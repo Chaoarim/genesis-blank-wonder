@@ -1,0 +1,10 @@
+project_id = "usoezyigkgpnnvcvciwo"
+
+[functions.kiwify-webhook]
+verify_jwt = false
+
+[functions.simulate-webhook]
+verify_jwt = false
+
+[functions.import-parts]
+verify_jwt = false
