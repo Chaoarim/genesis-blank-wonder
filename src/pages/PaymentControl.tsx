@@ -112,7 +112,7 @@ const PaymentControl = () => {
       }
       toast.error("Erro ao carregar assinaturas");
     } else {
-      setSubscriptions(subData || []);
+      setSubscriptions((subData || []) as UserSubscription[]);
       // Inicializar notas editáveis
       const notes: { [key: string]: string } = {};
       (subData || []).forEach(sub => {

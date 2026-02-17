@@ -14,16 +14,350 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_usage: {
+        Row: {
+          id: string
+          query_count: number
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          query_count?: number
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          query_count?: number
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      parts: {
+        Row: {
+          anos_aplicacao: string | null
+          chave_de_busca: string | null
+          codigo_peca: string | null
+          contexto_ia: string | null
+          created_at: string
+          descricao: string | null
+          fabricante: string | null
+          id: string
+          marca_veiculo: string | null
+          modelo_veiculo: string | null
+        }
+        Insert: {
+          anos_aplicacao?: string | null
+          chave_de_busca?: string | null
+          codigo_peca?: string | null
+          contexto_ia?: string | null
+          created_at?: string
+          descricao?: string | null
+          fabricante?: string | null
+          id?: string
+          marca_veiculo?: string | null
+          modelo_veiculo?: string | null
+        }
+        Update: {
+          anos_aplicacao?: string | null
+          chave_de_busca?: string | null
+          codigo_peca?: string | null
+          contexto_ia?: string | null
+          created_at?: string
+          descricao?: string | null
+          fabricante?: string | null
+          id?: string
+          marca_veiculo?: string | null
+          modelo_veiculo?: string | null
+        }
+        Relationships: []
+      }
+      popular_car_parts: {
+        Row: {
+          aplicacao: string | null
+          car_id: string
+          created_at: string
+          fabricante: string | null
+          fornecedor: string | null
+          id: string
+          produto: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          car_id: string
+          created_at?: string
+          fabricante?: string | null
+          fornecedor?: string | null
+          id?: string
+          produto: string
+        }
+        Update: {
+          aplicacao?: string | null
+          car_id?: string
+          created_at?: string
+          fabricante?: string | null
+          fornecedor?: string | null
+          id?: string
+          produto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popular_car_parts_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "popular_cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      popular_cars: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      pre_registrations: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          password_hash: string | null
+          status: string
+          whatsapp: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          password_hash?: string | null
+          status?: string
+          whatsapp: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          password_hash?: string | null
+          status?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      price_comparison_products: {
+        Row: {
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          local: string
+          marca: string
+          melhor_preco: string | null
+          preco_dpk: number | null
+          preco_real: number | null
+          preco_sama: number | null
+          qtde: number
+          roles_dpk: string | null
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          descricao: string
+          id?: string
+          local: string
+          marca: string
+          melhor_preco?: string | null
+          preco_dpk?: number | null
+          preco_real?: number | null
+          preco_sama?: number | null
+          qtde?: number
+          roles_dpk?: string | null
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          local?: string
+          marca?: string
+          melhor_preco?: string | null
+          preco_dpk?: number | null
+          preco_real?: number | null
+          preco_sama?: number | null
+          qtde?: number
+          roles_dpk?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string | null
+          id: string
+          kiwify_customer_id: string | null
+          notes: string | null
+          plan: string | null
+          started_at: string | null
+          status: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string | null
+          id?: string
+          kiwify_customer_id?: string | null
+          notes?: string | null
+          plan?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string | null
+          id?: string
+          kiwify_customer_id?: string | null
+          notes?: string | null
+          plan?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          acao_acesso: string | null
+          data_hora: string
+          email: string
+          evento_recebido: string
+          id: string
+          plano_aplicado: string | null
+        }
+        Insert: {
+          acao_acesso?: string | null
+          data_hora?: string
+          email: string
+          evento_recebido: string
+          id?: string
+          plano_aplicado?: string | null
+        }
+        Update: {
+          acao_acesso?: string | null
+          data_hora?: string
+          email?: string
+          evento_recebido?: string
+          id?: string
+          plano_aplicado?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_subscription_status: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      get_daily_usage: { Args: { p_user_id: string }; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      update_subscription_by_email: {
+        Args: { p_email: string; p_plan: string; p_status: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +484,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
