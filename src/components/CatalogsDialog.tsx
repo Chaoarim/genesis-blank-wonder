@@ -127,26 +127,16 @@ export function CatalogsDialog({ open, onOpenChange, parts, onConsultAI }: Catal
                     )}
                   </div>
 
-                  <div className="px-4 pb-4 flex gap-2">
+                  <div className="px-4 pb-4">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1 text-xs"
+                      className="w-full text-xs"
                       onClick={() => setSelectedSupplier(supplier.name)}
                     >
                       <Package className="w-3.5 h-3.5 mr-1" />
                       Consulta rápida
                     </Button>
-                    {onConsultAI && (
-                      <Button
-                        size="sm"
-                        className="flex-1 text-xs"
-                        onClick={() => handleConsultAI(supplier.name)}
-                      >
-                        <MessageSquare className="w-3.5 h-3.5 mr-1" />
-                        Consultar IA
-                      </Button>
-                    )}
                   </div>
                 </div>
               ))}
