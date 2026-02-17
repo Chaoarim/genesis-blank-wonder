@@ -1,11 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Search, Package, MessageSquare } from 'lucide-react';
+import { BookOpen, Search, Package, X, ChevronDown, Globe } from 'lucide-react';
 import { Part } from '@/hooks/usePartsDatabase';
-import { SupplierQuickSearch } from './SupplierQuickSearch';
 
 interface CatalogsDialogProps {
   open: boolean;
@@ -14,149 +13,271 @@ interface CatalogsDialogProps {
   onConsultAI?: (supplierName: string) => void;
 }
 
-interface SupplierInfo {
-  name: string;
-  count: number;
-  description: string;
-}
+const PAGE_SIZE = 50;
 
-function getSupplierDescription(parts: Part[], supplierName: string): string {
-  const supplierParts = parts.filter(
-    p => p.fornecedor.trim().toUpperCase() === supplierName
-  );
-  const productTypes = new Set<string>();
-  for (const p of supplierParts.slice(0, 200)) {
-    const produto = p.produto.trim();
-    if (produto) {
-      // Get first meaningful words of product
-      const words = produto.split(/\s+/).slice(0, 3).join(' ');
-      if (words.length > 2) productTypes.add(words.toLowerCase());
-    }
-  }
-  const unique = [...productTypes].slice(0, 5);
-  return unique.length > 0
-    ? unique.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(', ') + '...'
-    : '';
-}
+const normalizeForSearch = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-export function CatalogsDialog({ open, onOpenChange, parts, onConsultAI }: CatalogsDialogProps) {
+export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProps) {
   const [search, setSearch] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const suppliers: SupplierInfo[] = useMemo(() => {
-    const supplierMap = new Map<string, number>();
+  const filtered = useMemo(() => {
+    const q = normalizeForSearch(search);
+    if (q.length < 2) return parts;
 
-    parts.forEach(part => {
-      const supplier = part.fornecedor.trim().toUpperCase();
-      if (supplier) {
-        supplierMap.set(supplier, (supplierMap.get(supplier) || 0) + 1);
+    const terms = q.split(' ').filter(t => t.length >= 2);
+    if (terms.length === 0) return parts;
+
+    const LATERALITY_TERMS = new Set([
+      'dianteiro', 'dianteira', 'traseiro', 'traseira',
+      'esquerdo', 'esquerda', 'direito', 'direita',
+    ]);
+
+    const VEHICLE_TERMS = new Set([
+      'gol', 'parati', 'saveiro', 'voyage', 'fox', 'polo', 'golf', 'up',
+      'corsa', 'celta', 'onix', 'prisma', 'cobalt', 'montana', 'agile', 'spin', 'cruze', 'tracker',
+      'uno', 'palio', 'siena', 'strada', 'mobi', 'argo', 'cronos', 'toro', 'fiorino', 'doblo',
+      'fiesta', 'ka', 'focus', 'ecosport', 'ranger', 'fusion',
+      'civic', 'fit', 'city', 'hrv', 'crv', 'accord',
+      'corolla', 'etios', 'yaris', 'hilux', 'camry', 'rav4', 'sw4',
+      'hb20', 'tucson', 'creta', 'ix35', 'santa', 'veloster',
+      'logan', 'sandero', 'duster', 'kwid', 'captur',
+      'kicks', 'versa', 'march', 'sentra', 'frontier', 'livina',
+      'amarok', 'tiguan', 'jetta', 'passat', 'tcross', 'taos', 'nivus', 'virtus',
+      'astra', 'vectra', 'meriva', 'zafira', 's10', 'blazer', 'trailblazer',
+      'pampa', 'escort', 'versailles', 'del', 'rey', 'belina',
+      'kombi', 'fusca', 'brasilia', 'variant',
+      'punto', 'linea', 'bravo', 'idea', 'weekend',
+      'clio', 'megane', 'scenic', 'symbol', 'fluence',
+      'picanto', 'cerato', 'sportage', 'sorento', 'soul',
+    ]);
+
+    const productTerms: string[] = [];
+    const vehicleTerms: string[] = [];
+    const lateralityTerms: string[] = [];
+
+    for (const term of terms) {
+      if (LATERALITY_TERMS.has(term)) {
+        lateralityTerms.push(term);
+      } else if (VEHICLE_TERMS.has(term)) {
+        vehicleTerms.push(term);
+      } else {
+        productTerms.push(term);
       }
-    });
-
-    return Array.from(supplierMap.entries())
-      .map(([name, count]) => ({
-        name,
-        count,
-        description: getSupplierDescription(parts, name),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [parts]);
-
-  const filteredSuppliers = useMemo(() => {
-    if (!search.trim()) return suppliers;
-    const searchLower = search.toLowerCase();
-    return suppliers.filter(s => s.name.toLowerCase().includes(searchLower));
-  }, [suppliers, search]);
-
-  const handleConsultAI = (supplierName: string) => {
-    if (onConsultAI) {
-      onConsultAI(supplierName);
-      onOpenChange(false);
     }
+
+    const PRODUCT_PREFIXES_TO_EXCLUDE = ['coxim', 'kit', 'batente', 'coifa', 'suporte', 'prato', 'base', 'reparo'];
+
+    const scored: { part: Part; score: number }[] = [];
+
+    for (const part of parts) {
+      const code = normalizeForSearch(part.fabricante);
+      const produto = normalizeForSearch(part.produto);
+      const chave = normalizeForSearch(part.chaveDeBusca);
+      const marca = normalizeForSearch(part.marca || '');
+      const modelo = normalizeForSearch(part.modelo || '');
+      const ano = normalizeForSearch(part.ano || '');
+      const fornecedor = normalizeForSearch(part.fornecedor || '');
+      const fullText = `${produto} ${chave} ${marca} ${modelo} ${ano} ${fornecedor}`;
+
+      if (lateralityTerms.length > 0) {
+        if (!lateralityTerms.every(lt => fullText.includes(lt))) continue;
+      }
+
+      if (vehicleTerms.length > 0) {
+        if (!vehicleTerms.every(vt => fullText.includes(vt))) continue;
+      }
+
+      if (productTerms.length > 0) {
+        let excluded = false;
+        for (const term of productTerms) {
+          const produtoWords = produto.split(' ').filter(w => w.length >= 2);
+          const termIndex = produtoWords.indexOf(term);
+
+          if (termIndex > 0) {
+            const precedingWords = produtoWords.slice(0, termIndex);
+            if (precedingWords.some(pw => PRODUCT_PREFIXES_TO_EXCLUDE.includes(pw))) {
+              excluded = true;
+              break;
+            }
+          }
+
+          if (produto.includes(term)) {
+            for (const prefix of PRODUCT_PREFIXES_TO_EXCLUDE) {
+              if (produto.startsWith(prefix) && !productTerms.includes(prefix)) {
+                excluded = true;
+                break;
+              }
+            }
+          }
+          if (excluded) break;
+        }
+        if (excluded) continue;
+      }
+
+      let score = 0;
+      let matchedProduct = 0;
+
+      score += lateralityTerms.length * 5;
+      score += vehicleTerms.length * 4;
+
+      for (const term of productTerms) {
+        let termScore = 0;
+        if (code === term) termScore += 10;
+        else if (code.includes(term)) termScore += 5;
+        if (produto.includes(term)) termScore += 3;
+        if (chave.includes(term)) termScore += 1;
+        if (fornecedor.includes(term)) termScore += 2;
+
+        if (termScore > 0) {
+          matchedProduct++;
+          score += termScore;
+        }
+      }
+
+      if (productTerms.length > 0 && matchedProduct / productTerms.length < 0.5) continue;
+      if (score <= 0) continue;
+
+      scored.push({ part, score });
+    }
+
+    return scored.sort((a, b) => b.score - a.score).map(s => s.part);
+  }, [search, parts]);
+
+  const visibleResults = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMore = visibleCount < filtered.length;
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setSearch('');
+    setVisibleCount(PAGE_SIZE);
   };
 
+  const handleSearchChange = useCallback((val: string) => {
+    setSearch(val);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+
   return (
-    <>
-      <Dialog open={open && !selectedSupplier} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Catálogos por Fornecedor
-              <span className="text-sm font-normal text-muted-foreground">
-                ({suppliers.length} fornecedores)
-              </span>
-            </DialogTitle>
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
+          <DialogTitle className="flex items-center gap-2 text-base font-semibold">
+            <BookOpen className="w-5 h-5 text-primary" />
+            Catálogos
+            <span className="text-xs font-normal text-muted-foreground">
+              ({parts.length.toLocaleString()} peças)
+            </span>
+          </DialogTitle>
+        </DialogHeader>
 
-          <div className="px-6 py-4 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Pesquisar fornecedor..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="px-4 py-3 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder="Buscar código, peça, veículo ou fornecedor..."
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10 pr-9"
+            />
+            {search && (
+              <button
+                onClick={() => handleSearchChange('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
+        </div>
 
-          <ScrollArea className="flex-1 min-h-0 max-h-[70vh]">
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredSuppliers.map((supplier) => (
+        <div className="px-4 py-1.5 border-b border-border bg-muted/50">
+          <span className="text-xs text-muted-foreground font-medium">
+            {search.length >= 2
+              ? `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''}`
+              : `${parts.length} peças no catálogo`}
+            {filtered.length > PAGE_SIZE && (
+              <span className="ml-2">
+                · mostrando {Math.min(visibleCount, filtered.length)} de {filtered.length}
+              </span>
+            )}
+          </span>
+        </div>
+
+        <ScrollArea className="flex-1 min-h-0 max-h-[60vh]" style={{ overflow: 'auto' }}>
+          {visibleResults.length > 0 ? (
+            <div className="divide-y divide-border">
+              {visibleResults.map((part, idx) => (
                 <div
-                  key={supplier.name}
-                  className="flex flex-col rounded-xl bg-card border border-border hover:border-primary/50 transition-colors overflow-hidden"
+                  key={`${part.fabricante}-${idx}`}
+                  className="px-4 py-2.5 hover:bg-accent/50 transition-colors"
                 >
-                  <div className="p-4 flex-1">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-                        {supplier.name.substring(0, 2)}
+                  <div className="flex items-start gap-2">
+                    <Package className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-semibold text-sm text-primary">
+                          {part.fabricante}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                          {part.fornecedor}
+                        </span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-sm truncate">{supplier.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {supplier.count.toLocaleString()} peças
-                        </p>
-                      </div>
-                    </div>
-                    {supplier.description && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                        {supplier.description}
+                      <p className="text-sm text-foreground mt-0.5 truncate">
+                        {part.produto}
                       </p>
-                    )}
-                  </div>
-
-                  <div className="px-4 pb-4">
+                      {(part.marca || part.modelo) && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {[part.marca, part.modelo, part.ano].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </div>
                     <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs"
-                      onClick={() => setSelectedSupplier(supplier.name)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 mt-0.5"
+                      title="Pesquisa Web"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
+                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`, '_blank');
+                      }}
                     >
-                      <Package className="w-3.5 h-3.5 mr-1" />
-                      Consulta rápida
+                      <Globe className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                   </div>
                 </div>
               ))}
 
-              {filteredSuppliers.length === 0 && (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  Nenhum fornecedor encontrado
+              {hasMore && (
+                <div className="px-4 py-3 flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                    className="gap-2"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                    Carregar mais {Math.min(PAGE_SIZE, filtered.length - visibleCount)} resultados
+                  </Button>
                 </div>
               )}
             </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      <SupplierQuickSearch
-        open={!!selectedSupplier}
-        onOpenChange={(v) => !v && setSelectedSupplier(null)}
-        supplierName={selectedSupplier || ''}
-        parts={parts}
-      />
-    </>
+          ) : (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Nenhuma peça encontrada{search ? ` para "${search}"` : ''}
+            </div>
+          )}
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }
