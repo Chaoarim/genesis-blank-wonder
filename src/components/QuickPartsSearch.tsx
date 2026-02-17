@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Part } from '@/hooks/usePartsDatabase';
+import { smartFilterParts } from '@/lib/partsSearchEngine';
 
 interface QuickPartsSearchProps {
   parts: Part[];
@@ -18,57 +19,9 @@ export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const normalizeForSearch = (text: string) =>
-    text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
   const allResults = useMemo(() => {
-    const q = normalizeForSearch(search);
-    if (q.length < 2) return [];
-
-    const terms = q.split(' ').filter(t => t.length >= 2);
-    if (terms.length === 0) return [];
-
-    const scored: { part: Part; score: number }[] = [];
-
-    for (const part of parts) {
-      const code = normalizeForSearch(part.fabricante);
-      const produto = normalizeForSearch(part.produto);
-      const fornecedor = normalizeForSearch(part.fornecedor);
-      const chave = normalizeForSearch(part.chaveDeBusca);
-
-      let score = 0;
-      let matched = 0;
-
-      for (const term of terms) {
-        let termScore = 0;
-        if (code === term) termScore += 10;
-        else if (code.includes(term)) termScore += 5;
-
-        if (fornecedor.includes(term)) termScore += 3;
-        if (produto.includes(term)) termScore += 2;
-        if (chave.includes(term)) termScore += 1;
-
-        if (termScore > 0) {
-          matched++;
-          score += termScore;
-        }
-      }
-
-      const ratio = matched / terms.length;
-      if (ratio >= 0.5 && score > 0) {
-        scored.push({ part, score });
-      }
-    }
-
-    return scored
-      .sort((a, b) => b.score - a.score)
-      .map(s => s.part);
+    if (search.length < 2) return [];
+    return smartFilterParts(parts, search);
   }, [search, parts]);
 
   const visibleResults = useMemo(() => allResults.slice(0, visibleCount), [allResults, visibleCount]);
