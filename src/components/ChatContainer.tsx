@@ -38,6 +38,10 @@ export function ChatContainer({ onLogout }: ChatContainerProps) {
     sendMessage(query, options);
   };
 
+  const handleConsultAI = (supplierName: string) => {
+    sendMessage(`Quais são as principais peças do fornecedor ${supplierName}? Liste os produtos mais importantes.`);
+  };
+
   const handleClearMessages = () => {
     clearMessages();
   };
@@ -50,6 +54,7 @@ export function ChatContainer({ onLogout }: ChatContainerProps) {
         loadProgress={loadProgress}
         onLogout={onLogout}
         parts={parts}
+        onConsultAI={handleConsultAI}
       />
 
       <div className="flex-1 overflow-y-auto scrollbar-custom">

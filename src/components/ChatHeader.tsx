@@ -9,9 +9,10 @@ interface ChatHeaderProps {
   loadProgress?: number;
   onLogout?: () => void;
   parts: Part[];
+  onConsultAI?: (supplierName: string) => void;
 }
 
-export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, onLogout, parts }: ChatHeaderProps) {
+export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, onLogout, parts, onConsultAI }: ChatHeaderProps) {
 
   return (
     <header className="glass-card border-b border-border px-6 py-4">
@@ -36,6 +37,7 @@ export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, on
           <CatalogsSheet 
             parts={parts} 
             disabled={isLoadingDatabase}
+            onConsultAI={onConsultAI}
           />
 
           <div className="flex items-center gap-2 text-sm">
