@@ -131,7 +131,7 @@ const Sales = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Utilize nossa inteligência artificial para consultar códigos de peças, 
+            Utilize nossa inteligência para consultar códigos de peças, 
             fabricantes e aplicações de forma rápida e precisa.
           </p>
 
