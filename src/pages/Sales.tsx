@@ -122,7 +122,7 @@ const Sales = () => {
         <div className="container mx-auto text-center max-w-4xl">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Zap className="w-4 h-4" />
-            Consulta de Peças Automotivas com IA
+            Consulta de Peças Automotivas com inteligência
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
