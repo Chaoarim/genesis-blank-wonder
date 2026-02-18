@@ -76,9 +76,13 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
       if (!lateralityTerms.every(lt => fullText.includes(lt))) continue;
     }
 
-    // MANDATORY: ALL vehicle terms must match in vehicle-related fields
+    // MANDATORY: ALL vehicle terms must match in vehicle-related fields (word boundary)
     if (vehicleTerms.length > 0) {
-      if (!vehicleTerms.every(vt => vehicleText.includes(vt) || produto.includes(vt))) continue;
+      const matchesVehicle = (text: string, term: string) => {
+        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
+        return regex.test(text);
+      };
+      if (!vehicleTerms.every(vt => matchesVehicle(vehicleText, vt) || matchesVehicle(produto, vt))) continue;
     }
 
     // Product exclusion logic
