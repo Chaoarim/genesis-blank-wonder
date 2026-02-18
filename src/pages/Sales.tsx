@@ -52,7 +52,7 @@ const Sales = () => {
   const features = [
     { icon: Search, text: "Consulta inteligente de peças automotivas" },
     { icon: Database, text: "Base de dados completa e atualizada" },
-    { icon: MessageSquare, text: "Chat IA para busca por descrição" },
+    { icon: MessageSquare, text: "Inteligência para busca por descrição" },
     { icon: Zap, text: "Respostas instantâneas e precisas" },
     { icon: Shield, text: "Dados verificados de fabricantes" },
     { icon: Globe, text: "Dados unificados para decisões rápidas" },
