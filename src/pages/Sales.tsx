@@ -126,7 +126,7 @@ const Sales = () => {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Encontre qualquer peça automotiva em{" "}
+            Encontre peça automotiva em{" "}
             <span className="text-gradient">segundos</span>
           </h1>
           
