@@ -34,11 +34,6 @@ export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, on
         </div>
 
         <div className="flex items-center gap-4">
-          <CatalogsSheet 
-            parts={parts} 
-            disabled={isLoadingDatabase}
-            onConsultAI={onConsultAI}
-          />
 
           <div className="flex items-center gap-2 text-sm">
             <Database className="w-4 h-4 text-primary" />
