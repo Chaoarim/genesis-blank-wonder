@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Package } from 'lucide-react';
+import { Package, X } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface PartThumbnailProps {
   imageUrl?: string | null;
@@ -9,6 +10,7 @@ interface PartThumbnailProps {
 
 export function PartThumbnail({ imageUrl, alt = '', className = 'w-8 h-8' }: PartThumbnailProps) {
   const [error, setError] = useState(false);
+  const [showFull, setShowFull] = useState(false);
 
   if (!imageUrl || error) {
     return (
@@ -19,14 +21,30 @@ export function PartThumbnail({ imageUrl, alt = '', className = 'w-8 h-8' }: Par
   }
 
   return (
-    <div className={`${className} rounded bg-muted overflow-hidden shrink-0`}>
-      <img
-        src={imageUrl}
-        alt={alt}
-        className="w-full h-full object-cover"
-        loading="lazy"
-        onError={() => setError(true)}
-      />
-    </div>
+    <>
+      <div
+        className={`${className} rounded bg-muted overflow-hidden shrink-0 cursor-pointer ring-offset-background transition-opacity hover:opacity-80`}
+        onClick={(e) => { e.stopPropagation(); setShowFull(true); }}
+      >
+        <img
+          src={imageUrl}
+          alt={alt}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={() => setError(true)}
+        />
+      </div>
+
+      <Dialog open={showFull} onOpenChange={setShowFull}>
+        <DialogContent className="max-w-lg p-2 bg-background border border-border">
+          {alt && <p className="text-sm font-medium text-foreground px-2 pt-1 truncate">{alt}</p>}
+          <img
+            src={imageUrl}
+            alt={alt}
+            className="w-full h-auto rounded object-contain max-h-[70vh]"
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
