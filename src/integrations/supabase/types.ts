@@ -45,6 +45,7 @@ export type Database = {
           descricao: string | null
           fabricante: string | null
           id: string
+          image_url: string | null
           marca_veiculo: string | null
           modelo_veiculo: string | null
         }
@@ -57,6 +58,7 @@ export type Database = {
           descricao?: string | null
           fabricante?: string | null
           id?: string
+          image_url?: string | null
           marca_veiculo?: string | null
           modelo_veiculo?: string | null
         }
@@ -69,6 +71,7 @@ export type Database = {
           descricao?: string | null
           fabricante?: string | null
           id?: string
+          image_url?: string | null
           marca_veiculo?: string | null
           modelo_veiculo?: string | null
         }
