@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, X, Package, ChevronDown, ArrowLeft, Globe } from 'lucide-react';
+import { Search, X, ChevronDown, ArrowLeft, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
+import { PartThumbnail } from './PartThumbnail';
 
 interface SupplierQuickSearchProps {
   open: boolean;
@@ -104,7 +105,7 @@ export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts }:
                   className="px-4 py-2.5 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-start gap-2">
-                    <Package className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <PartThumbnail imageUrl={part.imageUrl} alt={part.produto} className="w-9 h-9 mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono font-semibold text-sm text-primary">

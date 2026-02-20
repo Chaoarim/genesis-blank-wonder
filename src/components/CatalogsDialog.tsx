@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Search, Package, X, ChevronDown, Globe } from 'lucide-react';
+import { BookOpen, Search, X, ChevronDown, Globe } from 'lucide-react';
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
+import { PartThumbnail } from './PartThumbnail';
 
 interface CatalogsDialogProps {
   open: boolean;
@@ -95,7 +96,7 @@ export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProp
                   className="px-4 py-2.5 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-start gap-2">
-                    <Package className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <PartThumbnail imageUrl={part.imageUrl} alt={part.produto} className="w-9 h-9 mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono font-semibold text-sm text-primary">

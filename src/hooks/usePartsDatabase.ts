@@ -23,6 +23,7 @@ export interface Part {
   ano: string;
   chaveDeBusca: string;
   contextoIA: string;
+  imageUrl?: string;
 }
 
 export function usePartsDatabase() {
@@ -71,6 +72,7 @@ export function usePartsDatabase() {
                   ano: row.anos_aplicacao || '',
                   chaveDeBusca: row.chave_de_busca || '',
                   contextoIA: row.contexto_ia || '',
+                  imageUrl: (row as any).image_url || undefined,
                 });
               }
             }
