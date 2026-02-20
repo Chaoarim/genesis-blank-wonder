@@ -122,13 +122,11 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
 
     for (const term of productTerms) {
       let termScore = 0;
-      const inCode = code === term ? 10 : code.includes(term) ? 5 : 0;
-      const inProduto = produto.includes(term) ? 3 : 0;
-      const inFornecedor = fornecedor.includes(term) ? 2 : 0;
-
-      // Only count as matched if term appears in produto or code (primary fields)
-      // chave/contexto are vehicle-application fields and should NOT qualify a product term
-      termScore = inCode + inProduto + inFornecedor;
+      if (code === term) termScore += 10;
+      else if (code.includes(term)) termScore += 5;
+      if (produto.includes(term)) termScore += 3;
+      if (chave.includes(term)) termScore += 1;
+      if (fornecedor.includes(term)) termScore += 2;
 
       if (termScore > 0) {
         matchedProduct++;
@@ -136,8 +134,7 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
       }
     }
 
-    // ALL product terms must match in primary fields (produto/code/fornecedor)
-    if (productTerms.length > 0 && matchedProduct < productTerms.length) continue;
+    if (productTerms.length > 0 && matchedProduct / productTerms.length < 0.5) continue;
     if (score <= 0) continue;
 
     scored.push({ part, score });
