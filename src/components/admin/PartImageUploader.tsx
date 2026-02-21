@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Upload, Loader2, Image, Search, X, Check } from 'lucide-react';
+import { Upload, Loader2, Image, Search, X, Check, Trash2 } from 'lucide-react';
 
 interface PartImageUploaderProps {}
 
@@ -109,6 +109,44 @@ export function PartImageUploader({}: PartImageUploaderProps) {
     }
   }, [parts]);
 
+  const handleImageDelete = useCallback(async (partId: string) => {
+    const targetPart = parts.find(p => p.id === partId);
+    const codigoPeca = targetPart?.codigo_peca?.trim();
+
+    if (!confirm(`Excluir imagem${codigoPeca ? ` de todas as peças com código ${codigoPeca}` : ''}?`)) return;
+
+    setUploading(prev => ({ ...prev, [partId]: true }));
+    try {
+      if (codigoPeca) {
+        const { error: updateError } = await supabase
+          .from('parts')
+          .update({ image_url: null })
+          .eq('codigo_peca', codigoPeca);
+        if (updateError) throw updateError;
+
+        setParts(prev => prev.map(p =>
+          p.codigo_peca?.trim() === codigoPeca ? { ...p, image_url: null } : p
+        ));
+      } else {
+        const { error: updateError } = await supabase
+          .from('parts')
+          .update({ image_url: null })
+          .eq('id', partId);
+        if (updateError) throw updateError;
+
+        setParts(prev => prev.map(p =>
+          p.id === partId ? { ...p, image_url: null } : p
+        ));
+      }
+      toast.success('Imagem removida!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao excluir imagem');
+    } finally {
+      setUploading(prev => ({ ...prev, [partId]: false }));
+    }
+  }, [parts]);
+
   const handleBatchUpload = useCallback(async (files: FileList) => {
     // Match files by name to part codigo_peca
     let matched = 0;
@@ -201,7 +239,17 @@ export function PartImageUploader({}: PartImageUploaderProps) {
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {part.image_url && (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <>
+                        <Check className="w-4 h-4 text-green-500" />
+                        <button
+                          onClick={() => handleImageDelete(part.id)}
+                          disabled={uploading[part.id]}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-50"
+                          title="Excluir imagem"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </>
                     )}
                     <label className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
                       uploading[part.id]
