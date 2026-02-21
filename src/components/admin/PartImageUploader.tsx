@@ -21,10 +21,17 @@ const PAGE_SIZE = 50;
 
 export function PartImageUploader({}: PartImageUploaderProps) {
   const [supplierFilter, setSupplierFilter] = useState('');
+  const [codeFilter, setCodeFilter] = useState('');
   const [parts, setParts] = useState<PartRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [searched, setSearched] = useState(false);
+
+  const filteredParts = useMemo(() => {
+    if (!codeFilter.trim()) return parts;
+    const q = codeFilter.trim().toUpperCase();
+    return parts.filter(p => p.codigo_peca?.toUpperCase().includes(q));
+  }, [parts, codeFilter]);
 
   const loadPartsBySupplier = useCallback(async () => {
     if (!supplierFilter.trim()) {
@@ -196,9 +203,10 @@ export function PartImageUploader({}: PartImageUploaderProps) {
 
       {parts.length > 0 && (
         <>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-sm text-muted-foreground">
               {parts.length} peças encontradas · {parts.filter(p => p.image_url).length} com imagem
+              {codeFilter && ` · ${filteredParts.length} filtradas`}
             </span>
             <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">
               <Upload className="w-4 h-4" />
@@ -213,9 +221,24 @@ export function PartImageUploader({}: PartImageUploaderProps) {
             </label>
           </div>
 
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Filtrar por código da peça..."
+              value={codeFilter}
+              onChange={e => setCodeFilter(e.target.value)}
+              className="pl-10"
+            />
+            {codeFilter && (
+              <button onClick={() => setCodeFilter('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              </button>
+            )}
+          </div>
+
           <ScrollArea className="max-h-[400px]">
             <div className="divide-y divide-border">
-              {parts.map(part => (
+              {filteredParts.map(part => (
                 <div key={part.id} className="flex items-center gap-3 py-2.5 px-1">
                   <div className="w-12 h-12 rounded border border-border bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                     {part.image_url ? (
