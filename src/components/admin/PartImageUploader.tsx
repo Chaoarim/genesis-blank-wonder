@@ -54,60 +54,60 @@ export function PartImageUploader({}: PartImageUploaderProps) {
   const handleImageUpload = useCallback(async (partId: string, file: File) => {
     setUploading(prev => ({ ...prev, [partId]: true }));
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${partId}.${ext}`;
+      const targetPart = parts.find(p => p.id === partId);
+      const codigoPeca = targetPart?.codigo_peca?.trim();
 
-      // Upload to storage
+      // Use codigo_peca as filename so all parts share the same file
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = codigoPeca ? `${codigoPeca}.${ext}` : `${partId}.${ext}`;
+
       const { error: uploadError } = await supabase.storage
         .from('part-images')
         .upload(path, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('part-images')
         .getPublicUrl(path);
 
-      // Find the codigo_peca for this part
-      const targetPart = parts.find(p => p.id === partId);
-      const codigoPeca = targetPart?.codigo_peca;
+      // Add cache-buster to force browsers to load the new image
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       if (codigoPeca) {
-        // Update ALL parts with the same codigo_peca
         const { error: updateError } = await supabase
           .from('parts')
-          .update({ image_url: urlData.publicUrl })
+          .update({ image_url: publicUrl })
           .eq('codigo_peca', codigoPeca);
 
         if (updateError) throw updateError;
 
-        // Update local state for all matching parts
         setParts(prev => prev.map(p =>
-          p.codigo_peca === codigoPeca ? { ...p, image_url: urlData.publicUrl } : p
+          p.codigo_peca?.trim() === codigoPeca ? { ...p, image_url: publicUrl } : p
         ));
+
+        const count = parts.filter(p => p.codigo_peca?.trim() === codigoPeca).length;
+        toast.success(`Imagem aplicada em ${count} peça(s) com código ${codigoPeca}!`);
       } else {
-        // Fallback: update only this part
         const { error: updateError } = await supabase
           .from('parts')
-          .update({ image_url: urlData.publicUrl })
+          .update({ image_url: publicUrl })
           .eq('id', partId);
 
         if (updateError) throw updateError;
 
         setParts(prev => prev.map(p =>
-          p.id === partId ? { ...p, image_url: urlData.publicUrl } : p
+          p.id === partId ? { ...p, image_url: publicUrl } : p
         ));
+        toast.success('Imagem salva!');
       }
-
-      toast.success('Imagem salva!');
     } catch (err) {
       console.error(err);
       toast.error('Erro ao fazer upload');
     } finally {
       setUploading(prev => ({ ...prev, [partId]: false }));
     }
-  }, []);
+  }, [parts]);
 
   const handleBatchUpload = useCallback(async (files: FileList) => {
     // Match files by name to part codigo_peca
