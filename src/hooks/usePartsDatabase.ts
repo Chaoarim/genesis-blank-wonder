@@ -31,6 +31,11 @@ export function usePartsDatabase() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshParts = useCallback(() => {
+    setRefreshKey(k => k + 1);
+  }, []);
 
   useEffect(() => {
     const loadDatabase = async () => {
@@ -72,7 +77,7 @@ export function usePartsDatabase() {
                   ano: row.anos_aplicacao || '',
                   chaveDeBusca: row.chave_de_busca || '',
                   contextoIA: row.contexto_ia || '',
-                  imageUrl: (row as any).image_url || undefined,
+                  imageUrl: row.image_url || undefined,
                 });
               }
             }
@@ -187,7 +192,7 @@ export function usePartsDatabase() {
     };
 
     loadDatabase();
-  }, []);
+  }, [refreshKey]);
 
   const normalizeForSearch = useCallback((text: string) => {
     return text
@@ -290,5 +295,6 @@ export function usePartsDatabase() {
     totalParts: parts.length,
     searchParts,
     getRelevantPartsForAI,
+    refreshParts,
   };
 }

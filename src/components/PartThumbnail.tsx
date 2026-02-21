@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Package, X } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Package } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 interface PartThumbnailProps {
   imageUrl?: string | null;
@@ -36,8 +36,10 @@ export function PartThumbnail({ imageUrl, alt = '', className = 'w-8 h-8' }: Par
       </div>
 
       <Dialog open={showFull} onOpenChange={setShowFull}>
-        <DialogContent className="max-w-lg p-2 bg-background border border-border">
-          {alt && <p className="text-sm font-medium text-foreground px-2 pt-1 truncate">{alt}</p>}
+        <DialogContent className="max-w-lg p-2 bg-background border border-border" aria-describedby={undefined}>
+          <DialogTitle className="text-sm font-medium text-foreground px-2 pt-1 truncate">
+            {alt || 'Imagem da peça'}
+          </DialogTitle>
           <img
             src={imageUrl}
             alt={alt}
