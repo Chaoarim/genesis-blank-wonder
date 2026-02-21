@@ -69,18 +69,36 @@ export function PartImageUploader({}: PartImageUploaderProps) {
         .from('part-images')
         .getPublicUrl(path);
 
-      // Update parts table
-      const { error: updateError } = await supabase
-        .from('parts')
-        .update({ image_url: urlData.publicUrl })
-        .eq('id', partId);
+      // Find the codigo_peca for this part
+      const targetPart = parts.find(p => p.id === partId);
+      const codigoPeca = targetPart?.codigo_peca;
 
-      if (updateError) throw updateError;
+      if (codigoPeca) {
+        // Update ALL parts with the same codigo_peca
+        const { error: updateError } = await supabase
+          .from('parts')
+          .update({ image_url: urlData.publicUrl })
+          .eq('codigo_peca', codigoPeca);
 
-      // Update local state
-      setParts(prev => prev.map(p =>
-        p.id === partId ? { ...p, image_url: urlData.publicUrl } : p
-      ));
+        if (updateError) throw updateError;
+
+        // Update local state for all matching parts
+        setParts(prev => prev.map(p =>
+          p.codigo_peca === codigoPeca ? { ...p, image_url: urlData.publicUrl } : p
+        ));
+      } else {
+        // Fallback: update only this part
+        const { error: updateError } = await supabase
+          .from('parts')
+          .update({ image_url: urlData.publicUrl })
+          .eq('id', partId);
+
+        if (updateError) throw updateError;
+
+        setParts(prev => prev.map(p =>
+          p.id === partId ? { ...p, image_url: urlData.publicUrl } : p
+        ));
+      }
 
       toast.success('Imagem salva!');
     } catch (err) {
