@@ -89,7 +89,8 @@ export function usePartsDatabase() {
           setParts(allParts);
           setLoadProgress(100);
           setIsLoading(false);
-          console.log(`Base de dados carregada do banco: ${allParts.length} peças`);
+          const withImages = allParts.filter(p => p.imageUrl).length;
+          console.log(`Base de dados carregada do banco: ${allParts.length} peças (${withImages} com imagem)`);
           return;
         }
 
