@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, X, ChevronDown, Globe } from 'lucide-react';
+import { Search, X, ChevronDown, Bot } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from './PartThumbnail';
+import { ChatContainer } from './ChatContainer';
 
 interface QuickPartsSearchProps {
   parts: Part[];
@@ -19,6 +20,7 @@ export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   const allResults = useMemo(() => {
     if (search.length < 2) return [];
@@ -150,14 +152,13 @@ export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 shrink-0 mt-0.5"
-                                title="Pesquisa Web"
+                                title="Modo IA"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                                  window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`, '_blank');
+                                  setAiChatOpen(true);
                                 }}
                               >
-                                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                                <Bot className="w-3.5 h-3.5 text-muted-foreground" />
                               </Button>
                             </div>
                           </div>
@@ -187,6 +188,12 @@ export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
               )}
             </ScrollArea>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={aiChatOpen} onOpenChange={setAiChatOpen}>
+        <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0">
+          <ChatContainer />
         </DialogContent>
       </Dialog>
     </>
