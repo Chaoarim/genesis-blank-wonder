@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, X, ChevronDown, ArrowLeft, Globe } from 'lucide-react';
+import { Search, X, ChevronDown, ArrowLeft, Bot } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from './PartThumbnail';
+import { ChatContainer } from './ChatContainer';
 
 interface SupplierQuickSearchProps {
   open: boolean;
@@ -20,6 +21,7 @@ const PAGE_SIZE = 50;
 export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts }: SupplierQuickSearchProps) {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   const supplierParts = useMemo(() => {
     const name = supplierName.trim().toUpperCase();
@@ -46,6 +48,7 @@ export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts }:
   }, []);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
@@ -125,14 +128,13 @@ export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts }:
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 shrink-0 mt-0.5"
-                      title="Pesquisa Web"
+                      title="Modo IA"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`, '_blank');
+                        setAiChatOpen(true);
                       }}
                     >
-                      <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Bot className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                   </div>
                 </div>
@@ -160,5 +162,12 @@ export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts }:
         </ScrollArea>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={aiChatOpen} onOpenChange={setAiChatOpen}>
+      <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0">
+        <ChatContainer />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
