@@ -41,15 +41,31 @@ export function PartImageUploader({}: PartImageUploaderProps) {
     setLoading(true);
     setSearched(true);
     try {
-      const { data, error } = await supabase
-        .from('parts')
-        .select('id, fabricante, codigo_peca, descricao, image_url')
-        .ilike('fabricante', `%${supplierFilter.trim()}%`)
-        .limit(500);
+      const filter = supplierFilter.trim();
+      const allData: PartRow[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      let hasMore = true;
 
-      if (error) throw error;
-      setParts(data || []);
-      if (!data?.length) toast.info('Nenhuma peça encontrada para esse fornecedor');
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('parts')
+          .select('id, fabricante, codigo_peca, descricao, image_url')
+          .ilike('fabricante', `%${filter}%`)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allData.push(...data);
+          page++;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      setParts(allData);
+      if (!allData.length) toast.info('Nenhuma peça encontrada para esse fornecedor');
     } catch (err) {
       console.error(err);
       toast.error('Erro ao buscar peças');
