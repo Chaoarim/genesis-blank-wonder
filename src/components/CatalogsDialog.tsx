@@ -7,7 +7,6 @@ import { BookOpen, Search, X, ChevronDown, Bot } from 'lucide-react';
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from './PartThumbnail';
-import { ChatContainer } from './ChatContainer';
 
 interface CatalogsDialogProps {
   open: boolean;
@@ -21,7 +20,6 @@ const PAGE_SIZE = 50;
 export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProps) {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (search.length < 2) return parts;
@@ -43,7 +41,6 @@ export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProp
   }, []);
 
   return (
-    <>
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
@@ -125,7 +122,8 @@ export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProp
                       title="Modo IA"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setAiChatOpen(true);
+                        const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
+                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
                       }}
                     >
                       <Bot className="w-3.5 h-3.5 text-muted-foreground" />
@@ -156,12 +154,5 @@ export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProp
         </ScrollArea>
       </DialogContent>
     </Dialog>
-
-    <Dialog open={aiChatOpen} onOpenChange={setAiChatOpen}>
-      <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0">
-        <ChatContainer />
-      </DialogContent>
-    </Dialog>
-    </>
   );
 }
