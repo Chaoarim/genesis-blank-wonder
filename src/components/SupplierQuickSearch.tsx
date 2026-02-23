@@ -130,7 +130,7 @@ export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts }:
                       onClick={(e) => {
                         e.stopPropagation();
                         const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&udm=50`, '_blank');
                       }}
                     >
                       <Bot className="w-3.5 h-3.5 text-muted-foreground" />
