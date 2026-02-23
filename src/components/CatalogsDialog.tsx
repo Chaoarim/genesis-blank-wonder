@@ -3,21 +3,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Search, X, ChevronDown, Bot } from 'lucide-react';
+import { BookOpen, Search, X, ChevronDown, Bot, Plus } from 'lucide-react';
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from './PartThumbnail';
+import { toast } from 'sonner';
 
 interface CatalogsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   parts: Part[];
   onConsultAI?: (supplierName: string) => void;
+  onAddToQuote?: (part: { codigo: string; fornecedor: string; produto: string; aplicacao: string }) => void;
 }
 
 const PAGE_SIZE = 50;
 
-export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProps) {
+export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: CatalogsDialogProps) {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
@@ -119,7 +121,7 @@ export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProp
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 shrink-0 mt-0.5"
-                      title="Modo IA"
+                      title="Pesquisa Web"
                       onClick={(e) => {
                         e.stopPropagation();
                         const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
@@ -128,6 +130,26 @@ export function CatalogsDialog({ open, onOpenChange, parts }: CatalogsDialogProp
                     >
                       <Bot className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
+                    {onAddToQuote && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 mt-0.5 text-green-500 hover:text-green-400"
+                        title="Adicionar ao orçamento"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToQuote({
+                            codigo: part.fabricante || '',
+                            fornecedor: part.fornecedor || '',
+                            produto: part.produto || '',
+                            aplicacao: [part.marca, part.modelo, part.ano].filter(Boolean).join(' '),
+                          });
+                          toast.success('Peça adicionada ao orçamento');
+                        }}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -1,7 +1,9 @@
 import { Car, Database, Zap, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CatalogsSheet } from './CatalogsSheet';
+import { QuotePanel } from './QuotePanel';
 import { Part } from '@/hooks/usePartsDatabase';
+import type { QuoteItem } from '@/hooks/useQuoteCart';
 
 interface ChatHeaderProps {
   totalParts: number;
@@ -10,9 +12,18 @@ interface ChatHeaderProps {
   onLogout?: () => void;
   parts: Part[];
   onConsultAI?: (supplierName: string) => void;
+  quoteCart: {
+    items: QuoteItem[];
+    total: number;
+    addItem: (part: { codigo: string; fornecedor: string; produto: string; aplicacao: string }) => void;
+    removeItem: (id: string) => void;
+    updateItem: (id: string, field: 'quantidade' | 'precoUnitario', value: number) => void;
+    clearCart: () => void;
+    sendToWhatsApp: (phone?: string) => void;
+  };
 }
 
-export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, onLogout, parts, onConsultAI }: ChatHeaderProps) {
+export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, onLogout, parts, onConsultAI, quoteCart }: ChatHeaderProps) {
 
   return (
     <header className="glass-card border-b border-border px-6 py-4">
@@ -47,6 +58,14 @@ export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, on
               </span>
             )}
           </div>
+          <QuotePanel
+            items={quoteCart.items}
+            total={quoteCart.total}
+            onUpdateItem={quoteCart.updateItem}
+            onRemoveItem={quoteCart.removeItem}
+            onClearCart={quoteCart.clearCart}
+            onSendWhatsApp={quoteCart.sendToWhatsApp}
+          />
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/30">
             <Zap className="w-3.5 h-3.5 text-success" />
             <span className="text-xs font-medium text-success">Online</span>

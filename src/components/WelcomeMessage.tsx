@@ -201,6 +201,7 @@ export function WelcomeMessage({ onExampleClick, parts, onAddToQuote, quoteItems
         onOpenChange={(open) => !open && setSelectedSupplier(null)}
         supplierName={selectedSupplier || ''}
         parts={parts}
+        onAddToQuote={onAddToQuote}
       />
     </>
   );

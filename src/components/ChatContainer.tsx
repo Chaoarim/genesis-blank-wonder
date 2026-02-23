@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { usePartsDatabase } from '@/hooks/usePartsDatabase';
+import { useQuoteCart } from '@/hooks/useQuoteCart';
 import { ChatHeader } from './ChatHeader';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -22,6 +23,8 @@ export function ChatContainer({ onLogout }: ChatContainerProps) {
     loadProgress,
     getRelevantPartsForAI,
   } = usePartsDatabase();
+
+  const quoteCart = useQuoteCart();
 
   const { messages, isLoading, error, sendMessage, clearMessages } = useChat({
     getRelevantPartsForAI,
@@ -55,11 +58,12 @@ export function ChatContainer({ onLogout }: ChatContainerProps) {
         onLogout={onLogout}
         parts={parts}
         onConsultAI={handleConsultAI}
+        quoteCart={quoteCart}
       />
 
       <div className="flex-1 overflow-y-auto scrollbar-custom">
         {messages.length === 0 ? (
-          <WelcomeMessage onExampleClick={handleExampleClick} parts={parts} />
+          <WelcomeMessage onExampleClick={handleExampleClick} parts={parts} onAddToQuote={quoteCart.addItem} />
         ) : (
           <div className="p-6 space-y-6">
             {messages.map((message) => (
