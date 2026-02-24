@@ -1,4 +1,5 @@
-import { Car, Database, Zap, LogOut } from 'lucide-react';
+import { Car, Database, Zap, LogOut, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CatalogsSheet } from './CatalogsSheet';
 import { QuotePanel } from './QuotePanel';
@@ -24,6 +25,7 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, onLogout, parts, onConsultAI, quoteCart }: ChatHeaderProps) {
+  const navigate = useNavigate();
 
   return (
     <header className="glass-card border-b border-border px-6 py-4">
@@ -66,6 +68,10 @@ export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, on
             onClearCart={quoteCart.clearCart}
             onSendWhatsApp={quoteCart.sendToWhatsApp}
           />
+          <Button variant="outline" size="sm" onClick={() => navigate('/vendas')} className="gap-1.5">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Vendas</span>
+          </Button>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/30">
             <Zap className="w-3.5 h-3.5 text-success" />
             <span className="text-xs font-medium text-success">Online</span>
