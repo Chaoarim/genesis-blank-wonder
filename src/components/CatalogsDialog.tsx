@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Search, X, ChevronDown, Bot, Plus } from 'lucide-react';
+import { BookOpen, Search, X, ChevronDown, Sparkles, Plus } from 'lucide-react';
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from './PartThumbnail';
@@ -125,10 +125,10 @@ export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: Cata
                       onClick={(e) => {
                         e.stopPropagation();
                         const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                        window.open(`https://gemini.google.com/app?q=${encodeURIComponent(query)}`, '_blank');
                       }}
                     >
-                      <Bot className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                     {onAddToQuote && (
                       <Button
