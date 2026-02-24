@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, X, ChevronDown, Bot, Plus } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -156,10 +156,10 @@ export function QuickPartsSearch({ parts, disabled, onAddToQuote }: QuickPartsSe
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                                  window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                                  window.open(`https://gemini.google.com/app?q=${encodeURIComponent(query)}`, '_blank');
                                 }}
                               >
-                                <Bot className="w-3.5 h-3.5 text-muted-foreground" />
+                                <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
                               </Button>
                               {onAddToQuote && (
                                 <Button
