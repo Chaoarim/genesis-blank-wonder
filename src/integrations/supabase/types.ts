@@ -35,6 +35,39 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       parts: {
         Row: {
           anos_aplicacao: string | null
@@ -244,6 +277,127 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sale_items: {
+        Row: {
+          codigo: string
+          created_at: string
+          fornecedor: string | null
+          id: string
+          preco_unitario: number
+          produto: string
+          quantidade: number
+          sale_id: string
+          user_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          preco_unitario?: number
+          produto: string
+          quantidade?: number
+          sale_id: string
+          user_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          preco_unitario?: number
+          produto?: string
+          quantidade?: number
+          sale_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          channel: string
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          discount: number
+          id: string
+          notes: string | null
+          status: string
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          discount?: number
+          id?: string
+          notes?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          discount?: number
+          id?: string
+          notes?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_goals: {
+        Row: {
+          created_at: string
+          goal_amount: number
+          id: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          goal_amount?: number
+          id?: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          goal_amount?: number
+          id?: string
+          month?: number
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Sales from "./pages/Sales";
+import SalesHub from "./pages/SalesHub";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
@@ -33,6 +34,7 @@ const App = () => (
           
           {/* Área logada */}
           <Route path="/app" element={<Dashboard />} />
+          <Route path="/vendas" element={<SalesHub />} />
           
           {/* Pré-Cadastro e Pagamento */}
           <Route path="/pre-cadastro" element={<PreRegistration />} />
