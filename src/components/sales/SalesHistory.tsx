@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, ChevronDown, ChevronUp, Search, Send } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronUp, Search, Send, Printer, FileText } from 'lucide-react';
+import { printSale, downloadPdf } from '@/lib/salePrint';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SalesHistoryProps {
@@ -85,9 +86,15 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
                         <p className="text-xs text-muted-foreground">Desconto: {fmt(Number(sale.discount))}</p>
                       )}
                       {sale.notes && <p className="text-xs text-muted-foreground italic">{sale.notes}</p>}
-                      <div className="flex gap-2 pt-2">
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <Button variant="outline" size="sm" onClick={() => printSale(sale, itemsCache[sale.id])} className="gap-1">
+                          <Printer className="w-3 h-3" /> Imprimir
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => downloadPdf(sale, itemsCache[sale.id])} className="gap-1">
+                          <FileText className="w-3 h-3" /> PDF
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => resendWhatsApp(sale)} className="gap-1">
-                          <Send className="w-3 h-3" /> Reenviar WhatsApp
+                          <Send className="w-3 h-3" /> WhatsApp
                         </Button>
                         <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onDeleteSale(sale.id)}>
                           <Trash2 className="w-3 h-3 mr-1" /> Excluir
