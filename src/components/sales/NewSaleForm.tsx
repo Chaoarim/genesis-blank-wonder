@@ -15,6 +15,7 @@ interface SaleItemDraft {
   codigo: string;
   produto: string;
   fornecedor: string;
+  aplicacao: string;
   quantidade: number;
   preco_unitario: number;
 }
@@ -34,14 +35,14 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
   const [notes, setNotes] = useState('');
   const [discount, setDiscount] = useState(0);
   const [items, setItems] = useState<SaleItemDraft[]>([
-    { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', quantidade: 1, preco_unitario: 0 },
+    { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', aplicacao: '', quantidade: 1, preco_unitario: 0 },
   ]);
   const [saving, setSaving] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
 
-  const addItem = () => setItems(prev => [...prev, { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', quantidade: 1, preco_unitario: 0 }]);
+  const addItem = () => setItems(prev => [...prev, { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', aplicacao: '', quantidade: 1, preco_unitario: 0 }]);
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
   const updateItem = (id: string, field: string, value: any) => setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
 
@@ -154,11 +155,13 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
           <PartSearchInline
             parts={parts}
             onAddPart={(part) => {
+              const aplicacao = [part.marca, part.modelo, part.ano].filter(Boolean).join(' ');
               setItems(prev => [...prev, {
                 id: crypto.randomUUID(),
                 codigo: part.fabricante,
                 produto: part.produto,
                 fornecedor: part.fornecedor,
+                aplicacao,
                 quantidade: 1,
                 preco_unitario: 0,
               }]);
@@ -191,6 +194,7 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
               <Input placeholder="Código" value={item.codigo} onChange={e => updateItem(item.id, 'codigo', e.target.value)} />
               <Input placeholder="Produto" value={item.produto} onChange={e => updateItem(item.id, 'produto', e.target.value)} />
               <Input placeholder="Fornecedor" value={item.fornecedor} onChange={e => updateItem(item.id, 'fornecedor', e.target.value)} />
+              <Input placeholder="Aplicação (veículo)" value={item.aplicacao} onChange={e => updateItem(item.id, 'aplicacao', e.target.value)} />
               <div className="flex gap-2">
                 <Input type="number" min={1} placeholder="Qtde" value={item.quantidade} onChange={e => updateItem(item.id, 'quantidade', Math.max(1, parseInt(e.target.value) || 1))} />
                 <Input type="number" min={0} step={0.01} placeholder="Preço" value={item.preco_unitario || ''} onChange={e => updateItem(item.id, 'preco_unitario', parseFloat(e.target.value) || 0)} />
