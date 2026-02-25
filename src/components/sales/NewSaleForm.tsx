@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Plus, Send, CheckCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Customer } from '@/hooks/useSalesData';
+import type { Part } from '@/hooks/usePartsDatabase';
+import { PartSearchInline } from './PartSearchInline';
 
 interface SaleItemDraft {
   id: string;
@@ -19,12 +21,13 @@ interface SaleItemDraft {
 
 interface NewSaleFormProps {
   customers: Customer[];
+  parts?: Part[];
   onAddCustomer: (data: { name: string; phone?: string }) => Promise<any>;
   onCreateSale: (data: any) => Promise<any>;
   onDone: () => void;
 }
 
-export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone }: NewSaleFormProps) {
+export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale, onDone }: NewSaleFormProps) {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [channel, setChannel] = useState('balcao');
@@ -144,12 +147,33 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone }: 
         )}
       </Card>
 
+      {/* Parts Search */}
+      {parts.length > 0 && (
+        <Card className="p-4 space-y-2">
+          <h3 className="font-semibold text-sm">🔍 Consultar Peças</h3>
+          <PartSearchInline
+            parts={parts}
+            onAddPart={(part) => {
+              setItems(prev => [...prev, {
+                id: crypto.randomUUID(),
+                codigo: part.fabricante,
+                produto: part.produto,
+                fornecedor: part.fornecedor,
+                quantidade: 1,
+                preco_unitario: 0,
+              }]);
+              toast.success(`${part.fabricante} adicionado ao pedido`);
+            }}
+          />
+        </Card>
+      )}
+
       {/* Items */}
       <Card className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Itens</h3>
           <Button variant="outline" size="sm" onClick={addItem}>
-            <Plus className="w-3 h-3 mr-1" /> Adicionar
+            <Plus className="w-3 h-3 mr-1" /> Adicionar manual
           </Button>
         </div>
 

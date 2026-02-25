@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesData } from '@/hooks/useSalesData';
+import { usePartsDatabase } from '@/hooks/usePartsDatabase';
 import { SalesDashboard } from '@/components/sales/SalesDashboard';
 import { CustomersManager } from '@/components/sales/CustomersManager';
 import { NewSaleForm } from '@/components/sales/NewSaleForm';
@@ -35,6 +36,7 @@ const SalesHub = () => {
   }, [navigate]);
 
   const salesData = useSalesData(user?.id ?? null);
+  const { parts } = usePartsDatabase();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -114,6 +116,7 @@ const SalesHub = () => {
           <TabsContent value="new-sale">
             <NewSaleForm
               customers={salesData.customers}
+              parts={parts}
               onAddCustomer={salesData.addCustomer}
               onCreateSale={salesData.createSale}
               onDone={() => setActiveTab('dashboard')}
