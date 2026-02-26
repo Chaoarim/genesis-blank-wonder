@@ -280,6 +280,36 @@ export type Database = {
         }
         Relationships: []
       }
+      price_list_items: {
+        Row: {
+          codigo: string
+          created_at: string
+          descricao: string
+          fornecedor: string | null
+          id: string
+          preco_custo: number
+          user_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          descricao: string
+          fornecedor?: string | null
+          id?: string
+          preco_custo?: number
+          user_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          fornecedor?: string | null
+          id?: string
+          preco_custo?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
