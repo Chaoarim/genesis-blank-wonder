@@ -155,7 +155,7 @@ const SalesHub = () => {
           </TabsContent>
 
           <TabsContent value="markup">
-            <MarkupManager parts={parts} />
+            <MarkupManager />
           </TabsContent>
         </Tabs>
       </main>
