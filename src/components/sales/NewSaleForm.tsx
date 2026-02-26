@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Plus, Send, CheckCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { Customer } from '@/hooks/useSalesData';
 import type { Part } from '@/hooks/usePartsDatabase';
 import { PartSearchInline } from './PartSearchInline';
+
+interface PriceListMatch {
+  codigo: string;
+  descricao: string;
+  fornecedor: string;
+  preco_custo: number;
+  preco_revenda: number;
+}
 
 interface SaleItemDraft {
   id: string;
@@ -41,10 +50,63 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
+  const [priceList, setPriceList] = useState<PriceListMatch[]>([]);
+  const [markup, setMarkup] = useState(0);
+
+  // Load user's price list + markup on mount
+  useEffect(() => {
+    const loadPriceData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const [markupRes, itemsRes] = await Promise.all([
+        supabase.from('markup_settings').select('markup_revenda').eq('user_id', user.id).maybeSingle(),
+        supabase.from('price_list_items').select('codigo, descricao, fornecedor, preco_custo').eq('user_id', user.id),
+      ]);
+
+      const mk = Number(markupRes.data?.markup_revenda) || 0;
+      setMarkup(mk);
+
+      if (itemsRes.data) {
+        setPriceList(itemsRes.data.map(r => ({
+          codigo: r.codigo,
+          descricao: r.descricao,
+          fornecedor: r.fornecedor || '',
+          preco_custo: Number(r.preco_custo) || 0,
+          preco_revenda: (Number(r.preco_custo) || 0) * (1 + mk / 100),
+        })));
+      }
+    };
+    loadPriceData();
+  }, []);
+
+  const findInPriceList = useCallback((codigo: string): PriceListMatch | undefined => {
+    if (!codigo.trim() || priceList.length === 0) return undefined;
+    const q = codigo.trim().toLowerCase();
+    return priceList.find(p => p.codigo.toLowerCase() === q);
+  }, [priceList]);
 
   const addItem = () => setItems(prev => [...prev, { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', aplicacao: '', quantidade: 1, preco_unitario: 0 }]);
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
-  const updateItem = (id: string, field: string, value: any) => setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
+
+  const updateItem = useCallback((id: string, field: string, value: any) => {
+    setItems(prev => prev.map(i => {
+      if (i.id !== id) return i;
+      const updated = { ...i, [field]: value };
+
+      // Auto-fill from price list when code changes
+      if (field === 'codigo' && typeof value === 'string') {
+        const match = findInPriceList(value);
+        if (match) {
+          updated.produto = match.descricao;
+          updated.fornecedor = match.fornecedor;
+          updated.preco_unitario = Math.round(match.preco_revenda * 100) / 100;
+          toast.success(`Preço de revenda aplicado: ${match.preco_revenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`, { duration: 2000 });
+        }
+      }
+      return updated;
+    }));
+  }, [findInPriceList]);
 
   const subtotal = items.reduce((s, i) => s + i.quantidade * i.preco_unitario, 0);
   const total = Math.max(subtotal - discount, 0);
