@@ -132,7 +132,7 @@ export function SupplierQuickSearch({ open, onOpenChange, supplierName, parts, o
                       onClick={(e) => {
                         e.stopPropagation();
                         const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                        window.open(`https://gemini.google.com/app?q=${encodeURIComponent(query)}`, '_blank');
+                        window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`, '_blank');
                       }}
                     >
                       <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
