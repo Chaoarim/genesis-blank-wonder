@@ -68,6 +68,33 @@ export type Database = {
         }
         Relationships: []
       }
+      markup_settings: {
+        Row: {
+          created_at: string
+          id: string
+          markup_distribuidor: number
+          markup_revenda: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          markup_distribuidor?: number
+          markup_revenda?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          markup_distribuidor?: number
+          markup_revenda?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       parts: {
         Row: {
           anos_aplicacao: string | null

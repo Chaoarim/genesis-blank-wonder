@@ -10,7 +10,8 @@ import { SalesHistory } from '@/components/sales/SalesHistory';
 import { GoalsManager } from '@/components/sales/GoalsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent } from 'lucide-react';
+import { MarkupManager } from '@/components/sales/MarkupManager';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
@@ -86,7 +87,7 @@ const SalesHub = () => {
       {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-6xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 mb-6 h-auto">
+          <TabsList className="grid w-full grid-cols-6 mb-6 h-auto">
             <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-2.5 text-xs">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -106,6 +107,10 @@ const SalesHub = () => {
             <TabsTrigger value="goals" className="flex flex-col gap-1 py-2.5 text-xs">
               <Target className="w-4 h-4" />
               <span className="hidden sm:inline">Metas</span>
+            </TabsTrigger>
+            <TabsTrigger value="markup" className="flex flex-col gap-1 py-2.5 text-xs">
+              <Percent className="w-4 h-4" />
+              <span className="hidden sm:inline">Markup</span>
             </TabsTrigger>
           </TabsList>
 
@@ -147,6 +152,10 @@ const SalesHub = () => {
               stats={salesData.stats}
               onSetGoal={salesData.setGoal}
             />
+          </TabsContent>
+
+          <TabsContent value="markup">
+            <MarkupManager parts={parts} />
           </TabsContent>
         </Tabs>
       </main>
