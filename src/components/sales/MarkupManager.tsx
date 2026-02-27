@@ -7,6 +7,7 @@ import { Save, Percent, Link2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { InventoryImporter } from './InventoryImporter';
+import { InventoryImageUploader } from './InventoryImageUploader';
 
 interface InventoryItem {
   id: string;
@@ -16,6 +17,7 @@ interface InventoryItem {
   aplicacao: string;
   qtd_estoque: number;
   preco: number;
+  image_url?: string;
 }
 
 export function MarkupManager() {
@@ -48,6 +50,7 @@ export function MarkupManager() {
           aplicacao: r.aplicacao || '',
           qtd_estoque: Number(r.qtd_estoque) || 0,
           preco: Number(r.preco) || 0,
+          image_url: r.image_url || '',
         })));
       }
       setLoading(false);
@@ -133,6 +136,23 @@ export function MarkupManager() {
 
       {/* Inventory Importer */}
       <InventoryImporter items={inventoryItems} setItems={setInventoryItems} markup={markup} />
+
+      {/* Image Uploader - only show when there are items */}
+      {inventoryItems.length > 0 && (
+        <InventoryImageUploader onImagesUploaded={async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+          const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+          if (data) {
+            setInventoryItems(data.map((r: any) => ({
+              id: r.id, codigo: r.codigo, produto: r.produto,
+              fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+              qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+              image_url: r.image_url || '',
+            })));
+          }
+        }} />
+      )}
     </div>
   );
 }

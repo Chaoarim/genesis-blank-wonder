@@ -16,6 +16,7 @@ interface CatalogItem {
   aplicacao: string;
   qtd_estoque: number;
   preco_revenda: number;
+  image_url?: string;
 }
 
 interface CartItem {
@@ -96,6 +97,7 @@ export default function CatalogB2B() {
           aplicacao: r.aplicacao || '',
           qtd_estoque: Number(r.qtd_estoque) || 0,
           preco_revenda: (Number(r.preco) || 0) * (1 + mk / 100),
+          image_url: r.image_url || '',
         })));
       }
       setLoading(false);
@@ -394,6 +396,13 @@ export default function CatalogB2B() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filtered.slice(0, 50).map(item => (
             <Card key={item.id} className="p-3 flex items-start gap-3">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.codigo} className="w-16 h-16 object-cover rounded-lg shrink-0" loading="lazy" />
+              ) : (
+                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center shrink-0">
+                  <Package className="w-6 h-6 text-muted-foreground" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.codigo}</p>
                 <p className="font-medium text-sm truncate">{item.produto}</p>

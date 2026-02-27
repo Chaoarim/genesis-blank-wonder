@@ -149,6 +149,7 @@ export type Database = {
           created_at: string
           fornecedor: string | null
           id: string
+          image_url: string | null
           preco: number
           produto: string
           qtd_estoque: number
@@ -161,6 +162,7 @@ export type Database = {
           created_at?: string
           fornecedor?: string | null
           id?: string
+          image_url?: string | null
           preco?: number
           produto: string
           qtd_estoque?: number
@@ -173,6 +175,7 @@ export type Database = {
           created_at?: string
           fornecedor?: string | null
           id?: string
+          image_url?: string | null
           preco?: number
           produto?: string
           qtd_estoque?: number
