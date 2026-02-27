@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      catalog_customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          password_hash: string
+          phone: string
+          seller_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          password_hash: string
+          phone: string
+          seller_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          password_hash?: string
+          phone?: string
+          seller_id?: string
+        }
+        Relationships: []
+      }
+      catalog_orders: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          id: string
+          items: Json
+          seller_id: string
+          status: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name: string
+          customer_phone: string
+          id?: string
+          items?: Json
+          seller_id: string
+          status?: string
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          items?: Json
+          seller_id?: string
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_usage: {
         Row: {
           id: string
@@ -63,6 +137,45 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          aplicacao: string | null
+          codigo: string
+          created_at: string
+          fornecedor: string | null
+          id: string
+          preco: number
+          produto: string
+          qtd_estoque: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          codigo: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          preco?: number
+          produto: string
+          qtd_estoque?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aplicacao?: string | null
+          codigo?: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          preco?: number
+          produto?: string
+          qtd_estoque?: number
           updated_at?: string
           user_id?: string
         }
