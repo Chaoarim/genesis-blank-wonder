@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CatalogItem {
@@ -275,11 +275,11 @@ export default function CatalogB2B() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
         <Card className="w-full max-w-sm p-6 space-y-4">
-          <div className="text-center space-y-1">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-              <Package className="w-6 h-6 text-primary-foreground" />
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+              <Settings className="w-8 h-8 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold">{sellerName || 'Catálogo'}</h1>
+            <h1 className="text-2xl font-bold">{sellerName || 'Catálogo'}</h1>
             <p className="text-sm text-muted-foreground">
               {authMode === 'login' ? 'Entre para ver preços e fazer pedidos' : 'Cadastre-se para começar'}
             </p>
@@ -313,9 +313,9 @@ export default function CatalogB2B() {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-              <Package className="w-4 h-4 text-primary-foreground" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow">
+              <Settings className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-sm font-bold leading-tight">{sellerName || 'Catálogo'}</h1>
