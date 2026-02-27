@@ -40,9 +40,14 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
 
     try {
       const buffer = await file.arrayBuffer();
-      const wb = XLSX.read(buffer, { type: 'array' });
+      const wb = XLSX.read(buffer, { type: 'array', raw: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      
+      // Use raw:true to get original cell values, then also get formatted
+      const rowsRaw: any[] = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
+      const rowsFormatted: any[] = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+      const rows = rowsRaw.length > 0 ? rowsRaw : rowsFormatted;
 
       if (rows.length === 0) {
         toast.error('Planilha vazia');
@@ -51,21 +56,38 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       }
 
       const keys = Object.keys(rows[0]);
-      console.log('[InventoryImporter] Colunas da planilha:', keys);
-      console.log('[InventoryImporter] Primeira linha:', rows[0]);
+      console.log('[Importer] Headers:', keys);
+      console.log('[Importer] Row 0 raw:', JSON.stringify(rows[0]));
+      if (rowsFormatted.length > 0) {
+        console.log('[Importer] Row 0 formatted:', JSON.stringify(rowsFormatted[0]));
+      }
       
       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-      const findCol = (hints: string[]) => {
-        // Exact normalized match first
-        const exact = keys.find(k => hints.some(h => normalize(k) === h));
-        if (exact) return exact;
-        // Then starts-with
-        const starts = keys.find(k => hints.some(h => normalize(k).startsWith(h)));
-        if (starts) return starts;
-        // Then contains
-        return keys.find(k => hints.some(h => normalize(k).includes(h)));
+      
+      // Build a map: normalizedKey -> originalKey
+      const keyMap: Record<string, string> = {};
+      keys.forEach(k => { keyMap[normalize(k)] = k; });
+      console.log('[Importer] Normalized keys:', Object.keys(keyMap));
+
+      const findCol = (hints: string[]): string | null => {
+        for (const h of hints) {
+          // exact match on normalized
+          if (keyMap[h]) return keyMap[h];
+        }
+        for (const h of hints) {
+          // starts-with
+          const found = Object.entries(keyMap).find(([nk]) => nk.startsWith(h));
+          if (found) return found[1];
+        }
+        for (const h of hints) {
+          // contains
+          const found = Object.entries(keyMap).find(([nk]) => nk.includes(h));
+          if (found) return found[1];
+        }
+        return null;
       };
-      const parseLocalizedNumber = (v: any): number => {
+
+      const parseNum = (v: any): number => {
         if (v === null || v === undefined || v === '') return 0;
         if (typeof v === 'number') return v;
         let s = String(v).trim();
@@ -75,41 +97,57 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
         const lastDot = s.lastIndexOf('.');
         if (lastComma > lastDot) {
           s = s.replace(/\./g, '').replace(',', '.');
-        } else {
+        } else if (lastDot > lastComma) {
           s = s.replace(/,/g, '');
+        } else {
+          // no separator or only one type
+          s = s.replace(',', '.');
         }
         const parsed = parseFloat(s);
         return isNaN(parsed) ? 0 : parsed;
       };
 
-      const colCodigo = findCol(['codigo', 'cod', 'ref', 'referencia', 'code', 'sku']) || keys[0];
-      const colProduto = findCol(['produto', 'descricao', 'desc', 'nome', 'name', 'peca', 'item']) || keys[1];
-      const colFornecedor = findCol(['fornecedor', 'distribuidor', 'supplier', 'forn', 'marca', 'brand']) || null;
-      const colAplicacao = findCol(['aplicacao', 'aplicacoes', 'veiculo', 'veiculos', 'carro', 'modelo', 'vehicle', 'auto', 'uso']) || null;
-      const colEstoque = findCol(['estoque', 'qtd', 'quantidade', 'stock', 'qty', 'saldo']) || null;
-      const colPreco = findCol(['preco', 'custo', 'price', 'valor', 'cost', 'unit', 'vlr', 'vl']) || null;
+      let colCodigo = findCol(['codigo', 'cod', 'ref', 'referencia', 'code', 'sku']);
+      let colProduto = findCol(['produto', 'descricao', 'desc', 'nome', 'peca', 'item']);
+      let colFornecedor = findCol(['fornecedor', 'distribuidor', 'supplier', 'forn']);
+      let colAplicacao = findCol(['aplicacao', 'aplicacoes', 'veiculo', 'veiculos', 'carro', 'auto', 'uso']);
+      let colEstoque = findCol(['estoque', 'qtd', 'quantidade', 'stock', 'qty', 'saldo']);
+      let colPreco = findCol(['preco', 'custo', 'price', 'valor', 'cost', 'vlr']);
+
+      // Fallback: if 6 columns detected in order, map by position
+      if (!colPreco && keys.length >= 6) {
+        console.log('[Importer] Preço não detectado por nome, usando posição 6');
+        colPreco = keys[5];
+      }
+      if (!colAplicacao && keys.length >= 4) {
+        console.log('[Importer] Aplicação não detectada por nome, usando posição 4');
+        colAplicacao = keys[3];
+      }
+      if (!colCodigo) colCodigo = keys[0];
+      if (!colProduto) colProduto = keys[1];
+      if (!colFornecedor && keys.length >= 3) colFornecedor = keys[2];
+      if (!colEstoque && keys.length >= 5) colEstoque = keys[4];
+
+      console.log('[Importer] Mapeamento final:', { colCodigo, colProduto, colFornecedor, colAplicacao, colEstoque, colPreco });
       
-      console.log('[InventoryImporter] Colunas planilha:', keys);
-      console.log('[InventoryImporter] Detectadas:', { colCodigo, colProduto, colFornecedor, colAplicacao, colEstoque, colPreco });
-      console.log('[InventoryImporter] Primeira linha raw:', JSON.stringify(rows[0]));
-      
-      const missing: string[] = [];
-      if (!colAplicacao) missing.push('Aplicação');
-      if (!colPreco) missing.push('Preço');
-      if (missing.length > 0) {
-        toast.warning(`Colunas não detectadas: ${missing.join(', ')}. Verifique os nomes no cabeçalho.`);
+      // Log sample values for price column
+      if (colPreco && rows.length > 0) {
+        const samplePrice = rows[0][colPreco];
+        console.log('[Importer] Preço amostra:', samplePrice, 'tipo:', typeof samplePrice, 'parseado:', parseNum(samplePrice));
       }
 
       const parsed = rows
         .map(r => ({
-          codigo: String(r[colCodigo] || '').trim(),
-          produto: String(r[colProduto] || '').trim(),
+          codigo: String(r[colCodigo!] || '').trim(),
+          produto: String(r[colProduto!] || '').trim(),
           fornecedor: colFornecedor ? String(r[colFornecedor] || '').trim() : '',
           aplicacao: colAplicacao ? String(r[colAplicacao] || '').trim() : '',
           qtd_estoque: colEstoque ? (parseInt(String(r[colEstoque])) || 0) : 0,
-          preco: colPreco ? parseLocalizedNumber(r[colPreco]) : 0,
+          preco: colPreco ? parseNum(r[colPreco]) : 0,
         }))
         .filter(r => r.codigo);
+      
+      console.log('[Importer] Primeiro item parseado:', JSON.stringify(parsed[0]));
 
       if (parsed.length === 0) {
         toast.error('Nenhum item válido encontrado.');
