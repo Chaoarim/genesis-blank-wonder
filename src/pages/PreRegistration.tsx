@@ -81,10 +81,11 @@ const PreRegistration = () => {
 
     try {
       const { error } = await supabase.from("pre_registrations").insert({
+        company_name: formData.company_name.trim(),
         full_name: formData.full_name.trim(),
         email: formData.email.trim().toLowerCase(),
         whatsapp: digitsOnly(formData.whatsapp),
-        password_hash: formData.password, // Será hasheado no backend ao criar usuário
+        password_hash: formData.password,
         status: "pending",
       });
 

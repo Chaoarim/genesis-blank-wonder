@@ -318,6 +318,7 @@ export type Database = {
       pre_registrations: {
         Row: {
           approved_at: string | null
+          company_name: string | null
           created_at: string
           email: string
           full_name: string
@@ -328,6 +329,7 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          company_name?: string | null
           created_at?: string
           email: string
           full_name: string
@@ -338,6 +340,7 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string
           full_name?: string
