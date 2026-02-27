@@ -215,21 +215,13 @@ export default function CatalogB2B() {
     [cart]
   );
 
-  const sendToWhatsApp = useCallback(() => {
-    if (cart.length === 0 || !customer) return;
+  const [submitting, setSubmitting] = useState(false);
 
-    const lines = cart.map((c, idx) => {
-      const sub = c.quantidade * c.item.preco_revenda;
-      return `${idx + 1}. *${c.item.codigo}* - ${c.item.produto}\n   Qtde: ${c.quantidade} x ${fmt(c.item.preco_revenda)} = ${fmt(sub)}`;
-    });
+  const submitOrder = useCallback(async () => {
+    if (cart.length === 0 || !customer || submitting) return;
+    setSubmitting(true);
 
-    const text = `*PEDIDO - ${customer.name}*\nTelefone: ${customer.phone}\n\n${lines.join('\n\n')}\n\n*TOTAL: ${fmt(cartTotal)}*`;
-
-    // Try to find seller's phone - for now just open WhatsApp with text
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-
-    // Save order
-    supabase.from('catalog_orders').insert({
+    const { error } = await supabase.from('catalog_orders').insert({
       seller_id: sellerId,
       customer_id: customer.id,
       customer_name: customer.name,
@@ -243,10 +235,16 @@ export default function CatalogB2B() {
       total: cartTotal,
     });
 
-    toast.success('Pedido enviado!');
+    setSubmitting(false);
+    if (error) {
+      toast.error('Erro ao enviar pedido. Tente novamente.');
+      return;
+    }
+
+    toast.success('Pedido enviado com sucesso! O vendedor entrará em contato.');
     setCart([]);
     setShowCart(false);
-  }, [cart, customer, cartTotal, sellerId]);
+  }, [cart, customer, cartTotal, sellerId, submitting]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -373,8 +371,8 @@ export default function CatalogB2B() {
             ))}
             <div className="flex items-center justify-between pt-2">
               <p className="text-lg font-bold">Total: {fmt(cartTotal)}</p>
-              <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={sendToWhatsApp}>
-                <Send className="w-4 h-4" /> Enviar via WhatsApp
+              <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={submitOrder} disabled={submitting}>
+                <Send className="w-4 h-4" /> {submitting ? 'Enviando...' : 'Finalizar Pedido'}
               </Button>
             </div>
           </Card>
