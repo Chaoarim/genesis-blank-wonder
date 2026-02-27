@@ -53,13 +53,26 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       const keys = Object.keys(rows[0]);
       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
       const findCol = (hints: string[]) => keys.find(k => hints.some(h => normalize(k).includes(h)));
+      const parseLocalizedNumber = (v: string): number => {
+        const s = v.replace(/[R$\s]/g, '').trim();
+        if (!s) return 0;
+        // If has comma and dot: 1.234,56 → remove dots, replace comma
+        if (s.includes(',') && s.includes('.')) {
+          return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+        }
+        // If only comma: 234,56 → replace comma with dot
+        if (s.includes(',')) {
+          return parseFloat(s.replace(',', '.')) || 0;
+        }
+        return parseFloat(s) || 0;
+      };
 
       const colCodigo = findCol(['codigo', 'cod', 'ref', 'referencia', 'code']) || keys[0];
       const colProduto = findCol(['produto', 'descricao', 'desc', 'nome', 'name', 'peca']) || keys[1];
       const colFornecedor = findCol(['fornecedor', 'distribuidor', 'supplier', 'forn', 'marca']) || null;
       const colAplicacao = findCol(['aplicacao', 'veiculo', 'carro', 'modelo', 'vehicle']) || null;
       const colEstoque = findCol(['estoque', 'qtd', 'quantidade', 'stock', 'qty']) || null;
-      const colPreco = findCol(['preco', 'custo', 'price', 'valor', 'cost']) || null;
+      const colPreco = findCol(['preco', 'custo', 'price', 'valor', 'cost', 'unit']) || null;
 
       const parsed = rows
         .map(r => ({
@@ -68,7 +81,7 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
           fornecedor: colFornecedor ? String(r[colFornecedor] || '').trim() : '',
           aplicacao: colAplicacao ? String(r[colAplicacao] || '').trim() : '',
           qtd_estoque: colEstoque ? (parseInt(String(r[colEstoque])) || 0) : 0,
-          preco: colPreco ? (parseFloat(String(r[colPreco]).replace(',', '.')) || 0) : 0,
+          preco: colPreco ? parseLocalizedNumber(String(r[colPreco])) : 0,
         }))
         .filter(r => r.codigo);
 
