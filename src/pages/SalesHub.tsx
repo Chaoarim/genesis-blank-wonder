@@ -8,9 +8,10 @@ import { CustomersManager } from '@/components/sales/CustomersManager';
 import { NewSaleForm } from '@/components/sales/NewSaleForm';
 import { SalesHistory } from '@/components/sales/SalesHistory';
 import { GoalsManager } from '@/components/sales/GoalsManager';
+import { InventorySearch } from '@/components/sales/InventorySearch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package } from 'lucide-react';
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
@@ -87,7 +88,7 @@ const SalesHub = () => {
       {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-6xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 mb-6 h-auto">
+          <TabsList className="grid w-full grid-cols-7 mb-6 h-auto">
             <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-2.5 text-xs">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -95,6 +96,10 @@ const SalesHub = () => {
             <TabsTrigger value="new-sale" className="flex flex-col gap-1 py-2.5 text-xs">
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Nova Venda</span>
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="flex flex-col gap-1 py-2.5 text-xs">
+              <Package className="w-4 h-4" />
+              <span className="hidden sm:inline">Estoque</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex flex-col gap-1 py-2.5 text-xs">
               <History className="w-4 h-4" />
@@ -126,6 +131,10 @@ const SalesHub = () => {
               onCreateSale={salesData.createSale}
               onDone={() => setActiveTab('dashboard')}
             />
+          </TabsContent>
+
+          <TabsContent value="inventory">
+            <InventorySearch />
           </TabsContent>
 
           <TabsContent value="history">
