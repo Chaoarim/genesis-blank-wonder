@@ -17,6 +17,7 @@ interface InventoryItem {
   aplicacao: string;
   qtd_estoque: number;
   preco: number;
+  image_url?: string;
 }
 
 interface InventoryImporterProps {
@@ -184,6 +185,7 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
           aplicacao: r.aplicacao || '',
           qtd_estoque: Number(r.qtd_estoque) || 0,
           preco: Number(r.preco) || 0,
+          image_url: r.image_url || '',
         })));
       }
 
@@ -268,6 +270,7 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">Foto</TableHead>
                   <TableHead>Código</TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead>Fornecedor</TableHead>
@@ -281,6 +284,15 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
               <TableBody>
                 {filtered.slice(0, 100).map(item => (
                   <TableRow key={item.id}>
+                    <TableCell className="p-1">
+                      {item.image_url ? (
+                        <img src={item.image_url} alt={item.codigo} className="w-10 h-10 object-cover rounded" loading="lazy" />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{item.codigo}</TableCell>
                     <TableCell className="text-sm">{item.produto}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
