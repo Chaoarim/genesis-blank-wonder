@@ -65,16 +65,21 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
         // Then contains
         return keys.find(k => hints.some(h => normalize(k).includes(h)));
       };
-      const parseLocalizedNumber = (v: string): number => {
-        const s = v.replace(/[R$\s]/g, '').trim();
+      const parseLocalizedNumber = (v: any): number => {
+        if (v === null || v === undefined || v === '') return 0;
+        if (typeof v === 'number') return v;
+        let s = String(v).trim();
+        s = s.replace(/[R$€£¥\s]/g, '');
         if (!s) return 0;
-        if (s.includes(',') && s.includes('.')) {
-          return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+        const lastComma = s.lastIndexOf(',');
+        const lastDot = s.lastIndexOf('.');
+        if (lastComma > lastDot) {
+          s = s.replace(/\./g, '').replace(',', '.');
+        } else {
+          s = s.replace(/,/g, '');
         }
-        if (s.includes(',')) {
-          return parseFloat(s.replace(',', '.')) || 0;
-        }
-        return parseFloat(s) || 0;
+        const parsed = parseFloat(s);
+        return isNaN(parsed) ? 0 : parsed;
       };
 
       const colCodigo = findCol(['codigo', 'cod', 'ref', 'referencia', 'code', 'sku']) || keys[0];
@@ -84,7 +89,16 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       const colEstoque = findCol(['estoque', 'qtd', 'quantidade', 'stock', 'qty', 'saldo']) || null;
       const colPreco = findCol(['preco', 'custo', 'price', 'valor', 'cost', 'unit', 'vlr', 'vl']) || null;
       
-      console.log('[InventoryImporter] Colunas detectadas:', { colCodigo, colProduto, colFornecedor, colAplicacao, colEstoque, colPreco });
+      console.log('[InventoryImporter] Colunas planilha:', keys);
+      console.log('[InventoryImporter] Detectadas:', { colCodigo, colProduto, colFornecedor, colAplicacao, colEstoque, colPreco });
+      console.log('[InventoryImporter] Primeira linha raw:', JSON.stringify(rows[0]));
+      
+      const missing: string[] = [];
+      if (!colAplicacao) missing.push('Aplicação');
+      if (!colPreco) missing.push('Preço');
+      if (missing.length > 0) {
+        toast.warning(`Colunas não detectadas: ${missing.join(', ')}. Verifique os nomes no cabeçalho.`);
+      }
 
       const parsed = rows
         .map(r => ({
@@ -93,7 +107,7 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
           fornecedor: colFornecedor ? String(r[colFornecedor] || '').trim() : '',
           aplicacao: colAplicacao ? String(r[colAplicacao] || '').trim() : '',
           qtd_estoque: colEstoque ? (parseInt(String(r[colEstoque])) || 0) : 0,
-          preco: colPreco ? parseLocalizedNumber(String(r[colPreco])) : 0,
+          preco: colPreco ? parseLocalizedNumber(r[colPreco]) : 0,
         }))
         .filter(r => r.codigo);
 
