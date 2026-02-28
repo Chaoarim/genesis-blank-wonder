@@ -55,7 +55,7 @@ serve(async (req) => {
       );
     }
 
-    const { email, password, full_name } = await req.json();
+    const { email, password, full_name, company_name } = await req.json();
 
     if (!email || !password) {
       return new Response(
@@ -68,9 +68,10 @@ serve(async (req) => {
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: email.trim().toLowerCase(),
       password: password,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: true,
       user_metadata: {
         full_name: full_name || "",
+        company_name: company_name || "",
       },
     });
 

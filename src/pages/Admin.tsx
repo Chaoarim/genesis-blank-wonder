@@ -222,6 +222,7 @@ const Admin = () => {
             email: registration.email,
             password: registration.password_hash,
             full_name: registration.full_name,
+            company_name: registration.company_name,
           }),
         }
       );
