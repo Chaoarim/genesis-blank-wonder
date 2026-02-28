@@ -214,10 +214,14 @@ const Dashboard = () => {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
             <Search className="w-6 h-6 text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-bold text-lg">Buscar Peças</h2>
-            <p className="text-sm text-muted-foreground">Pesquise peças de todos os fornecedores</p>
+            <p className="text-sm text-muted-foreground">Catálogos por fornecedor</p>
           </div>
+          <span className="flex items-center gap-1.5 text-xs text-green-500 font-medium shrink-0">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Online
+          </span>
         </Card>
 
         
