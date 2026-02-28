@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface OrderItem {
@@ -62,6 +62,15 @@ export function CatalogOrdersManager() {
     if (error) { toast.error('Erro ao atualizar status'); return; }
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
     toast.success(`Pedido ${status === 'confirmed' ? 'confirmado' : 'cancelado'}!`);
+  }, []);
+
+  const deleteOrder = useCallback(async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este pedido?')) return;
+    const { error } = await supabase.from('catalog_orders').delete().eq('id', id);
+    if (error) { toast.error('Erro ao excluir pedido'); return; }
+    setOrders(prev => prev.filter(o => o.id !== id));
+    setExpandedId(null);
+    toast.success('Pedido excluído!');
   }, []);
 
   const openWhatsApp = useCallback((phone: string, order: CatalogOrder) => {
@@ -171,6 +180,9 @@ export function CatalogOrdersManager() {
                           </Button>
                         </>
                       )}
+                      <Button variant="ghost" size="sm" className="gap-1 text-destructive" onClick={() => deleteOrder(order.id)}>
+                        <Trash2 className="w-3 h-3" /> Excluir
+                      </Button>
                     </div>
                   </div>
                 )}
