@@ -257,67 +257,84 @@ const Sales = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════ */}
-      {/* MÓDULO 2: CHAT INTELIGENTE */}
+      {/* MÓDULO 2: CONSULTA POR FORNECEDOR */}
       {/* ═══════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 bg-card/30">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Simulação do chat */}
+            {/* Simulação da página de busca */}
             <Card className="p-6 glass-card border-primary/20 order-2 lg:order-1">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold">ConsultaParts</p>
-                  <p className="text-[10px] text-muted-foreground">Chat Inteligente</p>
+                <BookOpen className="w-5 h-5 text-primary" />
+                <span className="text-sm font-bold flex-1">Catálogos por Fornecedor</span>
+                <span className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: 'hsl(var(--success))' }}>
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'hsl(var(--success))' }} />
+                  Online
+                </span>
+              </div>
+
+              {/* Barra de busca simulada */}
+              <div className="bg-muted/50 rounded-lg p-2.5 flex items-center gap-2 mb-4">
+                <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Buscar código, peça ou veículo...</span>
+              </div>
+
+              {/* Resultado selecionado de um fornecedor */}
+              <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">FR</div>
+                  <div>
+                    <p className="text-xs font-bold">FRAS-LE</p>
+                    <p className="text-[10px] text-muted-foreground">1.850 peças</p>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-3">
-                <div className="chat-bubble-user px-4 py-2.5 ml-auto max-w-[85%] w-fit">
-                  <p className="text-sm">Qual pastilha de freio serve no Gol G5 2010?</p>
-                </div>
-                <div className="chat-bubble-ai px-4 py-2.5 max-w-[85%]">
-                  <p className="text-sm leading-relaxed">
-                    Para o <strong>VW Gol G5 2010</strong>, encontrei estas opções:
-                  </p>
-                  <ul className="text-xs mt-2 space-y-1 text-muted-foreground">
-                    <li>• <strong>SYL-1234</strong> — FRAS-LE — Dianteira</li>
-                    <li>• <strong>PD-789</strong> — COBREQ — Dianteira</li>
-                    <li>• <strong>N-1180</strong> — NAKATA — Dianteira</li>
-                  </ul>
-                  <p className="text-xs mt-2 text-muted-foreground">
-                    Todas compatíveis com Gol G5/G6, Voyage e Fox 2008+.
-                  </p>
-                </div>
-                <div className="chat-bubble-user px-4 py-2.5 ml-auto max-w-[85%] w-fit">
-                  <p className="text-sm">E a traseira?</p>
-                </div>
-                <div className="chat-bubble-ai px-4 py-2.5 max-w-[85%]">
-                  <p className="text-sm">Para a <strong>traseira</strong> do Gol G5, o sistema utiliza sapatas. Encontrei a <strong>SL-3421</strong> da FRAS-LE.</p>
-                </div>
+
+              {/* Resultados de peças */}
+              <div className="space-y-2">
+                {[
+                  { code: "SYL-1234", product: "Pastilha de Freio Dianteira", app: "VW Gol G5/G6 · Voyage · Fox · 2008→", supplier: "FRAS-LE" },
+                  { code: "PD-5678", product: "Pastilha de Freio Traseira", app: "VW Gol G5 · Saveiro · 2009→", supplier: "FRAS-LE" },
+                  { code: "SL-3421", product: "Sapata de Freio Traseira", app: "VW Gol G4/G5 · Parati · 2006→", supplier: "FRAS-LE" },
+                ].map((item, i) => (
+                  <div key={i} className="bg-card/80 rounded-lg p-2.5 border border-border/50 flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center shrink-0 mt-0.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-mono text-xs font-semibold">{item.code}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded">{item.supplier}</span>
+                      </div>
+                      <p className="text-xs text-foreground mt-0.5">{item.product}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.app}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
+              <p className="text-[10px] text-muted-foreground text-center mt-3">3 resultados em 0.2s</p>
             </Card>
 
             <div className="order-1 lg:order-2">
               <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-4">
-                <MessageSquare className="w-3.5 h-3.5" />
+                <BookOpen className="w-3.5 h-3.5" />
                 MÓDULO 2
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Chat Inteligente Especializado
+                Consulta Rápida por Fornecedor
               </h2>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                Converse em linguagem natural com nosso sistema inteligente especializado no universo automotivo.
-                Pergunte por veículo, descreva a peça ou peça recomendações — o sistema consulta
-                toda a base de dados e retorna respostas precisas com código, fabricante e aplicação.
+                Acesse o catálogo completo de cada fornecedor em uma interface visual e intuitiva.
+                Selecione o fornecedor, pesquise por código, descrição ou veículo e encontre
+                a peça certa em segundos — com indicador de status em tempo real.
               </p>
               <div className="space-y-3">
                 {[
-                  "Pergunte em português natural, como faria com um balconista",
-                  "O sistema cruza dados de múltiplos fornecedores automaticamente",
-                  "Respostas com código, fabricante, produto e aplicação",
-                  "Limite diário de consultas com controle inteligente",
+                  "Navegue por 30+ fornecedores organizados em cards visuais",
+                  "Busca dentro de cada catálogo por código, peça ou veículo",
+                  "Indicador Online/Carregando em tempo real",
+                  "Pesquisa visual integrada com Google Imagens",
+                  "Resultados com código, fabricante, produto e aplicação",
                 ].map((t, i) => (
                   <div key={i} className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-primary shrink-0" />
