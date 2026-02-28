@@ -95,14 +95,14 @@ const Sales = () => {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Busca inteligente de peças, chat com IA, catálogos por fornecedor, central de vendas completa
+            Busca inteligente de peças, chat especializado, catálogos por fornecedor, central de vendas completa
             e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <Link to="/pre-cadastro">
               <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2 w-full sm:w-auto">
-                Começar Agora — R$ 20/mês
+                Começar Agora — R$ 49/mês
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -154,8 +154,8 @@ const Sales = () => {
               {
                 icon: Wrench,
                 title: "Oficina Mecânica",
-                desc: "Pergunte à IA qual peça serve em cada carro, cruze referências de fabricantes e evite devoluções.",
-                highlights: ["Chat com IA especialista", "Cruzamento de referências", "Pesquisa visual de peças"]
+                desc: "Use o sistema inteligente para encontrar qual peça serve em cada carro, cruze referências de fabricantes e evite devoluções.",
+                highlights: ["Chat especializado em peças", "Cruzamento de referências", "Pesquisa visual de peças"]
               },
             ].map((seg, i) => (
               <Card key={i} className="p-7 glass-card hover:border-primary/40 transition-all group">
@@ -257,7 +257,7 @@ const Sales = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════════════ */}
-      {/* MÓDULO 2: CHAT COM IA */}
+      {/* MÓDULO 2: CHAT INTELIGENTE */}
       {/* ═══════════════════════════════════════════════════════ */}
       <section className="py-20 px-4 bg-card/30">
         <div className="container mx-auto max-w-6xl">
@@ -269,7 +269,7 @@ const Sales = () => {
                   <Zap className="w-4 h-4 text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">ConsultaParts AI</p>
+                  <p className="text-sm font-bold">ConsultaParts</p>
                   <p className="text-[10px] text-muted-foreground">Chat Inteligente</p>
                 </div>
               </div>
@@ -305,17 +305,17 @@ const Sales = () => {
                 MÓDULO 2
               </div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Chat com IA Especialista
+                Chat Inteligente Especializado
               </h2>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                Converse em linguagem natural com nossa IA treinada no universo automotivo.
-                Pergunte por veículo, descreva a peça ou peça recomendações — a IA consulta
+                Converse em linguagem natural com nosso sistema inteligente especializado no universo automotivo.
+                Pergunte por veículo, descreva a peça ou peça recomendações — o sistema consulta
                 toda a base de dados e retorna respostas precisas com código, fabricante e aplicação.
               </p>
               <div className="space-y-3">
                 {[
                   "Pergunte em português natural, como faria com um balconista",
-                  "IA cruza dados de múltiplos fornecedores automaticamente",
+                  "O sistema cruza dados de múltiplos fornecedores automaticamente",
                   "Respostas com código, fabricante, produto e aplicação",
                   "Limite diário de consultas com controle inteligente",
                 ].map((t, i) => (
@@ -450,7 +450,7 @@ const Sales = () => {
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Por que a ConsultaParts AI é{" "}
+              Por que a ConsultaParts é{" "}
               <span className="text-gradient">diferente</span>
             </h2>
           </div>
@@ -464,8 +464,8 @@ const Sales = () => {
               },
               {
                 emoji: "🧠",
-                title: "IA que Entende Auto Peças",
-                desc: "Não é um chatbot genérico. Nossa IA foi treinada no universo automotivo — entende lateralidade, modelos, anos, fabricantes e aplicações."
+                title: "Sistema que Entende Auto Peças",
+                desc: "Não é uma ferramenta genérica. Nosso sistema inteligente foi construído para o universo automotivo — entende lateralidade, modelos, anos, fabricantes e aplicações."
               },
               {
                 emoji: "📊",
@@ -501,7 +501,7 @@ const Sales = () => {
             {[
               { name: "Ricardo M.", role: "Auto Peças — SP", text: "Reduzi o tempo de consulta de 5 minutos para 10 segundos. Meus vendedores atendem o dobro de clientes agora." },
               { name: "Carla S.", role: "Auto Center — MG", text: "A busca por veículo é sensacional. O mecânico fala o carro e a gente acha a peça na hora, sem erro." },
-              { name: "João P.", role: "Oficina Mecânica — RJ", text: "O chat com IA me salvou várias vezes. Pergunto a aplicação e ele responde certinho. Melhor que ligar pra distribuidora." },
+              { name: "João P.", role: "Oficina Mecânica — RJ", text: "O chat inteligente me salvou várias vezes. Pergunto a aplicação e ele responde certinho. Melhor que ligar pra distribuidora." },
             ].map((t, i) => (
               <Card key={i} className="p-6 glass-card">
                 <div className="flex gap-0.5 mb-3">
@@ -528,10 +528,10 @@ const Sales = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
               Tudo isso por menos de{" "}
-              <span className="text-gradient">R$ 1 por dia</span>
+              <span className="text-gradient">R$ 2 por dia</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Quanto você perde por dia com consultas lentas e erros de compra? A ConsultaParts AI se paga no primeiro atendimento.
+              Quanto você perde por dia com consultas lentas e erros de compra? A ConsultaParts se paga no primeiro atendimento.
             </p>
           </div>
 
@@ -543,8 +543,8 @@ const Sales = () => {
             <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-4 mb-6 text-primary-foreground">
               <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Preço Especial de Lançamento</p>
               <div className="flex items-center justify-center gap-3 mb-2">
-                <span className="text-lg line-through opacity-70">R$ 47,00</span>
-                <span className="text-4xl font-bold">R$ 20,00</span>
+                <span className="text-lg line-through opacity-70">R$ 97,00</span>
+                <span className="text-4xl font-bold">R$ 49,00</span>
                 <span className="text-sm opacity-80">/mês</span>
               </div>
               <div className="flex items-center justify-center gap-2 bg-primary-foreground/15 rounded-full py-1.5 px-4">
@@ -561,7 +561,7 @@ const Sales = () => {
             <ul className="space-y-2 mb-8">
               {[
                 "Busca inteligente de peças (código, descrição, veículo)",
-                "Chat com IA especialista em auto peças",
+                "Chat inteligente especializado em auto peças",
                 "Catálogos visuais por fornecedor",
                 "Central de Vendas completa (8 módulos)",
                 "Catálogo B2B online com link exclusivo",
@@ -606,7 +606,7 @@ const Sales = () => {
           <div className="space-y-3">
             {[
               { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar e fazer login." },
-              { q: "Como funciona o chat com IA?", a: "Você digita sua dúvida em português normal (ex: 'qual pastilha serve no Gol G5?') e a IA consulta toda a base para dar a resposta mais precisa." },
+              { q: "Como funciona o chat inteligente?", a: "Você digita sua dúvida em português normal (ex: 'qual pastilha serve no Gol G5?') e o sistema consulta toda a base para dar a resposta mais precisa." },
               { q: "Posso importar meu estoque de uma planilha?", a: "Sim! O sistema aceita arquivos Excel e CSV. Ele reconhece variações de cabeçalho e formatos de moeda brasileira automaticamente." },
               { q: "O que é o Catálogo B2B?", a: "É uma loja online do seu estoque com link exclusivo. Seus clientes acessam, pesquisam e fazem pedidos direto pelo celular." },
               { q: "A base de peças é atualizada?", a: "Sim! Adicionamos novos fornecedores e peças constantemente. Você sempre terá acesso aos dados mais recentes." },
@@ -638,16 +638,16 @@ const Sales = () => {
             Pronto para transformar seu negócio?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Lojas de auto peças, auto centers e oficinas já estão economizando horas por dia com a ConsultaParts AI.
+            Lojas de auto peças, auto centers e oficinas já estão economizando horas por dia com a ConsultaParts.
           </p>
           <Link to="/pre-cadastro">
             <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-              Começar Agora — R$ 20/mês
+              Começar Agora — R$ 49/mês
               <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground mt-4">
-            Sem contrato · Ativação em até 24h · Suporte WhatsApp
+            R$ 49/mês · Sem contrato · Ativação em até 24h
           </p>
         </div>
       </section>
