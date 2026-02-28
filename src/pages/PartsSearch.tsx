@@ -26,7 +26,7 @@ const PartsSearch = () => {
     });
   }, [navigate]);
 
-  const [hoveredSupplier, setHoveredSupplier] = useState<string | null>(null);
+  
 
   // Supplier stats
   const supplierStats = useMemo(() => {
@@ -142,14 +142,12 @@ const PartsSearch = () => {
                 {filteredSuppliers.map((supplier) => (
                   <Card
                     key={supplier.name}
-                    className="p-4 flex flex-col gap-2 cursor-pointer hover:shadow-lg hover:border-primary/40 transition-all relative group"
+                    className="p-4 flex flex-col gap-2 cursor-pointer hover:shadow-lg hover:border-primary/40 transition-all"
                     onClick={() => {
                       setSelectedSupplier(supplier.name);
                       setSearch('');
                       setVisibleCount(PAGE_SIZE);
                     }}
-                    onMouseEnter={() => setHoveredSupplier(supplier.name)}
-                    onMouseLeave={() => setHoveredSupplier(null)}
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0">
@@ -167,26 +165,6 @@ const PartsSearch = () => {
                       <Compass className="w-3.5 h-3.5" />
                       Consulta rápida
                     </Button>
-
-                    {/* Portfolio hover popup */}
-                    {hoveredSupplier === supplier.name && (
-                      <div className="absolute left-full top-0 ml-2 z-50 w-64 bg-card border border-border rounded-lg shadow-xl p-3 pointer-events-none hidden lg:block">
-                        <h4 className="text-xs font-bold text-foreground mb-2">
-                          Portfólio — {supplier.name}
-                        </h4>
-                        <ul className="space-y-1">
-                          {supplier.products.map((prod, i) => (
-                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                              <span className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" />
-                              <span className="line-clamp-1">{prod}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="text-[10px] text-muted-foreground/70 mt-2 border-t border-border pt-1.5">
-                          {supplier.count.toLocaleString()} peças disponíveis
-                        </p>
-                      </div>
-                    )}
                   </Card>
                 ))}
               </div>
