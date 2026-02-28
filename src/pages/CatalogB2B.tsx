@@ -65,13 +65,30 @@ export default function CatalogB2B() {
     if (!sellerId) return;
 
     const load = async () => {
-      // Get seller profile name
+      // Get seller company name from pre_registrations, fallback to profile
+      const { data: preReg } = await supabase
+        .from('pre_registrations')
+        .select('company_name, full_name')
+        .eq('email', '') // will try profile below
+        .maybeSingle();
+
+      // Get seller profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, email')
         .eq('user_id', sellerId)
         .maybeSingle();
-      if (profile?.full_name) setSellerName(profile.full_name);
+
+      if (profile) {
+        // Try to get company_name from pre_registrations using email
+        const { data: sellerPreReg } = await supabase
+          .from('pre_registrations')
+          .select('company_name')
+          .eq('email', profile.email)
+          .maybeSingle();
+        
+        setSellerName(sellerPreReg?.company_name || profile.full_name || 'Catálogo');
+      }
 
       // Get markup
       const { data: markupData } = await supabase

@@ -17,6 +17,7 @@ import { ptBR } from "date-fns/locale";
 interface PreRegistration {
   id: string;
   full_name: string;
+  company_name: string | null;
   email: string;
   whatsapp: string;
   status: string;
@@ -743,6 +744,7 @@ const Admin = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
+                      <TableHead>Empresa</TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>WhatsApp</TableHead>
@@ -754,7 +756,7 @@ const Admin = () => {
                   <TableBody>
                     {registrations.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                           Nenhum pré-cadastro encontrado
                         </TableCell>
                       </TableRow>
@@ -764,6 +766,7 @@ const Admin = () => {
                           <TableCell className="font-mono text-sm">
                             {format(new Date(reg.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                           </TableCell>
+                          <TableCell className="font-medium text-primary">{reg.company_name || '—'}</TableCell>
                           <TableCell className="font-medium">{reg.full_name}</TableCell>
                           <TableCell>{reg.email}</TableCell>
                           <TableCell className="font-mono text-sm">
