@@ -9,6 +9,7 @@ import CatalogB2B from "./pages/CatalogB2B";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import PartsSearch from "./pages/PartsSearch";
 import Admin from "./pages/Admin";
 import PaymentControl from "./pages/PaymentControl";
 import PreRegistration from "./pages/PreRegistration";
@@ -35,6 +36,7 @@ const App = () => (
           
           {/* Área logada */}
           <Route path="/app" element={<Dashboard />} />
+          <Route path="/buscar-pecas" element={<PartsSearch />} />
           <Route path="/vendas" element={<SalesHub />} />
           
           {/* Catálogo B2B público */}

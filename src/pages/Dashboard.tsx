@@ -218,10 +218,22 @@ const Dashboard = () => {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
             <Search className="w-6 h-6 text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-bold text-lg">Buscar Peças</h2>
             <p className="text-sm text-muted-foreground">Pesquise peças de todos os fornecedores</p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open('/buscar-pecas', '_blank');
+            }}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Abrir
+          </Button>
         </Card>
 
         <CatalogsDialog open={catalogOpen} onOpenChange={setCatalogOpen} parts={parts} />
