@@ -60,52 +60,53 @@ export default function CatalogB2B() {
     }
   }, [sellerId]);
 
-  // Load catalog items
-  useEffect(() => {
+  const loadItems = useCallback(async () => {
     if (!sellerId) return;
 
-    const load = async () => {
-      // Get seller profile with company name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, company_name')
-        .eq('user_id', sellerId)
-        .maybeSingle();
-      if (profile) {
-        setSellerName(profile.company_name || profile.full_name || 'Catálogo');
-      }
+    // Get seller profile with company name
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, company_name')
+      .eq('user_id', sellerId)
+      .maybeSingle();
+    if (profile) {
+      setSellerName(profile.company_name || profile.full_name || 'Catálogo');
+    }
 
-      // Get markup
-      const { data: markupData } = await supabase
-        .from('markup_settings')
-        .select('markup_revenda')
-        .eq('user_id', sellerId)
-        .maybeSingle();
-      const mk = Number(markupData?.markup_revenda) || 0;
+    // Get markup
+    const { data: markupData } = await supabase
+      .from('markup_settings')
+      .select('markup_revenda')
+      .eq('user_id', sellerId)
+      .maybeSingle();
+    const mk = Number(markupData?.markup_revenda) || 0;
 
-      // Get inventory
-      const { data } = await supabase
-        .from('inventory_items')
-        .select('*')
-        .eq('user_id', sellerId)
-        .order('produto');
+    // Get inventory
+    const { data } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('user_id', sellerId)
+      .order('produto');
 
-      if (data) {
-        setItems(data.map((r: any) => ({
-          id: r.id,
-          codigo: r.codigo,
-          produto: r.produto,
-          fornecedor: r.fornecedor || '',
-          aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0,
-          preco_revenda: (Number(r.preco) || 0) * (1 + mk / 100),
-          image_url: r.image_url || '',
-        })));
-      }
-      setLoading(false);
-    };
-    load();
+    if (data) {
+      setItems(data.map((r: any) => ({
+        id: r.id,
+        codigo: r.codigo,
+        produto: r.produto,
+        fornecedor: r.fornecedor || '',
+        aplicacao: r.aplicacao || '',
+        qtd_estoque: Number(r.qtd_estoque) || 0,
+        preco_revenda: (Number(r.preco) || 0) * (1 + mk / 100),
+        image_url: r.image_url || '',
+      })));
+    }
+    setLoading(false);
   }, [sellerId]);
+
+  // Load catalog items
+  useEffect(() => {
+    loadItems();
+  }, [loadItems]);
 
   const handleLogin = async () => {
     if (!authPhone.trim() || !authPassword.trim()) {
@@ -246,7 +247,10 @@ export default function CatalogB2B() {
     toast.success('Pedido enviado com sucesso! O vendedor entrará em contato.');
     setCart([]);
     setShowCart(false);
-  }, [cart, customer, cartTotal, sellerId, submitting]);
+    
+    // Recarregar estoque atualizado
+    await loadItems();
+  }, [cart, customer, cartTotal, sellerId, submitting, loadItems]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -413,9 +417,14 @@ export default function CatalogB2B() {
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-lg font-bold text-primary">{fmt(item.preco_revenda)}</span>
                   <Badge variant={item.qtd_estoque > 0 ? 'default' : 'destructive'} className="text-[10px]">
-                    {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Sem estoque'}
+                    {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Esgotado'}
                   </Badge>
                 </div>
+                {item.qtd_estoque === 0 && (
+                  <p className="text-xs text-destructive font-medium mt-1">
+                    ⚠️ Produto indisponível no momento. Consulte o vendedor.
+                  </p>
+                )}
               </div>
               <Button
                 size="icon"
