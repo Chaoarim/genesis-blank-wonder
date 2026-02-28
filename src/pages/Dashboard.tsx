@@ -7,6 +7,8 @@ import { Zap, LogOut, AlertCircle, ExternalLink, BarChart3, PlusCircle, Shopping
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import type { User } from "@supabase/supabase-js";
+import { usePartsDatabase } from "@/hooks/usePartsDatabase";
+import { CatalogsDialog } from "@/components/CatalogsDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -14,6 +16,8 @@ const Dashboard = () => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const { parts } = usePartsDatabase();
 
   const fetchSubscriptionStatus = useCallback(async (userId: string) => {
     const { data: status, error } = await supabase.rpc('check_subscription_status', {
@@ -206,10 +210,10 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-4xl flex-1 space-y-6">
-        {/* Busca de Peças */}
+        {/* Busca de Peças - abre catálogos por fornecedor */}
         <Card
           className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
-          onClick={() => navigate('/vendas?tab=inventory')}
+          onClick={() => setCatalogOpen(true)}
         >
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
             <Search className="w-6 h-6 text-primary-foreground" />
@@ -219,6 +223,8 @@ const Dashboard = () => {
             <p className="text-sm text-muted-foreground">Pesquise peças de todos os fornecedores</p>
           </div>
         </Card>
+
+        <CatalogsDialog open={catalogOpen} onOpenChange={setCatalogOpen} parts={parts} />
 
         {/* Central de Vendas - Grid de Atalhos */}
         <div>
