@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChatContainer } from "@/components/ChatContainer";
+
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, AlertCircle, ExternalLink, BarChart3, PlusCircle, ShoppingBag, Package, History, Users, Target, Percent, Link2, Search } from "lucide-react";
+import { Zap, LogOut, AlertCircle, BarChart3, PlusCircle, ShoppingBag, Package, History, Users, Target, Percent, Link2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import type { User } from "@supabase/supabase-js";
-import { usePartsDatabase } from "@/hooks/usePartsDatabase";
-import { CatalogsDialog } from "@/components/CatalogsDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -16,8 +14,6 @@ const Dashboard = () => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(false);
-  const [catalogOpen, setCatalogOpen] = useState(false);
-  const { parts } = usePartsDatabase();
 
   const fetchSubscriptionStatus = useCallback(async (userId: string) => {
     const { data: status, error } = await supabase.rpc('check_subscription_status', {
@@ -213,30 +209,18 @@ const Dashboard = () => {
         {/* Busca de Peças - abre catálogos por fornecedor */}
         <Card
           className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
-          onClick={() => setCatalogOpen(true)}
+          onClick={() => window.open('/buscar-pecas', '_blank')}
         >
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
             <Search className="w-6 h-6 text-primary-foreground" />
           </div>
-          <div className="flex-1">
+          <div>
             <h2 className="font-bold text-lg">Buscar Peças</h2>
             <p className="text-sm text-muted-foreground">Pesquise peças de todos os fornecedores</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open('/buscar-pecas', '_blank');
-            }}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Abrir
-          </Button>
         </Card>
 
-        <CatalogsDialog open={catalogOpen} onOpenChange={setCatalogOpen} parts={parts} />
+        
 
         {/* Central de Vendas - Grid de Atalhos */}
         <div>
