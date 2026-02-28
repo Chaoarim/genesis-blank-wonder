@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface InventoryItem {
   id: string;
@@ -22,6 +23,8 @@ export function InventorySearch() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [markup, setMarkup] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -61,6 +64,16 @@ export function InventorySearch() {
       normalizeSearch(`${i.codigo} ${i.produto} ${i.fornecedor} ${i.aplicacao}`).includes(q)
     );
   }, [items, search]);
+
+  const saveStock = useCallback(async (id: string) => {
+    const newQty = parseInt(editValue);
+    if (isNaN(newQty) || newQty < 0) { toast.error('Quantidade inválida'); return; }
+    const { error } = await supabase.from('inventory_items').update({ qtd_estoque: newQty }).eq('id', id);
+    if (error) { toast.error('Erro ao atualizar estoque'); return; }
+    setItems(prev => prev.map(i => i.id === id ? { ...i, qtd_estoque: newQty } : i));
+    setEditingId(null);
+    toast.success('Estoque atualizado!');
+  }, [editValue]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -131,8 +144,35 @@ export function InventorySearch() {
                     <TableCell className="text-sm font-medium">{item.produto}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.aplicacao}</TableCell>
-                    <TableCell className={`text-center font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : item.qtd_estoque <= 3 ? 'text-amber-500' : 'text-green-600'}`}>
-                      {item.qtd_estoque}
+                    <TableCell className="text-center">
+                      {editingId === item.id ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={editValue}
+                            onChange={e => setEditValue(e.target.value)}
+                            className="w-16 h-7 text-center text-xs p-1"
+                            autoFocus
+                            onKeyDown={e => { if (e.key === 'Enter') saveStock(item.id); if (e.key === 'Escape') setEditingId(null); }}
+                          />
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600" onClick={() => saveStock(item.id)}>
+                            <Check className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setEditingId(null)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          <span className={`font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : item.qtd_estoque <= 3 ? 'text-amber-500' : 'text-green-600'}`}>
+                            {item.qtd_estoque}
+                          </span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingId(item.id); setEditValue(String(item.qtd_estoque)); }}>
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right font-bold text-primary">{fmt(precoRevenda)}</TableCell>
                     <TableCell>
