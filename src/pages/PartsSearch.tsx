@@ -84,7 +84,7 @@ const PartsSearch = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <BookOpen className="w-5 h-5 text-primary" />
-            <div>
+            <div className="flex-1">
               <h1 className="text-lg font-bold leading-tight">
                 Catálogos por Fornecedor
                 <span className="text-sm font-normal text-muted-foreground ml-2">
@@ -92,6 +92,17 @@ const PartsSearch = () => {
                 </span>
               </h1>
             </div>
+            {partsLoading ? (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium shrink-0">
+                <span className="w-3 h-3 border-2 border-muted-foreground/40 border-t-primary rounded-full animate-spin" />
+                Carregando
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-xs text-green-500 font-medium shrink-0">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Online
+              </span>
+            )}
           </div>
         </header>
 
