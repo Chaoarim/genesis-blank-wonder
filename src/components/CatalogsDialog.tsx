@@ -3,11 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Search, X, ChevronDown, Sparkles, Plus } from 'lucide-react';
+import { BookOpen, Search, X, ChevronDown, Sparkles, Plus, Filter } from 'lucide-react';
 import { Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from './PartThumbnail';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CatalogsDialogProps {
   open: boolean;
@@ -21,12 +22,26 @@ const PAGE_SIZE = 50;
 
 export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: CatalogsDialogProps) {
   const [search, setSearch] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const suppliers = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of parts) {
+      if (p.fornecedor) set.add(p.fornecedor);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [parts]);
+
+  const partsForSearch = useMemo(() => {
+    if (selectedSupplier === 'all') return parts;
+    return parts.filter(p => p.fornecedor === selectedSupplier);
+  }, [parts, selectedSupplier]);
+
   const filtered = useMemo(() => {
-    if (search.length < 2) return parts;
-    return smartFilterParts(parts, search);
-  }, [search, parts]);
+    if (search.length < 2) return partsForSearch;
+    return smartFilterParts(partsForSearch, search);
+  }, [search, partsForSearch]);
 
   const visibleResults = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
   const hasMore = visibleCount < filtered.length;
@@ -34,11 +49,17 @@ export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: Cata
   const handleClose = () => {
     onOpenChange(false);
     setSearch('');
+    setSelectedSupplier('all');
     setVisibleCount(PAGE_SIZE);
   };
 
   const handleSearchChange = useCallback((val: string) => {
     setSearch(val);
+    setVisibleCount(PAGE_SIZE);
+  }, []);
+
+  const handleSupplierChange = useCallback((val: string) => {
+    setSelectedSupplier(val);
     setVisibleCount(PAGE_SIZE);
   }, []);
 
@@ -48,19 +69,33 @@ export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: Cata
         <DialogHeader className="px-4 pt-4 pb-3 border-b border-border">
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
             <BookOpen className="w-5 h-5 text-primary" />
-            Catálogos
+            Buscar Peças
             <span className="text-xs font-normal text-muted-foreground">
-              ({parts.length.toLocaleString()} peças)
+              ({partsForSearch.length.toLocaleString()} peças{selectedSupplier !== 'all' ? ` · ${selectedSupplier}` : ` · ${suppliers.length} fornecedores`})
             </span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-4 py-3 border-b border-border">
+        <div className="px-4 py-3 border-b border-border space-y-2">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Select value={selectedSupplier} onValueChange={handleSupplierChange}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Todos os fornecedores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os fornecedores</SelectItem>
+                {suppliers.map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               autoFocus
-              placeholder="Buscar código, peça, veículo ou fornecedor..."
+              placeholder="Buscar código, peça ou veículo..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 pr-9"
@@ -80,7 +115,7 @@ export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: Cata
           <span className="text-xs text-muted-foreground font-medium">
             {search.length >= 2
               ? `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''}`
-              : `${parts.length} peças no catálogo`}
+              : `${partsForSearch.length} peças no catálogo`}
             {filtered.length > PAGE_SIZE && (
               <span className="ml-2">
                 · mostrando {Math.min(visibleCount, filtered.length)} de {filtered.length}
