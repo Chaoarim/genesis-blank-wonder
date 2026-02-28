@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesData } from '@/hooks/useSalesData';
 import { usePartsDatabase } from '@/hooks/usePartsDatabase';
@@ -19,9 +19,10 @@ import type { User } from '@supabase/supabase-js';
 
 const SalesHub = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
 
   useEffect(() => {
     const check = async () => {
