@@ -420,11 +420,6 @@ export default function CatalogB2B() {
                     {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Esgotado'}
                   </Badge>
                 </div>
-                {item.qtd_estoque === 0 && (
-                  <p className="text-xs text-destructive font-medium mt-1">
-                    ⚠️ Produto indisponível no momento. Consulte o vendedor.
-                  </p>
-                )}
               </div>
               <Button
                 size="icon"
