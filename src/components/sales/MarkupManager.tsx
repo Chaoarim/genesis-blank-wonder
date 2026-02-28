@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { InventoryImporter } from './InventoryImporter';
 import { InventoryImageUploader } from './InventoryImageUploader';
+import { ManualProductForm } from './ManualProductForm';
 
 interface InventoryItem {
   id: string;
@@ -90,7 +91,7 @@ export function MarkupManager() {
       <Card className="p-4 space-y-4">
         <h3 className="font-semibold text-lg flex items-center gap-2">
           <Percent className="w-5 h-5 text-primary" />
-          Markup Global de Revenda
+          Markup e Cadastro de Produtos
         </h3>
         <div className="flex items-end gap-3">
           <div className="space-y-1 flex-1 max-w-xs">
@@ -133,6 +134,21 @@ export function MarkupManager() {
           </div>
         </Card>
       )}
+
+      {/* Manual Product Form */}
+      <ManualProductForm onProductAdded={async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        if (data) {
+          setInventoryItems(data.map((r: any) => ({
+            id: r.id, codigo: r.codigo, produto: r.produto,
+            fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+            qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+            image_url: r.image_url || '',
+          })));
+        }
+      }} />
 
       {/* Inventory Importer */}
       <InventoryImporter items={inventoryItems} setItems={setInventoryItems} markup={markup} />

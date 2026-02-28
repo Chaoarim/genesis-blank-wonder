@@ -1,23 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Plus, Send, CheckCircle, UserPlus } from 'lucide-react';
+import { Trash2, Send, CheckCircle, UserPlus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import type { Customer } from '@/hooks/useSalesData';
-import type { Part } from '@/hooks/usePartsDatabase';
-import { PartSearchInline } from './PartSearchInline';
-
-interface PriceListMatch {
-  codigo: string;
-  descricao: string;
-  fornecedor: string;
-  preco_custo: number;
-  preco_revenda: number;
-}
+import { InventorySearchInline } from './InventorySearchInline';
 
 interface SaleItemDraft {
   id: string;
@@ -31,89 +21,35 @@ interface SaleItemDraft {
 
 interface NewSaleFormProps {
   customers: Customer[];
-  parts?: Part[];
+  parts?: any[];
   onAddCustomer: (data: { name: string; phone?: string }) => Promise<any>;
   onCreateSale: (data: any) => Promise<any>;
   onDone: () => void;
 }
 
-export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale, onDone }: NewSaleFormProps) {
+export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone }: NewSaleFormProps) {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [channel, setChannel] = useState('balcao');
   const [notes, setNotes] = useState('');
   const [discount, setDiscount] = useState(0);
-  const [items, setItems] = useState<SaleItemDraft[]>([
-    { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', aplicacao: '', quantidade: 1, preco_unitario: 0 },
-  ]);
+  const [items, setItems] = useState<SaleItemDraft[]>([]);
   const [saving, setSaving] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
-  const [priceList, setPriceList] = useState<PriceListMatch[]>([]);
-  const [markup, setMarkup] = useState(0);
 
-  // Load user's price list + markup on mount
-  useEffect(() => {
-    const loadPriceData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const [markupRes, itemsRes] = await Promise.all([
-        supabase.from('markup_settings').select('markup_revenda').eq('user_id', user.id).maybeSingle(),
-        supabase.from('price_list_items').select('codigo, descricao, fornecedor, preco_custo').eq('user_id', user.id),
-      ]);
-
-      const mk = Number(markupRes.data?.markup_revenda) || 0;
-      setMarkup(mk);
-
-      if (itemsRes.data) {
-        setPriceList(itemsRes.data.map(r => ({
-          codigo: r.codigo,
-          descricao: r.descricao,
-          fornecedor: r.fornecedor || '',
-          preco_custo: Number(r.preco_custo) || 0,
-          preco_revenda: (Number(r.preco_custo) || 0) * (1 + mk / 100),
-        })));
-      }
-    };
-    loadPriceData();
-  }, []);
-
-  const findInPriceList = useCallback((codigo: string): PriceListMatch | undefined => {
-    if (!codigo.trim() || priceList.length === 0) return undefined;
-    const q = codigo.trim().toLowerCase();
-    return priceList.find(p => p.codigo.toLowerCase() === q);
-  }, [priceList]);
-
-  const addItem = () => setItems(prev => [...prev, { id: crypto.randomUUID(), codigo: '', produto: '', fornecedor: '', aplicacao: '', quantidade: 1, preco_unitario: 0 }]);
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
-  const updateItem = useCallback((id: string, field: string, value: any) => {
-    setItems(prev => prev.map(i => {
-      if (i.id !== id) return i;
-      const updated = { ...i, [field]: value };
-
-      // Auto-fill from price list when code changes
-      if (field === 'codigo' && typeof value === 'string') {
-        const match = findInPriceList(value);
-        if (match) {
-          updated.produto = match.descricao;
-          updated.fornecedor = match.fornecedor;
-          updated.preco_unitario = Math.round(match.preco_revenda * 100) / 100;
-          toast.success(`Preço de revenda aplicado: ${match.preco_revenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`, { duration: 2000 });
-        }
-      }
-      return updated;
-    }));
-  }, [findInPriceList]);
+  const updateItemQty = useCallback((id: string, qty: number) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, quantidade: Math.max(1, qty) } : i));
+  }, []);
 
   const subtotal = items.reduce((s, i) => s + i.quantidade * i.preco_unitario, 0);
   const total = Math.max(subtotal - discount, 0);
 
   const handleSave = async () => {
-    const validItems = items.filter(i => i.codigo.trim() && i.preco_unitario > 0);
-    if (validItems.length === 0) { toast.error('Adicione pelo menos 1 item com código e preço'); return; }
+    if (items.length === 0) { toast.error('Adicione pelo menos 1 item do estoque'); return; }
 
     setSaving(true);
     const selectedCustomer = customers.find(c => c.id === customerId);
@@ -124,15 +60,14 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
       channel,
       notes,
       discount,
-      items: validItems.map(i => ({ codigo: i.codigo, produto: i.produto, fornecedor: i.fornecedor, quantidade: i.quantidade, preco_unitario: i.preco_unitario })),
+      items: items.map(i => ({ codigo: i.codigo, produto: i.produto, fornecedor: i.fornecedor, quantidade: i.quantidade, preco_unitario: i.preco_unitario })),
     });
 
     setSaving(false);
     if (sale) {
-      // Send via WhatsApp if channel is whatsapp
       if (channel === 'whatsapp') {
         const phone = selectedCustomer?.phone;
-        const lines = validItems.map((item, idx) => `${idx + 1}. ${item.codigo} - ${item.produto}\n   Qtde: ${item.quantidade} x R$ ${item.preco_unitario.toFixed(2)}`);
+        const lines = items.map((item, idx) => `${idx + 1}. ${item.codigo} - ${item.produto}\n   Qtde: ${item.quantidade} x R$ ${item.preco_unitario.toFixed(2)}`);
         const text = `*VENDA CONFIRMADA*\n\n${lines.join('\n\n')}\n${discount > 0 ? `\nDesconto: R$ ${discount.toFixed(2)}` : ''}\n\n*TOTAL: R$ ${total.toFixed(2)}*`;
         const url = phone
           ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`
@@ -210,61 +145,63 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
         )}
       </Card>
 
-      {/* Parts Search */}
-      {parts.length > 0 && (
-        <Card className="p-4 space-y-2">
-          <h3 className="font-semibold text-sm">🔍 Consultar Peças</h3>
-          <PartSearchInline
-            parts={parts}
-            onAddPart={(part) => {
-              const aplicacao = [part.marca, part.modelo, part.ano].filter(Boolean).join(' ');
-              setItems(prev => [...prev, {
-                id: crypto.randomUUID(),
-                codigo: part.fabricante,
-                produto: part.produto,
-                fornecedor: part.fornecedor,
-                aplicacao,
-                quantidade: 1,
-                preco_unitario: 0,
-              }]);
-              toast.success(`${part.fabricante} adicionado ao pedido`);
-            }}
-          />
-        </Card>
-      )}
+      {/* Inventory Search */}
+      <Card className="p-4 space-y-2">
+        <h3 className="font-semibold text-sm">🔍 Consultar Estoque</h3>
+        <InventorySearchInline
+          onAddItem={(item, precoRevenda) => {
+            setItems(prev => [...prev, {
+              id: crypto.randomUUID(),
+              codigo: item.codigo,
+              produto: item.produto,
+              fornecedor: item.fornecedor,
+              aplicacao: item.aplicacao,
+              quantidade: 1,
+              preco_unitario: Math.round(precoRevenda * 100) / 100,
+            }]);
+            toast.success(`${item.codigo} adicionado ao pedido`);
+          }}
+        />
+      </Card>
 
-      {/* Items */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Itens</h3>
-          <Button variant="outline" size="sm" onClick={addItem}>
-            <Plus className="w-3 h-3 mr-1" /> Adicionar manual
-          </Button>
-        </div>
+      {/* Items List */}
+      {items.length > 0 && (
+        <Card className="p-4 space-y-3">
+          <h3 className="font-semibold">Itens do Pedido ({items.length})</h3>
 
-        {items.map((item, idx) => (
-          <div key={item.id} className="rounded-lg border border-border p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Item {idx + 1}</span>
-              {items.length > 1 && (
+          {items.map((item, idx) => (
+            <div key={item.id} className="rounded-lg border border-border p-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground font-medium">Item {idx + 1}</span>
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeItem(item.id)}>
                   <Trash2 className="w-3 h-3" />
                 </Button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Código" value={item.codigo} onChange={e => updateItem(item.id, 'codigo', e.target.value)} />
-              <Input placeholder="Produto" value={item.produto} onChange={e => updateItem(item.id, 'produto', e.target.value)} />
-              <Input placeholder="Fornecedor" value={item.fornecedor} onChange={e => updateItem(item.id, 'fornecedor', e.target.value)} />
-              <Input placeholder="Aplicação (veículo)" value={item.aplicacao} onChange={e => updateItem(item.id, 'aplicacao', e.target.value)} />
-              <div className="flex gap-2">
-                <Input type="number" min={1} placeholder="Qtde" value={item.quantidade} onChange={e => updateItem(item.id, 'quantidade', Math.max(1, parseInt(e.target.value) || 1))} />
-                <Input type="number" min={0} step={0.01} placeholder="Preço" value={item.preco_unitario || ''} onChange={e => updateItem(item.id, 'preco_unitario', parseFloat(e.target.value) || 0)} />
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-mono font-bold text-primary">{item.codigo}</span>
+                <span className="truncate">{item.produto}</span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {item.fornecedor}{item.aplicacao ? ` • ${item.aplicacao}` : ''}
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground">Qtde:</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={item.quantidade}
+                    onChange={e => updateItemQty(item.id, parseInt(e.target.value) || 1)}
+                    className="w-16 h-7 text-center text-xs"
+                  />
+                </div>
+                <span className="text-sm font-bold text-primary">{fmt(item.preco_unitario)} /un</span>
+                <span className="text-sm font-bold ml-auto">{fmt(item.quantidade * item.preco_unitario)}</span>
               </div>
             </div>
-          </div>
-        ))}
-      </Card>
+          ))}
+        </Card>
+      )}
 
       {/* Summary */}
       <Card className="p-4 space-y-3">
@@ -280,7 +217,7 @@ export function NewSaleForm({ customers, parts = [], onAddCustomer, onCreateSale
           </div>
         </div>
 
-        <Button onClick={handleSave} disabled={saving} className="w-full h-12 font-bold text-base gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
+        <Button onClick={handleSave} disabled={saving || items.length === 0} className="w-full h-12 font-bold text-base gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
           {channel === 'whatsapp' ? <Send className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
           {saving ? 'Salvando...' : channel === 'whatsapp' ? 'Finalizar e Enviar WhatsApp' : 'Finalizar Venda'}
         </Button>

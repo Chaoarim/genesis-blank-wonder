@@ -10,6 +10,7 @@ import { SalesHistory } from '@/components/sales/SalesHistory';
 import { CatalogOrdersManager } from '@/components/sales/CatalogOrdersManager';
 import { GoalsManager } from '@/components/sales/GoalsManager';
 import { InventorySearch } from '@/components/sales/InventorySearch';
+import { LowStockReport } from '@/components/sales/LowStockReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag } from 'lucide-react';
@@ -121,7 +122,7 @@ const SalesHub = () => {
             </TabsTrigger>
             <TabsTrigger value="markup" className="flex flex-col gap-1 py-2.5 text-xs">
               <Percent className="w-4 h-4" />
-              <span className="hidden sm:inline">Markup</span>
+              <span className="hidden sm:inline text-[10px]">Markup/Cadastro</span>
             </TabsTrigger>
           </TabsList>
 
@@ -144,7 +145,10 @@ const SalesHub = () => {
           </TabsContent>
 
           <TabsContent value="inventory">
-            <InventorySearch />
+            <div className="space-y-4">
+              <InventorySearch />
+              <LowStockReport />
+            </div>
           </TabsContent>
 
           <TabsContent value="history">
