@@ -249,7 +249,7 @@ const Dashboard = () => {
         <Card
           className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow"
           onClick={() => {
-            if (user) navigate(`/catalogo/${user.id}`);
+            if (user) window.open(`/catalogo/${user.id}`, '_blank');
           }}
         >
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
