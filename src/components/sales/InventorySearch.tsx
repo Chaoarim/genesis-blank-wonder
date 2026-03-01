@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Search, Package, ExternalLink, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { PartThumbnail } from '@/components/PartThumbnail';
 import { toast } from 'sonner';
 
 interface InventoryItem {
@@ -132,13 +133,7 @@ export function InventorySearch() {
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="p-1">
-                      {item.image_url ? (
-                        <img src={item.image_url} alt={item.codigo} className="w-10 h-10 object-cover rounded" loading="lazy" />
-                      ) : (
-                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                          <Package className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      )}
+                      <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-10 h-10" />
                     </TableCell>
                     <TableCell className="font-mono text-xs">{item.codigo}</TableCell>
                     <TableCell className="text-sm font-medium">{item.produto}</TableCell>
