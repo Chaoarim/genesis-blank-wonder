@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { PartThumbnail } from '@/components/PartThumbnail';
+import { smartFilterInventory } from '@/lib/partsSearchEngine';
 
 interface CatalogItem {
   id: string;
@@ -255,15 +256,9 @@ export default function CatalogB2B() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const normalizeSearch = (t: string) =>
-    t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
-    const q = normalizeSearch(search);
-    return items.filter(i =>
-      normalizeSearch(`${i.codigo} ${i.produto} ${i.fornecedor} ${i.aplicacao}`).includes(q)
-    );
+    return smartFilterInventory(items, search);
   }, [items, search]);
 
   if (loading) {
