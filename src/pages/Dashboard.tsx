@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, AlertCircle, BarChart3, PlusCircle, ShoppingBag, Package, History, Users, Target, Percent, Link2, Search } from "lucide-react";
+import { Zap, LogOut, AlertCircle, BarChart3, PlusCircle, ShoppingBag, Package, History, Users, Target, Percent, Link2, Search, Copy, Share2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import type { User } from "@supabase/supabase-js";
@@ -246,19 +246,56 @@ const Dashboard = () => {
         </div>
 
         {/* Catálogo B2B */}
-        <Card
-          className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => {
-            if (user) navigate(`/catalogo/${user.id}`);
-          }}
-        >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
-            <Link2 className="w-6 h-6 text-white" />
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
+              <Link2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="font-bold text-lg">Catálogo B2B Online</h2>
+              <p className="text-sm text-muted-foreground">Compartilhe seu catálogo com clientes</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-bold text-lg">Catálogo B2B Online</h2>
-            <p className="text-sm text-muted-foreground">Acesse o link do seu catálogo para clientes</p>
-          </div>
+
+          {user && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-xs font-mono text-muted-foreground break-all select-all">
+                {`${window.location.origin}/catalogo/${user.id}`}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/catalogo/${user.id}`);
+                    toast.success('Link copiado!');
+                  }}
+                >
+                  <Copy className="w-4 h-4" /> Copiar Link
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    const url = `${window.location.origin}/catalogo/${user.id}`;
+                    const msg = encodeURIComponent(`Confira nosso catálogo de peças: ${url}`);
+                    window.open(`https://wa.me/?text=${msg}`, '_blank');
+                  }}
+                >
+                  <Share2 className="w-4 h-4" /> WhatsApp
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => navigate(`/catalogo/${user.id}`)}
+                >
+                  <ExternalLink className="w-4 h-4" /> Abrir
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </main>
     </div>
