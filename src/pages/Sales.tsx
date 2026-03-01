@@ -54,17 +54,6 @@ const Sales = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {userId && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 hidden sm:flex"
-                onClick={() => window.open(`${window.location.origin}/#/catalogo/${userId}`, '_blank')}
-              >
-                <Link2 className="w-4 h-4" />
-                Catálogo B2B
-              </Button>
-            )}
             {isAdmin && (
               <Link to="/admin">
                 <Button variant="ghost" size="sm" className="gap-1.5 hidden sm:flex">
