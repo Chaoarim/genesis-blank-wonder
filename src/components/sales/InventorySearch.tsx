@@ -6,6 +6,7 @@ import { Search, Package, ExternalLink, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { PartThumbnail } from '@/components/PartThumbnail';
+import { smartFilterInventory } from '@/lib/partsSearchEngine';
 import { toast } from 'sonner';
 
 interface InventoryItem {
@@ -55,15 +56,9 @@ export function InventorySearch() {
     load();
   }, []);
 
-  const normalizeSearch = (t: string) =>
-    t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
-    const q = normalizeSearch(search);
-    return items.filter(i =>
-      normalizeSearch(`${i.codigo} ${i.produto} ${i.fornecedor} ${i.aplicacao}`).includes(q)
-    );
+    return smartFilterInventory(items, search);
   }, [items, search]);
 
   const saveStock = useCallback(async (id: string) => {

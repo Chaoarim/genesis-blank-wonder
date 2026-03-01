@@ -1,8 +1,10 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, X, Package } from 'lucide-react';
+import { Search, Plus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { PartThumbnail } from '@/components/PartThumbnail';
+import { smartFilterInventory } from '@/lib/partsSearchEngine';
 
 interface InventoryItem {
   id: string;
@@ -25,7 +27,6 @@ export function InventorySearchInline({ onAddItem }: InventorySearchInlineProps)
   const [markup, setMarkup] = useState(0);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     const load = async () => {
@@ -49,15 +50,9 @@ export function InventorySearchInline({ onAddItem }: InventorySearchInlineProps)
     load();
   }, []);
 
-  const normalize = (t: string) =>
-    t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
   const results = useMemo(() => {
     if (query.trim().length < 2) return [];
-    const q = normalize(query);
-    return items.filter(i =>
-      normalize(`${i.codigo} ${i.produto} ${i.fornecedor} ${i.aplicacao}`).includes(q)
-    ).slice(0, 20);
+    return smartFilterInventory(items, query).slice(0, 20);
   }, [items, query]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -101,13 +96,7 @@ export function InventorySearchInline({ onAddItem }: InventorySearchInlineProps)
                 className="flex items-center gap-3 px-3 py-2 hover:bg-muted/50 border-b border-border last:border-b-0 cursor-pointer group"
                 onClick={() => handleAdd(item)}
               >
-                {item.image_url ? (
-                  <img src={item.image_url} alt={item.codigo} className="w-9 h-9 object-cover rounded" loading="lazy" />
-                ) : (
-                  <div className="w-9 h-9 bg-muted rounded flex items-center justify-center shrink-0">
-                    <Package className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                )}
+                <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-9 h-9" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono font-bold text-primary">{item.codigo}</span>
