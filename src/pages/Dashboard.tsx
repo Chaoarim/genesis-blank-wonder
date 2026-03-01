@@ -209,7 +209,7 @@ const Dashboard = () => {
         {/* Busca de Peças - abre catálogos por fornecedor */}
         <Card
           className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
-          onClick={() => window.open('/buscar-pecas', '_blank')}
+          onClick={() => navigate('/buscar-pecas')}
         >
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
             <Search className="w-6 h-6 text-primary-foreground" />
