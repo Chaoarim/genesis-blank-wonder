@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink, Pencil, Check, X } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X, Trash2, ImagePlus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { PartThumbnail } from '@/components/PartThumbnail';
@@ -20,13 +20,18 @@ interface InventoryItem {
   image_url?: string;
 }
 
+type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao';
+
 export function InventorySearch() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [markup, setMarkup] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editField, setEditField] = useState<EditField>('qtd_estoque');
   const [editValue, setEditValue] = useState('');
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -40,13 +45,9 @@ export function InventorySearch() {
 
       if (itemsRes.data) {
         setItems(itemsRes.data.map((r: any) => ({
-          id: r.id,
-          codigo: r.codigo,
-          produto: r.produto,
-          fornecedor: r.fornecedor || '',
-          aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0,
-          preco: Number(r.preco) || 0,
+          id: r.id, codigo: r.codigo, produto: r.produto,
+          fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+          qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
           image_url: r.image_url || '',
         })));
       }
@@ -61,17 +62,95 @@ export function InventorySearch() {
     return smartFilterInventory(items, search);
   }, [items, search]);
 
-  const saveStock = useCallback(async (id: string) => {
-    const newQty = parseInt(editValue);
-    if (isNaN(newQty) || newQty < 0) { toast.error('Quantidade inválida'); return; }
-    const { error } = await supabase.from('inventory_items').update({ qtd_estoque: newQty }).eq('id', id);
-    if (error) { toast.error('Erro ao atualizar estoque'); return; }
-    setItems(prev => prev.map(i => i.id === id ? { ...i, qtd_estoque: newQty } : i));
+  const startEdit = (id: string, field: EditField, currentValue: string | number) => {
+    setEditingId(id);
+    setEditField(field);
+    setEditValue(String(currentValue));
+  };
+
+  const saveEdit = useCallback(async (id: string) => {
+    const updateData: Record<string, any> = {};
+
+    if (editField === 'qtd_estoque') {
+      const newQty = parseInt(editValue);
+      if (isNaN(newQty) || newQty < 0) { toast.error('Quantidade inválida'); return; }
+      updateData.qtd_estoque = newQty;
+    } else {
+      if (editField === 'codigo' && !editValue.trim()) { toast.error('Código não pode ser vazio'); return; }
+      if (editField === 'produto' && !editValue.trim()) { toast.error('Produto não pode ser vazio'); return; }
+      updateData[editField] = editValue.trim();
+    }
+
+    const { error } = await supabase.from('inventory_items').update(updateData).eq('id', id);
+    if (error) { toast.error('Erro ao atualizar'); return; }
+
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
     setEditingId(null);
-    toast.success('Estoque atualizado!');
-  }, [editValue]);
+    toast.success('Atualizado!');
+  }, [editValue, editField]);
+
+  const deleteItem = useCallback(async (id: string, codigo: string) => {
+    if (!confirm(`Excluir item ${codigo} do estoque?`)) return;
+    const { error } = await supabase.from('inventory_items').delete().eq('id', id);
+    if (error) { toast.error('Erro ao excluir'); return; }
+    setItems(prev => prev.filter(i => i.id !== id));
+    toast.success(`${codigo} excluído`);
+  }, []);
+
+  const handleImageUpload = useCallback(async (itemId: string, codigo: string, file: File) => {
+    setUploadingId(itemId);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setUploadingId(null); return; }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const filePath = `inventory/${user.id}/${codigo}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage.from('part-images').upload(filePath, file, { upsert: true });
+    if (uploadError) { toast.error('Erro no upload'); setUploadingId(null); return; }
+
+    const { data: publicUrlData } = supabase.storage.from('part-images').getPublicUrl(filePath);
+    const imageUrl = publicUrlData.publicUrl;
+
+    const { error } = await supabase.from('inventory_items').update({ image_url: imageUrl }).eq('id', itemId);
+    if (!error) {
+      setItems(prev => prev.map(i => i.id === itemId ? { ...i, image_url: imageUrl } : i));
+      toast.success('Foto atualizada!');
+    }
+    setUploadingId(null);
+  }, []);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const renderEditableCell = (item: InventoryItem, field: EditField, value: string | number, className?: string) => {
+    if (editingId === item.id && editField === field) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            type={field === 'qtd_estoque' ? 'number' : 'text'}
+            min={field === 'qtd_estoque' ? 0 : undefined}
+            value={editValue}
+            onChange={e => setEditValue(e.target.value)}
+            className="h-7 text-xs p-1 min-w-[60px]"
+            autoFocus
+            onKeyDown={e => { if (e.key === 'Enter') saveEdit(item.id); if (e.key === 'Escape') setEditingId(null); }}
+          />
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600 shrink-0" onClick={() => saveEdit(item.id)}>
+            <Check className="w-3 h-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive shrink-0" onClick={() => setEditingId(null)}>
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1 group/cell cursor-pointer" onClick={() => startEdit(item.id, field, value)}>
+        <span className={className}>{value}</span>
+        <Pencil className="w-3 h-3 opacity-0 group-hover/cell:opacity-50 shrink-0" />
+      </div>
+    );
+  };
 
   if (loading) return <p className="text-center text-muted-foreground py-8">Carregando estoque...</p>;
 
@@ -87,6 +166,14 @@ export function InventorySearch() {
 
   return (
     <div className="space-y-4">
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => {
+        const file = e.target.files?.[0];
+        const id = fileRef.current?.dataset.itemId;
+        const codigo = fileRef.current?.dataset.itemCodigo;
+        if (file && id && codigo) handleImageUpload(id, codigo, file);
+        if (fileRef.current) fileRef.current.value = '';
+      }} />
+
       <Card className="p-4 space-y-3">
         <h3 className="font-semibold flex items-center gap-2">
           <Search className="w-5 h-5 text-primary" />
@@ -119,7 +206,7 @@ export function InventorySearch() {
                 <TableHead>Aplicação</TableHead>
                 <TableHead className="text-center">Estoque</TableHead>
                 <TableHead className="text-right">Preço Revenda</TableHead>
-                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -128,55 +215,55 @@ export function InventorySearch() {
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="p-1">
-                      <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-10 h-10" />
+                      <div className="relative group/photo cursor-pointer" onClick={() => {
+                        if (fileRef.current) {
+                          fileRef.current.dataset.itemId = item.id;
+                          fileRef.current.dataset.itemCodigo = item.codigo;
+                          fileRef.current.click();
+                        }
+                      }}>
+                        {uploadingId === item.id ? (
+                          <div className="w-10 h-10 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin" /></div>
+                        ) : (
+                          <>
+                            <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-10 h-10" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/photo:opacity-100 transition-opacity rounded flex items-center justify-center">
+                              <ImagePlus className="w-4 h-4 text-white" />
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{item.codigo}</TableCell>
-                    <TableCell className="text-sm font-medium">{item.produto}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.aplicacao}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {renderEditableCell(item, 'codigo', item.codigo)}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {renderEditableCell(item, 'produto', item.produto, 'font-medium')}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {renderEditableCell(item, 'fornecedor', item.fornecedor, 'text-muted-foreground')}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {renderEditableCell(item, 'aplicacao', item.aplicacao, 'text-muted-foreground')}
+                    </TableCell>
                     <TableCell className="text-center">
-                      {editingId === item.id ? (
-                        <div className="flex items-center justify-center gap-1">
-                          <Input
-                            type="number"
-                            min={0}
-                            value={editValue}
-                            onChange={e => setEditValue(e.target.value)}
-                            className="w-16 h-7 text-center text-xs p-1"
-                            autoFocus
-                            onKeyDown={e => { if (e.key === 'Enter') saveStock(item.id); if (e.key === 'Escape') setEditingId(null); }}
-                          />
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600" onClick={() => saveStock(item.id)}>
-                            <Check className="w-3 h-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setEditingId(null)}>
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1">
-                          <span className={`font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : item.qtd_estoque <= 3 ? 'text-amber-500' : 'text-green-600'}`}>
-                            {item.qtd_estoque}
-                          </span>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingId(item.id); setEditValue(String(item.qtd_estoque)); }}>
-                            <Pencil className="w-3 h-3" />
-                          </Button>
-                        </div>
+                      {renderEditableCell(item, 'qtd_estoque', item.qtd_estoque,
+                        `font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : item.qtd_estoque <= 3 ? 'text-amber-500' : 'text-green-600'}`
                       )}
                     </TableCell>
                     <TableCell className="text-right font-bold text-primary">{fmt(precoRevenda)}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => {
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           const q = `${item.codigo} ${item.produto} ${item.fornecedor}`;
                           window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`, '_blank');
-                        }}
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
+                        }}>
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteItem(item.id, item.codigo)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
