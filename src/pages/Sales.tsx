@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Sales = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [spotsLeft, setSpotsLeft] = useState(23);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ const Sales = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          setUserId(user.id);
           const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
           setIsAdmin(data === true);
         }
@@ -52,6 +54,17 @@ const Sales = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {userId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 hidden sm:flex"
+                onClick={() => window.open(`${window.location.origin}/#/catalogo/${userId}`, '_blank')}
+              >
+                <Link2 className="w-4 h-4" />
+                Catálogo B2B
+              </Button>
+            )}
             {isAdmin && (
               <Link to="/admin">
                 <Button variant="ghost" size="sm" className="gap-1.5 hidden sm:flex">
