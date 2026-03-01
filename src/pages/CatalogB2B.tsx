@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
@@ -49,6 +49,7 @@ export default function CatalogB2B() {
   const [authPhone, setAuthPhone] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check saved session
   useEffect(() => {
@@ -291,7 +292,12 @@ export default function CatalogB2B() {
             <Input placeholder="Seu nome" value={authName} onChange={e => setAuthName(e.target.value)} />
           )}
           <Input placeholder="WhatsApp (com DDD)" value={authPhone} onChange={e => setAuthPhone(e.target.value)} />
-          <Input type="password" placeholder="Senha" value={authPassword} onChange={e => setAuthPassword(e.target.value)} />
+          <div className="relative">
+            <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="pr-10" />
+            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(p => !p)}>
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
 
           <Button
             className="w-full gap-2"
