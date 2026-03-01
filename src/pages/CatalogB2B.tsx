@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import { PartThumbnail } from '@/components/PartThumbnail';
 
 interface CatalogItem {
   id: string;
@@ -400,13 +401,7 @@ export default function CatalogB2B() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filtered.slice(0, 50).map(item => (
             <Card key={item.id} className="p-3 flex items-start gap-3">
-              {item.image_url ? (
-                <img src={item.image_url} alt={item.codigo} className="w-16 h-16 object-cover rounded-lg shrink-0" loading="lazy" />
-              ) : (
-                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center shrink-0">
-                  <Package className="w-6 h-6 text-muted-foreground" />
-                </div>
-              )}
+              <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-16 h-16 rounded-lg" />
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.codigo}</p>
                 <p className="font-medium text-sm truncate">{item.produto}</p>
