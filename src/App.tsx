@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import PaymentControl from "./pages/PaymentControl";
 import PreRegistration from "./pages/PreRegistration";
 import PixPayment from "./pages/PixPayment";
+import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
 import NotFound from "./pages/NotFound";
 
@@ -45,6 +46,7 @@ const App = () => (
           {/* Pré-Cadastro e Pagamento */}
           <Route path="/pre-cadastro" element={<PreRegistration />} />
           <Route path="/pagamento-pix" element={<PixPayment />} />
+          <Route path="/renovacao-pix" element={<PixRenewal />} />
           
           {/* Admin */}
           <Route path="/admin" element={<Admin />} />
