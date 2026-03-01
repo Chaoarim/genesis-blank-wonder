@@ -148,18 +148,25 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone }: 
       {/* Inventory Search */}
       <Card className="p-4 space-y-2">
         <h3 className="font-semibold text-sm">🔍 Consultar Estoque</h3>
-        <InventorySearchInline
+      <InventorySearchInline
           onAddItem={(item, precoRevenda) => {
-            setItems(prev => [...prev, {
-              id: crypto.randomUUID(),
-              codigo: item.codigo,
-              produto: item.produto,
-              fornecedor: item.fornecedor,
-              aplicacao: item.aplicacao,
-              quantidade: 1,
-              preco_unitario: Math.round(precoRevenda * 100) / 100,
-            }]);
-            toast.success(`${item.codigo} adicionado ao pedido`);
+            setItems(prev => {
+              const existing = prev.find(i => i.codigo === item.codigo);
+              if (existing) {
+                toast.error(`${item.codigo} já está no pedido. Ajuste a quantidade se necessário.`);
+                return prev;
+              }
+              toast.success(`${item.codigo} adicionado ao pedido`);
+              return [...prev, {
+                id: crypto.randomUUID(),
+                codigo: item.codigo,
+                produto: item.produto,
+                fornecedor: item.fornecedor,
+                aplicacao: item.aplicacao,
+                quantidade: 1,
+                preco_unitario: Math.round(precoRevenda * 100) / 100,
+              }];
+            });
           }}
         />
       </Card>
