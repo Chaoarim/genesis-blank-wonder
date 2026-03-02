@@ -11,9 +11,11 @@ import { CatalogOrdersManager } from '@/components/sales/CatalogOrdersManager';
 import { GoalsManager } from '@/components/sales/GoalsManager';
 import { InventorySearch } from '@/components/sales/InventorySearch';
 import { LowStockReport } from '@/components/sales/LowStockReport';
+import { ImportInventoryTab } from '@/components/sales/ImportInventoryTab';
+import { ManualProductForm } from '@/components/sales/ManualProductForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus } from 'lucide-react';
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
@@ -91,42 +93,50 @@ const SalesHub = () => {
       {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-6xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-9 mb-6 h-auto">
-            <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-2.5 text-xs">
+          <TabsList className="flex flex-wrap w-full mb-6 h-auto gap-1">
+            <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="new-sale" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="new-sale" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <PlusCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Nova Venda</span>
             </TabsTrigger>
-            <TabsTrigger value="orders" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="orders" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">Pedidos</span>
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="inventory" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Estoque</span>
             </TabsTrigger>
-            <TabsTrigger value="low-stock" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="low-stock" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Estoque Baixo</span>
+              <span className="hidden sm:inline text-[10px]">Est. Baixo</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="history" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <History className="w-4 h-4" />
               <span className="hidden sm:inline">Histórico</span>
             </TabsTrigger>
-            <TabsTrigger value="customers" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="customers" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Clientes</span>
             </TabsTrigger>
-            <TabsTrigger value="goals" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="goals" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <Target className="w-4 h-4" />
               <span className="hidden sm:inline">Metas</span>
             </TabsTrigger>
-            <TabsTrigger value="markup" className="flex flex-col gap-1 py-2.5 text-xs">
+            <TabsTrigger value="markup" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
               <Percent className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Markup/Cadastro</span>
+              <span className="hidden sm:inline text-[10px]">Markup</span>
+            </TabsTrigger>
+            <TabsTrigger value="import-inventory" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden sm:inline text-[10px]">Importar</span>
+            </TabsTrigger>
+            <TabsTrigger value="manual-product" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
+              <PackagePlus className="w-4 h-4" />
+              <span className="hidden sm:inline text-[10px]">Cadastrar</span>
             </TabsTrigger>
           </TabsList>
 
@@ -184,6 +194,14 @@ const SalesHub = () => {
 
           <TabsContent value="markup">
             <MarkupManager />
+          </TabsContent>
+
+          <TabsContent value="import-inventory">
+            <ImportInventoryTab />
+          </TabsContent>
+
+          <TabsContent value="manual-product">
+            <ManualProductForm onProductAdded={() => toast.success('Produto cadastrado! Veja na aba Estoque.')} />
           </TabsContent>
         </Tabs>
       </main>
