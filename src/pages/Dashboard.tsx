@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, AlertCircle, BarChart3, PlusCircle, ShoppingBag, Package, History, Users, Target, Percent, Link2, Search, Copy, Share2, ExternalLink } from "lucide-react";
+import { Zap, LogOut, AlertCircle, BarChart3, PlusCircle, ShoppingBag, Package, History, Users, Target, Percent, Link2, Search, Copy, Share2, ExternalLink, RefreshCw } from "lucide-react";
+import { RenewalWarning } from "@/components/RenewalWarning";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import type { User } from "@supabase/supabase-js";
@@ -182,6 +183,7 @@ const Dashboard = () => {
     { label: 'Clientes', icon: Users, tab: 'customers', color: 'from-pink-500 to-pink-700' },
     { label: 'Metas', icon: Target, tab: 'goals', color: 'from-red-500 to-red-700' },
     { label: 'Markup', icon: Percent, tab: 'markup', color: 'from-indigo-500 to-indigo-700' },
+    { label: 'Renovação', icon: RefreshCw, tab: '__renewal__', color: 'from-orange-500 to-orange-700' },
   ];
 
   return (
@@ -206,6 +208,9 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-4xl flex-1 space-y-6">
+        {/* Renewal Warning */}
+        <RenewalWarning />
+
         {/* Busca de Peças - abre catálogos por fornecedor */}
         <Card
           className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
@@ -234,7 +239,7 @@ const Dashboard = () => {
               <Card
                 key={tab}
                 className="p-4 flex flex-col items-center gap-2 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.03] active:scale-95"
-                onClick={() => navigate(`/vendas?tab=${tab}`)}
+                onClick={() => tab === '__renewal__' ? navigate('/renovacao-pix') : navigate(`/vendas?tab=${tab}`)}
               >
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
                   <Icon className="w-5 h-5 text-white" />
