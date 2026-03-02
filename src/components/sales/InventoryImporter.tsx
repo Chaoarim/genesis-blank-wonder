@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, Trash2, Search, FileSpreadsheet, X, Package } from 'lucide-react';
+import { Upload, Trash2, Search, FileSpreadsheet, X, Package, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
@@ -236,11 +236,32 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
         <p className="text-xs text-muted-foreground">
           Envie um arquivo CSV ou Excel com: Código, Produto, Fornecedor, Aplicação (veículo), Qtd Estoque e Preço
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileUpload} className="hidden" />
           <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={importing} className="gap-2">
             <Upload className="w-4 h-4" />
             {importing ? 'Importando...' : 'Escolher Arquivo'}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              const header = [['Código', 'Produto', 'Fornecedor', 'Aplicação', 'Qtd Estoque', 'Preço']];
+              const sample = [
+                ['ABC123', 'Pastilha de Freio Dianteira', 'Fras-le', 'Gol G5 2010-2014', 10, 45.90],
+                ['DEF456', 'Filtro de Óleo', 'Tecfil', 'Civic 2012-2016', 25, 22.50],
+                ['GHI789', 'Amortecedor Traseiro', 'Cofap', 'Corolla 2015-2019', 4, 189.00],
+              ];
+              const ws = XLSX.utils.aoa_to_sheet([...header, ...sample]);
+              ws['!cols'] = [{ wch: 12 }, { wch: 30 }, { wch: 15 }, { wch: 25 }, { wch: 12 }, { wch: 12 }];
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Estoque');
+              XLSX.writeFile(wb, 'modelo-estoque.xlsx');
+              toast.success('Modelo baixado!');
+            }}
+          >
+            <Download className="w-4 h-4" />
+            Baixar Modelo
           </Button>
           {items.length > 0 && (
             <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={handleClearAll}>
