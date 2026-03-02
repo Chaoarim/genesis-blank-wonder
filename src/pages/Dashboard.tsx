@@ -294,7 +294,7 @@ const Dashboard = () => {
                 <Button
                   size="sm"
                   className="gap-2"
-                  onClick={() => window.open(`${window.location.origin}/#/catalogo/${user.id}`, '_blank')}
+                  onClick={() => navigate(`/catalogo/${user.id}`)}
                 >
                   <ExternalLink className="w-4 h-4" /> Abrir
                 </Button>
