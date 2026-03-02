@@ -242,7 +242,7 @@ const Dashboard = () => {
                 className="p-4 flex flex-col items-center gap-2 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.03] active:scale-95"
                 onClick={() => {
                   if (tab === '__renewal__') navigate('/renovacao-pix');
-                  else if (tab === '__low-stock__') navigate('/vendas?tab=inventory');
+                  else if (tab === '__low-stock__') navigate('/vendas?tab=low-stock');
                   else navigate(`/vendas?tab=${tab}`);
                 }}
               >
