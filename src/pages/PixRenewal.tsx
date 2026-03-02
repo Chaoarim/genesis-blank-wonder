@@ -56,8 +56,11 @@ const PixRenewal = () => {
           <div className="space-y-6">
             {/* Valor */}
             <div className="bg-gradient-to-r from-primary to-amber-600 text-primary-foreground rounded-lg p-4 text-center">
-              <p className="text-xs uppercase tracking-wide font-semibold mb-1">Valor da Renovação</p>
-              <span className="text-3xl font-bold">R$ 47,00</span>
+              <p className="text-xs uppercase tracking-wide font-semibold mb-1">⚡ Oferta Especial</p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg line-through opacity-70">R$ 97,00</span>
+                <span className="text-3xl font-bold">R$ 49,00</span>
+              </div>
               <p className="text-xs mt-1 opacity-80">Acesso mensal completo</p>
             </div>
 
