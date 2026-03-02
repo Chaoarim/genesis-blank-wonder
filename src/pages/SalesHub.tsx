@@ -13,7 +13,7 @@ import { InventorySearch } from '@/components/sales/InventorySearch';
 import { LowStockReport } from '@/components/sales/LowStockReport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
@@ -91,7 +91,7 @@ const SalesHub = () => {
       {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-6xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8 mb-6 h-auto">
+          <TabsList className="grid w-full grid-cols-9 mb-6 h-auto">
             <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-2.5 text-xs">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Dashboard</span>
@@ -107,6 +107,10 @@ const SalesHub = () => {
             <TabsTrigger value="inventory" className="flex flex-col gap-1 py-2.5 text-xs">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Estoque</span>
+            </TabsTrigger>
+            <TabsTrigger value="low-stock" className="flex flex-col gap-1 py-2.5 text-xs">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="hidden sm:inline text-[10px]">Estoque Baixo</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex flex-col gap-1 py-2.5 text-xs">
               <History className="w-4 h-4" />
@@ -145,10 +149,11 @@ const SalesHub = () => {
           </TabsContent>
 
           <TabsContent value="inventory">
-            <div className="space-y-4">
-              <InventorySearch />
-              <LowStockReport />
-            </div>
+            <InventorySearch />
+          </TabsContent>
+
+          <TabsContent value="low-stock">
+            <LowStockReport />
           </TabsContent>
 
           <TabsContent value="history">
