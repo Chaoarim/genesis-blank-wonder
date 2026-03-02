@@ -165,6 +165,12 @@ export function useSalesData(userId: string | null) {
     toast.success('Meta atualizada!');
   }, [userId, goals]);
 
+  const deleteGoal = useCallback(async (goalId: string) => {
+    await supabase.from('sales_goals').delete().eq('id', goalId);
+    setGoals(prev => prev.filter(g => g.id !== goalId));
+    toast.success('Meta excluída!');
+  }, []);
+
   // ---- Stats ----
   const now = new Date();
   const todaySales = sales.filter(s => s.status === 'completed' && new Date(s.created_at).toDateString() === now.toDateString());
@@ -192,7 +198,7 @@ export function useSalesData(userId: string | null) {
     customers, sales, goals, loading, fetchAll,
     addCustomer, updateCustomer, deleteCustomer,
     createSale, deleteSale, getSaleItems,
-    setGoal,
+    setGoal, deleteGoal,
     stats: { todayTotal, weekTotal, monthTotal, todaySales: todaySales.length, monthSales: monthSales.length, goalProgress, currentGoal, dailyTotals },
   };
 }
