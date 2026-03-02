@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Target, Trophy } from 'lucide-react';
+import { Target, Trophy, Trash2 } from 'lucide-react';
 import type { SalesGoal } from '@/hooks/useSalesData';
 
 interface GoalsManagerProps {
@@ -14,13 +14,14 @@ interface GoalsManagerProps {
     currentGoal: { goal_amount: number } | undefined;
   };
   onSetGoal: (month: number, year: number, amount: number) => Promise<void>;
+  onDeleteGoal: (goalId: string) => Promise<void>;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-export function GoalsManager({ goals, stats, onSetGoal }: GoalsManagerProps) {
+export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal }: GoalsManagerProps) {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -92,7 +93,17 @@ export function GoalsManager({ goals, stats, onSetGoal }: GoalsManagerProps) {
             {goals.map(g => (
               <div key={g.id} className="flex items-center justify-between text-sm rounded-lg border border-border p-3">
                 <span>{MONTHS[g.month - 1]} {g.year}</span>
-                <span className="font-bold text-primary">{fmt(Number(g.goal_amount))}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-primary">{fmt(Number(g.goal_amount))}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={() => onDeleteGoal(g.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
