@@ -10,6 +10,7 @@ import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPl
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { PartImageUploader } from "@/components/admin/PartImageUploader";
+import { AdminPartsManager } from "@/components/admin/AdminPartsManager";
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -1019,6 +1020,8 @@ const Admin = () => {
             </Card>
 
             <PartImageUploader />
+
+            <AdminPartsManager />
           </TabsContent>
 
 
