@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, Trash2, Search, FileSpreadsheet, X, Package, Download } from 'lucide-react';
+import { Upload, Trash2, Search, FileSpreadsheet, X, Package, Download, Eye, EyeOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
@@ -18,6 +19,7 @@ interface InventoryItem {
   qtd_estoque: number;
   preco: number;
   image_url?: string;
+  visible_catalog?: boolean;
 }
 
 interface InventoryImporterProps {
@@ -186,6 +188,7 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
           qtd_estoque: Number(r.qtd_estoque) || 0,
           preco: Number(r.preco) || 0,
           image_url: r.image_url || '',
+          visible_catalog: r.visible_catalog ?? false,
         })));
       }
 
@@ -198,6 +201,12 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
     setImporting(false);
     if (fileRef.current) fileRef.current.value = '';
   }, [setItems]);
+
+  const toggleCatalogVisibility = useCallback(async (id: string, visible: boolean) => {
+    await supabase.from('inventory_items').update({ visible_catalog: visible }).eq('id', id);
+    setItems(items.map(i => i.id === id ? { ...i, visible_catalog: visible } : i));
+    toast.success(visible ? 'Item visível no catálogo' : 'Item oculto do catálogo');
+  }, [items, setItems]);
 
   const handleDeleteItem = useCallback(async (id: string) => {
     await supabase.from('inventory_items').delete().eq('id', id);
@@ -295,8 +304,9 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
                   <TableHead>Código</TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead>Fornecedor</TableHead>
-                  <TableHead>Aplicação</TableHead>
-                  <TableHead className="text-center">Estoque</TableHead>
+                   <TableHead>Aplicação</TableHead>
+                   <TableHead className="text-center">Catálogo</TableHead>
+                   <TableHead className="text-center">Estoque</TableHead>
                   <TableHead className="text-right">Preço Custo</TableHead>
                   {markup > 0 && <TableHead className="text-right">Preço Revenda</TableHead>}
                   <TableHead className="w-10"></TableHead>
@@ -318,6 +328,12 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
                     <TableCell className="text-sm">{item.produto}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{item.aplicacao}</TableCell>
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={item.visible_catalog ?? false}
+                        onCheckedChange={(v) => toggleCatalogVisibility(item.id, v)}
+                      />
+                    </TableCell>
                     <TableCell className="text-center font-medium">{item.qtd_estoque}</TableCell>
                     <TableCell className="text-right font-medium">{fmt(item.preco)}</TableCell>
                     {markup > 0 && (

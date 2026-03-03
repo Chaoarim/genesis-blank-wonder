@@ -17,6 +17,7 @@ interface InventoryItem {
   qtd_estoque: number;
   preco: number;
   image_url?: string;
+  visible_catalog?: boolean;
 }
 
 export function ImportInventoryTab() {
@@ -34,7 +35,7 @@ export function ImportInventoryTab() {
         id: r.id, codigo: r.codigo, produto: r.produto,
         fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
         qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-        image_url: r.image_url || '',
+        image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
       })));
     }
   }, []);
@@ -56,7 +57,7 @@ export function ImportInventoryTab() {
           id: r.id, codigo: r.codigo, produto: r.produto,
           fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
           qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-          image_url: r.image_url || '',
+          image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
         })));
       }
       setLoading(false);
