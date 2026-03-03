@@ -89,6 +89,7 @@ export default function CatalogB2B() {
       .from('inventory_items')
       .select('*')
       .eq('user_id', sellerId)
+      .eq('visible_catalog', true)
       .order('produto');
 
     if (data) {

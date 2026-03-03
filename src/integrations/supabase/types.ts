@@ -155,6 +155,7 @@ export type Database = {
           qtd_estoque: number
           updated_at: string
           user_id: string
+          visible_catalog: boolean
         }
         Insert: {
           aplicacao?: string | null
@@ -168,6 +169,7 @@ export type Database = {
           qtd_estoque?: number
           updated_at?: string
           user_id: string
+          visible_catalog?: boolean
         }
         Update: {
           aplicacao?: string | null
@@ -181,6 +183,7 @@ export type Database = {
           qtd_estoque?: number
           updated_at?: string
           user_id?: string
+          visible_catalog?: boolean
         }
         Relationships: []
       }
