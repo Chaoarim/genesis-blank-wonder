@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
@@ -223,6 +223,27 @@ export default function CatalogB2B() {
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [todaySalesCount, setTodaySalesCount] = useState(0);
+
+  // Load today's sales count for social proof
+  useEffect(() => {
+    if (!sellerId) return;
+    const today = new Date().toISOString().split('T')[0];
+    supabase
+      .from('catalog_orders')
+      .select('items', { count: 'exact' })
+      .eq('seller_id', sellerId)
+      .gte('created_at', today)
+      .then(({ data }) => {
+        if (data) {
+          const totalItems = data.reduce((sum, order) => {
+            const items = Array.isArray(order.items) ? order.items : [];
+            return sum + items.reduce((s: number, i: any) => s + (i.quantidade || 1), 0);
+          }, 0);
+          setTodaySalesCount(totalItems);
+        }
+      });
+  }, [sellerId]);
 
   const submitOrder = useCallback(async () => {
     if (cart.length === 0 || !customer || submitting) return;
@@ -398,6 +419,16 @@ export default function CatalogB2B() {
             autoFocus
           />
         </div>
+
+        {/* Social proof banner */}
+        {todaySalesCount > 0 && (
+          <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 animate-pulse-slow">
+            <Flame className="w-5 h-5 text-orange-500 shrink-0" />
+            <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
+              🔥 <strong>{todaySalesCount} {todaySalesCount === 1 ? 'peça vendida' : 'peças vendidas'}</strong> hoje — garanta a sua antes que acabe!
+            </p>
+          </div>
+        )}
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
