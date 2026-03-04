@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
+import { CountdownTimer } from '@/components/catalog/CountdownTimer';
 
 interface CatalogItem {
   id: string;
@@ -24,6 +25,11 @@ interface CatalogItem {
 interface CartItem {
   item: CatalogItem;
   quantidade: number;
+}
+
+interface PromotionInfo {
+  discount_percent: number;
+  expires_at: string;
 }
 
 interface CatalogCustomer {
@@ -50,6 +56,7 @@ export default function CatalogB2B() {
   const [authPassword, setAuthPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [promotions, setPromotions] = useState<Map<string, PromotionInfo>>(new Map());
 
   // Check saved session
   useEffect(() => {
@@ -104,6 +111,22 @@ export default function CatalogB2B() {
         image_url: r.image_url || '',
       })));
     }
+
+    // Load active promotions
+    const { data: promoData } = await supabase
+      .from('inventory_promotions')
+      .select('inventory_item_id, discount_percent, expires_at')
+      .eq('user_id', sellerId)
+      .gte('expires_at', new Date().toISOString());
+
+    if (promoData) {
+      const map = new Map<string, PromotionInfo>();
+      promoData.forEach(p => {
+        map.set(p.inventory_item_id, { discount_percent: p.discount_percent, expires_at: p.expires_at });
+      });
+      setPromotions(map);
+    }
+
     setLoading(false);
   }, [sellerId]);
 
@@ -432,9 +455,22 @@ export default function CatalogB2B() {
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {filtered.slice(0, 50).map(item => (
-            <Card key={item.id} className="p-3 flex items-start gap-3">
-              <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-16 h-16 rounded-lg" />
+          {filtered.slice(0, 50).map(item => {
+            const promo = promotions.get(item.id);
+            const hasPromo = promo && new Date(promo.expires_at) > new Date();
+            const finalPrice = hasPromo
+              ? item.preco_revenda * (1 - promo.discount_percent / 100)
+              : item.preco_revenda;
+            return (
+            <Card key={item.id} className={`p-3 flex items-start gap-3 ${hasPromo ? 'border-red-300 dark:border-red-700 bg-red-50/30 dark:bg-red-950/10' : ''}`}>
+              <div className="relative">
+                <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-16 h-16 rounded-lg" />
+                {hasPromo && (
+                  <div className="absolute -top-1 -left-1 bg-destructive text-destructive-foreground text-[9px] font-bold px-1 py-0.5 rounded">
+                    -{promo.discount_percent}%
+                  </div>
+                )}
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.codigo}</p>
                 <p className="font-medium text-sm truncate">{item.produto}</p>
@@ -442,12 +478,24 @@ export default function CatalogB2B() {
                 {item.aplicacao && (
                   <p className="text-xs text-muted-foreground mt-0.5">🚗 {item.aplicacao}</p>
                 )}
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-lg font-bold text-primary">{fmt(item.preco_revenda)}</span>
+                <div className="flex items-center flex-wrap gap-1.5 mt-1">
+                  {hasPromo ? (
+                    <>
+                      <span className="text-xs line-through text-muted-foreground">{fmt(item.preco_revenda)}</span>
+                      <span className="text-lg font-bold text-destructive">{fmt(finalPrice)}</span>
+                    </>
+                  ) : (
+                    <span className="text-lg font-bold text-primary">{fmt(item.preco_revenda)}</span>
+                  )}
                   <Badge variant={item.qtd_estoque > 0 ? 'default' : 'destructive'} className="text-[10px]">
                     {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Esgotado'}
                   </Badge>
                 </div>
+                {hasPromo && (
+                  <div className="mt-1">
+                    <CountdownTimer expiresAt={promo.expires_at} />
+                  </div>
+                )}
               </div>
               <Button
                 size="icon"
@@ -458,7 +506,8 @@ export default function CatalogB2B() {
                 <Plus className="w-5 h-5" />
               </Button>
             </Card>
-          ))}
+            );
+          })}
         </div>
 
         {filtered.length === 0 && (
