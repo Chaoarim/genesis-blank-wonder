@@ -187,6 +187,41 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_promotions: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          expires_at: string
+          id: string
+          inventory_item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          expires_at: string
+          id?: string
+          inventory_item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          expires_at?: string
+          id?: string
+          inventory_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_promotions_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       markup_settings: {
         Row: {
           created_at: string

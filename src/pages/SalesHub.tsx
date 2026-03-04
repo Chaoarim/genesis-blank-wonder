@@ -12,10 +12,11 @@ import { GoalsManager } from '@/components/sales/GoalsManager';
 import { InventorySearch } from '@/components/sales/InventorySearch';
 import { LowStockReport } from '@/components/sales/LowStockReport';
 import { ImportInventoryTab } from '@/components/sales/ImportInventoryTab';
+import { PromotionsManager } from '@/components/sales/PromotionsManager';
 import { ManualProductForm } from '@/components/sales/ManualProductForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag } from 'lucide-react';
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
@@ -138,6 +139,10 @@ const SalesHub = () => {
               <PackagePlus className="w-4 h-4" />
               <span className="hidden sm:inline text-[10px]">Cadastrar</span>
             </TabsTrigger>
+            <TabsTrigger value="promotions" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
+              <Tag className="w-4 h-4" />
+              <span className="hidden sm:inline text-[10px]">Ofertas</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -203,6 +208,10 @@ const SalesHub = () => {
 
           <TabsContent value="manual-product">
             <ManualProductForm onProductAdded={() => toast.success('Produto cadastrado! Veja na aba Estoque.')} />
+          </TabsContent>
+
+          <TabsContent value="promotions">
+            <PromotionsManager />
           </TabsContent>
         </Tabs>
       </main>
