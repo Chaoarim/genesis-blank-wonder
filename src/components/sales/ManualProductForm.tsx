@@ -18,6 +18,7 @@ export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
   const [aplicacao, setAplicacao] = useState('');
   const [qtdEstoque, setQtdEstoque] = useState(0);
   const [preco, setPreco] = useState(0);
+  const [vendidosDisplay, setVendidosDisplay] = useState(0);
   const [saving, setSaving] = useState(false);
 
   const handleSave = useCallback(async () => {
@@ -38,7 +39,8 @@ export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
       aplicacao: aplicacao.trim(),
       qtd_estoque: qtdEstoque,
       preco,
-    });
+      vendidos_display: vendidosDisplay,
+    } as any);
 
     setSaving(false);
 
@@ -54,8 +56,9 @@ export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
     setAplicacao('');
     setQtdEstoque(0);
     setPreco(0);
+    setVendidosDisplay(0);
     onProductAdded();
-  }, [codigo, produto, fornecedor, aplicacao, qtdEstoque, preco, onProductAdded]);
+  }, [codigo, produto, fornecedor, aplicacao, qtdEstoque, preco, vendidosDisplay, onProductAdded]);
 
   return (
     <Card className="p-4 space-y-4">
@@ -88,6 +91,11 @@ export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
         <div className="space-y-1">
           <Label>Preço Custo (R$)</Label>
           <Input type="number" min={0} step={0.01} value={preco || ''} onChange={e => setPreco(parseFloat(e.target.value) || 0)} />
+        </div>
+        <div className="space-y-1">
+          <Label>🔥 Vendidos (exibição)</Label>
+          <Input type="number" min={0} value={vendidosDisplay || ''} onChange={e => setVendidosDisplay(parseInt(e.target.value) || 0)} placeholder="Ex: 150" />
+          <p className="text-[10px] text-muted-foreground">Número exibido no catálogo para gerar urgência</p>
         </div>
       </div>
 

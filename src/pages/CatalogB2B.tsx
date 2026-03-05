@@ -20,6 +20,7 @@ interface CatalogItem {
   qtd_estoque: number;
   preco_revenda: number;
   image_url?: string;
+  vendidos_display: number;
 }
 
 interface CartItem {
@@ -117,6 +118,7 @@ export default function CatalogB2B() {
         qtd_estoque: Number(r.qtd_estoque) || 0,
         preco_revenda: (Number(r.preco) || 0) * (1 + mk / 100),
         image_url: r.image_url || '',
+        vendidos_display: Number(r.vendidos_display) || 0,
       })));
     }
 
@@ -652,7 +654,7 @@ export default function CatalogB2B() {
           </div>
         )}
 
-        {/* Social proof banner */}
+        {/* Social proof banner - kept for global urgency */}
         {todaySalesCount > 0 && (
           <div className="flex items-center gap-2 mb-4 px-3 py-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 animate-pulse-slow">
             <Flame className="w-5 h-5 text-orange-500 shrink-0" />
@@ -704,6 +706,12 @@ export default function CatalogB2B() {
                     {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Esgotado'}
                   </Badge>
                 </div>
+                {item.vendidos_display > 0 && (
+                  <div className="flex items-center gap-1 mt-1 text-[11px] text-orange-600 dark:text-orange-400 font-medium">
+                    <Flame className="w-3 h-3" />
+                    <span>{item.vendidos_display} vendido{item.vendidos_display !== 1 ? 's' : ''}</span>
+                  </div>
+                )}
                 {hasPromo && (
                   <div className="mt-1">
                     <CountdownTimer expiresAt={promo.expires_at} />

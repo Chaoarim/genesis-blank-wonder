@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory_items ADD COLUMN IF NOT EXISTS vendidos_display integer NOT NULL DEFAULT 0;
