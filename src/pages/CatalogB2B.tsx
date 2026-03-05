@@ -264,23 +264,45 @@ export default function CatalogB2B() {
     [cart]
   );
 
+  // Calculate supplier-specific subtotal for coupon
+  const supplierSubtotal = useMemo(() => {
+    if (!appliedCoupon?.supplier_filter) return cartSubtotal;
+    return cart
+      .filter(c => (c.item.fornecedor || '').trim().toUpperCase() === appliedCoupon.supplier_filter)
+      .reduce((sum, c) => sum + c.quantidade * c.item.preco_revenda, 0);
+  }, [cart, cartSubtotal, appliedCoupon]);
+
+  // Coupon validation message
+  const couponWarning = useMemo(() => {
+    if (!appliedCoupon) return '';
+    if (appliedCoupon.supplier_filter) {
+      // Supplier-specific coupon: check supplier items total against min_order_amount
+      if (supplierSubtotal === 0) {
+        return `Este cupom é válido apenas para produtos do fornecedor ${appliedCoupon.supplier_filter}. Adicione itens desse fornecedor ao carrinho.`;
+      }
+      if (appliedCoupon.min_order_amount > 0 && supplierSubtotal < appliedCoupon.min_order_amount) {
+        const falta = appliedCoupon.min_order_amount - supplierSubtotal;
+        return `Cupom válido apenas para ${appliedCoupon.supplier_filter}. Faltam ${fmt(falta)} em produtos desse fornecedor para atingir o mínimo de ${fmt(appliedCoupon.min_order_amount)}.`;
+      }
+    } else {
+      // General coupon: check total cart against min_order_amount
+      if (appliedCoupon.min_order_amount > 0 && cartSubtotal < appliedCoupon.min_order_amount) {
+        const falta = appliedCoupon.min_order_amount - cartSubtotal;
+        return `Cupom não pode ser validado. Faltam ${fmt(falta)} para atingir o pedido mínimo de ${fmt(appliedCoupon.min_order_amount)}.`;
+      }
+    }
+    return '';
+  }, [appliedCoupon, cartSubtotal, supplierSubtotal]);
+
   // Calculate coupon discount
   const couponDiscount = useMemo(() => {
-    if (!appliedCoupon) return 0;
-    // Check min order
-    if (cartSubtotal < appliedCoupon.min_order_amount) return 0;
-    // Check supplier filter
-    if (appliedCoupon.supplier_filter) {
-      const hasSupplierItems = cart.some(c =>
-        (c.item.fornecedor || '').trim().toUpperCase() === appliedCoupon.supplier_filter
-      );
-      if (!hasSupplierItems) return 0;
-    }
+    if (!appliedCoupon || couponWarning) return 0;
+    const base = appliedCoupon.supplier_filter ? supplierSubtotal : cartSubtotal;
     if (appliedCoupon.discount_type === 'percent') {
-      return cartSubtotal * (appliedCoupon.discount_value / 100);
+      return base * (appliedCoupon.discount_value / 100);
     }
-    return Math.min(appliedCoupon.discount_value, cartSubtotal);
-  }, [cart, cartSubtotal, appliedCoupon]);
+    return Math.min(appliedCoupon.discount_value, base);
+  }, [appliedCoupon, cartSubtotal, supplierSubtotal, couponWarning]);
 
   const cartTotal = cartSubtotal - couponDiscount;
 
@@ -560,6 +582,14 @@ export default function CatalogB2B() {
                 </div>
               )}
             </div>
+
+            {/* Coupon warning */}
+            {appliedCoupon && couponWarning && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2">
+                <Ticket className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                <span>{couponWarning}</span>
+              </div>
+            )}
 
             {/* Totals */}
             <div className="border-t pt-3 space-y-1">
