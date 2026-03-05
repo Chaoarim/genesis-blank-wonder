@@ -462,7 +462,7 @@ export default function CatalogB2B() {
               ? item.preco_revenda * (1 - promo.discount_percent / 100)
               : item.preco_revenda;
             return (
-            <Card key={item.id} className={`p-3 flex items-start gap-3 ${hasPromo ? 'border-red-300 dark:border-red-700 bg-red-50/30 dark:bg-red-950/10' : ''}`}>
+            <Card key={item.id} className="p-3 flex items-start gap-3">
               <div className="relative">
                 <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-16 h-16 rounded-lg" />
                 {hasPromo && (
