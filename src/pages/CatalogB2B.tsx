@@ -120,17 +120,28 @@ export default function CatalogB2B() {
       })));
     }
 
-    // Load active promotions
+    // Load active promotions - will filter by customer after login
     const { data: promoData } = await supabase
       .from('inventory_promotions')
-      .select('inventory_item_id, discount_percent, expires_at')
+      .select('inventory_item_id, discount_percent, expires_at, customer_id')
       .eq('user_id', sellerId)
       .gte('expires_at', new Date().toISOString());
 
     if (promoData) {
+      // Get current customer from state or localStorage
+      const savedCustomer = localStorage.getItem(`catalog_customer_${sellerId}`);
+      const currentCustomerId = savedCustomer ? JSON.parse(savedCustomer)?.id : null;
+
       const map = new Map<string, PromotionInfo>();
-      promoData.forEach(p => {
-        map.set(p.inventory_item_id, { discount_percent: p.discount_percent, expires_at: p.expires_at });
+      promoData.forEach((p: any) => {
+        // Show promo if: no customer_id (global) OR matches current customer
+        if (!p.customer_id || p.customer_id === currentCustomerId) {
+          // Keep the best discount if multiple apply
+          const existing = map.get(p.inventory_item_id);
+          if (!existing || p.discount_percent > existing.discount_percent) {
+            map.set(p.inventory_item_id, { discount_percent: p.discount_percent, expires_at: p.expires_at });
+          }
+        }
       });
       setPromotions(map);
     }

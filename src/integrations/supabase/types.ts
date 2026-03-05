@@ -235,6 +235,8 @@ export type Database = {
       inventory_promotions: {
         Row: {
           created_at: string
+          customer_id: string | null
+          customer_name: string | null
           discount_percent: number
           expires_at: string
           id: string
@@ -243,6 +245,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
           discount_percent?: number
           expires_at: string
           id?: string
@@ -251,6 +255,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
           discount_percent?: number
           expires_at?: string
           id?: string
