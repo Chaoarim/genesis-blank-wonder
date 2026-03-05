@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink, Pencil, Check, X, Trash2, ImagePlus, Loader2 } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X, Trash2, ImagePlus, Loader2, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { PartThumbnail } from '@/components/PartThumbnail';
@@ -18,9 +18,10 @@ interface InventoryItem {
   qtd_estoque: number;
   preco: number;
   image_url?: string;
+  vendidos_display: number;
 }
 
-type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao';
+type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display';
 
 export function InventorySearch() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -48,7 +49,7 @@ export function InventorySearch() {
           id: r.id, codigo: r.codigo, produto: r.produto,
           fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
           qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-          image_url: r.image_url || '',
+          image_url: r.image_url || '', vendidos_display: Number(r.vendidos_display) || 0,
         })));
       }
       setMarkup(Number(markupRes.data?.markup_revenda) || 0);
@@ -71,10 +72,10 @@ export function InventorySearch() {
   const saveEdit = useCallback(async (id: string) => {
     const updateData: Record<string, any> = {};
 
-    if (editField === 'qtd_estoque') {
+    if (editField === 'qtd_estoque' || editField === 'vendidos_display') {
       const newQty = parseInt(editValue);
-      if (isNaN(newQty) || newQty < 0) { toast.error('Quantidade inválida'); return; }
-      updateData.qtd_estoque = newQty;
+      if (isNaN(newQty) || newQty < 0) { toast.error('Valor inválido'); return; }
+      updateData[editField] = newQty;
     } else {
       if (editField === 'codigo' && !editValue.trim()) { toast.error('Código não pode ser vazio'); return; }
       if (editField === 'produto' && !editValue.trim()) { toast.error('Produto não pode ser vazio'); return; }
@@ -205,6 +206,9 @@ export function InventorySearch() {
                 <TableHead>Fornecedor</TableHead>
                 <TableHead>Aplicação</TableHead>
                 <TableHead className="text-center">Estoque</TableHead>
+                <TableHead className="text-center">
+                  <span className="flex items-center justify-center gap-1"><Flame className="w-3 h-3" />Vendidos</span>
+                </TableHead>
                 <TableHead className="text-right">Preço Revenda</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
@@ -249,6 +253,11 @@ export function InventorySearch() {
                     <TableCell className="text-center">
                       {renderEditableCell(item, 'qtd_estoque', item.qtd_estoque,
                         `font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : item.qtd_estoque <= 3 ? 'text-amber-500' : 'text-green-600'}`
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {renderEditableCell(item, 'vendidos_display', item.vendidos_display,
+                        `font-bold ${item.vendidos_display > 0 ? 'text-orange-500' : 'text-muted-foreground'}`
                       )}
                     </TableCell>
                     <TableCell className="text-right font-bold text-primary">{fmt(precoRevenda)}</TableCell>
