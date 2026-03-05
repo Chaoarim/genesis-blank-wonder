@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame, Tag } from 'lucide-react';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame, Tag, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
@@ -57,6 +57,14 @@ export default function CatalogB2B() {
   const [authLoading, setAuthLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [promotions, setPromotions] = useState<Map<string, PromotionInfo>>(new Map());
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: string; code: string; discount_type: string; discount_value: number;
+    min_order_amount: number; supplier_filter: string | null;
+  } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   // Check saved session
   useEffect(() => {
@@ -240,10 +248,69 @@ export default function CatalogB2B() {
     setCart(prev => prev.filter(c => c.item.id !== itemId));
   }, []);
 
-  const cartTotal = useMemo(() =>
+  const cartSubtotal = useMemo(() =>
     cart.reduce((sum, c) => sum + c.quantidade * c.item.preco_revenda, 0),
     [cart]
   );
+
+  // Calculate coupon discount
+  const couponDiscount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    // Check min order
+    if (cartSubtotal < appliedCoupon.min_order_amount) return 0;
+    // Check supplier filter
+    if (appliedCoupon.supplier_filter) {
+      const hasSupplierItems = cart.some(c =>
+        (c.item.fornecedor || '').trim().toUpperCase() === appliedCoupon.supplier_filter
+      );
+      if (!hasSupplierItems) return 0;
+    }
+    if (appliedCoupon.discount_type === 'percent') {
+      return cartSubtotal * (appliedCoupon.discount_value / 100);
+    }
+    return Math.min(appliedCoupon.discount_value, cartSubtotal);
+  }, [cart, cartSubtotal, appliedCoupon]);
+
+  const cartTotal = cartSubtotal - couponDiscount;
+
+  const applyCoupon = useCallback(async () => {
+    if (!couponCode.trim() || !sellerId) return;
+    setCouponLoading(true);
+    const { data, error } = await supabase
+      .from('discount_coupons')
+      .select('*')
+      .eq('user_id', sellerId)
+      .eq('code', couponCode.trim().toUpperCase())
+      .eq('is_active', true)
+      .gte('expires_at', new Date().toISOString())
+      .maybeSingle();
+
+    if (error || !data) {
+      toast.error('Cupom inválido ou expirado');
+      setCouponLoading(false);
+      return;
+    }
+    if (data.max_uses && data.used_count >= data.max_uses) {
+      toast.error('Este cupom atingiu o limite de usos');
+      setCouponLoading(false);
+      return;
+    }
+    setAppliedCoupon({
+      id: data.id,
+      code: data.code,
+      discount_type: data.discount_type,
+      discount_value: Number(data.discount_value),
+      min_order_amount: Number(data.min_order_amount) || 0,
+      supplier_filter: data.supplier_filter,
+    });
+    toast.success(`Cupom ${data.code} aplicado!`);
+    setCouponLoading(false);
+  }, [couponCode, sellerId]);
+
+  const removeCoupon = useCallback(() => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+  }, []);
 
   const [submitting, setSubmitting] = useState(false);
   const [todaySalesCount, setTodaySalesCount] = useState(0);
@@ -272,33 +339,46 @@ export default function CatalogB2B() {
     if (cart.length === 0 || !customer || submitting) return;
     setSubmitting(true);
 
+    const orderItems = cart.map(c => ({
+      codigo: c.item.codigo,
+      produto: c.item.produto,
+      quantidade: c.quantidade,
+      preco: c.item.preco_revenda,
+    }));
+
     const { error } = await supabase.from('catalog_orders').insert({
       seller_id: sellerId,
       customer_id: customer.id,
       customer_name: customer.name,
       customer_phone: customer.phone,
-      items: cart.map(c => ({
-        codigo: c.item.codigo,
-        produto: c.item.produto,
-        quantidade: c.quantidade,
-        preco: c.item.preco_revenda,
-      })),
+      items: orderItems,
       total: cartTotal,
     });
 
-    setSubmitting(false);
     if (error) {
+      setSubmitting(false);
       toast.error('Erro ao enviar pedido. Tente novamente.');
       return;
     }
 
+    // Increment coupon used_count
+    if (appliedCoupon && couponDiscount > 0) {
+      await supabase
+        .from('discount_coupons')
+        .update({ used_count: (appliedCoupon as any).used_count ? (appliedCoupon as any).used_count + 1 : 1 } as any)
+        .eq('id', appliedCoupon.id);
+    }
+
+    setSubmitting(false);
     toast.success('Pedido enviado com sucesso! O vendedor entrará em contato.');
     setCart([]);
     setShowCart(false);
+    setAppliedCoupon(null);
+    setCouponCode('');
     
     // Recarregar estoque atualizado
     await loadItems();
-  }, [cart, customer, cartTotal, sellerId, submitting, loadItems]);
+  }, [cart, customer, cartTotal, sellerId, submitting, loadItems, appliedCoupon, couponDiscount]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -435,11 +515,61 @@ export default function CatalogB2B() {
                 </Button>
               </div>
             ))}
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-lg font-bold">Total: {fmt(cartTotal)}</p>
-              <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={submitOrder} disabled={submitting}>
-                <Send className="w-4 h-4" /> {submitting ? 'Enviando...' : 'Finalizar Pedido'}
-              </Button>
+
+            {/* Coupon Input */}
+            <div className="border-t pt-3">
+              {appliedCoupon ? (
+                <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-2">
+                  <Ticket className="w-4 h-4 text-green-600 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-green-700 dark:text-green-300">Cupom {appliedCoupon.code}</p>
+                    <p className="text-[10px] text-green-600 dark:text-green-400">
+                      {appliedCoupon.discount_type === 'percent' ? `${appliedCoupon.discount_value}%` : fmt(appliedCoupon.discount_value)} de desconto
+                      {appliedCoupon.supplier_filter ? ` (${appliedCoupon.supplier_filter})` : ''}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeCoupon}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Ticket className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Cupom de desconto"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                      className="pl-8 h-9 text-sm uppercase font-mono"
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={applyCoupon} disabled={couponLoading || !couponCode.trim()}>
+                    {couponLoading ? '...' : 'Aplicar'}
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Totals */}
+            <div className="border-t pt-3 space-y-1">
+              {couponDiscount > 0 && (
+                <>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>{fmt(cartSubtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Desconto ({appliedCoupon?.code})</span>
+                    <span>-{fmt(couponDiscount)}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-bold">Total: {fmt(cartTotal)}</p>
+                <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={submitOrder} disabled={submitting}>
+                  <Send className="w-4 h-4" /> {submitting ? 'Enviando...' : 'Finalizar Pedido'}
+                </Button>
+              </div>
             </div>
           </Card>
         )}
