@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Upload, Trash2, Search, FileSpreadsheet, X, Package, Download, Eye, EyeOff } from 'lucide-react';
+import { Upload, Trash2, Search, FileSpreadsheet, X, Package, Download, Eye, EyeOff, Pencil, Check, ImagePlus, Flame } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,7 @@ interface InventoryItem {
   preco: number;
   image_url?: string;
   visible_catalog?: boolean;
+  vendidos_display?: number;
 }
 
 interface InventoryImporterProps {
@@ -32,6 +33,61 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
   const [search, setSearch] = useState('');
   const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoEditId, setPhotoEditId] = useState<string | null>(null);
+
+  const startEdit = (id: string, field: string, currentValue: string) => {
+    setEditingCell({ id, field });
+    setEditValue(currentValue);
+  };
+
+  const saveEdit = useCallback(async () => {
+    if (!editingCell) return;
+    const { id, field } = editingCell;
+
+    const dbField = field === 'vendidos_display' ? 'vendidos_display' : field;
+    const value = field === 'vendidos_display' ? (parseInt(editValue) || 0) : editValue.trim();
+
+    const { error } = await supabase.from('inventory_items').update({ [dbField]: value }).eq('id', id);
+    if (error) {
+      toast.error('Erro ao salvar');
+      console.error(error);
+    } else {
+      setItems(items.map(i => i.id === id ? { ...i, [field]: value } : i));
+      toast.success('Atualizado!');
+    }
+    setEditingCell(null);
+  }, [editingCell, editValue, items, setItems]);
+
+  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !photoEditId) return;
+
+    const item = items.find(i => i.id === photoEditId);
+    if (!item) return;
+
+    const ext = file.name.split('.').pop();
+    const path = `${item.codigo.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage.from('part-images').upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast.error('Erro no upload');
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('part-images').getPublicUrl(path);
+    const { error } = await supabase.from('inventory_items').update({ image_url: publicUrl }).eq('id', photoEditId);
+    if (error) {
+      toast.error('Erro ao salvar URL');
+    } else {
+      setItems(items.map(i => i.id === photoEditId ? { ...i, image_url: publicUrl } : i));
+      toast.success('Foto atualizada!');
+    }
+    setPhotoEditId(null);
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  }, [photoEditId, items, setItems]);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,69 +101,35 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer, { type: 'array', raw: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      
-      // Use raw:true to get original cell values, then also get formatted
       const rowsRaw: any[] = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
       const rowsFormatted: any[] = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
-
       const rows = rowsRaw.length > 0 ? rowsRaw : rowsFormatted;
 
-      if (rows.length === 0) {
-        toast.error('Planilha vazia');
-        setImporting(false);
-        return;
-      }
+      if (rows.length === 0) { toast.error('Planilha vazia'); setImporting(false); return; }
 
       const keys = Object.keys(rows[0]);
-      console.log('[Importer] Headers:', keys);
-      console.log('[Importer] Row 0 raw:', JSON.stringify(rows[0]));
-      if (rowsFormatted.length > 0) {
-        console.log('[Importer] Row 0 formatted:', JSON.stringify(rowsFormatted[0]));
-      }
-      
       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
-      
-      // Build a map: normalizedKey -> originalKey
       const keyMap: Record<string, string> = {};
       keys.forEach(k => { keyMap[normalize(k)] = k; });
-      console.log('[Importer] Normalized keys:', Object.keys(keyMap));
 
       const findCol = (hints: string[]): string | null => {
-        for (const h of hints) {
-          // exact match on normalized
-          if (keyMap[h]) return keyMap[h];
-        }
-        for (const h of hints) {
-          // starts-with
-          const found = Object.entries(keyMap).find(([nk]) => nk.startsWith(h));
-          if (found) return found[1];
-        }
-        for (const h of hints) {
-          // contains
-          const found = Object.entries(keyMap).find(([nk]) => nk.includes(h));
-          if (found) return found[1];
-        }
+        for (const h of hints) { if (keyMap[h]) return keyMap[h]; }
+        for (const h of hints) { const f = Object.entries(keyMap).find(([nk]) => nk.startsWith(h)); if (f) return f[1]; }
+        for (const h of hints) { const f = Object.entries(keyMap).find(([nk]) => nk.includes(h)); if (f) return f[1]; }
         return null;
       };
 
       const parseNum = (v: any): number => {
         if (v === null || v === undefined || v === '') return 0;
         if (typeof v === 'number') return v;
-        let s = String(v).trim();
-        s = s.replace(/[R$€£¥\s]/g, '');
+        let s = String(v).trim().replace(/[R$€£¥\s]/g, '');
         if (!s) return 0;
-        const lastComma = s.lastIndexOf(',');
-        const lastDot = s.lastIndexOf('.');
-        if (lastComma > lastDot) {
-          s = s.replace(/\./g, '').replace(',', '.');
-        } else if (lastDot > lastComma) {
-          s = s.replace(/,/g, '');
-        } else {
-          // no separator or only one type
-          s = s.replace(',', '.');
-        }
-        const parsed = parseFloat(s);
-        return isNaN(parsed) ? 0 : parsed;
+        const lc = s.lastIndexOf(','), ld = s.lastIndexOf('.');
+        if (lc > ld) s = s.replace(/\./g, '').replace(',', '.');
+        else if (ld > lc) s = s.replace(/,/g, '');
+        else s = s.replace(',', '.');
+        const p = parseFloat(s);
+        return isNaN(p) ? 0 : p;
       };
 
       let colCodigo = findCol(['codigo', 'cod', 'ref', 'referencia', 'code', 'sku']);
@@ -117,27 +139,12 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       let colEstoque = findCol(['estoque', 'qtd', 'quantidade', 'stock', 'qty', 'saldo']);
       let colPreco = findCol(['preco', 'custo', 'price', 'valor', 'cost', 'vlr']);
 
-      // Fallback: if 6 columns detected in order, map by position
-      if (!colPreco && keys.length >= 6) {
-        console.log('[Importer] Preço não detectado por nome, usando posição 6');
-        colPreco = keys[5];
-      }
-      if (!colAplicacao && keys.length >= 4) {
-        console.log('[Importer] Aplicação não detectada por nome, usando posição 4');
-        colAplicacao = keys[3];
-      }
+      if (!colPreco && keys.length >= 6) colPreco = keys[5];
+      if (!colAplicacao && keys.length >= 4) colAplicacao = keys[3];
       if (!colCodigo) colCodigo = keys[0];
       if (!colProduto) colProduto = keys[1];
       if (!colFornecedor && keys.length >= 3) colFornecedor = keys[2];
       if (!colEstoque && keys.length >= 5) colEstoque = keys[4];
-
-      console.log('[Importer] Mapeamento final:', { colCodigo, colProduto, colFornecedor, colAplicacao, colEstoque, colPreco });
-      
-      // Log sample values for price column
-      if (colPreco && rows.length > 0) {
-        const samplePrice = rows[0][colPreco];
-        console.log('[Importer] Preço amostra:', samplePrice, 'tipo:', typeof samplePrice, 'parseado:', parseNum(samplePrice));
-      }
 
       const parsed = rows
         .map(r => ({
@@ -149,54 +156,28 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
           preco: colPreco ? parseNum(r[colPreco]) : 0,
         }))
         .filter(r => r.codigo);
-      
-      console.log('[Importer] Primeiro item parseado:', JSON.stringify(parsed[0]));
 
-      if (parsed.length === 0) {
-        toast.error('Nenhum item válido encontrado.');
-        setImporting(false);
-        return;
-      }
+      if (parsed.length === 0) { toast.error('Nenhum item válido encontrado.'); setImporting(false); return; }
 
       const batchSize = 500;
       for (let i = 0; i < parsed.length; i += batchSize) {
-        const batch = parsed.slice(i, i + batchSize).map(p => ({
-          user_id: user.id,
-          ...p,
-        }));
+        const batch = parsed.slice(i, i + batchSize).map(p => ({ user_id: user.id, ...p }));
         const { error } = await supabase.from('inventory_items').insert(batch);
-        if (error) {
-          console.error('Insert error:', error);
-          toast.error('Erro ao importar lote');
-        }
+        if (error) { console.error('Insert error:', error); toast.error('Erro ao importar lote'); }
       }
 
-      // Reload
-      const { data } = await supabase
-        .from('inventory_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
+      const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
       if (data) {
         setItems(data.map((r: any) => ({
-          id: r.id,
-          codigo: r.codigo,
-          produto: r.produto,
-          fornecedor: r.fornecedor || '',
-          aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0,
-          preco: Number(r.preco) || 0,
-          image_url: r.image_url || '',
-          visible_catalog: r.visible_catalog ?? false,
+          id: r.id, codigo: r.codigo, produto: r.produto,
+          fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+          qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+          image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
+          vendidos_display: Number(r.vendidos_display) || 0,
         })));
       }
-
       toast.success(`${parsed.length} itens importados ao estoque!`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao ler arquivo');
-    }
+    } catch (err) { console.error(err); toast.error('Erro ao ler arquivo'); }
 
     setImporting(false);
     if (fileRef.current) fileRef.current.value = '';
@@ -223,20 +204,48 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
   }, [setItems]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-  const normalizeSearch = (t: string) =>
-    t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const normalizeSearch = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
     const q = normalizeSearch(search);
-    return items.filter(i =>
-      normalizeSearch(`${i.codigo} ${i.produto} ${i.fornecedor} ${i.aplicacao}`).includes(q)
-    );
+    return items.filter(i => normalizeSearch(`${i.codigo} ${i.produto} ${i.fornecedor} ${i.aplicacao}`).includes(q));
   }, [items, search]);
+
+  const isEditing = (id: string, field: string) => editingCell?.id === id && editingCell?.field === field;
+
+  const EditableCell = ({ id, field, value, className = '' }: { id: string; field: string; value: string; className?: string }) => {
+    if (isEditing(id, field)) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={editValue}
+            onChange={e => setEditValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingCell(null); }}
+            className="h-7 text-xs min-w-[60px]"
+            autoFocus
+          />
+          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={saveEdit}>
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className={`flex items-center gap-1 group ${className}`}>
+        <span className="truncate">{value || '—'}</span>
+        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" onClick={() => startEdit(id, field, value)}>
+          <Pencil className="w-3 h-3 text-muted-foreground" />
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
+      {/* Hidden file input for photo editing */}
+      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+
       <Card className="p-4 space-y-3">
         <h3 className="font-semibold flex items-center gap-2">
           <Package className="w-5 h-5 text-primary" />
@@ -284,29 +293,26 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
         <Card className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">{items.length} itens no estoque</h3>
+            <p className="text-xs text-muted-foreground">Clique no ✏️ para editar</p>
           </div>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Filtrar por código, produto, fornecedor ou aplicação..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Filtrar por código, produto, fornecedor ou aplicação..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
 
           <div className="overflow-auto max-h-[500px] rounded-lg border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">Foto</TableHead>
+                  <TableHead className="w-14">Foto</TableHead>
                   <TableHead>Código</TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead>Fornecedor</TableHead>
-                   <TableHead>Aplicação</TableHead>
-                   <TableHead className="text-center">Catálogo</TableHead>
-                   <TableHead className="text-center">Estoque</TableHead>
+                  <TableHead>Aplicação</TableHead>
+                  <TableHead className="text-center w-20">Vendidos</TableHead>
+                  <TableHead className="text-center">Catálogo</TableHead>
+                  <TableHead className="text-center">Estoque</TableHead>
                   <TableHead className="text-right">Preço Custo</TableHead>
                   {markup > 0 && <TableHead className="text-right">Preço Revenda</TableHead>}
                   <TableHead className="w-10"></TableHead>
@@ -315,31 +321,73 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
               <TableBody>
                 {filtered.slice(0, 100).map(item => (
                   <TableRow key={item.id}>
+                    {/* Foto - editable */}
                     <TableCell className="p-1">
-                      {item.image_url ? (
-                        <img src={item.image_url} alt={item.codigo} className="w-10 h-10 object-cover rounded" loading="lazy" />
+                      <div className="relative group cursor-pointer" onClick={() => {
+                        setPhotoEditId(item.id);
+                        photoInputRef.current?.click();
+                      }}>
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.codigo} className="w-10 h-10 object-cover rounded" loading="lazy" />
+                        ) : (
+                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
+                            <Package className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Pencil className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    {/* Código - editable */}
+                    <TableCell className="font-mono text-xs">
+                      <EditableCell id={item.id} field="codigo" value={item.codigo} />
+                    </TableCell>
+                    {/* Produto - editable */}
+                    <TableCell className="text-sm">
+                      <EditableCell id={item.id} field="produto" value={item.produto} />
+                    </TableCell>
+                    {/* Fornecedor - editable */}
+                    <TableCell className="text-sm text-muted-foreground">
+                      <EditableCell id={item.id} field="fornecedor" value={item.fornecedor} />
+                    </TableCell>
+                    {/* Aplicação - editable */}
+                    <TableCell className="text-sm text-muted-foreground">
+                      <EditableCell id={item.id} field="aplicacao" value={item.aplicacao} />
+                    </TableCell>
+                    {/* Vendidos - editable */}
+                    <TableCell className="text-center">
+                      {isEditing(item.id, 'vendidos_display') ? (
+                        <div className="flex items-center gap-1 justify-center">
+                          <Input
+                            type="number"
+                            value={editValue}
+                            onChange={e => setEditValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingCell(null); }}
+                            className="h-7 text-xs w-16 text-center"
+                            autoFocus
+                          />
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={saveEdit}>
+                            <Check className="w-3 h-3 text-green-600" />
+                          </Button>
+                        </div>
                       ) : (
-                        <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                          <Package className="w-4 h-4 text-muted-foreground" />
+                        <div className="flex items-center gap-1 justify-center group">
+                          {(item.vendidos_display || 0) > 0 && <Flame className="w-3 h-3 text-orange-500" />}
+                          <span className="text-xs">{item.vendidos_display || 0}</span>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" onClick={() => startEdit(item.id, 'vendidos_display', String(item.vendidos_display || 0))}>
+                            <Pencil className="w-3 h-3 text-muted-foreground" />
+                          </Button>
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">{item.codigo}</TableCell>
-                    <TableCell className="text-sm">{item.produto}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.aplicacao}</TableCell>
                     <TableCell className="text-center">
-                      <Switch
-                        checked={item.visible_catalog ?? false}
-                        onCheckedChange={(v) => toggleCatalogVisibility(item.id, v)}
-                      />
+                      <Switch checked={item.visible_catalog ?? false} onCheckedChange={(v) => toggleCatalogVisibility(item.id, v)} />
                     </TableCell>
                     <TableCell className="text-center font-medium">{item.qtd_estoque}</TableCell>
                     <TableCell className="text-right font-medium">{fmt(item.preco)}</TableCell>
                     {markup > 0 && (
-                      <TableCell className="text-right font-bold text-primary">
-                        {fmt(item.preco * (1 + markup / 100))}
-                      </TableCell>
+                      <TableCell className="text-right font-bold text-primary">{fmt(item.preco * (1 + markup / 100))}</TableCell>
                     )}
                     <TableCell>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteItem(item.id)}>
@@ -351,9 +399,7 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
               </TableBody>
             </Table>
             {filtered.length > 100 && (
-              <p className="text-center text-xs text-muted-foreground py-2">
-                Mostrando 100 de {filtered.length} itens. Use o filtro.
-              </p>
+              <p className="text-center text-xs text-muted-foreground py-2">Mostrando 100 de {filtered.length} itens. Use o filtro.</p>
             )}
           </div>
         </Card>
