@@ -302,10 +302,23 @@ export default function CatalogB2B() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+
+  const brands = useMemo(() => {
+    const map = new Map<string, number>();
+    items.forEach(i => {
+      const f = (i.fornecedor || '').trim().toUpperCase();
+      if (f) map.set(f, (map.get(f) || 0) + 1);
+    });
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  }, [items]);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return items;
-    return smartFilterInventory(items, search);
-  }, [items, search]);
+    let result = items;
+    if (search.trim()) result = smartFilterInventory(result, search);
+    if (selectedBrand) result = result.filter(i => (i.fornecedor || '').trim().toUpperCase() === selectedBrand);
+    return result;
+  }, [items, search, selectedBrand]);
 
   if (loading) {
     return (
@@ -442,6 +455,31 @@ export default function CatalogB2B() {
             autoFocus
           />
         </div>
+
+        {/* Brand filter */}
+        {brands.length > 1 && (
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              onClick={() => setSelectedBrand(null)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                !selectedBrand ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+              }`}
+            >
+              Todas
+            </button>
+            {brands.map(([brand, count]) => (
+              <button
+                key={brand}
+                onClick={() => setSelectedBrand(selectedBrand === brand ? null : brand)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  selectedBrand === brand ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+                }`}
+              >
+                {brand} ({count})
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Social proof banner */}
         {todaySalesCount > 0 && (
