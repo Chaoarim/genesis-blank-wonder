@@ -512,7 +512,11 @@ export default function CatalogB2B() {
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{item.codigo}</p>
                 <p className="font-medium text-sm truncate">{item.produto}</p>
-                <p className="text-xs text-muted-foreground">{item.fornecedor}</p>
+                {item.fornecedor && (
+                  <Badge variant="outline" className="text-[10px] font-bold px-1.5 py-0 border-primary/40 text-primary">
+                    {item.fornecedor}
+                  </Badge>
+                )}
                 {item.aplicacao && (
                   <p className="text-xs text-muted-foreground mt-0.5">🚗 {item.aplicacao}</p>
                 )}
