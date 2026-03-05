@@ -142,6 +142,51 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          min_order_amount: number | null
+          supplier_filter: string | null
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_order_amount?: number | null
+          supplier_filter?: string | null
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_order_amount?: number | null
+          supplier_filter?: string | null
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           aplicacao: string | null
