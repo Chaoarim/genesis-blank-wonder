@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { UserPlus, Trash2, Shield, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { UserPlus, Trash2, Shield, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 import { ALL_PERMISSIONS } from '@/hooks/useSellerPermissions';
 
@@ -23,21 +24,55 @@ interface Props {
 export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleActive, onSetPermissions, onGetPermissions }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [adding, setAdding] = useState(false);
   const [permSellerId, setPermSellerId] = useState<string | null>(null);
   const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
   const [permDialogOpen, setPermDialogOpen] = useState(false);
 
   const handleAdd = async () => {
-    if (!name.trim() || !email.trim()) { toast.error('Preencha nome e email'); return; }
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      toast.error('Preencha nome, email e senha');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
     setAdding(true);
-    const result = await onAddSeller({ name: name.trim(), email: email.trim() });
-    if (result) {
-      toast.success('Vendedor adicionado!');
-      setName('');
-      setEmail('');
-    } else {
-      toast.error('Erro ao adicionar vendedor');
+    try {
+      // 1. Create Supabase Auth account via edge function
+      const res = await supabase.functions.invoke('create-user', {
+        body: { email: email.trim(), password, full_name: name.trim() },
+      });
+
+      if (res.error || !res.data?.success) {
+        toast.error(res.data?.error || 'Erro ao criar conta do vendedor');
+        setAdding(false);
+        return;
+      }
+
+      const authId = res.data.user_id;
+
+      // 2. Add seller record linked to auth account
+      const result = await onAddSeller({ name: name.trim(), email: email.trim() });
+      if (result) {
+        // 3. Link seller_auth_id
+        await supabase
+          .from('seller_users')
+          .update({ seller_auth_id: authId })
+          .eq('id', result.id);
+
+        toast.success('Vendedor criado com sucesso! Ele já pode fazer login.');
+        setName('');
+        setEmail('');
+        setPassword('');
+      } else {
+        toast.error('Erro ao registrar vendedor');
+      }
+    } catch (err) {
+      toast.error('Erro ao criar vendedor');
     }
     setAdding(false);
   };
@@ -73,13 +108,29 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
           <div className="flex flex-col sm:flex-row gap-3">
             <Input placeholder="Nome do vendedor" value={name} onChange={e => setName(e.target.value)} />
             <Input placeholder="Email (para login)" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+            <div className="relative min-w-[180px]">
+              <Input
+                placeholder="Senha de acesso"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
             <Button onClick={handleAdd} disabled={adding} className="shrink-0">
-              <UserPlus className="w-4 h-4 mr-2" />
+              {adding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
               Adicionar
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            O vendedor precisará criar uma conta com este email para acessar a Central de Vendas.
+            A conta será criada automaticamente. O vendedor faz login em <strong>/login</strong> com o email e senha definidos.
           </p>
         </CardContent>
       </Card>
