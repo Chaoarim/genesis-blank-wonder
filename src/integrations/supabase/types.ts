@@ -645,6 +645,39 @@ export type Database = {
           },
         ]
       }
+      sales_commissions: {
+        Row: {
+          commission_fixed: number
+          commission_percent: number
+          created_at: string
+          id: string
+          reference: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commission_fixed?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          reference?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commission_fixed?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          reference?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sales_goals: {
         Row: {
           created_at: string
@@ -669,6 +702,65 @@ export type Database = {
           month?: number
           user_id?: string
           year?: number
+        }
+        Relationships: []
+      }
+      seller_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: string
+          seller_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: string
+          seller_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: string
+          seller_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_permissions_seller_user_id_fkey"
+            columns: ["seller_user_id"]
+            isOneToOne: false
+            referencedRelation: "seller_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_users: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          seller_auth_id: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          seller_auth_id?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          seller_auth_id?: string | null
         }
         Relationships: []
       }

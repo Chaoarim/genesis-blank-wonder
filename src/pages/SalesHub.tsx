@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesData } from '@/hooks/useSalesData';
 import { usePartsDatabase } from '@/hooks/usePartsDatabase';
+import { useSellerPermissions } from '@/hooks/useSellerPermissions';
 import { SalesDashboard } from '@/components/sales/SalesDashboard';
 import { CustomersManager } from '@/components/sales/CustomersManager';
 import { NewSaleForm } from '@/components/sales/NewSaleForm';
@@ -15,12 +16,39 @@ import { ImportInventoryTab } from '@/components/sales/ImportInventoryTab';
 import { PromotionsManager } from '@/components/sales/PromotionsManager';
 import { CouponsManager } from '@/components/sales/CouponsManager';
 import { ManualProductForm } from '@/components/sales/ManualProductForm';
+import { SellersManager } from '@/components/sales/SellersManager';
+import { CommissionsManager } from '@/components/sales/CommissionsManager';
+import { MarkupManager } from '@/components/sales/MarkupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket } from 'lucide-react';
-import { MarkupManager } from '@/components/sales/MarkupManager';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
+
+interface TabDef {
+  value: string;
+  icon: React.ElementType;
+  label: string;
+  shortLabel?: string;
+}
+
+const ALL_TABS: TabDef[] = [
+  { value: 'dashboard', icon: BarChart3, label: 'Dashboard' },
+  { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda' },
+  { value: 'orders', icon: ShoppingBag, label: 'Pedidos' },
+  { value: 'inventory', icon: Package, label: 'Estoque' },
+  { value: 'low-stock', icon: AlertTriangle, label: 'Est. Baixo', shortLabel: 'Est. Baixo' },
+  { value: 'history', icon: History, label: 'Histórico' },
+  { value: 'customers', icon: Users, label: 'Clientes' },
+  { value: 'goals', icon: Target, label: 'Metas' },
+  { value: 'markup', icon: Percent, label: 'Markup' },
+  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar' },
+  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar' },
+  { value: 'promotions', icon: Tag, label: 'Ofertas' },
+  { value: 'coupons', icon: Ticket, label: 'Cupons' },
+  { value: 'sellers', icon: UserCog, label: 'Vendedores' },
+  { value: 'commissions', icon: DollarSign, label: 'Comissões' },
+];
 
 const SalesHub = () => {
   const navigate = useNavigate();
@@ -46,6 +74,7 @@ const SalesHub = () => {
 
   const salesData = useSalesData(user?.id ?? null);
   const { parts } = usePartsDatabase();
+  const sellerPerms = useSellerPermissions(user?.id ?? null);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -55,7 +84,17 @@ const SalesHub = () => {
 
   const goToNewSale = useCallback(() => setActiveTab('new-sale'), []);
 
-  if (loading) {
+  // Filter visible tabs based on permissions
+  const visibleTabs = ALL_TABS.filter(tab => sellerPerms.hasPermission(tab.value));
+
+  // If active tab is not visible, fallback to new-sale
+  useEffect(() => {
+    if (!sellerPerms.loading && !visibleTabs.find(t => t.value === activeTab)) {
+      setActiveTab('new-sale');
+    }
+  }, [sellerPerms.loading, visibleTabs, activeTab]);
+
+  if (loading || sellerPerms.loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse flex items-center gap-2">
@@ -68,7 +107,6 @@ const SalesHub = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -81,7 +119,9 @@ const SalesHub = () => {
               </div>
               <div>
                 <h1 className="text-lg font-bold leading-tight">Central de Vendas</h1>
-                <p className="text-xs text-muted-foreground">Gerencie tudo em um lugar</p>
+                <p className="text-xs text-muted-foreground">
+                  {sellerPerms.isAdmin ? 'Administrador' : `Vendedor: ${sellerPerms.sellerRecord?.name}`}
+                </p>
               </div>
             </div>
           </div>
@@ -92,62 +132,15 @@ const SalesHub = () => {
         </div>
       </header>
 
-      {/* Content */}
       <main className="container mx-auto px-4 py-6 max-w-6xl">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap w-full mb-6 h-auto gap-1">
-            <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="new-sale" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <PlusCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Nova Venda</span>
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Pedidos</span>
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <Package className="w-4 h-4" />
-              <span className="hidden sm:inline">Estoque</span>
-            </TabsTrigger>
-            <TabsTrigger value="low-stock" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Est. Baixo</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <History className="w-4 h-4" />
-              <span className="hidden sm:inline">Histórico</span>
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Clientes</span>
-            </TabsTrigger>
-            <TabsTrigger value="goals" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Metas</span>
-            </TabsTrigger>
-            <TabsTrigger value="markup" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <Percent className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Markup</span>
-            </TabsTrigger>
-            <TabsTrigger value="import-inventory" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <FileSpreadsheet className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Importar</span>
-            </TabsTrigger>
-            <TabsTrigger value="manual-product" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <PackagePlus className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Cadastrar</span>
-            </TabsTrigger>
-            <TabsTrigger value="promotions" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <Tag className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Ofertas</span>
-            </TabsTrigger>
-            <TabsTrigger value="coupons" className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
-              <Ticket className="w-4 h-4" />
-              <span className="hidden sm:inline text-[10px]">Cupons</span>
-            </TabsTrigger>
+            {visibleTabs.map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col gap-1 py-2.5 text-xs flex-1 min-w-[60px]">
+                <tab.icon className="w-4 h-4" />
+                <span className="hidden sm:inline text-[10px]">{tab.shortLabel || tab.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -221,6 +214,25 @@ const SalesHub = () => {
 
           <TabsContent value="coupons">
             <CouponsManager />
+          </TabsContent>
+
+          <TabsContent value="sellers">
+            {sellerPerms.isAdmin && (
+              <SellersManager
+                sellers={sellerPerms.sellers}
+                onAddSeller={sellerPerms.addSeller}
+                onRemoveSeller={sellerPerms.removeSeller}
+                onToggleActive={sellerPerms.toggleSellerActive}
+                onSetPermissions={sellerPerms.setSellerPermissions}
+                onGetPermissions={sellerPerms.getSellerPermissions}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="commissions">
+            {sellerPerms.isAdmin && user && (
+              <CommissionsManager userId={user.id} />
+            )}
           </TabsContent>
         </Tabs>
       </main>
