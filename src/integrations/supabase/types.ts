@@ -863,6 +863,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_admin_user_id: { Args: never; Returns: string }
       get_daily_usage: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
         Args: {

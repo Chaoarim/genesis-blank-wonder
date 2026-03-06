@@ -72,9 +72,9 @@ const SalesHub = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const salesData = useSalesData(user?.id ?? null);
-  const { parts } = usePartsDatabase();
   const sellerPerms = useSellerPermissions(user?.id ?? null);
+  const salesData = useSalesData(sellerPerms.adminUserId ?? null);
+  const { parts } = usePartsDatabase();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -154,6 +154,7 @@ const SalesHub = () => {
               onAddCustomer={salesData.addCustomer}
               onCreateSale={salesData.createSale}
               onDone={() => setActiveTab('dashboard')}
+              adminUserId={sellerPerms.adminUserId}
             />
           </TabsContent>
 
@@ -162,7 +163,7 @@ const SalesHub = () => {
           </TabsContent>
 
           <TabsContent value="inventory">
-            <InventorySearch />
+            <InventorySearch adminUserId={sellerPerms.adminUserId} />
           </TabsContent>
 
           <TabsContent value="low-stock">

@@ -134,12 +134,16 @@ export function useSellerPermissions(userId: string | null) {
     return (data || []).map((p: any) => p.permission);
   }, []);
 
+  // Effective user ID: admin's ID for sellers, own ID for admins
+  const adminUserId = sellerRecord ? sellerRecord.admin_user_id : userId;
+
   return {
     isAdmin,
     sellerRecord,
     permissions,
     sellers,
     loading,
+    adminUserId,
     hasPermission,
     addSeller,
     removeSeller,
