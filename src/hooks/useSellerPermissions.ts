@@ -1,0 +1,151 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface SellerUser {
+  id: string;
+  admin_user_id: string;
+  seller_auth_id: string | null;
+  name: string;
+  email: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface SellerPermission {
+  id: string;
+  seller_user_id: string;
+  permission: string;
+  created_at: string;
+}
+
+// All available permissions (tab names in SalesHub)
+export const ALL_PERMISSIONS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'orders', label: 'Pedidos' },
+  { key: 'inventory', label: 'Estoque' },
+  { key: 'low-stock', label: 'Estoque Baixo' },
+  { key: 'history', label: 'Histórico' },
+  { key: 'customers', label: 'Clientes' },
+  { key: 'goals', label: 'Metas' },
+  { key: 'markup', label: 'Markup' },
+  { key: 'import-inventory', label: 'Importar' },
+  { key: 'manual-product', label: 'Cadastrar' },
+  { key: 'promotions', label: 'Ofertas' },
+  { key: 'coupons', label: 'Cupons' },
+  { key: 'sellers', label: 'Vendedores' },
+  { key: 'commissions', label: 'Comissões' },
+] as const;
+
+export function useSellerPermissions(userId: string | null) {
+  const [isAdmin, setIsAdmin] = useState(true);
+  const [sellerRecord, setSellerRecord] = useState<SellerUser | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [sellers, setSellers] = useState<SellerUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+
+    // Check if current user is a seller (linked to an admin)
+    const { data: sellerData } = await supabase
+      .from('seller_users')
+      .select('*')
+      .eq('seller_auth_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (sellerData) {
+      // User is a seller - load their permissions
+      setIsAdmin(false);
+      setSellerRecord(sellerData as SellerUser);
+
+      const { data: perms } = await supabase
+        .from('seller_permissions')
+        .select('*')
+        .eq('seller_user_id', sellerData.id);
+
+      setPermissions((perms || []).map((p: any) => p.permission));
+    } else {
+      // User is admin - full access
+      setIsAdmin(true);
+      setSellerRecord(null);
+      setPermissions([]);
+
+      // Load admin's sellers
+      const { data: sellersData } = await supabase
+        .from('seller_users')
+        .select('*')
+        .eq('admin_user_id', userId)
+        .order('name');
+
+      setSellers((sellersData || []) as SellerUser[]);
+    }
+
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const hasPermission = useCallback((tab: string) => {
+    if (isAdmin) return true;
+    if (tab === 'new-sale') return true; // always allowed
+    return permissions.includes(tab);
+  }, [isAdmin, permissions]);
+
+  // Admin functions
+  const addSeller = useCallback(async (data: { name: string; email: string }) => {
+    if (!userId) return null;
+    const { data: row, error } = await supabase
+      .from('seller_users')
+      .insert({ admin_user_id: userId, name: data.name, email: data.email })
+      .select()
+      .single();
+    if (error) return null;
+    setSellers(prev => [...prev, row as SellerUser]);
+    return row;
+  }, [userId]);
+
+  const removeSeller = useCallback(async (id: string) => {
+    await supabase.from('seller_users').delete().eq('id', id);
+    setSellers(prev => prev.filter(s => s.id !== id));
+  }, []);
+
+  const toggleSellerActive = useCallback(async (id: string, active: boolean) => {
+    await supabase.from('seller_users').update({ is_active: active }).eq('id', id);
+    setSellers(prev => prev.map(s => s.id === id ? { ...s, is_active: active } : s));
+  }, []);
+
+  const setSellerPermissions = useCallback(async (sellerId: string, perms: string[]) => {
+    // Delete all existing then insert new
+    await supabase.from('seller_permissions').delete().eq('seller_user_id', sellerId);
+    if (perms.length > 0) {
+      await supabase.from('seller_permissions').insert(
+        perms.map(p => ({ seller_user_id: sellerId, permission: p }))
+      );
+    }
+  }, []);
+
+  const getSellerPermissions = useCallback(async (sellerId: string) => {
+    const { data } = await supabase
+      .from('seller_permissions')
+      .select('permission')
+      .eq('seller_user_id', sellerId);
+    return (data || []).map((p: any) => p.permission);
+  }, []);
+
+  return {
+    isAdmin,
+    sellerRecord,
+    permissions,
+    sellers,
+    loading,
+    hasPermission,
+    addSeller,
+    removeSeller,
+    toggleSellerActive,
+    setSellerPermissions,
+    getSellerPermissions,
+    refreshSellers: fetchData,
+  };
+}
