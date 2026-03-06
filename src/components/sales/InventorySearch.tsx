@@ -23,7 +23,7 @@ interface InventoryItem {
 
 type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display';
 
-export function InventorySearch() {
+export function InventorySearch({ adminUserId }: { adminUserId?: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -38,10 +38,11 @@ export function InventorySearch() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const effectiveId = adminUserId || user.id;
 
       const [itemsRes, markupRes] = await Promise.all([
-        supabase.from('inventory_items').select('*').eq('user_id', user.id).order('produto'),
-        supabase.from('markup_settings').select('markup_revenda').eq('user_id', user.id).maybeSingle(),
+        supabase.from('inventory_items').select('*').eq('user_id', effectiveId).order('produto'),
+        supabase.from('markup_settings').select('markup_revenda').eq('user_id', effectiveId).maybeSingle(),
       ]);
 
       if (itemsRes.data) {
@@ -56,7 +57,7 @@ export function InventorySearch() {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [adminUserId]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return items;

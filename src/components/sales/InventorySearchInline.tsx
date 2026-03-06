@@ -19,9 +19,10 @@ interface InventoryItem {
 
 interface InventorySearchInlineProps {
   onAddItem: (item: InventoryItem, precoRevenda: number) => void;
+  adminUserId?: string | null;
 }
 
-export function InventorySearchInline({ onAddItem }: InventorySearchInlineProps) {
+export function InventorySearchInline({ onAddItem, adminUserId }: InventorySearchInlineProps) {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [markup, setMarkup] = useState(0);
@@ -32,9 +33,10 @@ export function InventorySearchInline({ onAddItem }: InventorySearchInlineProps)
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const effectiveId = adminUserId || user.id;
       const [itemsRes, markupRes] = await Promise.all([
-        supabase.from('inventory_items').select('*').eq('user_id', user.id).order('produto'),
-        supabase.from('markup_settings').select('markup_revenda').eq('user_id', user.id).maybeSingle(),
+        supabase.from('inventory_items').select('*').eq('user_id', effectiveId).order('produto'),
+        supabase.from('markup_settings').select('markup_revenda').eq('user_id', effectiveId).maybeSingle(),
       ]);
       if (itemsRes.data) {
         setItems(itemsRes.data.map((r: any) => ({
@@ -48,7 +50,7 @@ export function InventorySearchInline({ onAddItem }: InventorySearchInlineProps)
       setLoading(false);
     };
     load();
-  }, []);
+  }, [adminUserId]);
 
   const results = useMemo(() => {
     if (query.trim().length < 2) return [];

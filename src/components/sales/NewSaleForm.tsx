@@ -25,9 +25,10 @@ interface NewSaleFormProps {
   onAddCustomer: (data: { name: string; phone?: string }) => Promise<any>;
   onCreateSale: (data: any) => Promise<any>;
   onDone: () => void;
+  adminUserId?: string | null;
 }
 
-export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone }: NewSaleFormProps) {
+export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId }: NewSaleFormProps) {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [channel, setChannel] = useState('balcao');
@@ -149,6 +150,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone }: 
       <Card className="p-4 space-y-2">
         <h3 className="font-semibold text-sm">🔍 Consultar Estoque</h3>
       <InventorySearchInline
+          adminUserId={adminUserId}
           onAddItem={(item, precoRevenda) => {
             setItems(prev => {
               const existing = prev.find(i => i.codigo === item.codigo);
