@@ -18,10 +18,11 @@ import { CouponsManager } from '@/components/sales/CouponsManager';
 import { ManualProductForm } from '@/components/sales/ManualProductForm';
 import { SellersManager } from '@/components/sales/SellersManager';
 import { CommissionsManager } from '@/components/sales/CommissionsManager';
+import { SellerCommissionsReport } from '@/components/sales/SellerCommissionsReport';
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
@@ -48,6 +49,7 @@ const ALL_TABS: TabDef[] = [
   { value: 'coupons', icon: Ticket, label: 'Cupons' },
   { value: 'sellers', icon: UserCog, label: 'Vendedores' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões' },
+  { value: 'report', icon: FileBarChart, label: 'Relatório' },
 ];
 
 const SalesHub = () => {
@@ -155,6 +157,8 @@ const SalesHub = () => {
               onCreateSale={salesData.createSale}
               onDone={() => setActiveTab('dashboard')}
               adminUserId={sellerPerms.adminUserId}
+              sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name || null}
+              sellerAuthId={sellerPerms.isAdmin ? null : (user?.id || null)}
             />
           </TabsContent>
 
@@ -233,6 +237,12 @@ const SalesHub = () => {
           <TabsContent value="commissions">
             {sellerPerms.isAdmin && user && (
               <CommissionsManager userId={user.id} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="report">
+            {sellerPerms.isAdmin && user && (
+              <SellerCommissionsReport sales={salesData.sales} userId={user.id} />
             )}
           </TabsContent>
         </Tabs>

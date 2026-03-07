@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag } from 'lucide-react';
+import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 
 interface CustomersManagerProps {
@@ -27,7 +29,7 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete }
 
   const filtered = customers.filter(c => {
     const q = search.toLowerCase();
-    return !q || c.name.toLowerCase().includes(q) || (c.phone || '').includes(q) || (c.email || '').toLowerCase().includes(q);
+    return !q || c.name.toLowerCase().includes(q) || (c.phone || '').includes(q) || (c.email || '').toLowerCase().includes(q) || (c.code || '').toLowerCase().includes(q);
   });
 
   const getCustomerStats = (customerId: string) => {
@@ -58,12 +60,17 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete }
 
   const resetForm = () => { setEditId(null); setName(''); setPhone(''); setEmail(''); setNotes(''); };
 
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success(`Código ${code} copiado!`);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Buscar clientes..." value={search} onChange={e => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder="Buscar por nome, código ou telefone..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
@@ -94,7 +101,15 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete }
               <Card key={c.id} className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{c.name}</p>
+                    <div className="flex items-center gap-2">
+                      {c.code && (
+                        <Badge variant="outline" className="font-mono text-xs cursor-pointer shrink-0" onClick={() => copyCode(c.code!)}>
+                          {c.code}
+                          <Copy className="w-3 h-3 ml-1" />
+                        </Badge>
+                      )}
+                      <p className="font-medium truncate">{c.name}</p>
+                    </div>
                     <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
                       {c.phone && (
                         <a href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1 hover:text-green-500">

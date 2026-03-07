@@ -111,6 +111,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          code: string | null
           created_at: string
           email: string | null
           id: string
@@ -121,6 +122,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          code?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -131,6 +133,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          code?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -601,9 +604,14 @@ export type Database = {
           created_at: string
           customer_id: string | null
           customer_name: string | null
+          delivery_type: string
           discount: number
           id: string
           notes: string | null
+          payment_deadline: string | null
+          payment_method: string
+          seller_auth_id: string | null
+          seller_name: string | null
           status: string
           total: number
           updated_at: string
@@ -614,9 +622,14 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
+          delivery_type?: string
           discount?: number
           id?: string
           notes?: string | null
+          payment_deadline?: string | null
+          payment_method?: string
+          seller_auth_id?: string | null
+          seller_name?: string | null
           status?: string
           total?: number
           updated_at?: string
@@ -627,9 +640,14 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
+          delivery_type?: string
           discount?: number
           id?: string
           notes?: string | null
+          payment_deadline?: string | null
+          payment_method?: string
+          seller_auth_id?: string | null
+          seller_name?: string | null
           status?: string
           total?: number
           updated_at?: string
@@ -737,6 +755,7 @@ export type Database = {
       seller_users: {
         Row: {
           admin_user_id: string
+          code: string | null
           created_at: string
           email: string
           id: string
@@ -746,6 +765,7 @@ export type Database = {
         }
         Insert: {
           admin_user_id: string
+          code?: string | null
           created_at?: string
           email: string
           id?: string
@@ -755,6 +775,7 @@ export type Database = {
         }
         Update: {
           admin_user_id?: string
+          code?: string | null
           created_at?: string
           email?: string
           id?: string
