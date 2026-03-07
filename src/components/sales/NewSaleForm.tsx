@@ -26,12 +26,31 @@ interface NewSaleFormProps {
   onCreateSale: (data: any) => Promise<any>;
   onDone: () => void;
   adminUserId?: string | null;
+  sellerName?: string | null;
+  sellerAuthId?: string | null;
 }
 
-export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId }: NewSaleFormProps) {
+const DELIVERY_OPTIONS = [
+  { value: 'retirada', label: 'Retirada' },
+  { value: 'moto', label: 'Moto Entrega' },
+  { value: 'frota', label: 'Frota Própria' },
+  { value: 'transportadora', label: 'Transportadora' },
+];
+
+const PAYMENT_OPTIONS = [
+  { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'pix', label: 'PIX' },
+  { value: 'cartao', label: 'Cartão' },
+  { value: 'faturado', label: 'Faturado (Prazo)' },
+];
+
+export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId, sellerName, sellerAuthId }: NewSaleFormProps) {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [channel, setChannel] = useState('balcao');
+  const [deliveryType, setDeliveryType] = useState('retirada');
+  const [paymentMethod, setPaymentMethod] = useState('dinheiro');
+  const [paymentDeadline, setPaymentDeadline] = useState('');
   const [notes, setNotes] = useState('');
   const [discount, setDiscount] = useState(0);
   const [items, setItems] = useState<SaleItemDraft[]>([]);
@@ -59,6 +78,11 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
       customer_id: customerId || undefined,
       customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
       channel,
+      delivery_type: deliveryType,
+      payment_method: paymentMethod,
+      payment_deadline: paymentMethod === 'faturado' && paymentDeadline ? paymentDeadline : undefined,
+      seller_auth_id: sellerAuthId || undefined,
+      seller_name: sellerName || undefined,
       notes,
       discount,
       items: items.map(i => ({ codigo: i.codigo, produto: i.produto, fornecedor: i.fornecedor, quantidade: i.quantidade, preco_unitario: i.preco_unitario })),
@@ -68,8 +92,10 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
     if (sale) {
       if (channel === 'whatsapp') {
         const phone = selectedCustomer?.phone;
+        const deliveryLabel = DELIVERY_OPTIONS.find(d => d.value === deliveryType)?.label || deliveryType;
+        const paymentLabel = PAYMENT_OPTIONS.find(p => p.value === paymentMethod)?.label || paymentMethod;
         const lines = items.map((item, idx) => `${idx + 1}. ${item.codigo} - ${item.produto}\n   Qtde: ${item.quantidade} x R$ ${item.preco_unitario.toFixed(2)}`);
-        const text = `*VENDA CONFIRMADA*\n\n${lines.join('\n\n')}\n${discount > 0 ? `\nDesconto: R$ ${discount.toFixed(2)}` : ''}\n\n*TOTAL: R$ ${total.toFixed(2)}*`;
+        const text = `*VENDA CONFIRMADA*\n\n${lines.join('\n\n')}\n${discount > 0 ? `\nDesconto: R$ ${discount.toFixed(2)}` : ''}\n\n*TOTAL: R$ ${total.toFixed(2)}*\n\n📦 Entrega: ${deliveryLabel}\n💳 Pagamento: ${paymentLabel}${paymentMethod === 'faturado' && paymentDeadline ? `\n📅 Prazo: ${new Date(paymentDeadline).toLocaleDateString('pt-BR')}` : ''}`;
         const url = phone
           ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`
           : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
@@ -107,7 +133,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
                 </SelectTrigger>
                 <SelectContent>
                   {customers.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{(c as any).code ? `${(c as any).code} - ` : ''}{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -133,6 +159,44 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
             </Select>
           </div>
         </div>
+
+        {/* Delivery & Payment */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground">📦 Entrega</label>
+            <Select value={deliveryType} onValueChange={setDeliveryType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DELIVERY_OPTIONS.map(d => (
+                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground">💳 Pagamento</label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_OPTIONS.map(p => (
+                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {paymentMethod === 'faturado' && (
+          <div>
+            <label className="text-xs text-muted-foreground">📅 Prazo do Faturamento</label>
+            <Input type="date" value={paymentDeadline} onChange={e => setPaymentDeadline(e.target.value)} />
+          </div>
+        )}
 
         {showNewCustomer && (
           <Card className="p-3 border-dashed space-y-2">

@@ -9,6 +9,7 @@ export interface Customer {
   phone: string | null;
   email: string | null;
   notes: string | null;
+  code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,11 @@ export interface Sale {
   total: number;
   discount: number;
   notes: string | null;
+  seller_auth_id: string | null;
+  seller_name: string | null;
+  delivery_type: string;
+  payment_method: string;
+  payment_deadline: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +109,11 @@ export function useSalesData(userId: string | null) {
     customer_id?: string;
     customer_name?: string;
     channel?: string;
+    delivery_type?: string;
+    payment_method?: string;
+    payment_deadline?: string;
+    seller_auth_id?: string;
+    seller_name?: string;
     notes?: string;
     items: { codigo: string; produto: string; fornecedor?: string; quantidade: number; preco_unitario: number }[];
     discount?: number;
@@ -115,6 +126,11 @@ export function useSalesData(userId: string | null) {
       customer_id: data.customer_id || null,
       customer_name: data.customer_name || null,
       channel: data.channel || 'balcao',
+      delivery_type: data.delivery_type || 'retirada',
+      payment_method: data.payment_method || 'dinheiro',
+      payment_deadline: data.payment_deadline || null,
+      seller_auth_id: data.seller_auth_id || null,
+      seller_name: data.seller_name || null,
       status: 'completed',
       total,
       discount: data.discount || 0,

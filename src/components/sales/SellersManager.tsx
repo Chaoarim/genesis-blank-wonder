@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { UserPlus, Trash2, Shield, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { UserPlus, Trash2, Shield, Users, Eye, EyeOff, Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
@@ -42,7 +42,6 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
     }
     setAdding(true);
     try {
-      // 1. Create Supabase Auth account via edge function
       const res = await supabase.functions.invoke('create-user', {
         body: { email: email.trim(), password, full_name: name.trim() },
       });
@@ -54,22 +53,17 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       }
 
       const authId = res.data.user_id;
-
-      // 2. Add seller record linked to auth account
       const result = await onAddSeller({ name: name.trim(), email: email.trim() });
       if (result) {
-        // 3. Link seller_auth_id
         await supabase
           .from('seller_users')
           .update({ seller_auth_id: authId })
           .eq('id', result.id);
 
-        toast.success('Vendedor criado com sucesso! Ele já pode fazer login.');
+        toast.success('Vendedor criado com sucesso!');
         setName('');
         setEmail('');
         setPassword('');
-      } else {
-        toast.error('Erro ao registrar vendedor');
       }
     } catch (err) {
       toast.error('Erro ao criar vendedor');
@@ -93,6 +87,11 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
 
   const togglePerm = (key: string) => {
     setSelectedPerms(prev => prev.includes(key) ? prev.filter(p => p !== key) : [...prev, key]);
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success(`Código ${code} copiado!`);
   };
 
   return (
@@ -130,7 +129,7 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            A conta será criada automaticamente. O vendedor faz login em <strong>/login</strong> com o email e senha definidos.
+            A conta será criada automaticamente. O vendedor faz login em <strong>/login</strong> com email e senha.
           </p>
         </CardContent>
       </Card>
@@ -150,7 +149,15 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
               {sellers.map(seller => (
                 <div key={seller.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{seller.name}</p>
+                    <div className="flex items-center gap-2">
+                      {(seller as any).code && (
+                        <Badge variant="outline" className="font-mono text-xs cursor-pointer" onClick={() => copyCode((seller as any).code)}>
+                          {(seller as any).code}
+                          <Copy className="w-3 h-3 ml-1" />
+                        </Badge>
+                      )}
+                      <p className="font-medium truncate">{seller.name}</p>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{seller.email}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-3">
@@ -177,7 +184,6 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
         </CardContent>
       </Card>
 
-      {/* Permissions Dialog */}
       <Dialog open={permDialogOpen} onOpenChange={setPermDialogOpen}>
         <DialogContent>
           <DialogHeader>
