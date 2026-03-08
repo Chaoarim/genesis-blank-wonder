@@ -32,7 +32,10 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
   const [permDialogOpen, setPermDialogOpen] = useState(false);
 
   const handleAdd = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedName || !normalizedEmail || !password.trim()) {
       toast.error('Preencha nome, email e senha');
       return;
     }
@@ -40,51 +43,92 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       toast.error('A senha deve ter pelo menos 6 caracteres');
       return;
     }
-    if (sellers.some(s => s.email.trim().toLowerCase() === email.trim().toLowerCase())) {
-      toast.error('Já existe um vendedor com este email');
-      return;
-    }
+
     setAdding(true);
     try {
       const res = await supabase.functions.invoke('create-user', {
-        body: { email: email.trim(), password, full_name: name.trim() },
+        body: { email: normalizedEmail, password, full_name: normalizedName },
       });
 
       if (res.error || !res.data?.success) {
         toast.error(res.data?.error || 'Erro ao criar conta do vendedor');
-        setAdding(false);
         return;
       }
 
-      const authId = res.data.user_id;
-      if (sellers.some(s => s.seller_auth_id === authId)) {
-        toast.error('Este usuário já está vinculado a outro vendedor. Use outro email.');
-        setAdding(false);
+      const authId = res.data.user_id as string | undefined;
+      if (!authId) {
+        toast.error('Conta criada sem ID de autenticação. Tente novamente.');
         return;
       }
 
-      const result = await onAddSeller({ name: name.trim(), email: email.trim() });
-      if (result) {
-        const { error: linkError } = await supabase
+      const [existingByEmailRes, existingByAuthRes] = await Promise.all([
+        supabase
           .from('seller_users')
-          .update({ seller_auth_id: authId })
-          .eq('id', result.id);
+          .select('id')
+          .eq('email', normalizedEmail)
+          .maybeSingle(),
+        supabase
+          .from('seller_users')
+          .select('id')
+          .eq('seller_auth_id', authId)
+          .maybeSingle(),
+      ]);
 
-        if (linkError) {
-          toast.error('Conta criada, mas falhou ao vincular vendedor. Tente novamente.');
-          setAdding(false);
+      if (existingByEmailRes.error || existingByAuthRes.error) {
+        toast.error('Erro ao validar vendedor existente. Tente novamente.');
+        return;
+      }
+
+      const existingSellerId = existingByEmailRes.data?.id || existingByAuthRes.data?.id;
+
+      if (existingSellerId) {
+        const { error: updateExistingError } = await supabase
+          .from('seller_users')
+          .update({
+            name: normalizedName,
+            email: normalizedEmail,
+            seller_auth_id: authId,
+            is_active: true,
+          })
+          .eq('id', existingSellerId);
+
+        if (updateExistingError) {
+          toast.error('Não foi possível atualizar o vendedor existente.');
           return;
         }
 
-        toast.success('Vendedor criado com sucesso!');
+        toast.success('Vendedor já existia e foi atualizado com sucesso!');
         setName('');
         setEmail('');
         setPassword('');
+        return;
       }
+
+      const result = await onAddSeller({ name: normalizedName, email: normalizedEmail });
+      if (!result) {
+        toast.error('Não foi possível cadastrar vendedor. Verifique se ele já existe.');
+        return;
+      }
+
+      const { error: linkError } = await supabase
+        .from('seller_users')
+        .update({ seller_auth_id: authId })
+        .eq('id', result.id);
+
+      if (linkError) {
+        toast.error('Conta criada, mas falhou ao vincular vendedor. Tente novamente.');
+        return;
+      }
+
+      toast.success('Vendedor criado com sucesso!');
+      setName('');
+      setEmail('');
+      setPassword('');
     } catch (err) {
       toast.error('Erro ao criar vendedor');
+    } finally {
+      setAdding(false);
     }
-    setAdding(false);
   };
 
   const openPermissions = async (seller: SellerUser) => {
