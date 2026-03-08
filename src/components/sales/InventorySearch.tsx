@@ -22,7 +22,7 @@ interface InventoryItem {
   vendidos_display: number;
 }
 
-type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display';
+type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display' | 'preco';
 
 export function InventorySearch({ adminUserId }: { adminUserId?: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -76,6 +76,10 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
       const newQty = parseInt(editValue);
       if (isNaN(newQty) || newQty < 0) { toast.error('Valor inválido'); return; }
       updateData[editField] = newQty;
+    } else if (editField === 'preco') {
+      const newPrice = parseFloat(editValue.replace(',', '.'));
+      if (isNaN(newPrice) || newPrice < 0) { toast.error('Preço inválido'); return; }
+      updateData.preco = newPrice;
     } else {
       if (editField === 'codigo' && !editValue.trim()) { toast.error('Código não pode ser vazio'); return; }
       if (editField === 'produto' && !editValue.trim()) { toast.error('Produto não pode ser vazio'); return; }
@@ -127,8 +131,7 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
       return (
         <div className="flex items-center gap-1">
           <Input
-            type={field === 'qtd_estoque' ? 'number' : 'text'}
-            min={field === 'qtd_estoque' ? 0 : undefined}
+            type={(['qtd_estoque', 'vendidos_display', 'preco'].includes(field)) ? 'text' : 'text'}
             value={editValue}
             onChange={e => setEditValue(e.target.value)}
             className="h-7 text-xs p-1 min-w-[60px]"
@@ -209,13 +212,12 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                 <TableHead className="text-center">
                   <span className="flex items-center justify-center gap-1"><Flame className="w-3 h-3" />Vendidos</span>
                 </TableHead>
-                <TableHead className="text-right">Preço Revenda</TableHead>
+                <TableHead className="text-right">Preço Custo</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 200).map(item => {
-                const precoRevenda = markup > 0 ? item.preco * (1 + markup / 100) : item.preco;
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="p-1">
@@ -260,7 +262,11 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                         `font-bold ${item.vendidos_display > 0 ? 'text-orange-500' : 'text-muted-foreground'}`
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-primary">{fmt(precoRevenda)}</TableCell>
+                    <TableCell className="text-right">
+                      {renderEditableCell(item, 'preco', item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+                        'font-bold text-primary'
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
