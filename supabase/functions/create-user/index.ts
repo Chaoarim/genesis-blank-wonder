@@ -81,7 +81,10 @@ serve(async (req) => {
       if (createError.message.includes("already been registered")) {
         console.log("User already exists, looking up by email:", normalizedEmail);
         
-        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
         
         if (listError) {
           console.error("Error listing users:", listError);
@@ -95,9 +98,17 @@ serve(async (req) => {
         
         if (existingUser) {
           // Update password to the new one provided
-          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+          const { error: updatePasswordError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
             password: password,
           });
+
+          if (updatePasswordError) {
+            console.error("Error updating existing user password:", updatePasswordError);
+            return new Response(
+              JSON.stringify({ error: "Usuário encontrado, mas falhou ao atualizar a senha." }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
 
           console.log("Found existing user:", existingUser.id);
           return new Response(

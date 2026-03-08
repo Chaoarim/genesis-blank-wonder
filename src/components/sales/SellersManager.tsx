@@ -64,14 +64,16 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       const [existingByEmailRes, existingByAuthRes] = await Promise.all([
         supabase
           .from('seller_users')
-          .select('id')
-          .eq('email', normalizedEmail)
-          .maybeSingle(),
+          .select('id, created_at')
+          .ilike('email', normalizedEmail)
+          .order('created_at', { ascending: false })
+          .limit(1),
         supabase
           .from('seller_users')
-          .select('id')
+          .select('id, created_at')
           .eq('seller_auth_id', authId)
-          .maybeSingle(),
+          .order('created_at', { ascending: false })
+          .limit(1),
       ]);
 
       if (existingByEmailRes.error || existingByAuthRes.error) {
@@ -79,7 +81,7 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
         return;
       }
 
-      const existingSellerId = existingByEmailRes.data?.id || existingByAuthRes.data?.id;
+      const existingSellerId = existingByEmailRes.data?.[0]?.id || existingByAuthRes.data?.[0]?.id;
 
       if (existingSellerId) {
         const { error: updateExistingError } = await supabase
@@ -106,7 +108,37 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
 
       const result = await onAddSeller({ name: normalizedName, email: normalizedEmail });
       if (!result) {
-        toast.error('Não foi possível cadastrar vendedor. Verifique se ele já existe.');
+        const { data: fallbackExisting, error: fallbackError } = await supabase
+          .from('seller_users')
+          .select('id, created_at')
+          .or(`email.ilike.${normalizedEmail},seller_auth_id.eq.${authId}`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (fallbackError || !fallbackExisting?.[0]?.id) {
+          toast.error('Não foi possível cadastrar vendedor. Verifique se ele já existe.');
+          return;
+        }
+
+        const { error: recoverLinkError } = await supabase
+          .from('seller_users')
+          .update({
+            name: normalizedName,
+            email: normalizedEmail,
+            seller_auth_id: authId,
+            is_active: true,
+          })
+          .eq('id', fallbackExisting[0].id);
+
+        if (recoverLinkError) {
+          toast.error('Conta criada, mas falhou ao reativar vendedor existente.');
+          return;
+        }
+
+        toast.success('Vendedor já existia e foi reativado com sucesso!');
+        setName('');
+        setEmail('');
+        setPassword('');
         return;
       }
 
@@ -152,6 +184,17 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success(`Código ${code} copiado!`);
+  };
+
+  const handleRemove = async (sellerId: string) => {
+    if (!confirm('Remover vendedor?')) return;
+
+    try {
+      await onRemoveSeller(sellerId);
+      toast.success('Vendedor removido com sucesso!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível remover vendedor.');
+    }
   };
 
   return (
@@ -232,7 +275,7 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
                       <Shield className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="text-destructive" onClick={() => {
-                      if (confirm('Remover vendedor?')) onRemoveSeller(seller.id);
+                      void handleRemove(seller.id);
                     }}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
