@@ -188,39 +188,24 @@ export default function CatalogB2B() {
     }
     setAuthLoading(true);
 
-    // Check if already exists
-    const { data: existing } = await supabase
-      .from('catalog_customers')
-      .select('id')
-      .eq('seller_id', sellerId)
-      .eq('phone', authPhone.trim())
-      .maybeSingle();
-
-    if (existing) {
-      toast.error('Telefone já cadastrado. Faça login.');
-      setAuthMode('login');
-      setAuthLoading(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('catalog_customers')
-      .insert({
-        seller_id: sellerId,
-        name: authName.trim(),
+    const { data, error } = await supabase.functions.invoke('catalog-login', {
+      body: {
+        sellerId,
         phone: authPhone.trim(),
-        password_hash: authPassword,
-      })
-      .select()
-      .single();
+        password: authPassword.trim(),
+        mode: 'register',
+        name: authName.trim(),
+      },
+    });
 
-    if (error || !data) {
-      toast.error('Erro ao cadastrar');
+    if (error || !data?.success) {
+      toast.error(data?.error || 'Erro ao cadastrar');
+      if (data?.error?.includes('já cadastrado')) setAuthMode('login');
       setAuthLoading(false);
       return;
     }
 
-    const cust: CatalogCustomer = { id: data.id, name: data.name, phone: data.phone };
+    const cust: CatalogCustomer = data.customer;
     setCustomer(cust);
     setShowLogin(false);
     localStorage.setItem(`catalog_customer_${sellerId}`, JSON.stringify(cust));
