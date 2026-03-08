@@ -170,14 +170,16 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   }, []);
 
   // ---- Goals ----
-  const setGoal = useCallback(async (month: number, year: number, amount: number) => {
+  const setGoal = useCallback(async (month: number, year: number, amount: number, sellerAuthId?: string | null) => {
     if (!userId) return;
-    const existing = goals.find(g => g.month === month && g.year === year);
+    const existing = goals.find(g => g.month === month && g.year === year && (g as any).seller_auth_id === (sellerAuthId || null));
     if (existing) {
       await supabase.from('sales_goals').update({ goal_amount: amount }).eq('id', existing.id);
       setGoals(prev => prev.map(g => g.id === existing.id ? { ...g, goal_amount: amount } : g));
     } else {
-      const { data } = await supabase.from('sales_goals').insert({ user_id: userId, month, year, goal_amount: amount }).select().single();
+      const insertData: any = { user_id: userId, month, year, goal_amount: amount };
+      if (sellerAuthId) insertData.seller_auth_id = sellerAuthId;
+      const { data } = await supabase.from('sales_goals').insert(insertData).select().single();
       if (data) setGoals(prev => [...prev, data as SalesGoal]);
     }
     toast.success('Meta atualizada!');
