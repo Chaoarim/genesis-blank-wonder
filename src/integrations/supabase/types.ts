@@ -486,6 +486,27 @@ export type Database = {
         }
         Relationships: []
       }
+      payable_suppliers: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_term_rules: {
         Row: {
           created_at: string
