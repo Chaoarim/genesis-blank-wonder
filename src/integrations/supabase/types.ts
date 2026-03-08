@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts_payable: {
+        Row: {
+          amount: number
+          barcode: string | null
+          category: string
+          created_at: string
+          description: string
+          document_number: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          status: string
+          supplier_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          barcode?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          document_number?: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          status?: string
+          supplier_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          barcode?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          document_number?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          status?: string
+          supplier_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       catalog_customers: {
         Row: {
           created_at: string
