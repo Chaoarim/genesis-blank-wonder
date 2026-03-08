@@ -203,6 +203,8 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
       due_date: bill.due_date,
       notes: bill.notes || '',
       barcode: bill.barcode || '',
+      installments: 1,
+      installment_dates: [''],
     });
     setEditingId(bill.id);
     setDialogOpen(true);
