@@ -116,9 +116,11 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
     const selectedCustomer = customers.find(c => c.id === customerId);
 
     // Credit limit check for faturado payments
-    if (paymentMethod === 'faturado' && selectedCustomer && selectedCustomer.limite_credito && Number(selectedCustomer.limite_credito) > 0) {
-      if (total > Number(selectedCustomer.limite_credito)) {
-        // Create sale as pending_credit and create credit approval
+    if (paymentMethod === 'faturado' && selectedCustomer) {
+      const creditLimit = Number(selectedCustomer.limite_credito) || 0;
+      const needsCreditApproval = creditLimit <= 0 || total > creditLimit;
+
+      if (needsCreditApproval) {
         const sale = await onCreateSale({
           customer_id: customerId || undefined,
           customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
@@ -134,18 +136,19 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
         });
 
         if (sale) {
-          // Update sale status to pending_credit
           await supabase.from('sales').update({ status: 'pending_credit' }).eq('id', sale.id);
-          // Create credit approval record
           await supabase.from('credit_approvals').insert({
             user_id: sale.user_id,
             sale_id: sale.id,
             customer_id: selectedCustomer.id,
             customer_name: selectedCustomer.name,
             sale_total: total,
-            credit_limit: Number(selectedCustomer.limite_credito),
+            credit_limit: creditLimit,
           });
-          toast.warning(`Pedido de R$ ${total.toFixed(2)} excede o limite de crédito de R$ ${Number(selectedCustomer.limite_credito).toFixed(2)}. Enviado para análise de crédito.`, { duration: 6000 });
+          const msg = creditLimit <= 0
+            ? `Cliente sem limite de crédito. Pedido de R$ ${total.toFixed(2)} enviado para Análise de Crédito.`
+            : `Pedido de R$ ${total.toFixed(2)} excede o limite de R$ ${creditLimit.toFixed(2)}. Enviado para Análise de Crédito.`;
+          toast.warning(msg, { duration: 6000 });
         }
         setSaving(false);
         if (sale) onDone();
