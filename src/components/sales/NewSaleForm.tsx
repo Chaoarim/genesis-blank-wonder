@@ -29,6 +29,7 @@ interface NewSaleFormProps {
   adminUserId?: string | null;
   sellerName?: string | null;
   sellerAuthId?: string | null;
+  sellers?: SellerUser[];
 }
 
 const DELIVERY_OPTIONS = [
