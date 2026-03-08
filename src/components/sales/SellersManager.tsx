@@ -40,6 +40,10 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       toast.error('A senha deve ter pelo menos 6 caracteres');
       return;
     }
+    if (sellers.some(s => s.email.trim().toLowerCase() === email.trim().toLowerCase())) {
+      toast.error('Já existe um vendedor com este email');
+      return;
+    }
     setAdding(true);
     try {
       const res = await supabase.functions.invoke('create-user', {
@@ -53,6 +57,12 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       }
 
       const authId = res.data.user_id;
+      if (sellers.some(s => s.seller_auth_id === authId)) {
+        toast.error('Este usuário já está vinculado a outro vendedor. Use outro email.');
+        setAdding(false);
+        return;
+      }
+
       const result = await onAddSeller({ name: name.trim(), email: email.trim() });
       if (result) {
         await supabase
