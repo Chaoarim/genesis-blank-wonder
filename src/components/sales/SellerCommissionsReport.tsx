@@ -26,6 +26,7 @@ interface Commission {
 interface Props {
   sales: Sale[];
   userId: string;
+  sellerName?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
