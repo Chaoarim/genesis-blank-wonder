@@ -36,6 +36,7 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [period, setPeriod] = useState('month');
+  const [sellerFilter, setSellerFilter] = useState('all');
 
   useEffect(() => {
     const load = async () => {
@@ -49,7 +50,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   }, [userId]);
 
   const now = new Date();
-  const filteredSales = sales.filter(s => {
+  const periodFiltered = sales.filter(s => {
     if (s.status !== 'completed') return false;
     const d = new Date(s.created_at);
     if (period === 'today') return d.toDateString() === now.toDateString();
@@ -61,6 +62,20 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
     if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     return true;
   });
+
+  // Apply seller filter (admin only)
+  const filteredSales = !sellerName && sellerFilter !== 'all'
+    ? periodFiltered.filter(s => (s.seller_auth_id || '__admin__') === sellerFilter)
+    : periodFiltered;
+
+  // Unique sellers list for filter dropdown
+  const uniqueSellers = !sellerName ? Array.from(
+    new Map(periodFiltered.map(s => [s.seller_auth_id || '__admin__', s.seller_name || 'Administrador'])).entries()
+  ).sort((a, b) => a[1].localeCompare(b[1])) : [];
+
+  const activeSellerLabel = sellerFilter !== 'all'
+    ? uniqueSellers.find(([id]) => id === sellerFilter)?.[1] || ''
+    : '';
 
   const calcCommission = useCallback((sale: Sale): number => {
     if (commissions.length === 0) return 0;
@@ -98,12 +113,17 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const grandTotal = sellers.reduce((s, v) => s + v.totalAmount, 0);
   const grandCommission = sellers.reduce((s, v) => s + v.commissionAmount, 0);
 
+  const reportTitle = !sellerName && activeSellerLabel
+    ? `Relatório — ${activeSellerLabel}`
+    : sellerName ? `Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor';
+
   const buildReportHtml = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Esta Semana' : period === 'month' ? 'Este Mês' : 'Tudo';
+    const showSellerCol = !sellerName && sellerFilter === 'all';
     const rows = filteredSales.map((sale, idx) => `
       <tr>
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${idx + 1}</td>
-        ${!sellerName ? `<td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.seller_name || 'Administrador'}</td>` : ''}
+        ${showSellerCol ? `<td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.seller_name || 'Administrador'}</td>` : ''}
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.customer_name || 'Cliente balcão'}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${new Date(sale.created_at).toLocaleDateString('pt-BR')} ${new Date(sale.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(Number(sale.total))}</td>
@@ -121,11 +141,11 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       .summary .total{font-size:18px;font-weight:700}
       .footer{margin-top:24px;text-align:center;font-size:11px;color:#999}
       @media print{body{padding:16px}}</style></head><body>
-      <h1>${sellerName ? `Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}</h1>
+      <h1>${reportTitle}</h1>
       <div class="meta"><p><strong>Período:</strong> ${periodLabel}</p><p><strong>Total de vendas:</strong> ${filteredSales.length}</p></div>
       <table><thead><tr>
         <th>#</th>
-        ${!sellerName ? '<th>Vendedor</th>' : ''}
+        ${showSellerCol ? '<th>Vendedor</th>' : ''}
         <th>Cliente</th><th>Data</th><th style="text-align:right">Valor</th><th style="text-align:right">Comissão</th>
       </tr></thead><tbody>${rows}</tbody></table>
       <div class="summary">
@@ -141,7 +161,8 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
 
   const handleDownloadPdf = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Tudo';
-    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Vendas_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
+    const sellerSuffix = activeSellerLabel ? `_${activeSellerLabel.replace(/\s+/g, '_')}` : '';
+    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Vendas${sellerSuffix}_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (
@@ -149,9 +170,22 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
-          {sellerName ? `Meu Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}
+          {sellerName ? `Meu Relatório — ${sellerName}` : reportTitle}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {!sellerName && uniqueSellers.length > 0 && (
+            <Select value={sellerFilter} onValueChange={setSellerFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Vendedores</SelectItem>
+                {uniqueSellers.map(([id, name]) => (
+                  <SelectItem key={id} value={id}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
@@ -247,7 +281,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       {/* Detailed sales list with customer and date */}
       <Card>
         <CardHeader>
-          <CardTitle>{sellerName ? 'Minhas Vendas Detalhadas' : 'Todas as Vendas Detalhadas'}</CardTitle>
+          <CardTitle>{sellerName ? 'Minhas Vendas Detalhadas' : activeSellerLabel ? `Vendas — ${activeSellerLabel}` : 'Todas as Vendas Detalhadas'}</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredSales.length === 0 ? (
@@ -257,7 +291,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {!sellerName && <TableHead>Vendedor</TableHead>}
+                    {!sellerName && sellerFilter === 'all' && <TableHead>Vendedor</TableHead>}
                     <TableHead>Cliente</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
@@ -267,7 +301,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
                 <TableBody>
                   {filteredSales.map(sale => (
                     <TableRow key={sale.id}>
-                      {!sellerName && (
+                      {!sellerName && sellerFilter === 'all' && (
                         <TableCell>
                           <span className="font-medium text-sm">{sale.seller_name || 'Administrador'}</span>
                         </TableCell>
