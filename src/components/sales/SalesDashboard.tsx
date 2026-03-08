@@ -126,7 +126,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground text-right">
-                {remainingDays} dias restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia
+                {remainingDays} dias úteis restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia útil
               </p>
             </div>
           </Card>
