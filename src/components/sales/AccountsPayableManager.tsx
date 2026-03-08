@@ -257,7 +257,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                     <Label>Fornecedor *</Label>
                     <Input list="suppliers-list" value={form.supplier_name} onChange={e => setForm(f => ({ ...f, supplier_name: e.target.value }))} placeholder="Digite ou selecione..." />
                     <datalist id="suppliers-list">
-                      {SUPPLIERS.map(s => <option key={s} value={s} />)}
+                      {suppliers.map(s => <option key={s} value={s} />)}
                     </datalist>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
