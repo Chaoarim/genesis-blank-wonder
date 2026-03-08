@@ -26,11 +26,12 @@ interface Commission {
 interface Props {
   sales: Sale[];
   userId: string;
+  sellerName?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function SellerCommissionsReport({ sales, userId }: Props) {
+export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [period, setPeriod] = useState('month');
 
@@ -100,7 +101,7 @@ export function SellerCommissionsReport({ sales, userId }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
-          Relatório de Vendas por Vendedor
+          {sellerName ? `Meu Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}
         </h2>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-[160px]">
