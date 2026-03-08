@@ -35,8 +35,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           
-          {/* Área logada */}
-          <Route path="/app" element={<Dashboard />} />
+          {/* Área logada — /app redireciona para /vendas */}
+          <Route path="/app" element={<Navigate to="/vendas" replace />} />
           <Route path="/buscar-pecas" element={<PartsSearch />} />
           <Route path="/vendas" element={<SalesHub />} />
           
