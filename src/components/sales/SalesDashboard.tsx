@@ -47,7 +47,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
         <StatCard icon={<ShoppingBag className="w-5 h-5" />} label="Mês" value={fmt(stats.monthTotal)} sub={`${stats.monthSales} vendas`} color="text-primary" />
         <StatCard
           icon={<Target className="w-5 h-5" />}
-          label="Meta"
+          label="Minha Meta"
           value={stats.currentGoal ? `${stats.goalProgress.toFixed(0)}%` : 'Sem meta'}
           sub={stats.currentGoal ? `Objetivo ${fmt(Number(stats.currentGoal.goal_amount))}` : undefined}
           color="text-amber-500"
@@ -55,6 +55,21 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
           {stats.currentGoal && <Progress value={stats.goalProgress} className="h-1.5 mt-2" />}
         </StatCard>
       </div>
+
+      {/* Store goal card - visible for both admin and seller */}
+      {stats.storeGoal && (
+        <Card className="p-4 border-primary/20 bg-primary/5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold">Meta da Loja</span>
+            </div>
+            <span className="text-sm font-bold text-primary">{(stats.storeGoalProgress ?? 0).toFixed(0)}%</span>
+          </div>
+          <Progress value={stats.storeGoalProgress ?? 0} className="h-2 mb-1" />
+          <p className="text-xs text-muted-foreground text-right">Objetivo {fmt(Number(stats.storeGoal.goal_amount))}</p>
+        </Card>
+      )}
 
       {/* Chart */}
       <Card className="p-4">

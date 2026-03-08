@@ -119,6 +119,23 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
         )}
       </Card>
 
+      {/* Store goal - always visible */}
+      {stats.storeGoal && (
+        <Card className="p-4 border-primary/20 bg-primary/5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold">Meta da Loja</span>
+            </div>
+            <span className="text-sm font-bold text-primary">{(stats.storeGoalProgress ?? 0).toFixed(1)}%</span>
+          </div>
+          <Progress value={stats.storeGoalProgress ?? 0} className="h-2 mb-1" />
+          <p className="text-xs text-muted-foreground text-right">
+            {fmt(stats.monthTotal)} de {fmt(Number(stats.storeGoal.goal_amount))}
+          </p>
+        </Card>
+      )}
+
       {/* Set goal - only for admin */}
       {isAdmin && (
         <Card className="p-4 space-y-3">

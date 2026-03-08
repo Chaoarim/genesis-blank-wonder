@@ -241,6 +241,6 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
     addCustomer, updateCustomer, deleteCustomer,
     createSale, deleteSale, getSaleItems,
     setGoal, deleteGoal,
-    stats: { todayTotal, weekTotal, monthTotal, todaySales: todaySales.length, monthSales: monthSales.length, goalProgress, currentGoal, dailyTotals },
+    stats: { todayTotal, weekTotal, monthTotal, todaySales: todaySales.length, monthSales: monthSales.length, goalProgress, currentGoal, storeGoal, storeGoalProgress, dailyTotals },
   };
 }
