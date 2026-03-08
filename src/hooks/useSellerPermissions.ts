@@ -26,6 +26,7 @@ export const ALL_PERMISSIONS = [
   { key: 'low-stock', label: 'Estoque Baixo' },
   { key: 'history', label: 'Histórico' },
   { key: 'customers', label: 'Clientes' },
+  { key: 'carteira', label: 'Carteira de Clientes' },
   { key: 'goals', label: 'Metas' },
   { key: 'markup', label: 'Markup' },
   { key: 'import-inventory', label: 'Importar' },
