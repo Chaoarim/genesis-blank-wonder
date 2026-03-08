@@ -90,6 +90,25 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   const subtotal = items.reduce((s, i) => s + i.quantidade * i.preco_unitario, 0);
   const total = Math.max(subtotal - discount, 0);
 
+  // Find matching term rules for current total
+  const matchingRules = termRules.filter(r => {
+    if (total < r.min_amount) return false;
+    if (r.max_amount && total > r.max_amount) return false;
+    return true;
+  });
+
+  const selectedTerm = termRules.find(r => r.id === selectedTermId);
+
+  const getInstallmentDates = (term: TermRule) => {
+    const days = term.day_intervals.split('/').map(d => parseInt(d.trim()));
+    const parcela = total / term.installments;
+    return days.map((d, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + d);
+      return { num: i + 1, days: d, date, value: parcela };
+    });
+  };
+
   const handleSave = async () => {
     if (items.length === 0) { toast.error('Adicione pelo menos 1 item do estoque'); return; }
 
