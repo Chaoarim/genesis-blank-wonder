@@ -96,7 +96,9 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
             {/* Daily goal */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Meta Diária</span>
+                <span className="text-xs text-muted-foreground">
+                  Meta Diária {!todayIsBusinessDay && <span className="text-[10px] text-muted-foreground/70">(hoje não é dia útil)</span>}
+                </span>
                 <span className="text-xs font-bold">{fmt(dailyGoal)}</span>
               </div>
               <Progress value={dailyProgress} className="h-2" />
