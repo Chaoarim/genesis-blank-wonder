@@ -365,14 +365,62 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>Valor (R$) *</Label>
+                      <Label>Valor Total (R$) *</Label>
                       <Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0,00" />
                     </div>
+                    {!editingId && (
+                      <div>
+                        <Label>Nº de Parcelas</Label>
+                        <Select value={String(form.installments)} onValueChange={v => {
+                          const num = Number(v);
+                          setForm(f => ({
+                            ...f,
+                            installments: num,
+                            installment_dates: Array.from({ length: num }, (_, i) => f.installment_dates[i] || ''),
+                          }));
+                        }}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
+                              <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  {form.installments === 1 ? (
                     <div>
                       <Label>Vencimento *</Label>
                       <Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>Vencimentos das Parcelas *</Label>
+                      {form.amount && (
+                        <p className="text-xs text-muted-foreground">
+                          Valor por parcela: {fmt(Math.round((Number(form.amount) / form.installments) * 100) / 100)}
+                        </p>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        {Array.from({ length: form.installments }, (_, i) => (
+                          <div key={i}>
+                            <Label className="text-xs text-muted-foreground">{i + 1}ª Parcela</Label>
+                            <Input
+                              type="date"
+                              value={form.installment_dates[i] || ''}
+                              onChange={e => {
+                                const dates = [...form.installment_dates];
+                                dates[i] = e.target.value;
+                                setForm(f => ({ ...f, installment_dates: dates }));
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <Label className="flex items-center gap-1"><Barcode className="w-3 h-3" />Código de Barras</Label>
                     <Input value={form.barcode} onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))} placeholder="Linha digitável do boleto" />
