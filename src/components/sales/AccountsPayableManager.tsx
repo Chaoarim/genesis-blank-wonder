@@ -50,6 +50,8 @@ const INITIAL_FORM = {
   due_date: '',
   notes: '',
   barcode: '',
+  installments: 1,
+  installment_dates: [''] as string[],
 };
 
 export function AccountsPayableManager({ userId }: { userId: string }) {
