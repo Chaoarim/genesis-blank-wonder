@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,9 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   };
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
   const [channel, setChannel] = useState('balcao');
   const [deliveryType, setDeliveryType] = useState('retirada');
   const [paymentMethod, setPaymentMethod] = useState('dinheiro');
@@ -70,6 +73,25 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+        setShowCustomerDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredCustomers = customers.filter(c => {
+    if (!customerSearch.trim()) return true;
+    const q = customerSearch.toLowerCase();
+    return c.name.toLowerCase().includes(q) || 
+           (c as any).code?.toLowerCase().includes(q) ||
+           c.phone?.toLowerCase().includes(q) ||
+           (c as any).empresa?.toLowerCase().includes(q);
+  });
   // Payment term rules
   interface TermRule { id: string; name: string; min_amount: number; max_amount: number | null; installments: number; day_intervals: string; }
   const [termRules, setTermRules] = useState<TermRule[]>([]);
@@ -215,23 +237,58 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
         <div>
           <label className="text-xs text-muted-foreground">Cliente</label>
           <div className="flex gap-2">
-            <Select value={customerId} onValueChange={v => { setCustomerId(v); const c = customers.find(x => x.id === v); if (c) setCustomerName(c.name); }}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Selecionar cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {(c as any).code ? `${(c as any).code} - ` : ''}{c.name}{getSellerLabel(c.seller_auth_id)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative flex-1" ref={customerDropdownRef}>
+              <Input
+                placeholder="Buscar cliente por nome, código, telefone..."
+                value={customerId ? `${(customers.find(c => c.id === customerId) as any)?.code ? (customers.find(c => c.id === customerId) as any).code + ' - ' : ''}${customers.find(c => c.id === customerId)?.name || ''}` : customerSearch}
+                onChange={e => {
+                  setCustomerSearch(e.target.value);
+                  setCustomerId('');
+                  setCustomerName('');
+                  setShowCustomerDropdown(true);
+                }}
+                onFocus={() => setShowCustomerDropdown(true)}
+              />
+              {customerId && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                  onClick={() => { setCustomerId(''); setCustomerName(''); setCustomerSearch(''); }}
+                >
+                  ✕
+                </button>
+              )}
+              {showCustomerDropdown && !customerId && (
+                <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+                  {filteredCustomers.length === 0 ? (
+                    <p className="p-2 text-xs text-muted-foreground">Nenhum cliente encontrado</p>
+                  ) : (
+                    filteredCustomers.slice(0, 50).map(c => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={() => {
+                          setCustomerId(c.id);
+                          setCustomerName(c.name);
+                          setCustomerSearch('');
+                          setShowCustomerDropdown(false);
+                        }}
+                      >
+                        <span className="font-medium">{(c as any).code ? `${(c as any).code} - ` : ''}{c.name}</span>
+                        {getSellerLabel(c.seller_auth_id)}
+                        {c.phone && <span className="ml-2 text-xs text-muted-foreground">{c.phone}</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <Button variant="outline" size="icon" onClick={() => setShowNewCustomer(prev => !prev)}>
               <UserPlus className="w-4 h-4" />
             </Button>
           </div>
-          {!customerId && (
+          {!customerId && !customerSearch && (
             <Input className="mt-2" placeholder="Ou digite o nome do cliente" value={customerName} onChange={e => setCustomerName(e.target.value)} />
           )}
         </div>
