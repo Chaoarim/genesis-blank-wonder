@@ -109,6 +109,66 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_approvals: {
+        Row: {
+          created_at: string
+          credit_limit: number
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sale_id: string | null
+          sale_total: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credit_limit?: number
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sale_id?: string | null
+          sale_total?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credit_limit?: number
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sale_id?: string | null
+          sale_total?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_approvals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_approvals_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           code: string | null
@@ -910,6 +970,72 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      warranty_returns: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          items: Json
+          reason: string | null
+          resolution: string | null
+          resolved_at: string | null
+          sale_id: string | null
+          status: string
+          total_value: number
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          items?: Json
+          reason?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          sale_id?: string | null
+          status?: string
+          total_value?: number
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          items?: Json
+          reason?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          sale_id?: string | null
+          status?: string
+          total_value?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warranty_returns_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warranty_returns_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_logs: {
         Row: {
