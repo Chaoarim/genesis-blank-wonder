@@ -90,7 +90,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ---- Customers ----
-  const addCustomer = useCallback(async (data: { name: string; phone?: string; email?: string; notes?: string; seller_auth_id?: string | null }) => {
+  const addCustomer = useCallback(async (data: { name: string; phone?: string; email?: string; whatsapp?: string; notes?: string; seller_auth_id?: string | null; cpf_cnpj?: string; inscricao_estadual?: string; endereco?: string; limite_credito?: number; empresa?: string; comprador?: string }) => {
     if (!userId) return null;
     const insertData: any = { ...data, user_id: userId };
 
