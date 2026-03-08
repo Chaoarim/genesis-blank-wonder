@@ -21,6 +21,7 @@ interface GoalsManagerProps {
   isAdmin?: boolean;
   sellers?: SellerUser[];
   sales?: Sale[];
+  sellerAuthId?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
