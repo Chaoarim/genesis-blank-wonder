@@ -61,6 +61,8 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [suppliers, setSuppliers] = useState<string[]>([]);
+  const [newSupplier, setNewSupplier] = useState('');
+  const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
 
   const fetchBills = useCallback(async () => {
     const { data } = await supabase
