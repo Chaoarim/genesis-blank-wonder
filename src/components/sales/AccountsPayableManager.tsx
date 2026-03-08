@@ -30,23 +30,7 @@ interface AccountPayable {
   created_at: string;
 }
 
-const SUPPLIERS = [
-  'Nakata Automotiva',
-  'Cofap / Magneti Marelli',
-  'SKF do Brasil',
-  'Sabó Indústria',
-  'Mahle Metal Leve',
-  'Monroe / Tenneco',
-  'Bosch Auto Peças',
-  'NGK do Brasil',
-  'Valeo Sistemas',
-  'ZF / TRW Automotive',
-  'Fremax / Jurid',
-  'Urba Produtos',
-  'Wega Motors',
-  'MTE-Thomson',
-  'Hipper Freios',
-];
+// Suppliers will be loaded from user's inventory
 
 const CATEGORIES = [
   { value: 'boleto', label: 'Boleto Bancário' },
