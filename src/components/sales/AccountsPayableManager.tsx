@@ -60,6 +60,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [suppliers, setSuppliers] = useState<string[]>([]);
 
   const fetchBills = useCallback(async () => {
     const { data } = await supabase
