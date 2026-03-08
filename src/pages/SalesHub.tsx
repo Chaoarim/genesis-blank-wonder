@@ -246,7 +246,7 @@ const SalesHub = () => {
               <CommissionsManager userId={user.id} />
             )}
             {!sellerPerms.isAdmin && user && (
-              <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} />
+              <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />
             )}
           </TabsContent>
 
