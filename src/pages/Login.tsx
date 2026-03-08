@@ -46,11 +46,7 @@ const Login = () => {
           .eq('is_active', true)
           .maybeSingle();
         
-        if (sellerData) {
-          navigate("/vendas");
-        } else {
-          navigate("/app");
-        }
+        navigate("/vendas");
       }
     } catch (error) {
       toast.error("Erro ao fazer login. Tente novamente.");
