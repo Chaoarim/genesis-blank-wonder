@@ -22,7 +22,8 @@ import { SellerCommissionsReport } from '@/components/sales/SellerCommissionsRep
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
