@@ -21,6 +21,7 @@ interface SalesDashboardProps {
     storeGoalProgress?: number;
     dailyTotals: { day: string; total: number }[];
     storeMonthTotal?: number;
+  };
   onNewSale: () => void;
   recentSales: Sale[];
   sellerName?: string | null;
