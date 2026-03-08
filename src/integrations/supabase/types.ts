@@ -1141,6 +1141,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _catalog_hash_password: { Args: { pw: string }; Returns: string }
+      _catalog_verify_password: {
+        Args: { pw: string; pw_hash: string }
+        Returns: boolean
+      }
       check_subscription_status: {
         Args: { p_user_id: string }
         Returns: string
