@@ -212,7 +212,7 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                 <TableHead className="text-center">
                   <span className="flex items-center justify-center gap-1"><Flame className="w-3 h-3" />Vendidos</span>
                 </TableHead>
-                <TableHead className="text-right">Preço Revenda</TableHead>
+                <TableHead className="text-right">Preço Custo</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
