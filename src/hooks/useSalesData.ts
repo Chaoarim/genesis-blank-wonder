@@ -218,15 +218,22 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   const todayTotal = todaySales.reduce((s, v) => s + Number(v.total), 0);
   const weekTotal = weekSales.reduce((s, v) => s + Number(v.total), 0);
   const monthTotal = monthSales.reduce((s, v) => s + Number(v.total), 0);
-  // For sellers, find their specific goal first; fallback to global goal
-  const currentGoal = sellerAuthId
-    ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && g.seller_auth_id === sellerAuthId)
-      || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id))
-    : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
-  const storeGoal = goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
-  const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
-  const storeGoalProgress = storeGoal ? Math.min((monthSales.reduce((s, v) => s + Number(v.total), 0) / Number(storeGoal.goal_amount)) * 100, 100) : 0;
+  // Goals for current month
+  const individualGoal = sellerAuthId
+    ? goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && g.seller_auth_id === sellerAuthId)
+    : undefined;
 
+  const storeGoal = goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
+  const currentGoal = sellerAuthId ? individualGoal : storeGoal;
+
+  const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
+  const individualGoalProgress = individualGoal ? Math.min((monthTotal / Number(individualGoal.goal_amount)) * 100, 100) : 0;
+
+  const storeMonthTotal = sales
+    .filter(s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear())
+    .reduce((sum, s) => sum + Number(s.total), 0);
+
+  const storeGoalProgress = storeGoal ? Math.min((storeMonthTotal / Number(storeGoal.goal_amount)) * 100, 100) : 0;
   const dailyTotals = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
     const dayStr = d.toDateString();

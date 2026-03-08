@@ -14,6 +14,8 @@ interface SalesDashboardProps {
     monthSales: number;
     goalProgress: number;
     currentGoal: { goal_amount: number } | undefined;
+    individualGoal?: { goal_amount: number } | undefined;
+    individualGoalProgress?: number;
     storeGoal?: { goal_amount: number } | undefined;
     storeGoalProgress?: number;
     dailyTotals: { day: string; total: number }[];
