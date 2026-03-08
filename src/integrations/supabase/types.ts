@@ -705,6 +705,7 @@ export type Database = {
           goal_amount: number
           id: string
           month: number
+          seller_auth_id: string | null
           user_id: string
           year: number
         }
@@ -713,6 +714,7 @@ export type Database = {
           goal_amount?: number
           id?: string
           month: number
+          seller_auth_id?: string | null
           user_id: string
           year: number
         }
@@ -721,6 +723,7 @@ export type Database = {
           goal_amount?: number
           id?: string
           month?: number
+          seller_auth_id?: string | null
           user_id?: string
           year?: number
         }

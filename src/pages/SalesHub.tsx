@@ -190,6 +190,8 @@ const SalesHub = () => {
               onAdd={salesData.addCustomer}
               onUpdate={salesData.updateCustomer}
               onDelete={salesData.deleteCustomer}
+              isAdmin={sellerPerms.isAdmin}
+              sellers={sellerPerms.sellers}
             />
           </TabsContent>
 
@@ -199,6 +201,9 @@ const SalesHub = () => {
               stats={salesData.stats}
               onSetGoal={salesData.setGoal}
               onDeleteGoal={salesData.deleteGoal}
+              isAdmin={sellerPerms.isAdmin}
+              sellers={sellerPerms.sellers}
+              sales={salesData.allSales}
             />
           </TabsContent>
 

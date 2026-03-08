@@ -10,6 +10,7 @@ export interface Customer {
   email: string | null;
   notes: string | null;
   code: string | null;
+  seller_auth_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -170,14 +171,16 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   }, []);
 
   // ---- Goals ----
-  const setGoal = useCallback(async (month: number, year: number, amount: number) => {
+  const setGoal = useCallback(async (month: number, year: number, amount: number, sellerAuthId?: string | null) => {
     if (!userId) return;
-    const existing = goals.find(g => g.month === month && g.year === year);
+    const existing = goals.find(g => g.month === month && g.year === year && (g as any).seller_auth_id === (sellerAuthId || null));
     if (existing) {
       await supabase.from('sales_goals').update({ goal_amount: amount }).eq('id', existing.id);
       setGoals(prev => prev.map(g => g.id === existing.id ? { ...g, goal_amount: amount } : g));
     } else {
-      const { data } = await supabase.from('sales_goals').insert({ user_id: userId, month, year, goal_amount: amount }).select().single();
+      const insertData: any = { user_id: userId, month, year, goal_amount: amount };
+      if (sellerAuthId) insertData.seller_auth_id = sellerAuthId;
+      const { data } = await supabase.from('sales_goals').insert(insertData).select().single();
       if (data) setGoals(prev => [...prev, data as SalesGoal]);
     }
     toast.success('Meta atualizada!');
@@ -208,7 +211,11 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   const todayTotal = todaySales.reduce((s, v) => s + Number(v.total), 0);
   const weekTotal = weekSales.reduce((s, v) => s + Number(v.total), 0);
   const monthTotal = monthSales.reduce((s, v) => s + Number(v.total), 0);
-  const currentGoal = goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear());
+  // For sellers, find their specific goal first; fallback to global goal
+  const currentGoal = sellerAuthId
+    ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && (g as any).seller_auth_id === sellerAuthId)
+      || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !(g as any).seller_auth_id))
+    : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !(g as any).seller_auth_id);
   const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
 
   const dailyTotals = Array.from({ length: 7 }, (_, i) => {
