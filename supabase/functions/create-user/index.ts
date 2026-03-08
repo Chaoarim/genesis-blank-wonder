@@ -78,58 +78,9 @@ serve(async (req) => {
     if (createError) {
       console.error("Error creating user:", createError);
       
-      // Check for duplicate email - if user already exists, update their password
       if (createError.message.includes("already been registered")) {
-        console.log("User already exists, attempting to update password...");
-        
-        // Find the user by email
-        const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-        
-        if (listError) {
-          console.error("Error listing users:", listError);
-          return new Response(
-            JSON.stringify({ error: "Erro ao buscar usuário existente" }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        
-        const existingUser = users.users.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
-        
-        if (existingUser) {
-          // Update the user's password
-          const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-            existingUser.id,
-            { 
-              password: password,
-              user_metadata: {
-                full_name: full_name || existingUser.user_metadata?.full_name || "",
-              },
-            }
-          );
-          
-          if (updateError) {
-            console.error("Error updating user password:", updateError);
-            return new Response(
-              JSON.stringify({ error: "Erro ao atualizar senha do usuário" }),
-              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-          
-          console.log("User password updated successfully:", existingUser.id);
-          
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              user_id: existingUser.id,
-              message: "Senha do usuário atualizada com sucesso",
-              updated: true
-            }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        
         return new Response(
-          JSON.stringify({ error: "Este email já está registrado no sistema" }),
+          JSON.stringify({ error: "Este email já está registrado. Use outro email para criar um novo vendedor." }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

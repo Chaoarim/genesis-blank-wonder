@@ -14,7 +14,7 @@ import type { SellerUser } from '@/hooks/useSellerPermissions';
 interface CustomersManagerProps {
   customers: Customer[];
   sales: Sale[];
-  onAdd: (data: { name: string; phone?: string; email?: string; notes?: string }) => Promise<any>;
+  onAdd: (data: { name: string; phone?: string; email?: string; notes?: string; seller_auth_id?: string | null }) => Promise<any>;
   onUpdate: (id: string, data: Partial<Customer>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   isAdmin?: boolean;
@@ -60,7 +60,8 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
     if (editId) {
       await onUpdate(editId, { name, phone: phone || null, email: email || null, notes: notes || null });
     } else {
-      await onAdd({ name, phone: phone || undefined, email: email || undefined, notes: notes || undefined });
+      const sellerForNewCustomer = isAdmin && sellerFilter !== 'all' && sellerFilter !== 'unassigned' ? sellerFilter : undefined;
+      await onAdd({ name, phone: phone || undefined, email: email || undefined, notes: notes || undefined, seller_auth_id: sellerForNewCustomer });
     }
     setDialogOpen(false);
     resetForm();
