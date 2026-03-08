@@ -21,10 +21,11 @@ import { SellersManager } from '@/components/sales/SellersManager';
 import { CommissionsManager } from '@/components/sales/CommissionsManager';
 import { SellerCommissionsReport } from '@/components/sales/SellerCommissionsReport';
 import { MarkupManager } from '@/components/sales/MarkupManager';
+import { PaymentTermsManager } from '@/components/sales/PaymentTermsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2, BookUser } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2, BookUser, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
