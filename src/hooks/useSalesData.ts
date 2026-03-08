@@ -52,6 +52,7 @@ export interface SalesGoal {
   month: number;
   year: number;
   goal_amount: number;
+  seller_auth_id: string | null;
 }
 
 export function useSalesData(userId: string | null, sellerAuthId?: string | null) {
