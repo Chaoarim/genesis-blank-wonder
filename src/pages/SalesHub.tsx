@@ -348,6 +348,12 @@ const SalesHub = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="accounts-payable">
+            {user && (
+              <AccountsPayableManager userId={sellerPerms.adminUserId || user.id} />
+            )}
+          </TabsContent>
+
           <TabsContent value="report">
             {sellerPerms.isAdmin && user && (
               <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />
