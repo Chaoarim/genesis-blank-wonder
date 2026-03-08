@@ -140,7 +140,7 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Histórico de Metas</h3>
           <div className="space-y-2">
-            {goals.map(g => {
+            {visibleGoals.map(g => {
               const gAny = g as any;
               const progress = isAdmin && sales ? getSellerGoalProgress(gAny) : null;
               return (
