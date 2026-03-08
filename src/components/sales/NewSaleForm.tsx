@@ -145,7 +145,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
       if (needsCreditApproval) {
         const sale = await onCreateSale({
           customer_id: customerId || undefined,
-          customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
+          customer_name: selectedCustomer?.name || customerName || customerSearch || 'Cliente balcão',
           channel,
           delivery_type: deliveryType,
           payment_method: paymentMethod,
