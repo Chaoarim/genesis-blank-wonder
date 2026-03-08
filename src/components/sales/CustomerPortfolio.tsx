@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Phone, Mail, ShoppingBag, Copy, UserCog } from 'lucide-react';
+import { Search, Phone, Mail, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { Customer, Sale } from '@/hooks/useSalesData';
