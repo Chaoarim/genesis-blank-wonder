@@ -281,7 +281,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       {/* Detailed sales list with customer and date */}
       <Card>
         <CardHeader>
-          <CardTitle>{sellerName ? 'Minhas Vendas Detalhadas' : 'Todas as Vendas Detalhadas'}</CardTitle>
+          <CardTitle>{sellerName ? 'Minhas Vendas Detalhadas' : activeSellerLabel ? `Vendas — ${activeSellerLabel}` : 'Todas as Vendas Detalhadas'}</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredSales.length === 0 ? (
