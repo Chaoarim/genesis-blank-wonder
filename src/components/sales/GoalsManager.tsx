@@ -177,7 +177,6 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
             {visibleGoals.map(g => {
               const progress = sales ? getSellerGoalProgress(g) : null;
               return (
-              return (
                 <div key={g.id} className="rounded-lg border border-border p-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
