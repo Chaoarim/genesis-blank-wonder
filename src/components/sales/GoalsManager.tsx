@@ -59,9 +59,9 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
   const [amountInput, setAmountInput] = useState(initialAmount ? initialAmount.toLocaleString('pt-BR') : '');
   const [selectedSeller, setSelectedSeller] = useState<string>('global');
 
-  // Filter goals: sellers only see their own goals
+  // Filter goals: sellers see their own goals + global (store) goals
   const visibleGoals = !isAdmin && sellerAuthId
-    ? goals.filter(g => (g as any).seller_auth_id === sellerAuthId)
+    ? goals.filter(g => g.seller_auth_id === sellerAuthId || !g.seller_auth_id)
     : goals;
   const handleSave = () => {
     if (amount <= 0) return;
@@ -75,7 +75,7 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
   };
 
   // Calculate seller-specific progress for admin view
-  const getSellerGoalProgress = (goal: SalesGoal & { seller_auth_id?: string | null }) => {
+  const getSellerGoalProgress = (goal: SalesGoal) => {
     if (!sales) return 0;
     const goalMonth = goal.month;
     const goalYear = goal.year;
@@ -175,8 +175,7 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
           <h3 className="font-semibold mb-3">Histórico de Metas</h3>
           <div className="space-y-2">
             {visibleGoals.map(g => {
-              const gAny = g as any;
-              const progress = isAdmin && sales ? getSellerGoalProgress(gAny) : null;
+              const progress = sales ? getSellerGoalProgress(g) : null;
               return (
                 <div key={g.id} className="rounded-lg border border-border p-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
@@ -184,8 +183,8 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
                       <span>{MONTHS[g.month - 1]} {g.year}</span>
                       {isAdmin && (
                         <Badge variant="secondary" className="text-[10px] gap-1">
-                          <Users className="w-3 h-3" />
-                          {getSellerName(gAny.seller_auth_id)}
+                         <Users className="w-3 h-3" />
+                          {getSellerName(g.seller_auth_id)}
                         </Badge>
                       )}
                     </div>

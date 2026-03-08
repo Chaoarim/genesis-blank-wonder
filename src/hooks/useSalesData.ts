@@ -52,6 +52,7 @@ export interface SalesGoal {
   month: number;
   year: number;
   goal_amount: number;
+  seller_auth_id: string | null;
 }
 
 export function useSalesData(userId: string | null, sellerAuthId?: string | null) {
@@ -179,7 +180,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   // ---- Goals ----
   const setGoal = useCallback(async (month: number, year: number, amount: number, sellerAuthId?: string | null) => {
     if (!userId) return;
-    const existing = goals.find(g => g.month === month && g.year === year && (g as any).seller_auth_id === (sellerAuthId || null));
+    const existing = goals.find(g => g.month === month && g.year === year && g.seller_auth_id === (sellerAuthId || null));
     if (existing) {
       await supabase.from('sales_goals').update({ goal_amount: amount }).eq('id', existing.id);
       setGoals(prev => prev.map(g => g.id === existing.id ? { ...g, goal_amount: amount } : g));
@@ -219,9 +220,9 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   const monthTotal = monthSales.reduce((s, v) => s + Number(v.total), 0);
   // For sellers, find their specific goal first; fallback to global goal
   const currentGoal = sellerAuthId
-    ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && (g as any).seller_auth_id === sellerAuthId)
-      || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !(g as any).seller_auth_id))
-    : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !(g as any).seller_auth_id);
+    ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && g.seller_auth_id === sellerAuthId)
+      || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id))
+    : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
   const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
 
   const dailyTotals = Array.from({ length: 7 }, (_, i) => {
