@@ -76,6 +76,10 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
       const newQty = parseInt(editValue);
       if (isNaN(newQty) || newQty < 0) { toast.error('Valor inválido'); return; }
       updateData[editField] = newQty;
+    } else if (editField === 'preco') {
+      const newPrice = parseFloat(editValue.replace(',', '.'));
+      if (isNaN(newPrice) || newPrice < 0) { toast.error('Preço inválido'); return; }
+      updateData.preco = newPrice;
     } else {
       if (editField === 'codigo' && !editValue.trim()) { toast.error('Código não pode ser vazio'); return; }
       if (editField === 'produto' && !editValue.trim()) { toast.error('Produto não pode ser vazio'); return; }
