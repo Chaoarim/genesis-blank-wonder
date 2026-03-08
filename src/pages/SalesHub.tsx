@@ -239,11 +239,17 @@ const SalesHub = () => {
             {sellerPerms.isAdmin && user && (
               <CommissionsManager userId={user.id} />
             )}
+            {!sellerPerms.isAdmin && user && (
+              <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} />
+            )}
           </TabsContent>
 
           <TabsContent value="report">
             {sellerPerms.isAdmin && user && (
               <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />
+            )}
+            {!sellerPerms.isAdmin && user && (
+              <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} />
             )}
           </TabsContent>
         </Tabs>
