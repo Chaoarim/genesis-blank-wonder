@@ -9,7 +9,7 @@ export interface SellerUser {
   email: string;
   is_active: boolean;
   created_at: string;
-  password_plain?: string | null;
+  
 }
 
 export interface SellerPermission {
