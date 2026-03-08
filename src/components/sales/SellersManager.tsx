@@ -65,10 +65,16 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
 
       const result = await onAddSeller({ name: name.trim(), email: email.trim() });
       if (result) {
-        await supabase
+        const { error: linkError } = await supabase
           .from('seller_users')
           .update({ seller_auth_id: authId })
           .eq('id', result.id);
+
+        if (linkError) {
+          toast.error('Conta criada, mas falhou ao vincular vendedor. Tente novamente.');
+          setAdding(false);
+          return;
+        }
 
         toast.success('Vendedor criado com sucesso!');
         setName('');
