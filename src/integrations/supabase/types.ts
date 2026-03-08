@@ -956,7 +956,6 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
-          password_plain: string | null
           seller_auth_id: string | null
         }
         Insert: {
@@ -967,7 +966,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
-          password_plain?: string | null
           seller_auth_id?: string | null
         }
         Update: {
@@ -978,7 +976,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
-          password_plain?: string | null
           seller_auth_id?: string | null
         }
         Relationships: []
@@ -1144,6 +1141,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _catalog_hash_password: { Args: { pw: string }; Returns: string }
+      _catalog_verify_password: {
+        Args: { pw: string; pw_hash: string }
+        Returns: boolean
+      }
       check_subscription_status: {
         Args: { p_user_id: string }
         Returns: string

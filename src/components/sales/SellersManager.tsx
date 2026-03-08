@@ -31,9 +31,7 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
   const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
   const [permDialogOpen, setPermDialogOpen] = useState(false);
 
-  // Password visibility per seller
-  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
-  // Password editing state
+  // Password reset state
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [editPasswordValue, setEditPasswordValue] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
@@ -134,13 +132,9 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
     toast.success(`Código ${code} copiado!`);
   };
 
-  const togglePasswordVisibility = (sellerId: string) => {
-    setVisiblePasswords(prev => ({ ...prev, [sellerId]: !prev[sellerId] }));
-  };
-
   const startEditPassword = (seller: SellerUser) => {
     setEditingPasswordId(seller.id);
-    setEditPasswordValue(seller.password_plain || '');
+    setEditPasswordValue('');
   };
 
   const cancelEditPassword = () => {
@@ -278,16 +272,17 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
                     </div>
                   </div>
 
-                  {/* Password row */}
+                  {/* Password reset row */}
                   <div className="flex items-center gap-2 pl-1">
-                    <span className="text-xs text-muted-foreground font-medium">Senha:</span>
                     {editingPasswordId === seller.id ? (
                       <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground font-medium">Nova senha:</span>
                         <Input
                           value={editPasswordValue}
                           onChange={e => setEditPasswordValue(e.target.value)}
                           className="h-7 text-xs w-40"
-                          placeholder="Nova senha"
+                          placeholder="Nova senha (min. 6 chars)"
+                          type="password"
                         />
                         <Button
                           variant="ghost"
@@ -303,31 +298,15 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded select-all">
-                          {visiblePasswords[seller.id]
-                            ? (seller.password_plain || '—')
-                            : '••••••'}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => togglePasswordVisibility(seller.id)}
-                          title={visiblePasswords[seller.id] ? 'Ocultar' : 'Mostrar'}
-                        >
-                          {visiblePasswords[seller.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => startEditPassword(seller)}
-                          title="Alterar senha"
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        onClick={() => startEditPassword(seller)}
+                      >
+                        <Pencil className="w-3 h-3" />
+                        Redefinir Senha
+                      </Button>
                     )}
                   </div>
                 </div>

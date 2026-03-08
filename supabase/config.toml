@@ -1,1 +1,4 @@
 project_id = "orqysvmrmyqebjntloac"
+
+[functions.catalog-login]
+verify_jwt = false
