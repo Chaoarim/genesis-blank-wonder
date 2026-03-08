@@ -109,31 +109,68 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   };
 
   const handleSave = async () => {
-    if (!form.supplier_name || !form.amount || !form.due_date) {
-      toast.error('Preencha fornecedor, valor e vencimento');
+    const numInstallments = form.installments;
+    
+    if (!form.supplier_name || !form.amount) {
+      toast.error('Preencha fornecedor e valor');
       return;
     }
-    const payload = {
-      user_id: userId,
-      supplier_name: form.supplier_name,
-      document_number: form.document_number,
-      description: form.description,
-      category: form.category,
-      amount: Number(form.amount),
-      due_date: form.due_date,
-      notes: form.notes || null,
-      barcode: form.barcode || null,
-    };
 
-    if (editingId) {
-      const { error } = await supabase.from('accounts_payable').update(payload).eq('id', editingId);
-      if (error) { toast.error('Erro ao atualizar'); return; }
-      toast.success('Conta atualizada!');
+    if (numInstallments === 1) {
+      if (!form.due_date) {
+        toast.error('Preencha o vencimento');
+        return;
+      }
+      const payload = {
+        user_id: userId,
+        supplier_name: form.supplier_name,
+        document_number: form.document_number,
+        description: form.description,
+        category: form.category,
+        amount: Number(form.amount),
+        due_date: form.due_date,
+        notes: form.notes || null,
+        barcode: form.barcode || null,
+      };
+
+      if (editingId) {
+        const { error } = await supabase.from('accounts_payable').update(payload).eq('id', editingId);
+        if (error) { toast.error('Erro ao atualizar'); return; }
+        toast.success('Conta atualizada!');
+      } else {
+        const { error } = await supabase.from('accounts_payable').insert(payload);
+        if (error) { toast.error('Erro ao criar'); return; }
+        toast.success('Conta cadastrada!');
+      }
     } else {
-      const { error } = await supabase.from('accounts_payable').insert(payload);
-      if (error) { toast.error('Erro ao criar'); return; }
-      toast.success('Conta cadastrada!');
+      // Multiple installments - validate all dates
+      const dates = form.installment_dates.slice(0, numInstallments);
+      if (dates.some(d => !d)) {
+        toast.error('Preencha todos os vencimentos das parcelas');
+        return;
+      }
+
+      const totalAmount = Number(form.amount);
+      const installmentAmount = Math.round((totalAmount / numInstallments) * 100) / 100;
+      const lastInstallmentAmount = Math.round((totalAmount - installmentAmount * (numInstallments - 1)) * 100) / 100;
+
+      const payloads = dates.map((date, i) => ({
+        user_id: userId,
+        supplier_name: form.supplier_name,
+        document_number: form.document_number ? `${form.document_number} (${i + 1}/${numInstallments})` : '',
+        description: form.description ? `${form.description} - Parcela ${i + 1}/${numInstallments}` : `Parcela ${i + 1}/${numInstallments}`,
+        category: form.category,
+        amount: i === numInstallments - 1 ? lastInstallmentAmount : installmentAmount,
+        due_date: date,
+        notes: form.notes || null,
+        barcode: i === 0 ? (form.barcode || null) : null,
+      }));
+
+      const { error } = await supabase.from('accounts_payable').insert(payloads);
+      if (error) { toast.error('Erro ao criar parcelas'); return; }
+      toast.success(`${numInstallments} parcelas cadastradas!`);
     }
+
     setForm(INITIAL_FORM);
     setEditingId(null);
     setDialogOpen(false);
