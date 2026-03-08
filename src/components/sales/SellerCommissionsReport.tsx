@@ -36,6 +36,7 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [period, setPeriod] = useState('month');
+  const [sellerFilter, setSellerFilter] = useState('all');
 
   useEffect(() => {
     const load = async () => {
@@ -49,7 +50,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   }, [userId]);
 
   const now = new Date();
-  const filteredSales = sales.filter(s => {
+  const periodFiltered = sales.filter(s => {
     if (s.status !== 'completed') return false;
     const d = new Date(s.created_at);
     if (period === 'today') return d.toDateString() === now.toDateString();
@@ -61,6 +62,20 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
     if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     return true;
   });
+
+  // Apply seller filter (admin only)
+  const filteredSales = !sellerName && sellerFilter !== 'all'
+    ? periodFiltered.filter(s => (s.seller_auth_id || '__admin__') === sellerFilter)
+    : periodFiltered;
+
+  // Unique sellers list for filter dropdown
+  const uniqueSellers = !sellerName ? Array.from(
+    new Map(periodFiltered.map(s => [s.seller_auth_id || '__admin__', s.seller_name || 'Administrador'])).entries()
+  ).sort((a, b) => a[1].localeCompare(b[1])) : [];
+
+  const activeSellerLabel = sellerFilter !== 'all'
+    ? uniqueSellers.find(([id]) => id === sellerFilter)?.[1] || ''
+    : '';
 
   const calcCommission = useCallback((sale: Sale): number => {
     if (commissions.length === 0) return 0;
