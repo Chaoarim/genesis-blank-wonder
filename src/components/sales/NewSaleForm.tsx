@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Send, CheckCircle, UserPlus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Customer } from '@/hooks/useSalesData';
+import type { SellerUser } from '@/hooks/useSellerPermissions';
 import { InventorySearchInline } from './InventorySearchInline';
 
 interface SaleItemDraft {
