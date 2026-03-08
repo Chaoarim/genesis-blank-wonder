@@ -26,13 +26,37 @@ interface GoalsManagerProps {
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+const parseGoalAmountInput = (raw: string) => {
+  const sanitized = raw.replace(/\s/g, '').replace(/[^\d.,]/g, '');
+  if (!sanitized) return 0;
+
+  if (sanitized.includes(',') && sanitized.includes('.')) {
+    return Number(sanitized.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+
+  if (sanitized.includes(',')) {
+    return Number(sanitized.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+
+  if (sanitized.includes('.')) {
+    const parts = sanitized.split('.');
+    if (parts.length > 1 && parts[parts.length - 1].length === 3) {
+      return Number(sanitized.replace(/\./g, '')) || 0;
+    }
+  }
+
+  return Number(sanitized) || 0;
+};
+
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, sellers, sales, sellerAuthId }: GoalsManagerProps) {
   const now = new Date();
+  const initialAmount = stats.currentGoal ? Number(stats.currentGoal.goal_amount) : 0;
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
-  const [amount, setAmount] = useState(stats.currentGoal ? Number(stats.currentGoal.goal_amount) : 0);
+  const [amount, setAmount] = useState(initialAmount);
+  const [amountInput, setAmountInput] = useState(initialAmount ? initialAmount.toLocaleString('pt-BR') : '');
   const [selectedSeller, setSelectedSeller] = useState<string>('global');
 
   // Filter goals: sellers only see their own goals
@@ -127,7 +151,17 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Valor da meta (R$)</label>
-            <Input type="number" min={0} step={100} value={amount || ''} onChange={e => setAmount(parseFloat(e.target.value) || 0)} placeholder="Ex: 50000" />
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amountInput}
+              onChange={e => {
+                const nextInput = e.target.value;
+                setAmountInput(nextInput);
+                setAmount(parseGoalAmountInput(nextInput));
+              }}
+              placeholder="Ex: 100.000"
+            />
           </div>
           <Button className="w-full" onClick={handleSave} disabled={amount <= 0}>
             <Target className="w-4 h-4 mr-2" /> Salvar Meta
