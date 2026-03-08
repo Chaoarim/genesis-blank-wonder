@@ -15,7 +15,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    // Create admin client with service role key
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
@@ -64,9 +63,11 @@ serve(async (req) => {
       );
     }
 
-    // Create user with Supabase Admin API
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Try to create user
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password: password,
       email_confirm: true,
       user_metadata: {
@@ -76,15 +77,46 @@ serve(async (req) => {
     });
 
     if (createError) {
-      console.error("Error creating user:", createError);
-      
+      // If user already exists, find them and return their ID
       if (createError.message.includes("already been registered")) {
+        console.log("User already exists, looking up by email:", normalizedEmail);
+        
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        
+        if (listError) {
+          console.error("Error listing users:", listError);
+          return new Response(
+            JSON.stringify({ error: "Erro ao buscar usuário existente" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const existingUser = users.find(u => u.email?.toLowerCase() === normalizedEmail);
+        
+        if (existingUser) {
+          // Update password to the new one provided
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+            password: password,
+          });
+
+          console.log("Found existing user:", existingUser.id);
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              user_id: existingUser.id,
+              message: "Usuário existente vinculado com sucesso" 
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         return new Response(
-          JSON.stringify({ error: "Este email já está registrado. Use outro email para criar um novo vendedor." }),
+          JSON.stringify({ error: "Email registrado mas não foi possível localizar o usuário." }),
           { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      console.error("Error creating user:", createError);
       return new Response(
         JSON.stringify({ error: createError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
