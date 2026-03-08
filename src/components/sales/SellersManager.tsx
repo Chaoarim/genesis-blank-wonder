@@ -14,14 +14,14 @@ import { ALL_PERMISSIONS } from '@/hooks/useSellerPermissions';
 
 interface Props {
   sellers: SellerUser[];
-  onAddSeller: (data: { name: string; email: string }) => Promise<any>;
   onRemoveSeller: (id: string) => Promise<void>;
   onToggleActive: (id: string, active: boolean) => Promise<void>;
   onSetPermissions: (sellerId: string, perms: string[]) => Promise<void>;
   onGetPermissions: (sellerId: string) => Promise<string[]>;
+  onRefreshSellers: () => Promise<void>;
 }
 
-export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleActive, onSetPermissions, onGetPermissions }: Props) {
+export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetPermissions, onGetPermissions, onRefreshSellers }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,15 +39,21 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       toast.error('Preencha nome, email e senha');
       return;
     }
+
     if (password.length < 6) {
       toast.error('A senha deve ter pelo menos 6 caracteres');
       return;
     }
 
     setAdding(true);
+
     try {
       const res = await supabase.functions.invoke('create-user', {
-        body: { email: normalizedEmail, password, full_name: normalizedName },
+        body: {
+          email: normalizedEmail,
+          password,
+          full_name: normalizedName,
+        },
       });
 
       if (res.error || !res.data?.success) {
@@ -55,104 +61,9 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
         return;
       }
 
-      const authId = res.data.user_id as string | undefined;
-      if (!authId) {
-        toast.error('Conta criada sem ID de autenticação. Tente novamente.');
-        return;
-      }
+      await onRefreshSellers();
 
-      const [existingByEmailRes, existingByAuthRes] = await Promise.all([
-        supabase
-          .from('seller_users')
-          .select('id, created_at')
-          .ilike('email', normalizedEmail)
-          .order('created_at', { ascending: false })
-          .limit(1),
-        supabase
-          .from('seller_users')
-          .select('id, created_at')
-          .eq('seller_auth_id', authId)
-          .order('created_at', { ascending: false })
-          .limit(1),
-      ]);
-
-      if (existingByEmailRes.error || existingByAuthRes.error) {
-        toast.error('Erro ao validar vendedor existente. Tente novamente.');
-        return;
-      }
-
-      const existingSellerId = existingByEmailRes.data?.[0]?.id || existingByAuthRes.data?.[0]?.id;
-
-      if (existingSellerId) {
-        const { error: updateExistingError } = await supabase
-          .from('seller_users')
-          .update({
-            name: normalizedName,
-            email: normalizedEmail,
-            seller_auth_id: authId,
-            is_active: true,
-          })
-          .eq('id', existingSellerId);
-
-        if (updateExistingError) {
-          toast.error('Não foi possível atualizar o vendedor existente.');
-          return;
-        }
-
-        toast.success('Vendedor já existia e foi atualizado com sucesso!');
-        setName('');
-        setEmail('');
-        setPassword('');
-        return;
-      }
-
-      const result = await onAddSeller({ name: normalizedName, email: normalizedEmail });
-      if (!result) {
-        const { data: fallbackExisting, error: fallbackError } = await supabase
-          .from('seller_users')
-          .select('id, created_at')
-          .or(`email.ilike.${normalizedEmail},seller_auth_id.eq.${authId}`)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (fallbackError || !fallbackExisting?.[0]?.id) {
-          toast.error('Não foi possível cadastrar vendedor. Verifique se ele já existe.');
-          return;
-        }
-
-        const { error: recoverLinkError } = await supabase
-          .from('seller_users')
-          .update({
-            name: normalizedName,
-            email: normalizedEmail,
-            seller_auth_id: authId,
-            is_active: true,
-          })
-          .eq('id', fallbackExisting[0].id);
-
-        if (recoverLinkError) {
-          toast.error('Conta criada, mas falhou ao reativar vendedor existente.');
-          return;
-        }
-
-        toast.success('Vendedor já existia e foi reativado com sucesso!');
-        setName('');
-        setEmail('');
-        setPassword('');
-        return;
-      }
-
-      const { error: linkError } = await supabase
-        .from('seller_users')
-        .update({ seller_auth_id: authId })
-        .eq('id', result.id);
-
-      if (linkError) {
-        toast.error('Conta criada, mas falhou ao vincular vendedor. Tente novamente.');
-        return;
-      }
-
-      toast.success('Vendedor criado com sucesso!');
+      toast.success('Vendedor cadastrado com sucesso!');
       setName('');
       setEmail('');
       setPassword('');
@@ -162,6 +73,7 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       setAdding(false);
     }
   };
+
 
   const openPermissions = async (seller: SellerUser) => {
     setPermSellerId(seller.id);

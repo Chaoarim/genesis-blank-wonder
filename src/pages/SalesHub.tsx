@@ -299,11 +299,11 @@ const SalesHub = () => {
             {sellerPerms.isAdmin && (
               <SellersManager
                 sellers={sellerPerms.sellers}
-                onAddSeller={sellerPerms.addSeller}
                 onRemoveSeller={sellerPerms.removeSeller}
                 onToggleActive={sellerPerms.toggleSellerActive}
                 onSetPermissions={sellerPerms.setSellerPermissions}
                 onGetPermissions={sellerPerms.getSellerPermissions}
+                onRefreshSellers={sellerPerms.refreshSellers}
               />
             )}
           </TabsContent>
