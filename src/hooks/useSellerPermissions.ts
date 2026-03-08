@@ -90,7 +90,10 @@ export function useSellerPermissions(userId: string | null) {
 
   const hasPermission = useCallback((tab: string) => {
     if (isAdmin) return true;
-    if (tab === 'new-sale') return true; // always allowed
+
+    // Core tabs always available for sellers (individual operation + visibility)
+    if (['new-sale', 'dashboard', 'history', 'commissions', 'report'].includes(tab)) return true;
+
     return permissions.includes(tab);
   }, [isAdmin, permissions]);
 
