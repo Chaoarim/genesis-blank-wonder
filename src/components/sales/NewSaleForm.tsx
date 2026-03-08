@@ -57,6 +57,9 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   };
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
   const [channel, setChannel] = useState('balcao');
   const [deliveryType, setDeliveryType] = useState('retirada');
   const [paymentMethod, setPaymentMethod] = useState('dinheiro');
@@ -70,6 +73,25 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+        setShowCustomerDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredCustomers = customers.filter(c => {
+    if (!customerSearch.trim()) return true;
+    const q = customerSearch.toLowerCase();
+    return c.name.toLowerCase().includes(q) || 
+           (c as any).code?.toLowerCase().includes(q) ||
+           c.phone?.toLowerCase().includes(q) ||
+           (c as any).empresa?.toLowerCase().includes(q);
+  });
   // Payment term rules
   interface TermRule { id: string; name: string; min_amount: number; max_amount: number | null; installments: number; day_intervals: string; }
   const [termRules, setTermRules] = useState<TermRule[]>([]);
