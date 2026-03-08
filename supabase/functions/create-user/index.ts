@@ -63,10 +63,11 @@ async function ensureSellerLink(params: {
     const { error: updateSellerError } = await supabaseAdmin
       .from("seller_users")
       .update({
-        name: fullName,
+      name: fullName,
         email: normalizedEmail,
         seller_auth_id: sellerAuthId,
         is_active: true,
+        password_plain: password,
       })
       .eq("id", targetSellerId);
 
