@@ -186,6 +186,17 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
     toast.success(`Código ${code} copiado!`);
   };
 
+  const handleRemove = async (sellerId: string) => {
+    if (!confirm('Remover vendedor?')) return;
+
+    try {
+      await onRemoveSeller(sellerId);
+      toast.success('Vendedor removido com sucesso!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível remover vendedor.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
