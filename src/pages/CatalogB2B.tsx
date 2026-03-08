@@ -163,20 +163,17 @@ export default function CatalogB2B() {
     }
     setAuthLoading(true);
 
-    const { data } = await supabase
-      .from('catalog_customers')
-      .select('*')
-      .eq('seller_id', sellerId)
-      .eq('phone', authPhone.trim())
-      .maybeSingle();
+    const { data, error } = await supabase.functions.invoke('catalog-login', {
+      body: { sellerId, phone: authPhone.trim(), password: authPassword.trim(), mode: 'login' },
+    });
 
-    if (!data || data.password_hash !== authPassword) {
-      toast.error('Telefone ou senha incorretos');
+    if (error || !data?.success) {
+      toast.error(data?.error || 'Telefone ou senha incorretos');
       setAuthLoading(false);
       return;
     }
 
-    const cust: CatalogCustomer = { id: data.id, name: data.name, phone: data.phone };
+    const cust: CatalogCustomer = data.customer;
     setCustomer(cust);
     setShowLogin(false);
     localStorage.setItem(`catalog_customer_${sellerId}`, JSON.stringify(cust));
