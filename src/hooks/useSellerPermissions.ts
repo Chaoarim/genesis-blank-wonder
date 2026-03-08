@@ -80,7 +80,7 @@ export function useSellerPermissions(userId: string | null) {
       ]);
 
       setPermissions((permsRes.data || []).map((p: any) => p.permission));
-      setSellers((sellersRes.data || []) as SellerUser[]);
+      setSellers((sellersRes.data || []).map((s: any) => ({ ...s } as SellerUser)));
       setLoading(false);
       return;
     }
