@@ -136,7 +136,60 @@ const SalesHub = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-6xl">
+      <main className="container mx-auto px-4 py-6 max-w-6xl space-y-4">
+        {/* Quick access links */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate('/buscar-pecas')}
+          >
+            <Search className="w-4 h-4" />
+            Buscar Peças
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
+              window.open(catalogUrl, '_blank');
+            }}
+          >
+            <Link2 className="w-4 h-4" />
+            Catálogo B2B
+            <ExternalLink className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
+              navigator.clipboard.writeText(catalogUrl);
+              toast.success('Link do catálogo copiado!');
+            }}
+          >
+            <Copy className="w-4 h-4" />
+            Copiar Link
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
+              const msg = encodeURIComponent(`Confira nosso catálogo de peças: ${catalogUrl}`);
+              window.open(`https://wa.me/?text=${msg}`, '_blank');
+            }}
+          >
+            <Share2 className="w-4 h-4" />
+            Enviar WhatsApp
+          </Button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap w-full mb-6 h-auto gap-1">
             {visibleTabs.map(tab => (
