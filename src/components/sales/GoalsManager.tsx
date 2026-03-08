@@ -174,6 +174,3 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
     </div>
   );
 }
-
-// Need to import Badge
-import { Badge } from '@/components/ui/badge';

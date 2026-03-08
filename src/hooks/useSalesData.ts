@@ -10,6 +10,7 @@ export interface Customer {
   email: string | null;
   notes: string | null;
   code: string | null;
+  seller_auth_id: string | null;
   created_at: string;
   updated_at: string;
 }
