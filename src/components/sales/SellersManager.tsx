@@ -81,7 +81,7 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
         return;
       }
 
-      const existingSellerId = existingByEmailRes.data?.id || existingByAuthRes.data?.id;
+      const existingSellerId = existingByEmailRes.data?.[0]?.id || existingByAuthRes.data?.[0]?.id;
 
       if (existingSellerId) {
         const { error: updateExistingError } = await supabase
