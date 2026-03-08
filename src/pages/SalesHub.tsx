@@ -53,6 +53,7 @@ const ALL_TABS: TabDef[] = [
   { value: 'coupons', icon: Ticket, label: 'Cupons' },
   { value: 'sellers', icon: UserCog, label: 'Vendedores' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões' },
+  { value: 'payment-terms', icon: Calendar, label: 'Prazos' },
   { value: 'report', icon: FileBarChart, label: 'Relatório' },
 ];
 
