@@ -28,7 +28,7 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, sellers, sales }: GoalsManagerProps) {
+export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, sellers, sales, sellerAuthId }: GoalsManagerProps) {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
