@@ -956,7 +956,6 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
-          password_plain: string | null
           seller_auth_id: string | null
         }
         Insert: {
@@ -967,7 +966,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
-          password_plain?: string | null
           seller_auth_id?: string | null
         }
         Update: {
@@ -978,7 +976,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
-          password_plain?: string | null
           seller_auth_id?: string | null
         }
         Relationships: []
