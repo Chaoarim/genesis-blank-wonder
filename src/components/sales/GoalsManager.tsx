@@ -132,7 +132,7 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
           </div>
           <Progress value={stats.storeGoalProgress ?? 0} className="h-2 mb-1" />
           <p className="text-xs text-muted-foreground text-right">
-            {fmt(stats.monthTotal)} de {fmt(Number(stats.storeGoal.goal_amount))}
+            {fmt(stats.storeMonthTotal ?? 0)} de {fmt(Number(stats.storeGoal.goal_amount))}
           </p>
         </Card>
       )}
