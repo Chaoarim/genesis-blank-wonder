@@ -82,7 +82,7 @@ const PartsSearch = () => {
       <div className="min-h-screen bg-background flex flex-col">
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
           <div className="container mx-auto px-4 py-3 flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/app')} className="shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <BookOpen className="w-5 h-5 text-primary" />
