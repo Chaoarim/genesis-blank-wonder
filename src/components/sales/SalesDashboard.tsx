@@ -49,6 +49,7 @@ interface SalesDashboardProps {
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: SalesDashboardProps) {
+  const includeSaturdays = useIncludeSaturdays();
   return (
     <div className="space-y-6">
       {sellerName && (
