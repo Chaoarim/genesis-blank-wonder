@@ -291,7 +291,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {!sellerName && <TableHead>Vendedor</TableHead>}
+                    {!sellerName && sellerFilter === 'all' && <TableHead>Vendedor</TableHead>}
                     <TableHead>Cliente</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
