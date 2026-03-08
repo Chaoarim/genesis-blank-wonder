@@ -6,6 +6,7 @@ import { usePartsDatabase } from '@/hooks/usePartsDatabase';
 import { useSellerPermissions } from '@/hooks/useSellerPermissions';
 import { SalesDashboard } from '@/components/sales/SalesDashboard';
 import { CustomersManager } from '@/components/sales/CustomersManager';
+import { CustomerPortfolio } from '@/components/sales/CustomerPortfolio';
 import { NewSaleForm } from '@/components/sales/NewSaleForm';
 import { SalesHistory } from '@/components/sales/SalesHistory';
 import { CatalogOrdersManager } from '@/components/sales/CatalogOrdersManager';
