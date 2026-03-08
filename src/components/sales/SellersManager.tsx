@@ -275,7 +275,7 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
                       <Shield className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="text-destructive" onClick={() => {
-                      if (confirm('Remover vendedor?')) onRemoveSeller(seller.id);
+                      void handleRemove(seller.id);
                     }}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
