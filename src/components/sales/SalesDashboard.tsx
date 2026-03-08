@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Send } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
+import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
 
 interface SalesDashboardProps {
   stats: {
