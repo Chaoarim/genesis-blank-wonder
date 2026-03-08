@@ -81,8 +81,8 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
         const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
         const todayIsBusinessDay = isBusinessDay(now, includeSaturdays);
         const dailyGoal = businessDaysInMonth > 0 ? goalAmount / businessDaysInMonth : 0;
-        const dailyRemaining = todayIsBusinessDay ? Math.max(dailyGoal - stats.todayTotal, 0) : 0;
-        const dailyProgress = dailyGoal > 0 && todayIsBusinessDay ? Math.min((stats.todayTotal / dailyGoal) * 100, 100) : 0;
+        const dailyRemaining = Math.max(dailyGoal - stats.todayTotal, 0);
+        const dailyProgress = dailyGoal > 0 ? Math.min((stats.todayTotal / dailyGoal) * 100, 100) : 0;
         const monthlyRemaining = Math.max(goalAmount - stats.monthTotal, 0);
         const monthlyProgress = stats.individualGoalProgress ?? 0;
 
@@ -96,7 +96,9 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
             {/* Daily goal */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Meta Diária</span>
+                <span className="text-xs text-muted-foreground">
+                  Meta Diária {!todayIsBusinessDay && <span className="text-[10px] text-muted-foreground/70">(hoje não é dia útil)</span>}
+                </span>
                 <span className="text-xs font-bold">{fmt(dailyGoal)}</span>
               </div>
               <Progress value={dailyProgress} className="h-2" />
