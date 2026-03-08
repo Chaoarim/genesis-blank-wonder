@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, DollarSign, Users, TrendingUp } from 'lucide-react';
+import { BarChart3, DollarSign, Users, TrendingUp, Printer, FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import type { Sale } from '@/hooks/useSalesData';
 
@@ -96,24 +97,76 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const grandTotal = sellers.reduce((s, v) => s + v.totalAmount, 0);
   const grandCommission = sellers.reduce((s, v) => s + v.commissionAmount, 0);
 
+  const printReport = () => {
+    const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Esta Semana' : period === 'month' ? 'Este Mês' : 'Tudo';
+    const rows = filteredSales.map((sale, idx) => `
+      <tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee">${idx + 1}</td>
+        ${!sellerName ? `<td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.seller_name || 'Administrador'}</td>` : ''}
+        <td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.customer_name || 'Cliente balcão'}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee">${new Date(sale.created_at).toLocaleDateString('pt-BR')} ${new Date(sale.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(Number(sale.total))}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(calcCommission(sale))}</td>
+      </tr>
+    `).join('');
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Vendas</title>
+      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;padding:32px;max-width:900px;margin:auto}
+      h1{font-size:20px;margin-bottom:4px}
+      .meta{color:#666;font-size:13px;margin-bottom:16px}
+      table{width:100%;border-collapse:collapse;margin-bottom:16px}
+      th{text-align:left;padding:8px;border-bottom:2px solid #333;font-size:11px;text-transform:uppercase;color:#555}
+      .summary{text-align:right;margin-top:8px;font-size:14px}
+      .summary .total{font-size:18px;font-weight:700}
+      .footer{margin-top:24px;text-align:center;font-size:11px;color:#999}
+      @media print{body{padding:16px}}</style></head><body>
+      <h1>${sellerName ? `Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}</h1>
+      <div class="meta"><p><strong>Período:</strong> ${periodLabel}</p><p><strong>Total de vendas:</strong> ${filteredSales.length}</p></div>
+      <table><thead><tr>
+        <th>#</th>
+        ${!sellerName ? '<th>Vendedor</th>' : ''}
+        <th>Cliente</th><th>Data</th><th style="text-align:right">Valor</th><th style="text-align:right">Comissão</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      <div class="summary">
+        <p>Total Vendido: ${fmt(grandTotal)}</p>
+        <p class="total">Total Comissões: ${fmt(grandCommission)}</p>
+      </div>
+      <div class="footer">Gerado em ${new Date().toLocaleString('pt-BR')}</div></body></html>`;
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 400);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
           {sellerName ? `Meu Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}
         </h2>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="today">Hoje</SelectItem>
-            <SelectItem value="week">Esta Semana</SelectItem>
-            <SelectItem value="month">Este Mês</SelectItem>
-            <SelectItem value="all">Tudo</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Hoje</SelectItem>
+              <SelectItem value="week">Esta Semana</SelectItem>
+              <SelectItem value="month">Este Mês</SelectItem>
+              <SelectItem value="all">Tudo</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm" onClick={printReport} disabled={filteredSales.length === 0}>
+            <Printer className="w-4 h-4 mr-1" /> Imprimir
+          </Button>
+          <Button variant="outline" size="sm" onClick={printReport} disabled={filteredSales.length === 0}>
+            <FileDown className="w-4 h-4 mr-1" /> PDF
+          </Button>
+        </div>
       </div>
 
       {/* Summary cards */}
