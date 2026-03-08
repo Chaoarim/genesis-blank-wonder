@@ -145,7 +145,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
       if (needsCreditApproval) {
         const sale = await onCreateSale({
           customer_id: customerId || undefined,
-          customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
+          customer_name: selectedCustomer?.name || customerName || customerSearch || 'Cliente balcão',
           channel,
           delivery_type: deliveryType,
           payment_method: paymentMethod,
@@ -180,7 +180,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
 
     const sale = await onCreateSale({
       customer_id: customerId || undefined,
-      customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
+      customer_name: selectedCustomer?.name || customerName || customerSearch || 'Cliente balcão',
       channel,
       delivery_type: deliveryType,
       payment_method: paymentMethod,
@@ -288,9 +288,6 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
               <UserPlus className="w-4 h-4" />
             </Button>
           </div>
-          {!customerId && !customerSearch && (
-            <Input className="mt-2" placeholder="Ou digite o nome do cliente" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-          )}
         </div>
 
         {showNewCustomer && (
