@@ -43,7 +43,13 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
         <StatCard icon={<DollarSign className="w-5 h-5" />} label="Hoje" value={fmt(stats.todayTotal)} sub={`${stats.todaySales} vendas`} color="text-green-500" />
         <StatCard icon={<TrendingUp className="w-5 h-5" />} label="Semana" value={fmt(stats.weekTotal)} color="text-blue-500" />
         <StatCard icon={<ShoppingBag className="w-5 h-5" />} label="Mês" value={fmt(stats.monthTotal)} sub={`${stats.monthSales} vendas`} color="text-primary" />
-        <StatCard icon={<Target className="w-5 h-5" />} label="Meta" value={stats.currentGoal ? `${stats.goalProgress.toFixed(0)}%` : 'Sem meta'} color="text-amber-500">
+        <StatCard
+          icon={<Target className="w-5 h-5" />}
+          label="Meta"
+          value={stats.currentGoal ? `${stats.goalProgress.toFixed(0)}%` : 'Sem meta'}
+          sub={stats.currentGoal ? `Objetivo ${fmt(Number(stats.currentGoal.goal_amount))}` : undefined}
+          color="text-amber-500"
+        >
           {stats.currentGoal && <Progress value={stats.goalProgress} className="h-1.5 mt-2" />}
         </StatCard>
       </div>

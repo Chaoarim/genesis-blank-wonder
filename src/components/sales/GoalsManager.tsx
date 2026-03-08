@@ -151,7 +151,17 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Valor da meta (R$)</label>
-            <Input type="number" min={0} step={100} value={amount || ''} onChange={e => setAmount(parseFloat(e.target.value) || 0)} placeholder="Ex: 50000" />
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amountInput}
+              onChange={e => {
+                const nextInput = e.target.value;
+                setAmountInput(nextInput);
+                setAmount(parseGoalAmountInput(nextInput));
+              }}
+              placeholder="Ex: 100.000"
+            />
           </div>
           <Button className="w-full" onClick={handleSave} disabled={amount <= 0}>
             <Target className="w-4 h-4 mr-2" /> Salvar Meta
