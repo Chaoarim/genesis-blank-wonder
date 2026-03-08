@@ -263,7 +263,11 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                         `font-bold ${item.vendidos_display > 0 ? 'text-orange-500' : 'text-muted-foreground'}`
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-primary">{fmt(precoRevenda)}</TableCell>
+                    <TableCell className="text-right">
+                      {renderEditableCell(item, 'preco', item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+                        'font-bold text-primary'
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
