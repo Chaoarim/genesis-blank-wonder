@@ -131,8 +131,7 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
       return (
         <div className="flex items-center gap-1">
           <Input
-            type={field === 'qtd_estoque' ? 'number' : 'text'}
-            min={field === 'qtd_estoque' ? 0 : undefined}
+            type={(['qtd_estoque', 'vendidos_display', 'preco'].includes(field)) ? 'text' : 'text'}
             value={editValue}
             onChange={e => setEditValue(e.target.value)}
             className="h-7 text-xs p-1 min-w-[60px]"
