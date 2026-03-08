@@ -206,7 +206,7 @@ const SalesHub = () => {
 
           <TabsContent value="new-sale">
             <NewSaleForm
-              customers={salesData.customers}
+              customers={salesData.allCustomers}
               parts={parts}
               onAddCustomer={salesData.addCustomer}
               onCreateSale={salesData.createSale}
@@ -214,6 +214,7 @@ const SalesHub = () => {
               adminUserId={sellerPerms.adminUserId}
               sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name || null}
               sellerAuthId={sellerPerms.isAdmin ? null : (user?.id || null)}
+              sellers={sellerPerms.sellers}
             />
           </TabsContent>
 

@@ -267,7 +267,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   });
 
   return {
-    customers: effectiveCustomers, sales: effectiveSales, allSales: sales, goals, loading, fetchAll,
+    customers: effectiveCustomers, allCustomers: customers, sales: effectiveSales, allSales: sales, goals, loading, fetchAll,
     addCustomer, updateCustomer, deleteCustomer,
     createSale, deleteSale, getSaleItems,
     setGoal, deleteGoal,

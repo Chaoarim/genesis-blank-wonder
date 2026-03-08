@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Send, CheckCircle, UserPlus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Customer } from '@/hooks/useSalesData';
+import type { SellerUser } from '@/hooks/useSellerPermissions';
 import { InventorySearchInline } from './InventorySearchInline';
 
 interface SaleItemDraft {
@@ -28,6 +29,7 @@ interface NewSaleFormProps {
   adminUserId?: string | null;
   sellerName?: string | null;
   sellerAuthId?: string | null;
+  sellers?: SellerUser[];
 }
 
 const DELIVERY_OPTIONS = [
@@ -44,7 +46,13 @@ const PAYMENT_OPTIONS = [
   { value: 'faturado', label: 'Faturado (Prazo)' },
 ];
 
-export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId, sellerName, sellerAuthId }: NewSaleFormProps) {
+export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId, sellerName, sellerAuthId, sellers }: NewSaleFormProps) {
+
+  const getSellerLabel = (sellerAuthIdVal: string | null) => {
+    if (!sellerAuthIdVal || !sellers) return '';
+    const s = sellers.find(s => s.seller_auth_id === sellerAuthIdVal);
+    return s ? ` (${s.name})` : '';
+  };
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [channel, setChannel] = useState('balcao');
@@ -133,7 +141,9 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
               </SelectTrigger>
               <SelectContent>
                 {customers.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{(c as any).code ? `${(c as any).code} - ` : ''}{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    {(c as any).code ? `${(c as any).code} - ` : ''}{c.name}{getSellerLabel(c.seller_auth_id)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
