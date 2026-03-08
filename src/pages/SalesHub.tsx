@@ -329,6 +329,23 @@ const SalesHub = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="warranty">
+            {user && (
+              <WarrantyReturnsManager
+                userId={sellerPerms.adminUserId || user.id}
+                customers={salesData.allCustomers}
+                sales={salesData.allSales}
+                getSaleItems={salesData.getSaleItems}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="credit">
+            {sellerPerms.isAdmin && user && (
+              <CreditApprovalsManager userId={user.id} reviewerName="Admin" />
+            )}
+          </TabsContent>
+
           <TabsContent value="report">
             {sellerPerms.isAdmin && user && (
               <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />
