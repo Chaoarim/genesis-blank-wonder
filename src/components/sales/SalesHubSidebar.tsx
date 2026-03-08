@@ -100,4 +100,4 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
   );
 }
 
-export { MENU_ITEMS, ALL_TAB_VALUES: MENU_ITEMS.map(m => m.value) };
+export const ALL_TAB_VALUES = MENU_ITEMS.map(m => m.value);
