@@ -136,7 +136,7 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
       )}
 
       {/* Goal history */}
-      {goals.length > 0 && (
+      {visibleGoals.length > 0 && (
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Histórico de Metas</h3>
           <div className="space-y-2">
