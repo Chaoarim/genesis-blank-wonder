@@ -124,80 +124,27 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
       <Card className="p-4 space-y-4">
         <h3 className="font-semibold text-lg">Nova Venda</h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground">Cliente</label>
-            <div className="flex gap-2">
-              <Select value={customerId} onValueChange={v => { setCustomerId(v); const c = customers.find(x => x.id === v); if (c) setCustomerName(c.name); }}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Selecionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{(c as any).code ? `${(c as any).code} - ` : ''}{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon" onClick={() => setShowNewCustomer(prev => !prev)}>
-                <UserPlus className="w-4 h-4" />
-              </Button>
-            </div>
-            {!customerId && (
-              <Input className="mt-2" placeholder="Ou digite o nome do cliente" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-            )}
-          </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground">Canal</label>
-            <Select value={channel} onValueChange={setChannel}>
-              <SelectTrigger>
-                <SelectValue />
+        <div>
+          <label className="text-xs text-muted-foreground">Cliente</label>
+          <div className="flex gap-2">
+            <Select value={customerId} onValueChange={v => { setCustomerId(v); const c = customers.find(x => x.id === v); if (c) setCustomerName(c.name); }}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Selecionar cliente" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="balcao">Balcão</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Delivery & Payment */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground">📦 Entrega</label>
-            <Select value={deliveryType} onValueChange={setDeliveryType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DELIVERY_OPTIONS.map(d => (
-                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                {customers.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{(c as any).code ? `${(c as any).code} - ` : ''}{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <Button variant="outline" size="icon" onClick={() => setShowNewCustomer(prev => !prev)}>
+              <UserPlus className="w-4 h-4" />
+            </Button>
           </div>
-
-          <div>
-            <label className="text-xs text-muted-foreground">💳 Pagamento</label>
-            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_OPTIONS.map(p => (
-                  <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!customerId && (
+            <Input className="mt-2" placeholder="Ou digite o nome do cliente" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+          )}
         </div>
-
-        {paymentMethod === 'faturado' && (
-          <div>
-            <label className="text-xs text-muted-foreground">📅 Prazo do Faturamento</label>
-            <Input type="date" value={paymentDeadline} onChange={e => setPaymentDeadline(e.target.value)} />
-          </div>
-        )}
 
         {showNewCustomer && (
           <Card className="p-3 border-dashed space-y-2">
