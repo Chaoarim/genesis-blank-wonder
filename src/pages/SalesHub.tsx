@@ -43,6 +43,7 @@ const ALL_TABS: TabDef[] = [
   { value: 'low-stock', icon: AlertTriangle, label: 'Est. Baixo', shortLabel: 'Est. Baixo' },
   { value: 'history', icon: History, label: 'Histórico' },
   { value: 'customers', icon: Users, label: 'Clientes' },
+  { value: 'carteira', icon: BookUser, label: 'Carteira' },
   { value: 'goals', icon: Target, label: 'Metas' },
   { value: 'markup', icon: Percent, label: 'Markup' },
   { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar' },
