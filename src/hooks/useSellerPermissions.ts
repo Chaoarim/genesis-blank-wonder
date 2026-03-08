@@ -170,7 +170,7 @@ export function useSellerPermissions(userId: string | null) {
   }, []);
 
   // Effective user ID: admin's ID for sellers, own ID for admins
-  const adminUserId = sellerRecord ? sellerRecord.admin_user_id : userId;
+  const adminUserId = isAdmin ? userId : (sellerRecord ? sellerRecord.admin_user_id : null);
 
   return {
     isAdmin,
