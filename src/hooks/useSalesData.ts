@@ -181,15 +181,38 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   const setGoal = useCallback(async (month: number, year: number, amount: number, sellerAuthId?: string | null) => {
     if (!userId) return;
     const existing = goals.find(g => g.month === month && g.year === year && g.seller_auth_id === (sellerAuthId || null));
+
     if (existing) {
-      await supabase.from('sales_goals').update({ goal_amount: amount }).eq('id', existing.id);
+      const { error } = await supabase
+        .from('sales_goals')
+        .update({ goal_amount: amount })
+        .eq('id', existing.id);
+
+      if (error) {
+        toast.error('Erro ao atualizar meta');
+        return;
+      }
+
       setGoals(prev => prev.map(g => g.id === existing.id ? { ...g, goal_amount: amount } : g));
-    } else {
-      const insertData: any = { user_id: userId, month, year, goal_amount: amount };
-      if (sellerAuthId) insertData.seller_auth_id = sellerAuthId;
-      const { data } = await supabase.from('sales_goals').insert(insertData).select().single();
-      if (data) setGoals(prev => [...prev, data as SalesGoal]);
+      toast.success('Meta atualizada!');
+      return;
     }
+
+    const insertData: any = { user_id: userId, month, year, goal_amount: amount };
+    if (sellerAuthId) insertData.seller_auth_id = sellerAuthId;
+
+    const { data, error } = await supabase
+      .from('sales_goals')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error || !data) {
+      toast.error('Erro ao salvar meta. Verifique o vendedor e tente novamente.');
+      return;
+    }
+
+    setGoals(prev => [...prev, data as SalesGoal]);
     toast.success('Meta atualizada!');
   }, [userId, goals]);
 
