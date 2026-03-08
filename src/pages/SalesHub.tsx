@@ -22,6 +22,8 @@ import { CommissionsManager } from '@/components/sales/CommissionsManager';
 import { SellerCommissionsReport } from '@/components/sales/SellerCommissionsReport';
 import { MarkupManager } from '@/components/sales/MarkupManager';
 import { PaymentTermsManager } from '@/components/sales/PaymentTermsManager';
+import { WarrantyReturnsManager } from '@/components/sales/WarrantyReturnsManager';
+import { CreditApprovalsManager } from '@/components/sales/CreditApprovalsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
