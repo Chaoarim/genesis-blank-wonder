@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, DollarSign, Users, TrendingUp, Printer, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { downloadHtmlAsPdf, printHtml } from '@/lib/htmlToPdf';
 import type { Sale } from '@/hooks/useSalesData';
 
 interface SellerSummary {
