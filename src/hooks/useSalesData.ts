@@ -223,7 +223,9 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
     ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && g.seller_auth_id === sellerAuthId)
       || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id))
     : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
+  const storeGoal = goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
   const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
+  const storeGoalProgress = storeGoal ? Math.min((monthSales.reduce((s, v) => s + Number(v.total), 0) / Number(storeGoal.goal_amount)) * 100, 100) : 0;
 
   const dailyTotals = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
@@ -239,6 +241,6 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
     addCustomer, updateCustomer, deleteCustomer,
     createSale, deleteSale, getSaleItems,
     setGoal, deleteGoal,
-    stats: { todayTotal, weekTotal, monthTotal, todaySales: todaySales.length, monthSales: monthSales.length, goalProgress, currentGoal, dailyTotals },
+    stats: { todayTotal, weekTotal, monthTotal, todaySales: todaySales.length, monthSales: monthSales.length, goalProgress, currentGoal, storeGoal, storeGoalProgress, dailyTotals },
   };
 }
