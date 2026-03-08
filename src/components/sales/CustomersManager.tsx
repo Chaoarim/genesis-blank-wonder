@@ -38,6 +38,7 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [sellerFilter, setSellerFilter] = useState<string>('all');
+  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
 
   const set = (field: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
