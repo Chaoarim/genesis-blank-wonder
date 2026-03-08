@@ -18,13 +18,20 @@ interface SalesDashboardProps {
   };
   onNewSale: () => void;
   recentSales: Sale[];
+  sellerName?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function SalesDashboard({ stats, onNewSale, recentSales }: SalesDashboardProps) {
+export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: SalesDashboardProps) {
   return (
     <div className="space-y-6">
+      {sellerName && (
+        <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-center">
+          <p className="text-sm text-muted-foreground">Dashboard de</p>
+          <p className="text-lg font-bold text-primary">{sellerName}</p>
+        </div>
+      )}
       {/* Quick action */}
       <Button onClick={onNewSale} size="lg" className="w-full bg-gradient-to-r from-primary to-amber-600 text-primary-foreground font-bold text-base gap-2 h-14 shadow-lg">
         <PlusCircle className="w-5 h-5" />
