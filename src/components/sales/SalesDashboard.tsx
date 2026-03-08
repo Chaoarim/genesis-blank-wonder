@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -5,6 +6,24 @@ import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Send } from 'l
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
 import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
+
+function useIncludeSaturdays() {
+  const [includeSaturdays, setIncludeSaturdays] = useState(() => {
+    try { return localStorage.getItem('goals_include_saturdays') !== 'false'; } catch { return true; }
+  });
+  useEffect(() => {
+    const handler = () => {
+      try { setIncludeSaturdays(localStorage.getItem('goals_include_saturdays') !== 'false'); } catch { /* */ }
+    };
+    window.addEventListener('saturday-config-changed', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('saturday-config-changed', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
+  return includeSaturdays;
+}
 
 interface SalesDashboardProps {
   stats: {
@@ -30,6 +49,7 @@ interface SalesDashboardProps {
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: SalesDashboardProps) {
+  const includeSaturdays = useIncludeSaturdays();
   return (
     <div className="space-y-6">
       {sellerName && (
@@ -77,7 +97,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
       {!sellerName && stats.storeGoal && (() => {
         const now = new Date();
         const goalAmount = Number(stats.storeGoal!.goal_amount);
-        const includeSaturdays = true;
+        
         const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
         const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
         const todayIsBD = isBusinessDay(now, includeSaturdays);
@@ -141,7 +161,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
       {sellerName && stats.individualGoal && (() => {
         const now = new Date();
         const goalAmount = Number(stats.individualGoal!.goal_amount);
-        const includeSaturdays = true; // loja funciona aos sábados
+        
         const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
         const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
         const todayIsBusinessDay = isBusinessDay(now, includeSaturdays);

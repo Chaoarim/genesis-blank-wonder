@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Target, Trophy, Trash2, Users } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Target, Trophy, Trash2, Users, CalendarDays } from 'lucide-react';
 import type { SalesGoal, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
@@ -133,6 +135,36 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
           <Progress value={stats.storeGoalProgress ?? 0} className="h-2 mb-1" />
           <p className="text-xs text-muted-foreground text-right">
             {fmt(stats.storeMonthTotal ?? 0)} de {fmt(Number(stats.storeGoal.goal_amount))}
+          </p>
+        </Card>
+      )}
+
+      {/* Saturday config - only for admin */}
+      {isAdmin && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarDays className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-sm">Configuração de Dias Úteis</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="include-saturdays" className="text-sm text-muted-foreground">
+              Loja funciona aos sábados?
+            </Label>
+            <Switch
+              id="include-saturdays"
+              checked={(() => {
+                try { return localStorage.getItem('goals_include_saturdays') !== 'false'; } catch { return true; }
+              })()}
+              onCheckedChange={(checked) => {
+                localStorage.setItem('goals_include_saturdays', String(checked));
+                window.dispatchEvent(new Event('saturday-config-changed'));
+                // Force re-render
+                setYear(y => y); 
+              }}
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Isso afeta o cálculo da meta diária e dias úteis restantes no dashboard.
           </p>
         </Card>
       )}
