@@ -31,9 +31,7 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
   const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
   const [permDialogOpen, setPermDialogOpen] = useState(false);
 
-  // Password visibility per seller
-  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
-  // Password editing state
+  // Password reset state
   const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
   const [editPasswordValue, setEditPasswordValue] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
