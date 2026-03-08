@@ -56,6 +56,8 @@ const ALL_TABS: TabDef[] = [
   { value: 'sellers', icon: UserCog, label: 'Vendedores' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões' },
   { value: 'payment-terms', icon: Calendar, label: 'Prazos' },
+  { value: 'warranty', icon: ShieldCheck, label: 'Garantia' },
+  { value: 'credit', icon: CreditCard, label: 'Crédito' },
   { value: 'report', icon: FileBarChart, label: 'Relatório' },
 ];
 

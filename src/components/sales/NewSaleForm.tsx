@@ -115,6 +115,44 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
     setSaving(true);
     const selectedCustomer = customers.find(c => c.id === customerId);
 
+    // Credit limit check for faturado payments
+    if (paymentMethod === 'faturado' && selectedCustomer && selectedCustomer.limite_credito && Number(selectedCustomer.limite_credito) > 0) {
+      if (total > Number(selectedCustomer.limite_credito)) {
+        // Create sale as pending_credit and create credit approval
+        const sale = await onCreateSale({
+          customer_id: customerId || undefined,
+          customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
+          channel,
+          delivery_type: deliveryType,
+          payment_method: paymentMethod,
+          payment_deadline: paymentMethod === 'faturado' && paymentDeadline ? paymentDeadline : undefined,
+          seller_auth_id: sellerAuthId || undefined,
+          seller_name: sellerName || undefined,
+          notes: `[AGUARDANDO CRÉDITO] ${notes}`,
+          discount,
+          items: items.map(i => ({ codigo: i.codigo, produto: i.produto, fornecedor: i.fornecedor, quantidade: i.quantidade, preco_unitario: i.preco_unitario })),
+        });
+
+        if (sale) {
+          // Update sale status to pending_credit
+          await supabase.from('sales').update({ status: 'pending_credit' }).eq('id', sale.id);
+          // Create credit approval record
+          await supabase.from('credit_approvals').insert({
+            user_id: sale.user_id,
+            sale_id: sale.id,
+            customer_id: selectedCustomer.id,
+            customer_name: selectedCustomer.name,
+            sale_total: total,
+            credit_limit: Number(selectedCustomer.limite_credito),
+          });
+          toast.warning(`Pedido de R$ ${total.toFixed(2)} excede o limite de crédito de R$ ${Number(selectedCustomer.limite_credito).toFixed(2)}. Enviado para análise de crédito.`, { duration: 6000 });
+        }
+        setSaving(false);
+        if (sale) onDone();
+        return;
+      }
+    }
+
     const sale = await onCreateSale({
       customer_id: customerId || undefined,
       customer_name: selectedCustomer?.name || customerName || 'Cliente balcão',
