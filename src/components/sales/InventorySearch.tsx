@@ -22,7 +22,7 @@ interface InventoryItem {
   vendidos_display: number;
 }
 
-type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display';
+type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display' | 'preco';
 
 export function InventorySearch({ adminUserId }: { adminUserId?: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([]);
