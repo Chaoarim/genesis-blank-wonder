@@ -98,9 +98,17 @@ serve(async (req) => {
         
         if (existingUser) {
           // Update password to the new one provided
-          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+          const { error: updatePasswordError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
             password: password,
           });
+
+          if (updatePasswordError) {
+            console.error("Error updating existing user password:", updatePasswordError);
+            return new Response(
+              JSON.stringify({ error: "Usuário encontrado, mas falhou ao atualizar a senha." }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
 
           console.log("Found existing user:", existingUser.id);
           return new Response(
