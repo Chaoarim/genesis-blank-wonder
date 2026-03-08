@@ -24,10 +24,11 @@ import { MarkupManager } from '@/components/sales/MarkupManager';
 import { PaymentTermsManager } from '@/components/sales/PaymentTermsManager';
 import { WarrantyReturnsManager } from '@/components/sales/WarrantyReturnsManager';
 import { CreditApprovalsManager } from '@/components/sales/CreditApprovalsManager';
+import { AccountsPayableManager } from '@/components/sales/AccountsPayableManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2, BookUser, Calendar, ShieldCheck, CreditCard } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2, BookUser, Calendar, ShieldCheck, CreditCard, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
@@ -58,6 +59,7 @@ const ALL_TABS: TabDef[] = [
   { value: 'payment-terms', icon: Calendar, label: 'Prazos' },
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia' },
   { value: 'credit', icon: CreditCard, label: 'Crédito' },
+  { value: 'accounts-payable', icon: Receipt, label: 'Contas' },
   { value: 'report', icon: FileBarChart, label: 'Relatório' },
 ];
 
@@ -343,6 +345,12 @@ const SalesHub = () => {
           <TabsContent value="credit">
             {sellerPerms.isAdmin && user && (
               <CreditApprovalsManager userId={user.id} reviewerName="Admin" />
+            )}
+          </TabsContent>
+
+          <TabsContent value="accounts-payable">
+            {user && (
+              <AccountsPayableManager userId={sellerPerms.adminUserId || user.id} />
             )}
           </TabsContent>
 
