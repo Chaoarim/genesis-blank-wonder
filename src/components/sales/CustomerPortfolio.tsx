@@ -105,6 +105,12 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
                         </Badge>
                       )}
                       <p className="font-medium truncate">{c.name}</p>
+                      {c.empresa && (
+                        <Badge variant="outline" className="text-[10px] gap-1">
+                          <Building2 className="w-3 h-3" />
+                          {c.empresa}
+                        </Badge>
+                      )}
                       {assignedSeller ? (
                         <Badge variant="secondary" className="text-[10px] gap-1">
                           <UserCog className="w-3 h-3" />
@@ -115,15 +121,25 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
                       )}
                     </div>
                     <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
-                      {c.phone && (
-                        <a href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1 hover:text-green-500">
-                          <Phone className="w-3 h-3" /> {c.phone}
+                      {c.cpf_cnpj && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> {c.cpf_cnpj}</span>}
+                      {c.whatsapp && (
+                        <a href={`https://wa.me/${c.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1 hover:text-green-500">
+                          <MessageCircle className="w-3 h-3" /> {c.whatsapp}
                         </a>
+                      )}
+                      {c.phone && (
+                        <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {c.phone}</span>
                       )}
                       {c.email && (
                         <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {c.email}</span>
                       )}
                       <span className="flex items-center gap-1"><ShoppingBag className="w-3 h-3" /> {stats.count} vendas · {fmt(stats.total)}</span>
+                      {c.endereco && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {c.endereco}</span>}
+                      {c.limite_credito && Number(c.limite_credito) > 0 && (
+                        <span className="flex items-center gap-1 text-primary font-medium">
+                          <CreditCard className="w-3 h-3" /> Limite: {fmt(Number(c.limite_credito))}
+                        </span>
+                      )}
                       {c.notes && <span className="italic">· {c.notes}</span>}
                     </div>
                   </div>
