@@ -108,7 +108,37 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
 
       const result = await onAddSeller({ name: normalizedName, email: normalizedEmail });
       if (!result) {
-        toast.error('Não foi possível cadastrar vendedor. Verifique se ele já existe.');
+        const { data: fallbackExisting, error: fallbackError } = await supabase
+          .from('seller_users')
+          .select('id, created_at')
+          .or(`email.ilike.${normalizedEmail},seller_auth_id.eq.${authId}`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (fallbackError || !fallbackExisting?.[0]?.id) {
+          toast.error('Não foi possível cadastrar vendedor. Verifique se ele já existe.');
+          return;
+        }
+
+        const { error: recoverLinkError } = await supabase
+          .from('seller_users')
+          .update({
+            name: normalizedName,
+            email: normalizedEmail,
+            seller_auth_id: authId,
+            is_active: true,
+          })
+          .eq('id', fallbackExisting[0].id);
+
+        if (recoverLinkError) {
+          toast.error('Conta criada, mas falhou ao reativar vendedor existente.');
+          return;
+        }
+
+        toast.success('Vendedor já existia e foi reativado com sucesso!');
+        setName('');
+        setEmail('');
+        setPassword('');
         return;
       }
 
