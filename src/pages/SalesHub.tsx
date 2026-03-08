@@ -5,6 +5,7 @@ import { useSalesData } from '@/hooks/useSalesData';
 import { usePartsDatabase } from '@/hooks/usePartsDatabase';
 import { useSellerPermissions } from '@/hooks/useSellerPermissions';
 import { SalesDashboard } from '@/components/sales/SalesDashboard';
+import { RenewalWarning } from '@/components/RenewalWarning';
 import { CustomersManager } from '@/components/sales/CustomersManager';
 import { CustomerPortfolio } from '@/components/sales/CustomerPortfolio';
 import { NewSaleForm } from '@/components/sales/NewSaleForm';
@@ -248,7 +249,8 @@ const SalesHub = () => {
             </div>
           </header>
 
-          <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
+          <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full space-y-4">
+            <RenewalWarning />
             {renderContent()}
           </main>
         </div>
