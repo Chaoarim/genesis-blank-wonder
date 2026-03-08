@@ -136,7 +136,14 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
         const deliveryLabel = DELIVERY_OPTIONS.find(d => d.value === deliveryType)?.label || deliveryType;
         const paymentLabel = PAYMENT_OPTIONS.find(p => p.value === paymentMethod)?.label || paymentMethod;
         const lines = items.map((item, idx) => `${idx + 1}. ${item.codigo} - ${item.produto}\n   Qtde: ${item.quantidade} x R$ ${item.preco_unitario.toFixed(2)}`);
-        const text = `*VENDA CONFIRMADA*\n\n${lines.join('\n\n')}\n${discount > 0 ? `\nDesconto: R$ ${discount.toFixed(2)}` : ''}\n\n*TOTAL: R$ ${total.toFixed(2)}*\n\n📦 Entrega: ${deliveryLabel}\n💳 Pagamento: ${paymentLabel}${paymentMethod === 'faturado' && paymentDeadline ? `\n📅 Prazo: ${new Date(paymentDeadline).toLocaleDateString('pt-BR')}` : ''}`;
+        let prazoText = '';
+        if (paymentMethod === 'faturado' && selectedTerm && total > 0) {
+          const instDates = getInstallmentDates(selectedTerm);
+          prazoText = `\n📅 *Faturamento ${selectedTerm.installments}x:*\n` + instDates.map(inst => `   ${inst.num}ª parcela: ${inst.date.toLocaleDateString('pt-BR')} — R$ ${inst.value.toFixed(2)}`).join('\n');
+        } else if (paymentMethod === 'faturado' && paymentDeadline) {
+          prazoText = `\n📅 Prazo: ${new Date(paymentDeadline).toLocaleDateString('pt-BR')}`;
+        }
+        const text = `*VENDA CONFIRMADA*\n\n${lines.join('\n\n')}\n${discount > 0 ? `\nDesconto: R$ ${discount.toFixed(2)}` : ''}\n\n*TOTAL: R$ ${total.toFixed(2)}*\n\n📦 Entrega: ${deliveryLabel}\n💳 Pagamento: ${paymentLabel}${prazoText}`;
         const url = phone
           ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(text)}`
           : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
