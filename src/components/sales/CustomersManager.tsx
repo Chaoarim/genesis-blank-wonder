@@ -317,6 +317,9 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
                         </SelectContent>
                       </Select>
                     )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetailCustomer(c)} title="Ver ficha completa">
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}>
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>
