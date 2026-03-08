@@ -93,45 +93,47 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
         )}
       </Card>
 
-      {/* Set goal */}
-      <Card className="p-4 space-y-3">
-        <h3 className="font-semibold">Definir Meta</h3>
-        {isAdmin && sellers && sellers.length > 0 && (
-          <div>
-            <label className="text-xs text-muted-foreground">Vendedor</label>
-            <Select value={selectedSeller} onValueChange={setSelectedSeller}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="global">Geral (Loja)</SelectItem>
-                {sellers.filter(s => s.seller_auth_id).map(s => (
-                  <SelectItem key={s.id} value={s.seller_auth_id!}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Set goal - only for admin */}
+      {isAdmin && (
+        <Card className="p-4 space-y-3">
+          <h3 className="font-semibold">Definir Meta</h3>
+          {sellers && sellers.length > 0 && (
+            <div>
+              <label className="text-xs text-muted-foreground">Vendedor</label>
+              <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="global">Geral (Loja)</SelectItem>
+                  {sellers.filter(s => s.seller_auth_id).map(s => (
+                    <SelectItem key={s.id} value={s.seller_auth_id!}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Mês</label>
+              <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={e => setMonth(Number(e.target.value))}>
+                {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Ano</label>
+              <Input type="number" value={year} onChange={e => setYear(Number(e.target.value))} />
+            </div>
           </div>
-        )}
-        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-muted-foreground">Mês</label>
-            <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={month} onChange={e => setMonth(Number(e.target.value))}>
-              {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-            </select>
+            <label className="text-xs text-muted-foreground">Valor da meta (R$)</label>
+            <Input type="number" min={0} step={100} value={amount || ''} onChange={e => setAmount(parseFloat(e.target.value) || 0)} placeholder="Ex: 50000" />
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Ano</label>
-            <Input type="number" value={year} onChange={e => setYear(Number(e.target.value))} />
-          </div>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">Valor da meta (R$)</label>
-          <Input type="number" min={0} step={100} value={amount || ''} onChange={e => setAmount(parseFloat(e.target.value) || 0)} placeholder="Ex: 50000" />
-        </div>
-        <Button className="w-full" onClick={handleSave} disabled={amount <= 0}>
-          <Target className="w-4 h-4 mr-2" /> Salvar Meta
-        </Button>
-      </Card>
+          <Button className="w-full" onClick={handleSave} disabled={amount <= 0}>
+            <Target className="w-4 h-4 mr-2" /> Salvar Meta
+          </Button>
+        </Card>
+      )}
 
       {/* Goal history */}
       {goals.length > 0 && (
