@@ -35,6 +35,10 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
   const [amount, setAmount] = useState(stats.currentGoal ? Number(stats.currentGoal.goal_amount) : 0);
   const [selectedSeller, setSelectedSeller] = useState<string>('global');
 
+  // Filter goals: sellers only see their own goals
+  const visibleGoals = !isAdmin && sellerAuthId
+    ? goals.filter(g => (g as any).seller_auth_id === sellerAuthId)
+    : goals;
   const handleSave = () => {
     if (amount <= 0) return;
     const sellerAuthId = selectedSeller === 'global' ? null : selectedSeller;
