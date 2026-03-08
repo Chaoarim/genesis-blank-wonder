@@ -249,7 +249,8 @@ const SalesHub = () => {
             </div>
           </header>
 
-          <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
+          <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full space-y-4">
+            <RenewalWarning />
             {renderContent()}
           </main>
         </div>
