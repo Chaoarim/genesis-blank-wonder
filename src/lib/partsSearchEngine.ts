@@ -37,10 +37,40 @@ const SYNONYMS: Record<string, string[]> = {
   'kit direcao': ['terminal direcao', 'barra direcao', 'pivo', 'caixa direcao', 'bomba direcao'],
   'amortecedor': ['amortecedor dianteiro', 'amortecedor traseiro'],
   'vela': ['vela ignicao', 'vela aquecimento'],
-  'filtro': ['filtro oleo', 'filtro ar', 'filtro combustivel', 'filtro cabine'],
+  'filtro': ['filtro oleo', 'filtro ar', 'filtro combustivel', 'filtro cabine', 'elemento filtrante'],
   'correia': ['correia poly v', 'correia alternador', 'correia dentada', 'correia acessorio'],
   'jogo': ['kit', 'conjunto'],
   'kit': ['jogo', 'conjunto'],
+  'pastilha': ['pastilha freio', 'pastilha dianteira', 'pastilha traseira'],
+  'disco': ['disco freio', 'disco dianteiro', 'disco traseiro', 'disco ventilado'],
+  'lona': ['lona freio', 'sapata'],
+  'sapata': ['lona freio', 'lona'],
+  'bomba': ['bomba agua', 'bomba oleo', 'bomba combustivel', 'bomba direcao'],
+  'radiador': ['radiador agua', 'radiador oleo'],
+  'sensor': ['sensor temperatura', 'sensor rotacao', 'sensor abs', 'sensor oxigenio', 'sonda lambda'],
+  'sonda': ['sonda lambda', 'sensor oxigenio'],
+  'bobina': ['bobina ignicao', 'modulo ignicao'],
+  'bieleta': ['bieleta estabilizadora', 'barra estabilizadora'],
+  'bandeja': ['braco suspensao', 'bandeja suspensao'],
+  'terminal': ['terminal direcao', 'ponteira direcao'],
+  'ponteira': ['terminal direcao', 'ponteira direcao'],
+  'pivo': ['pivo suspensao', 'rotula'],
+  'rotula': ['pivo suspensao', 'pivo'],
+  'rolamento': ['rolamento roda', 'rolamento embreagem'],
+  'coxim': ['coxim motor', 'coxim cambio', 'calco motor'],
+  'calco': ['coxim motor', 'coxim'],
+  'retrovisor': ['espelho retrovisor'],
+  'espelho': ['espelho retrovisor', 'retrovisor'],
+  'lanterna': ['lanterna traseira', 'lanterna dianteira', 'farol'],
+  'farol': ['farol dianteiro', 'farol milha', 'farol neblina'],
+  'para choque': ['parachoque'],
+  'parachoque': ['para choque'],
+  'junta': ['junta cabecote', 'junta motor', 'junta homocinetica'],
+  'homocinetica': ['junta homocinetica', 'tulipa', 'trizeta'],
+  'tulipa': ['homocinetica'],
+  'trizeta': ['homocinetica'],
+  'cabo': ['cabo embreagem', 'cabo acelerador', 'cabo freio'],
+  'bucha': ['bucha bandeja', 'bucha estabilizadora', 'bucha suspensao'],
 };
 
 // Generate bigrams from an array of words
@@ -252,11 +282,13 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
   const terms = q.split(' ').filter(t => t.length >= 2);
   if (terms.length === 0) return [];
 
-  // Separate vehicle terms from product terms
+  // Separate vehicle terms, laterality terms, and product terms
   const productTerms: string[] = [];
   const vehicleTerms: string[] = [];
+  const lateralityTerms: string[] = [];
   for (const term of terms) {
-    if (VEHICLE_TERMS.has(term)) vehicleTerms.push(term);
+    if (LATERALITY_TERMS.has(term)) lateralityTerms.push(term);
+    else if (VEHICLE_TERMS.has(term)) vehicleTerms.push(term);
     else productTerms.push(term);
   }
 
@@ -272,14 +304,27 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
     const aplicacao = normalizeForSearch(item.aplicacao);
     const fullText = `${codigo} ${produto} ${fornecedor} ${aplicacao}`;
 
-    // Vehicle terms must match in aplicacao or produto
+    // MANDATORY: ALL laterality terms must match
+    if (lateralityTerms.length > 0) {
+      if (!lateralityTerms.every(lt => fuzzyMatch(fullText, lt))) continue;
+    }
+
+    // Vehicle terms must match in aplicacao or produto (using word boundary)
     if (vehicleTerms.length > 0) {
-      if (!vehicleTerms.every(vt => fuzzyMatch(aplicacao, vt) || fuzzyMatch(produto, vt))) continue;
+      const matchesVehicle = (text: string, term: string) => {
+        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
+        return regex.test(text);
+      };
+      if (!vehicleTerms.every(vt => matchesVehicle(aplicacao, vt) || matchesVehicle(produto, vt))) continue;
     }
 
     let score = 0;
     let matched = 0;
     const totalRequired = productTerms.length;
+
+    // Vehicle and laterality bonuses
+    score += vehicleTerms.length * 4;
+    score += lateralityTerms.length * 5;
 
     // Score product terms
     for (const term of productTerms) {
@@ -301,8 +346,6 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
       }
     }
 
-    // Vehicle match bonus
-    score += vehicleTerms.length * 4;
     if (vehicleTerms.length > 0) matched = Math.max(matched, 1);
 
     // At least half of product terms must match

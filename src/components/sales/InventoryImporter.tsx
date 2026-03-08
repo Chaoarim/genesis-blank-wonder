@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
 import { useMemo } from 'react';
+import { fetchAllInventory } from '@/lib/fetchAllInventory';
 
 interface InventoryItem {
   id: string;
@@ -160,23 +161,28 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       if (parsed.length === 0) { toast.error('Nenhum item válido encontrado.'); setImporting(false); return; }
 
       const batchSize = 500;
+      let insertedCount = 0;
       for (let i = 0; i < parsed.length; i += batchSize) {
         const batch = parsed.slice(i, i + batchSize).map(p => ({ user_id: user.id, ...p }));
         const { error } = await supabase.from('inventory_items').insert(batch);
-        if (error) { console.error('Insert error:', error); toast.error('Erro ao importar lote'); }
+        if (error) {
+          console.error('Insert error at batch', i, ':', error);
+          toast.error(`Erro no lote ${Math.floor(i / batchSize) + 1}`);
+        } else {
+          insertedCount += batch.length;
+        }
       }
 
-      const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-      if (data) {
-        setItems(data.map((r: any) => ({
-          id: r.id, codigo: r.codigo, produto: r.produto,
-          fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-          image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
-          vendidos_display: Number(r.vendidos_display) || 0,
-        })));
-      }
-      toast.success(`${parsed.length} itens importados ao estoque!`);
+      // Fetch ALL items using paginated helper (bypasses 1000-row limit)
+      const allItems = await fetchAllInventory(user.id);
+      setItems(allItems.map(r => ({
+        id: r.id, codigo: r.codigo, produto: r.produto,
+        fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+        qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+        image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
+        vendidos_display: Number(r.vendidos_display) || 0,
+      })));
+      toast.success(`${insertedCount} de ${parsed.length} itens importados ao estoque!`);
     } catch (err) { console.error(err); toast.error('Erro ao ler arquivo'); }
 
     setImporting(false);

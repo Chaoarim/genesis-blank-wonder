@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Search, Package, ExternalLink, Pencil, Check, X, Trash2, ImagePlus, Loader2, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllInventory } from '@/lib/fetchAllInventory';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
 import { toast } from 'sonner';
@@ -40,19 +41,17 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
       if (!user) return;
       const effectiveId = adminUserId || user.id;
 
-      const [itemsRes, markupRes] = await Promise.all([
-        supabase.from('inventory_items').select('*').eq('user_id', effectiveId).order('produto'),
+      const [allItems, markupRes] = await Promise.all([
+        fetchAllInventory(effectiveId, 'produto', true),
         supabase.from('markup_settings').select('markup_revenda').eq('user_id', effectiveId).maybeSingle(),
       ]);
 
-      if (itemsRes.data) {
-        setItems(itemsRes.data.map((r: any) => ({
-          id: r.id, codigo: r.codigo, produto: r.produto,
-          fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-          image_url: r.image_url || '', vendidos_display: Number(r.vendidos_display) || 0,
-        })));
-      }
+      setItems(allItems.map(r => ({
+        id: r.id, codigo: r.codigo, produto: r.produto,
+        fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+        qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+        image_url: r.image_url || '', vendidos_display: Number(r.vendidos_display) || 0,
+      })));
       setMarkup(Number(markupRes.data?.markup_revenda) || 0);
       setLoading(false);
     };
