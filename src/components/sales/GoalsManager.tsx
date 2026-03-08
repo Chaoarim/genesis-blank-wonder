@@ -59,9 +59,9 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
   const [amountInput, setAmountInput] = useState(initialAmount ? initialAmount.toLocaleString('pt-BR') : '');
   const [selectedSeller, setSelectedSeller] = useState<string>('global');
 
-  // Filter goals: sellers only see their own goals
+  // Filter goals: sellers see their own goals + global (store) goals
   const visibleGoals = !isAdmin && sellerAuthId
-    ? goals.filter(g => (g as any).seller_auth_id === sellerAuthId)
+    ? goals.filter(g => g.seller_auth_id === sellerAuthId || !g.seller_auth_id)
     : goals;
   const handleSave = () => {
     if (amount <= 0) return;
