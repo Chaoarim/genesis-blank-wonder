@@ -63,6 +63,9 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
   const [amount, setAmount] = useState(initialAmount);
   const [amountInput, setAmountInput] = useState(initialAmount ? initialAmount.toLocaleString('pt-BR') : '');
   const [selectedSeller, setSelectedSeller] = useState<string>('global');
+  const [includeSaturdays, setIncludeSaturdays] = useState(() => {
+    try { return localStorage.getItem('goals_include_saturdays') !== 'false'; } catch { return true; }
+  });
 
   // Filter goals: sellers see their own goals + global (store) goals
   const visibleGoals = !isAdmin && sellerAuthId
@@ -152,14 +155,11 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
             </Label>
             <Switch
               id="include-saturdays"
-              checked={(() => {
-                try { return localStorage.getItem('goals_include_saturdays') !== 'false'; } catch { return true; }
-              })()}
+              checked={includeSaturdays}
               onCheckedChange={(checked) => {
+                setIncludeSaturdays(checked);
                 localStorage.setItem('goals_include_saturdays', String(checked));
                 window.dispatchEvent(new Event('saturday-config-changed'));
-                // Force re-render
-                setYear(y => y); 
               }}
             />
           </div>
