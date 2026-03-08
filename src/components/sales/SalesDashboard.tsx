@@ -161,7 +161,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
       {sellerName && stats.individualGoal && (() => {
         const now = new Date();
         const goalAmount = Number(stats.individualGoal!.goal_amount);
-        const includeSaturdays = true; // loja funciona aos sábados
+        
         const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
         const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
         const todayIsBusinessDay = isBusinessDay(now, includeSaturdays);
