@@ -53,7 +53,7 @@ export interface SalesGoal {
   goal_amount: number;
 }
 
-export function useSalesData(userId: string | null) {
+export function useSalesData(userId: string | null, sellerAuthId?: string | null) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [goals, setGoals] = useState<SalesGoal[]>([]);
@@ -83,7 +83,9 @@ export function useSalesData(userId: string | null) {
   // ---- Customers ----
   const addCustomer = useCallback(async (data: { name: string; phone?: string; email?: string; notes?: string }) => {
     if (!userId) return null;
-    const { data: row, error } = await supabase.from('customers').insert({ ...data, user_id: userId }).select().single();
+    const insertData: any = { ...data, user_id: userId };
+    if (sellerAuthId) insertData.seller_auth_id = sellerAuthId;
+    const { data: row, error } = await supabase.from('customers').insert(insertData).select().single();
     if (error) { toast.error('Erro ao salvar cliente'); return null; }
     setCustomers(prev => [...prev, row as Customer]);
     toast.success('Cliente salvo!');
@@ -187,12 +189,21 @@ export function useSalesData(userId: string | null) {
     toast.success('Meta excluída!');
   }, []);
 
+  // ---- Filter by seller if applicable ----
+  const effectiveSales = sellerAuthId
+    ? sales.filter(s => s.seller_auth_id === sellerAuthId)
+    : sales;
+
+  const effectiveCustomers = sellerAuthId
+    ? customers.filter((c: any) => c.seller_auth_id === sellerAuthId || !c.seller_auth_id)
+    : customers;
+
   // ---- Stats ----
   const now = new Date();
-  const todaySales = sales.filter(s => s.status === 'completed' && new Date(s.created_at).toDateString() === now.toDateString());
-  const monthSales = sales.filter(s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear());
+  const todaySales = effectiveSales.filter(s => s.status === 'completed' && new Date(s.created_at).toDateString() === now.toDateString());
+  const monthSales = effectiveSales.filter(s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear());
   const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
-  const weekSales = sales.filter(s => s.status === 'completed' && new Date(s.created_at) >= weekStart);
+  const weekSales = effectiveSales.filter(s => s.status === 'completed' && new Date(s.created_at) >= weekStart);
 
   const todayTotal = todaySales.reduce((s, v) => s + Number(v.total), 0);
   const weekTotal = weekSales.reduce((s, v) => s + Number(v.total), 0);
@@ -200,18 +211,17 @@ export function useSalesData(userId: string | null) {
   const currentGoal = goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear());
   const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
 
-  // Daily totals for chart (last 7 days)
   const dailyTotals = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i));
     const dayStr = d.toDateString();
-    const dayTotal = sales
+    const dayTotal = effectiveSales
       .filter(s => s.status === 'completed' && new Date(s.created_at).toDateString() === dayStr)
       .reduce((sum, s) => sum + Number(s.total), 0);
     return { day: d.toLocaleDateString('pt-BR', { weekday: 'short' }), total: dayTotal };
   });
 
   return {
-    customers, sales, goals, loading, fetchAll,
+    customers: effectiveCustomers, sales: effectiveSales, allSales: sales, goals, loading, fetchAll,
     addCustomer, updateCustomer, deleteCustomer,
     createSale, deleteSale, getSaleItems,
     setGoal, deleteGoal,
