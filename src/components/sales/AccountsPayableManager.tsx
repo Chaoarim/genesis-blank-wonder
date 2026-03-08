@@ -76,21 +76,35 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
 
   useEffect(() => { fetchBills(); }, [fetchBills]);
 
-  useEffect(() => {
-    const fetchSuppliers = async () => {
-      const { data } = await supabase
-        .from('inventory_items')
-        .select('fornecedor')
-        .eq('user_id', userId)
-        .not('fornecedor', 'is', null)
-        .not('fornecedor', 'eq', '');
-      if (data) {
-        const unique = [...new Set(data.map(d => d.fornecedor).filter(Boolean))] as string[];
-        setSuppliers(unique.sort());
-      }
-    };
-    fetchSuppliers();
+  const fetchSuppliers = useCallback(async () => {
+    const { data } = await supabase
+      .from('payable_suppliers')
+      .select('name')
+      .eq('user_id', userId)
+      .order('name');
+    if (data) setSuppliers(data.map(d => d.name));
   }, [userId]);
+
+  useEffect(() => { fetchSuppliers(); }, [fetchSuppliers]);
+
+  const handleAddSupplier = async () => {
+    if (!newSupplier.trim()) return;
+    const { error } = await supabase.from('payable_suppliers').insert({ user_id: userId, name: newSupplier.trim() });
+    if (error) {
+      if (error.code === '23505') toast.error('Fornecedor já cadastrado');
+      else toast.error('Erro ao cadastrar fornecedor');
+      return;
+    }
+    toast.success('Fornecedor cadastrado!');
+    setNewSupplier('');
+    fetchSuppliers();
+  };
+
+  const handleDeleteSupplier = async (name: string) => {
+    await supabase.from('payable_suppliers').delete().eq('user_id', userId).eq('name', name);
+    toast.success('Fornecedor removido');
+    fetchSuppliers();
+  };
 
   const handleSave = async () => {
     if (!form.supplier_name || !form.amount || !form.due_date) {
