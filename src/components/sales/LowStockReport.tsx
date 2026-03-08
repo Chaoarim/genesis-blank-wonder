@@ -71,22 +71,11 @@ export function LowStockReport() {
   };
 
   const handlePrint = () => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(buildReportHtml());
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 400);
+    printHtml(buildReportHtml());
   };
 
   const handlePdf = () => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(buildReportHtml());
-    win.document.close();
-    win.document.title = `Estoque_Baixo_${new Date().toISOString().slice(0, 10)}`;
-    win.focus();
-    setTimeout(() => win.print(), 400);
+    downloadHtmlAsPdf(buildReportHtml(), `Estoque_Baixo_${new Date().toISOString().slice(0, 10)}`);
   };
 
   if (loading) return <p className="text-center text-muted-foreground py-4">Carregando...</p>;

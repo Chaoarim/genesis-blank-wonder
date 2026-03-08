@@ -163,10 +163,10 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
               <SelectItem value="all">Tudo</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={printReport} disabled={filteredSales.length === 0}>
+          <Button variant="outline" size="sm" onClick={handlePrint} disabled={filteredSales.length === 0}>
             <Printer className="w-4 h-4 mr-1" /> Imprimir
           </Button>
-          <Button variant="outline" size="sm" onClick={printReport} disabled={filteredSales.length === 0}>
+          <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={filteredSales.length === 0}>
             <FileDown className="w-4 h-4 mr-1" /> PDF
           </Button>
         </div>
