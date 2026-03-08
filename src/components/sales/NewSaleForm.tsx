@@ -70,6 +70,17 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
 
+  // Payment term rules
+  interface TermRule { id: string; name: string; min_amount: number; max_amount: number | null; installments: number; day_intervals: string; }
+  const [termRules, setTermRules] = useState<TermRule[]>([]);
+  const [selectedTermId, setSelectedTermId] = useState<string>('');
+
+  useEffect(() => {
+    supabase.from('payment_term_rules').select('*').order('min_amount').then(({ data }) => {
+      if (data) setTermRules(data.map((d: any) => ({ ...d, min_amount: Number(d.min_amount), max_amount: d.max_amount ? Number(d.max_amount) : null })));
+    });
+  }, []);
+
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
   const updateItemQty = useCallback((id: string, qty: number) => {
