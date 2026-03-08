@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllInventory } from '@/lib/fetchAllInventory';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
 
@@ -34,18 +35,16 @@ export function InventorySearchInline({ onAddItem, adminUserId }: InventorySearc
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const effectiveId = adminUserId || user.id;
-      const [itemsRes, markupRes] = await Promise.all([
-        supabase.from('inventory_items').select('*').eq('user_id', effectiveId).order('produto'),
+      const [allItems, markupRes] = await Promise.all([
+        fetchAllInventory(effectiveId, 'produto', true),
         supabase.from('markup_settings').select('markup_revenda').eq('user_id', effectiveId).maybeSingle(),
       ]);
-      if (itemsRes.data) {
-        setItems(itemsRes.data.map((r: any) => ({
-          id: r.id, codigo: r.codigo, produto: r.produto,
-          fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-          image_url: r.image_url || '',
-        })));
-      }
+      setItems(allItems.map(r => ({
+        id: r.id, codigo: r.codigo, produto: r.produto,
+        fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+        qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+        image_url: r.image_url || '',
+      })));
       setMarkup(Number(markupRes.data?.markup_revenda) || 0);
       setLoading(false);
     };

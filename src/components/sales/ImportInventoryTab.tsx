@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Link2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllInventory } from '@/lib/fetchAllInventory';
 import { InventoryImporter } from './InventoryImporter';
 import { InventoryImageUploader } from './InventoryImageUploader';
 
@@ -29,15 +30,13 @@ export function ImportInventoryTab() {
   const refreshItems = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase.from('inventory_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-    if (data) {
-      setInventoryItems(data.map((r: any) => ({
-        id: r.id, codigo: r.codigo, produto: r.produto,
-        fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
-        qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-        image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
-      })));
-    }
+    const allItems = await fetchAllInventory(user.id);
+    setInventoryItems(allItems.map(r => ({
+      id: r.id, codigo: r.codigo, produto: r.produto,
+      fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+      qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+      image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
+    })));
   }, []);
 
   useEffect(() => {
@@ -46,20 +45,18 @@ export function ImportInventoryTab() {
       if (!user) return;
       setUserId(user.id);
 
-      const [markupRes, invRes] = await Promise.all([
+      const [markupRes, allItems] = await Promise.all([
         supabase.from('markup_settings').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('inventory_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        fetchAllInventory(user.id),
       ]);
 
       if (markupRes.data) setMarkup(Number(markupRes.data.markup_revenda) || 0);
-      if (invRes.data) {
-        setInventoryItems(invRes.data.map((r: any) => ({
-          id: r.id, codigo: r.codigo, produto: r.produto,
-          fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
-          qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
-          image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
-        })));
-      }
+      setInventoryItems(allItems.map(r => ({
+        id: r.id, codigo: r.codigo, produto: r.produto,
+        fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
+        qtd_estoque: Number(r.qtd_estoque) || 0, preco: Number(r.preco) || 0,
+        image_url: r.image_url || '', visible_catalog: r.visible_catalog ?? false,
+      })));
       setLoading(false);
     };
     load();
