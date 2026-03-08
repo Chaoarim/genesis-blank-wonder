@@ -141,7 +141,9 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
               </SelectTrigger>
               <SelectContent>
                 {customers.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{(c as any).code ? `${(c as any).code} - ` : ''}{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    {(c as any).code ? `${(c as any).code} - ` : ''}{c.name}{getSellerLabel(c.seller_auth_id)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
