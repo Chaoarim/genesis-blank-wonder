@@ -113,12 +113,17 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const grandTotal = sellers.reduce((s, v) => s + v.totalAmount, 0);
   const grandCommission = sellers.reduce((s, v) => s + v.commissionAmount, 0);
 
+  const reportTitle = !sellerName && activeSellerLabel
+    ? `Relatório — ${activeSellerLabel}`
+    : sellerName ? `Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor';
+
   const buildReportHtml = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Esta Semana' : period === 'month' ? 'Este Mês' : 'Tudo';
+    const showSellerCol = !sellerName && sellerFilter === 'all';
     const rows = filteredSales.map((sale, idx) => `
       <tr>
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${idx + 1}</td>
-        ${!sellerName ? `<td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.seller_name || 'Administrador'}</td>` : ''}
+        ${showSellerCol ? `<td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.seller_name || 'Administrador'}</td>` : ''}
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${sale.customer_name || 'Cliente balcão'}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${new Date(sale.created_at).toLocaleDateString('pt-BR')} ${new Date(sale.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
         <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(Number(sale.total))}</td>
@@ -136,11 +141,11 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       .summary .total{font-size:18px;font-weight:700}
       .footer{margin-top:24px;text-align:center;font-size:11px;color:#999}
       @media print{body{padding:16px}}</style></head><body>
-      <h1>${sellerName ? `Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}</h1>
+      <h1>${reportTitle}</h1>
       <div class="meta"><p><strong>Período:</strong> ${periodLabel}</p><p><strong>Total de vendas:</strong> ${filteredSales.length}</p></div>
       <table><thead><tr>
         <th>#</th>
-        ${!sellerName ? '<th>Vendedor</th>' : ''}
+        ${showSellerCol ? '<th>Vendedor</th>' : ''}
         <th>Cliente</th><th>Data</th><th style="text-align:right">Valor</th><th style="text-align:right">Comissão</th>
       </tr></thead><tbody>${rows}</tbody></table>
       <div class="summary">
@@ -156,7 +161,8 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
 
   const handleDownloadPdf = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Tudo';
-    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Vendas_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
+    const sellerSuffix = activeSellerLabel ? `_${activeSellerLabel.replace(/\s+/g, '_')}` : '';
+    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Vendas${sellerSuffix}_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (
