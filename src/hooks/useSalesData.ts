@@ -90,7 +90,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
     setCustomers(prev => [...prev, row as Customer]);
     toast.success('Cliente salvo!');
     return row;
-  }, [userId]);
+  }, [userId, sellerAuthId]);
 
   const updateCustomer = useCallback(async (id: string, data: Partial<Customer>) => {
     const { error } = await supabase.from('customers').update(data).eq('id', id);
