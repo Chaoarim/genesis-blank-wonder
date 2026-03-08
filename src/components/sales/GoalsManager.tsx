@@ -184,8 +184,8 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
                       <span>{MONTHS[g.month - 1]} {g.year}</span>
                       {isAdmin && (
                         <Badge variant="secondary" className="text-[10px] gap-1">
-                          <Users className="w-3 h-3" />
-                          {getSellerName(gAny.seller_auth_id)}
+                         <Users className="w-3 h-3" />
+                          {getSellerName(g.seller_auth_id)}
                         </Badge>
                       )}
                     </div>

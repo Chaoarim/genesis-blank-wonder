@@ -220,9 +220,9 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   const monthTotal = monthSales.reduce((s, v) => s + Number(v.total), 0);
   // For sellers, find their specific goal first; fallback to global goal
   const currentGoal = sellerAuthId
-    ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && (g as any).seller_auth_id === sellerAuthId)
-      || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !(g as any).seller_auth_id))
-    : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !(g as any).seller_auth_id);
+    ? (goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && g.seller_auth_id === sellerAuthId)
+      || goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id))
+    : goals.find(g => g.month === now.getMonth() + 1 && g.year === now.getFullYear() && !g.seller_auth_id);
   const goalProgress = currentGoal ? Math.min((monthTotal / Number(currentGoal.goal_amount)) * 100, 100) : 0;
 
   const dailyTotals = Array.from({ length: 7 }, (_, i) => {
