@@ -101,7 +101,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
-          Relatório de Vendas por Vendedor
+          {sellerName ? `Meu Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor'}
         </h2>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-[160px]">
