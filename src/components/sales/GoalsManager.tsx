@@ -15,6 +15,8 @@ interface GoalsManagerProps {
     monthTotal: number;
     goalProgress: number;
     currentGoal: { goal_amount: number } | undefined;
+    storeGoal?: { goal_amount: number } | undefined;
+    storeGoalProgress?: number;
   };
   onSetGoal: (month: number, year: number, amount: number, sellerAuthId?: string | null) => Promise<void>;
   onDeleteGoal: (goalId: string) => Promise<void>;
