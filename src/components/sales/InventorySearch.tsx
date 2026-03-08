@@ -213,6 +213,7 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                   <span className="flex items-center justify-center gap-1"><Flame className="w-3 h-3" />Vendidos</span>
                 </TableHead>
                 <TableHead className="text-right">Preço Custo</TableHead>
+                <TableHead className="text-right">Preço Revenda</TableHead>
                 <TableHead className="w-20">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -266,6 +267,13 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                       {renderEditableCell(item, 'preco', item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
                         'font-bold text-primary'
                       )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className="font-bold text-green-600">
+                        {markup > 0
+                          ? (item.preco * (1 + markup / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                          : fmt(item.preco)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
