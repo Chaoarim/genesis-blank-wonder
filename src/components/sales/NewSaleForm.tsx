@@ -46,7 +46,13 @@ const PAYMENT_OPTIONS = [
   { value: 'faturado', label: 'Faturado (Prazo)' },
 ];
 
-export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId, sellerName, sellerAuthId }: NewSaleFormProps) {
+export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, adminUserId, sellerName, sellerAuthId, sellers }: NewSaleFormProps) {
+
+  const getSellerLabel = (sellerAuthIdVal: string | null) => {
+    if (!sellerAuthIdVal || !sellers) return '';
+    const s = sellers.find(s => s.seller_auth_id === sellerAuthIdVal);
+    return s ? ` (${s.name})` : '';
+  };
   const [customerId, setCustomerId] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [channel, setChannel] = useState('balcao');
