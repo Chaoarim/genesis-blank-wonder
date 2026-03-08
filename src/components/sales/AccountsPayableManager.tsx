@@ -74,6 +74,22 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
 
   useEffect(() => { fetchBills(); }, [fetchBills]);
 
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      const { data } = await supabase
+        .from('inventory_items')
+        .select('fornecedor')
+        .eq('user_id', userId)
+        .not('fornecedor', 'is', null)
+        .not('fornecedor', 'eq', '');
+      if (data) {
+        const unique = [...new Set(data.map(d => d.fornecedor).filter(Boolean))] as string[];
+        setSuppliers(unique.sort());
+      }
+    };
+    fetchSuppliers();
+  }, [userId]);
+
   const handleSave = async () => {
     if (!form.supplier_name || !form.amount || !form.due_date) {
       toast.error('Preencha fornecedor, valor e vencimento');
