@@ -85,7 +85,6 @@ async function ensureSellerLink(params: {
       email: normalizedEmail,
       seller_auth_id: sellerAuthId,
       is_active: true,
-      password_plain: password,
     })
     .select("id")
     .single();
