@@ -271,10 +271,37 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                 <div className="space-y-4">
                   <div>
                     <Label>Fornecedor *</Label>
-                    <Input list="suppliers-list" value={form.supplier_name} onChange={e => setForm(f => ({ ...f, supplier_name: e.target.value }))} placeholder="Digite ou selecione..." />
-                    <datalist id="suppliers-list">
-                      {suppliers.map(s => <option key={s} value={s} />)}
-                    </datalist>
+                    <div className="flex gap-2">
+                      <Select value={form.supplier_name} onValueChange={v => setForm(f => ({ ...f, supplier_name: v }))}>
+                        <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                        <SelectContent>
+                          {suppliers.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Dialog open={supplierDialogOpen} onOpenChange={setSupplierDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline" size="icon" title="Gerenciar fornecedores"><PlusCircle className="w-4 h-4" /></Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-sm">
+                          <DialogHeader><DialogTitle>Gerenciar Fornecedores</DialogTitle></DialogHeader>
+                          <div className="space-y-3">
+                            <div className="flex gap-2">
+                              <Input value={newSupplier} onChange={e => setNewSupplier(e.target.value)} placeholder="Nome do fornecedor" onKeyDown={e => e.key === 'Enter' && handleAddSupplier()} />
+                              <Button onClick={handleAddSupplier} size="sm">Adicionar</Button>
+                            </div>
+                            <div className="max-h-48 overflow-y-auto space-y-1">
+                              {suppliers.length === 0 && <p className="text-sm text-muted-foreground text-center py-3">Nenhum fornecedor cadastrado</p>}
+                              {suppliers.map(s => (
+                                <div key={s} className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted">
+                                  <span className="text-sm">{s}</span>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteSupplier(s)}><Trash2 className="w-3 h-3" /></Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
