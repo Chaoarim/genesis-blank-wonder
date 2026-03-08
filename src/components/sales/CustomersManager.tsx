@@ -333,6 +333,13 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
           })}
         </div>
       )}
+
+      <CustomerDetailDialog
+        customer={detailCustomer}
+        sales={sales}
+        open={!!detailCustomer}
+        onOpenChange={(v) => { if (!v) setDetailCustomer(null); }}
+      />
     </div>
   );
 }
