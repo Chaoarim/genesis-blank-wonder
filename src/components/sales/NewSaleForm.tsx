@@ -224,7 +224,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
         </Card>
       )}
 
-      {/* Summary */}
+      {/* Summary & Finalize */}
       <Card className="p-4 space-y-3">
         <Textarea placeholder="Observações (opcional)" value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
         <div className="flex items-center gap-3">
@@ -238,10 +238,71 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
           </div>
         </div>
 
-        <Button onClick={handleSave} disabled={saving || items.length === 0} className="w-full h-12 font-bold text-base gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
-          {channel === 'whatsapp' ? <Send className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-          {saving ? 'Salvando...' : channel === 'whatsapp' ? 'Finalizar e Enviar WhatsApp' : 'Finalizar Venda'}
-        </Button>
+        {!showFinalize ? (
+          <Button
+            onClick={() => setShowFinalize(true)}
+            disabled={items.length === 0}
+            className="w-full h-12 font-bold text-base gap-2"
+          >
+            <CheckCircle className="w-5 h-5" /> Finalizar Pedido
+          </Button>
+        ) : (
+          <div className="space-y-3 border-t border-border pt-3">
+            <p className="text-sm font-semibold">Opções de finalização</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Canal</label>
+                <Select value={channel} onValueChange={setChannel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="balcao">Balcão</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">📦 Entrega</label>
+                <Select value={deliveryType} onValueChange={setDeliveryType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DELIVERY_OPTIONS.map(d => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">💳 Pagamento</label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_OPTIONS.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {paymentMethod === 'faturado' && (
+              <div>
+                <label className="text-xs text-muted-foreground">📅 Prazo do Faturamento</label>
+                <Input type="date" value={paymentDeadline} onChange={e => setPaymentDeadline(e.target.value)} />
+              </div>
+            )}
+
+            <Button onClick={handleSave} disabled={saving || items.length === 0} className="w-full h-12 font-bold text-base gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
+              {channel === 'whatsapp' ? <Send className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+              {saving ? 'Salvando...' : channel === 'whatsapp' ? 'Finalizar e Enviar WhatsApp' : 'Finalizar Venda'}
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
