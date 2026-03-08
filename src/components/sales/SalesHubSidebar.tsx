@@ -67,7 +67,7 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
           const items = filteredItems.filter(i => i.group === group);
           if (items.length === 0) return null;
           return (
-            <SidebarGroup key={group} defaultOpen>
+            <SidebarGroup key={group}>
               <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                 {group}
               </SidebarGroupLabel>
