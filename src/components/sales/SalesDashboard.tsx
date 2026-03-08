@@ -72,6 +72,70 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
         )}
       </div>
 
+      {/* Detailed store goal card for admin */}
+      {!sellerName && stats.storeGoal && (() => {
+        const now = new Date();
+        const goalAmount = Number(stats.storeGoal!.goal_amount);
+        const includeSaturdays = true;
+        const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
+        const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
+        const todayIsBD = isBusinessDay(now, includeSaturdays);
+        const dailyGoal = businessDaysInMonth > 0 ? goalAmount / businessDaysInMonth : 0;
+        const dailyRemaining = Math.max(dailyGoal - stats.todayTotal, 0);
+        const dailyProgress = dailyGoal > 0 ? Math.min((stats.todayTotal / dailyGoal) * 100, 100) : 0;
+        const storeMonthTotal = stats.storeMonthTotal ?? stats.monthTotal;
+        const monthlyRemaining = Math.max(goalAmount - storeMonthTotal, 0);
+        const monthlyProgress = stats.storeGoalProgress ?? 0;
+
+        return (
+          <Card className="p-4 border-primary/20 bg-primary/5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              <span className="text-sm font-semibold">Detalhes da Meta da Loja</span>
+            </div>
+
+            {/* Daily goal */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Meta Diária {!todayIsBD && <span className="text-[10px] text-muted-foreground/70">(hoje não é dia útil)</span>}
+                </span>
+                <span className="text-xs font-bold">{fmt(dailyGoal)}</span>
+              </div>
+              <Progress value={dailyProgress} className="h-2" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Vendido hoje: <span className="font-semibold text-foreground">{fmt(stats.todayTotal)}</span> ({dailyProgress.toFixed(0)}%)
+                </span>
+                <span className="text-xs font-semibold text-amber-600">
+                  Falta: {fmt(dailyRemaining)}
+                </span>
+              </div>
+            </div>
+
+            {/* Monthly goal */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Meta Mensal</span>
+                <span className="text-xs font-bold">{fmt(goalAmount)}</span>
+              </div>
+              <Progress value={monthlyProgress} className="h-2" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Vendido no mês: <span className="font-semibold text-foreground">{fmt(storeMonthTotal)}</span> ({monthlyProgress.toFixed(0)}%)
+                </span>
+                <span className="text-xs font-semibold text-amber-600">
+                  Falta: {fmt(monthlyRemaining)}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground text-right">
+                {remainingDays} dias úteis restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia útil
+              </p>
+            </div>
+          </Card>
+        );
+      })()}
+
       {/* Detailed individual goal card for sellers */}
       {sellerName && stats.individualGoal && (() => {
         const now = new Date();
