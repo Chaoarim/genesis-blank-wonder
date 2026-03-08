@@ -47,22 +47,89 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
         <StatCard icon={<DollarSign className="w-5 h-5" />} label="Hoje" value={fmt(stats.todayTotal)} sub={`${stats.todaySales} vendas`} color="text-green-500" />
         <StatCard icon={<TrendingUp className="w-5 h-5" />} label="Semana" value={fmt(stats.weekTotal)} color="text-blue-500" />
         <StatCard icon={<ShoppingBag className="w-5 h-5" />} label="Mês" value={fmt(stats.monthTotal)} sub={`${stats.monthSales} vendas`} color="text-primary" />
-        <StatCard
-          icon={<Target className="w-5 h-5" />}
-          label={sellerName ? 'Meta Individual' : 'Meta da Loja'}
-          value={sellerName
-            ? (stats.individualGoal ? `${(stats.individualGoalProgress ?? 0).toFixed(0)}%` : 'Sem meta')
-            : (stats.storeGoal ? `${(stats.storeGoalProgress ?? 0).toFixed(0)}%` : 'Sem meta')}
-          sub={sellerName
-            ? (stats.individualGoal ? `Objetivo ${fmt(Number(stats.individualGoal.goal_amount))}` : 'Sem meta individual')
-            : (stats.storeGoal ? `Objetivo ${fmt(Number(stats.storeGoal.goal_amount))}` : 'Sem meta da loja')}
-          color="text-amber-500"
-        >
-          {sellerName
-            ? (stats.individualGoal && <Progress value={stats.individualGoalProgress ?? 0} className="h-1.5 mt-2" />)
-            : (stats.storeGoal && <Progress value={stats.storeGoalProgress ?? 0} className="h-1.5 mt-2" />)}
-        </StatCard>
+        {!sellerName && (
+          <StatCard
+            icon={<Target className="w-5 h-5" />}
+            label="Meta da Loja"
+            value={stats.storeGoal ? `${(stats.storeGoalProgress ?? 0).toFixed(0)}%` : 'Sem meta'}
+            sub={stats.storeGoal ? `Objetivo ${fmt(Number(stats.storeGoal.goal_amount))}` : 'Sem meta da loja'}
+            color="text-amber-500"
+          >
+            {stats.storeGoal && <Progress value={stats.storeGoalProgress ?? 0} className="h-1.5 mt-2" />}
+          </StatCard>
+        )}
+        {sellerName && (
+          <StatCard
+            icon={<Target className="w-5 h-5" />}
+            label="Meta Individual"
+            value={stats.individualGoal ? `${(stats.individualGoalProgress ?? 0).toFixed(0)}%` : 'Sem meta'}
+            sub={stats.individualGoal ? `Objetivo ${fmt(Number(stats.individualGoal.goal_amount))}` : 'Sem meta individual'}
+            color="text-amber-500"
+          >
+            {stats.individualGoal && <Progress value={stats.individualGoalProgress ?? 0} className="h-1.5 mt-2" />}
+          </StatCard>
+        )}
       </div>
+
+      {/* Detailed individual goal card for sellers */}
+      {sellerName && stats.individualGoal && (() => {
+        const now = new Date();
+        const goalAmount = Number(stats.individualGoal!.goal_amount);
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const currentDay = now.getDate();
+        const remainingDays = daysInMonth - currentDay + 1; // including today
+        const dailyGoal = goalAmount / daysInMonth;
+        const dailyRemaining = Math.max(dailyGoal - stats.todayTotal, 0);
+        const dailyProgress = dailyGoal > 0 ? Math.min((stats.todayTotal / dailyGoal) * 100, 100) : 0;
+        const monthlyRemaining = Math.max(goalAmount - stats.monthTotal, 0);
+        const monthlyProgress = stats.individualGoalProgress ?? 0;
+
+        return (
+          <Card className="p-4 border-amber-500/20 bg-amber-500/5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-amber-500" />
+              <span className="text-sm font-semibold">Detalhes da Meta Individual</span>
+            </div>
+
+            {/* Daily goal */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Meta Diária</span>
+                <span className="text-xs font-bold">{fmt(dailyGoal)}</span>
+              </div>
+              <Progress value={dailyProgress} className="h-2" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Vendido hoje: <span className="font-semibold text-foreground">{fmt(stats.todayTotal)}</span> ({dailyProgress.toFixed(0)}%)
+                </span>
+                <span className="text-xs font-semibold text-amber-600">
+                  Falta: {fmt(dailyRemaining)}
+                </span>
+              </div>
+            </div>
+
+            {/* Monthly goal */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Meta Mensal</span>
+                <span className="text-xs font-bold">{fmt(goalAmount)}</span>
+              </div>
+              <Progress value={monthlyProgress} className="h-2" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Vendido no mês: <span className="font-semibold text-foreground">{fmt(stats.monthTotal)}</span> ({monthlyProgress.toFixed(0)}%)
+                </span>
+                <span className="text-xs font-semibold text-amber-600">
+                  Falta: {fmt(monthlyRemaining)}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground text-right">
+                {remainingDays} dias restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia
+              </p>
+            </div>
+          </Card>
+        );
+      })()}
 
       {/* Store goal card - always visible for seller */}
       {sellerName && (
