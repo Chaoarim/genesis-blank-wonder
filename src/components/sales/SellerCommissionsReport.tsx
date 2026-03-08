@@ -301,7 +301,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
                 <TableBody>
                   {filteredSales.map(sale => (
                     <TableRow key={sale.id}>
-                      {!sellerName && (
+                      {!sellerName && sellerFilter === 'all' && (
                         <TableCell>
                           <span className="font-medium text-sm">{sale.seller_name || 'Administrador'}</span>
                         </TableCell>
