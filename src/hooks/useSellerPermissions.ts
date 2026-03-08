@@ -106,7 +106,7 @@ export function useSellerPermissions(userId: string | null) {
         .eq('admin_user_id', userId)
         .order('name');
 
-      setSellers((sellersData || []) as SellerUser[]);
+      setSellers((sellersData || []).map((s: any) => ({ ...s } as SellerUser)));
     } else {
       // Safety fallback: user without vínculo de vendedor e sem papel admin
       setIsAdmin(false);
