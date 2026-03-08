@@ -75,7 +75,7 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
   };
 
   // Calculate seller-specific progress for admin view
-  const getSellerGoalProgress = (goal: SalesGoal & { seller_auth_id?: string | null }) => {
+  const getSellerGoalProgress = (goal: SalesGoal) => {
     if (!sales) return 0;
     const goalMonth = goal.month;
     const goalYear = goal.year;
