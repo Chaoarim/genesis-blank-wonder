@@ -31,6 +31,30 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
   const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
   const [permDialogOpen, setPermDialogOpen] = useState(false);
 
+  const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+  const waitForSellerToBeVisible = async (emailToCheck: string, sellerId?: string) => {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const query = supabase
+        .from('seller_users')
+        .select('id')
+        .ilike('email', emailToCheck)
+        .limit(1);
+
+      const { data, error } = sellerId
+        ? await query.eq('id', sellerId)
+        : await query;
+
+      if (!error && (data?.length ?? 0) > 0) {
+        return true;
+      }
+
+      await wait(400);
+    }
+
+    return false;
+  };
+
   const handleAdd = async () => {
     const normalizedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
@@ -61,9 +85,15 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
         return;
       }
 
+      const isVisible = await waitForSellerToBeVisible(normalizedEmail, res.data?.seller_user_id as string | undefined);
       await onRefreshSellers();
 
-      toast.success('Vendedor cadastrado com sucesso!');
+      if (!isVisible) {
+        toast.warning('Vendedor criado. Atualizando lista...');
+      } else {
+        toast.success('Vendedor cadastrado com sucesso!');
+      }
+
       setName('');
       setEmail('');
       setPassword('');
