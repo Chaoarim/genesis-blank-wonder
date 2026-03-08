@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle } from 'lucide-react';
+import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCpfCnpj, formatWhatsapp } from '@/features/pre-registration/format';
+import { CustomerDetailDialog } from './CustomerDetailDialog';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
