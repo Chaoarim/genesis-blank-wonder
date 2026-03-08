@@ -180,7 +180,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   // ---- Goals ----
   const setGoal = useCallback(async (month: number, year: number, amount: number, sellerAuthId?: string | null) => {
     if (!userId) return;
-    const existing = goals.find(g => g.month === month && g.year === year && (g as any).seller_auth_id === (sellerAuthId || null));
+    const existing = goals.find(g => g.month === month && g.year === year && g.seller_auth_id === (sellerAuthId || null));
     if (existing) {
       await supabase.from('sales_goals').update({ goal_amount: amount }).eq('id', existing.id);
       setGoals(prev => prev.map(g => g.id === existing.id ? { ...g, goal_amount: amount } : g));
