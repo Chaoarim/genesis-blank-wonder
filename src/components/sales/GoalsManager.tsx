@@ -139,6 +139,36 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
         </Card>
       )}
 
+      {/* Saturday config - only for admin */}
+      {isAdmin && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarDays className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-sm">Configuração de Dias Úteis</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="include-saturdays" className="text-sm text-muted-foreground">
+              Loja funciona aos sábados?
+            </Label>
+            <Switch
+              id="include-saturdays"
+              checked={(() => {
+                try { return localStorage.getItem('goals_include_saturdays') !== 'false'; } catch { return true; }
+              })()}
+              onCheckedChange={(checked) => {
+                localStorage.setItem('goals_include_saturdays', String(checked));
+                window.dispatchEvent(new Event('saturday-config-changed'));
+                // Force re-render
+                setYear(y => y); 
+              }}
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Isso afeta o cálculo da meta diária e dias úteis restantes no dashboard.
+          </p>
+        </Card>
+      )}
+
       {/* Set goal - only for admin */}
       {isAdmin && (
         <Card className="p-4 space-y-3">
