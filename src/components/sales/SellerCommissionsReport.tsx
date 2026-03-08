@@ -31,7 +31,7 @@ interface Props {
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function SellerCommissionsReport({ sales, userId }: Props) {
+export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [period, setPeriod] = useState('month');
 
