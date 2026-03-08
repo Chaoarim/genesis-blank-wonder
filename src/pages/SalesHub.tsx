@@ -75,7 +75,8 @@ const SalesHub = () => {
   }, [navigate]);
 
   const sellerPerms = useSellerPermissions(user?.id ?? null);
-  const salesData = useSalesData(sellerPerms.adminUserId ?? null);
+  const sellerAuthId = sellerPerms.isAdmin ? null : (user?.id || null);
+  const salesData = useSalesData(sellerPerms.adminUserId ?? null, sellerAuthId);
   const { parts } = usePartsDatabase();
 
   const handleLogout = async () => {
