@@ -252,6 +252,16 @@ const SalesHub = () => {
             />
           </TabsContent>
 
+          <TabsContent value="carteira">
+            <CustomerPortfolio
+              customers={salesData.allCustomers}
+              sales={salesData.allSales}
+              isAdmin={sellerPerms.isAdmin}
+              sellers={sellerPerms.sellers}
+              onUpdate={salesData.updateCustomer}
+            />
+          </TabsContent>
+
           <TabsContent value="goals">
             <GoalsManager
               goals={salesData.goals}
