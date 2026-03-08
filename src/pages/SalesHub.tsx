@@ -201,6 +201,9 @@ const SalesHub = () => {
               stats={salesData.stats}
               onSetGoal={salesData.setGoal}
               onDeleteGoal={salesData.deleteGoal}
+              isAdmin={sellerPerms.isAdmin}
+              sellers={sellerPerms.sellers}
+              sales={salesData.allSales}
             />
           </TabsContent>
 
