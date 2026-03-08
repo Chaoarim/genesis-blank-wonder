@@ -8,9 +8,16 @@ export interface Customer {
   name: string;
   phone: string | null;
   email: string | null;
+  whatsapp: string | null;
   notes: string | null;
   code: string | null;
   seller_auth_id: string | null;
+  cpf_cnpj: string | null;
+  inscricao_estadual: string | null;
+  endereco: string | null;
+  limite_credito: number | null;
+  empresa: string | null;
+  comprador: string | null;
   created_at: string;
   updated_at: string;
 }
