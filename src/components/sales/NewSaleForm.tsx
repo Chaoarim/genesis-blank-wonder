@@ -333,9 +333,64 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
             </div>
 
             {paymentMethod === 'faturado' && (
-              <div>
-                <label className="text-xs text-muted-foreground">📅 Prazo do Faturamento</label>
-                <Input type="date" value={paymentDeadline} onChange={e => setPaymentDeadline(e.target.value)} />
+              <div className="space-y-3">
+                {matchingRules.length > 0 ? (
+                  <>
+                    <label className="text-xs text-muted-foreground font-medium">📅 Selecione o prazo de faturamento</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {matchingRules.map(rule => (
+                        <button
+                          key={rule.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTermId(rule.id);
+                            // Set deadline to the last installment date
+                            const days = rule.day_intervals.split('/').map(d => parseInt(d.trim()));
+                            const lastDay = Math.max(...days);
+                            const deadline = new Date();
+                            deadline.setDate(deadline.getDate() + lastDay);
+                            setPaymentDeadline(deadline.toISOString().split('T')[0]);
+                          }}
+                          className={`p-3 rounded-lg border text-left transition-all ${
+                            selectedTermId === rule.id
+                              ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <p className="text-sm font-semibold">{rule.name}</p>
+                          <p className="text-xs text-muted-foreground">{rule.installments}x — {rule.day_intervals} dias</p>
+                        </button>
+                      ))}
+                    </div>
+
+                    {selectedTerm && total > 0 && (
+                      <Card className="p-3 bg-muted/30 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> Parcelas
+                        </p>
+                        {getInstallmentDates(selectedTerm).map(inst => (
+                          <div key={inst.num} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className="text-[10px]">{inst.num}ª</Badge>
+                              <span className="text-muted-foreground">{inst.date.toLocaleDateString('pt-BR')} ({inst.days} dias)</span>
+                            </div>
+                            <span className="font-bold text-primary">{fmt(inst.value)}</span>
+                          </div>
+                        ))}
+                      </Card>
+                    )}
+                  </>
+                ) : (
+                  <div>
+                    <label className="text-xs text-muted-foreground">📅 Prazo do Faturamento (manual)</label>
+                    <Input type="date" value={paymentDeadline} onChange={e => setPaymentDeadline(e.target.value)} />
+                    {total > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Nenhuma regra de prazo configurada para este valor. Use a aba "Prazos" para criar regras.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
