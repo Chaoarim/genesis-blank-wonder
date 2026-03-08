@@ -1,4 +1,5 @@
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
+import { downloadHtmlAsPdf, printHtml } from './htmlToPdf';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -78,23 +79,9 @@ function buildHtml(sale: Sale, items: SaleItem[]): string {
 }
 
 export function printSale(sale: Sale, items: SaleItem[]) {
-  const html = buildHtml(sale, items);
-  const win = window.open('', '_blank');
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
+  printHtml(buildHtml(sale, items));
 }
 
 export function downloadPdf(sale: Sale, items: SaleItem[]) {
-  const html = buildHtml(sale, items);
-  const win = window.open('', '_blank');
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
-  win.document.title = `Pedido_${sale.id.slice(0, 8)}`;
-  win.focus();
-  // Use print dialog with "Save as PDF" — most reliable cross-browser approach
-  setTimeout(() => win.print(), 400);
+  downloadHtmlAsPdf(buildHtml(sale, items), `Pedido_${sale.id.slice(0, 8)}`);
 }

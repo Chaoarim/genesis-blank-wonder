@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { BarChart3, DollarSign, Users, TrendingUp, Printer, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { downloadHtmlAsPdf, printHtml } from '@/lib/htmlToPdf';
 import type { Sale } from '@/hooks/useSalesData';
 
 interface SellerSummary {
@@ -97,7 +98,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const grandTotal = sellers.reduce((s, v) => s + v.totalAmount, 0);
   const grandCommission = sellers.reduce((s, v) => s + v.commissionAmount, 0);
 
-  const printReport = () => {
+  const buildReportHtml = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Esta Semana' : period === 'month' ? 'Este Mês' : 'Tudo';
     const rows = filteredSales.map((sale, idx) => `
       <tr>
@@ -110,7 +111,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       </tr>
     `).join('');
 
-    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Vendas</title>
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Vendas</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;padding:32px;max-width:900px;margin:auto}
       h1{font-size:20px;margin-bottom:4px}
       .meta{color:#666;font-size:13px;margin-bottom:16px}
@@ -132,13 +133,15 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
         <p class="total">Total Comissões: ${fmt(grandCommission)}</p>
       </div>
       <div class="footer">Gerado em ${new Date().toLocaleString('pt-BR')}</div></body></html>`;
+  };
 
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 400);
+  const handlePrint = () => {
+    printHtml(buildReportHtml());
+  };
+
+  const handleDownloadPdf = () => {
+    const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Tudo';
+    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Vendas_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (
@@ -160,10 +163,10 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
               <SelectItem value="all">Tudo</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={printReport} disabled={filteredSales.length === 0}>
+          <Button variant="outline" size="sm" onClick={handlePrint} disabled={filteredSales.length === 0}>
             <Printer className="w-4 h-4 mr-1" /> Imprimir
           </Button>
-          <Button variant="outline" size="sm" onClick={printReport} disabled={filteredSales.length === 0}>
+          <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={filteredSales.length === 0}>
             <FileDown className="w-4 h-4 mr-1" /> PDF
           </Button>
         </div>
