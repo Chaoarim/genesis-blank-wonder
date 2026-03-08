@@ -268,6 +268,13 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
                         'font-bold text-primary'
                       )}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <span className="font-bold text-green-600">
+                        {markup > 0
+                          ? (item.preco * (1 + markup / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                          : fmt(item.preco)}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
