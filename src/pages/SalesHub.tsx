@@ -147,7 +147,7 @@ const SalesHub = () => {
           </TabsList>
 
           <TabsContent value="dashboard">
-            <SalesDashboard stats={salesData.stats} onNewSale={goToNewSale} recentSales={salesData.sales.slice(0, 5)} />
+            <SalesDashboard stats={salesData.stats} onNewSale={goToNewSale} recentSales={salesData.sales.slice(0, 5)} sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name || null} />
           </TabsContent>
 
           <TabsContent value="new-sale">
@@ -243,7 +243,7 @@ const SalesHub = () => {
 
           <TabsContent value="report">
             {sellerPerms.isAdmin && user && (
-              <SellerCommissionsReport sales={salesData.sales} userId={user.id} />
+              <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />
             )}
           </TabsContent>
         </Tabs>
