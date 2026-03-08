@@ -30,23 +30,7 @@ interface AccountPayable {
   created_at: string;
 }
 
-const SUPPLIERS = [
-  'Nakata Automotiva',
-  'Cofap / Magneti Marelli',
-  'SKF do Brasil',
-  'Sabó Indústria',
-  'Mahle Metal Leve',
-  'Monroe / Tenneco',
-  'Bosch Auto Peças',
-  'NGK do Brasil',
-  'Valeo Sistemas',
-  'ZF / TRW Automotive',
-  'Fremax / Jurid',
-  'Urba Produtos',
-  'Wega Motors',
-  'MTE-Thomson',
-  'Hipper Freios',
-];
+// Suppliers will be loaded from user's inventory
 
 const CATEGORIES = [
   { value: 'boleto', label: 'Boleto Bancário' },
@@ -76,6 +60,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [suppliers, setSuppliers] = useState<string[]>([]);
 
   const fetchBills = useCallback(async () => {
     const { data } = await supabase
@@ -88,6 +73,22 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   }, [userId]);
 
   useEffect(() => { fetchBills(); }, [fetchBills]);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      const { data } = await supabase
+        .from('inventory_items')
+        .select('fornecedor')
+        .eq('user_id', userId)
+        .not('fornecedor', 'is', null)
+        .not('fornecedor', 'eq', '');
+      if (data) {
+        const unique = [...new Set(data.map(d => d.fornecedor).filter(Boolean))] as string[];
+        setSuppliers(unique.sort());
+      }
+    };
+    fetchSuppliers();
+  }, [userId]);
 
   const handleSave = async () => {
     if (!form.supplier_name || !form.amount || !form.due_date) {
@@ -256,7 +257,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                     <Label>Fornecedor *</Label>
                     <Input list="suppliers-list" value={form.supplier_name} onChange={e => setForm(f => ({ ...f, supplier_name: e.target.value }))} placeholder="Digite ou selecione..." />
                     <datalist id="suppliers-list">
-                      {SUPPLIERS.map(s => <option key={s} value={s} />)}
+                      {suppliers.map(s => <option key={s} value={s} />)}
                     </datalist>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
