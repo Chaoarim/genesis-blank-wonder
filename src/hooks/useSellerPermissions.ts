@@ -26,6 +26,7 @@ export const ALL_PERMISSIONS = [
   { key: 'low-stock', label: 'Estoque Baixo' },
   { key: 'history', label: 'Histórico' },
   { key: 'customers', label: 'Clientes' },
+  { key: 'carteira', label: 'Carteira de Clientes' },
   { key: 'goals', label: 'Metas' },
   { key: 'markup', label: 'Markup' },
   { key: 'import-inventory', label: 'Importar' },
@@ -92,7 +93,7 @@ export function useSellerPermissions(userId: string | null) {
     if (isAdmin) return true;
 
     // Core tabs always available for sellers (individual operation + visibility)
-    if (['new-sale', 'dashboard', 'history', 'report'].includes(tab)) return true;
+    if (['new-sale', 'dashboard', 'history', 'report', 'carteira'].includes(tab)) return true;
 
     return permissions.includes(tab);
   }, [isAdmin, permissions]);

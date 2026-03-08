@@ -6,6 +6,7 @@ import { usePartsDatabase } from '@/hooks/usePartsDatabase';
 import { useSellerPermissions } from '@/hooks/useSellerPermissions';
 import { SalesDashboard } from '@/components/sales/SalesDashboard';
 import { CustomersManager } from '@/components/sales/CustomersManager';
+import { CustomerPortfolio } from '@/components/sales/CustomerPortfolio';
 import { NewSaleForm } from '@/components/sales/NewSaleForm';
 import { SalesHistory } from '@/components/sales/SalesHistory';
 import { CatalogOrdersManager } from '@/components/sales/CatalogOrdersManager';
@@ -23,7 +24,7 @@ import { MarkupManager } from '@/components/sales/MarkupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
+import { BarChart3, Users, PlusCircle, History, Target, LogOut, ArrowLeft, Zap, Percent, Package, ShoppingBag, AlertTriangle, FileSpreadsheet, PackagePlus, Tag, Ticket, UserCog, DollarSign, FileBarChart, Search, Link2, ExternalLink, Copy, Share2, BookUser } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
@@ -42,6 +43,7 @@ const ALL_TABS: TabDef[] = [
   { value: 'low-stock', icon: AlertTriangle, label: 'Est. Baixo', shortLabel: 'Est. Baixo' },
   { value: 'history', icon: History, label: 'Histórico' },
   { value: 'customers', icon: Users, label: 'Clientes' },
+  { value: 'carteira', icon: BookUser, label: 'Carteira' },
   { value: 'goals', icon: Target, label: 'Metas' },
   { value: 'markup', icon: Percent, label: 'Markup' },
   { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar' },
@@ -247,6 +249,16 @@ const SalesHub = () => {
               onDelete={salesData.deleteCustomer}
               isAdmin={sellerPerms.isAdmin}
               sellers={sellerPerms.sellers}
+            />
+          </TabsContent>
+
+          <TabsContent value="carteira">
+            <CustomerPortfolio
+              customers={salesData.allCustomers}
+              sales={salesData.allSales}
+              isAdmin={sellerPerms.isAdmin}
+              sellers={sellerPerms.sellers}
+              onUpdate={salesData.updateCustomer}
             />
           </TabsContent>
 
