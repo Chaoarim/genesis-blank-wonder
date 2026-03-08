@@ -24,8 +24,9 @@ async function ensureSellerLink(params: {
   sellerAuthId: string;
   normalizedEmail: string;
   fullName: string;
+  password: string;
 }): Promise<EnsureSellerResult> {
-  const { supabaseAdmin, adminUserId, sellerAuthId, normalizedEmail, fullName } = params;
+  const { supabaseAdmin, adminUserId, sellerAuthId, normalizedEmail, fullName, password } = params;
 
   const { data: existingByAuth, error: byAuthError } = await supabaseAdmin
     .from("seller_users")
