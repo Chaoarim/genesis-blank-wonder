@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle } from 'lucide-react';
+import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCpfCnpj, formatWhatsapp } from '@/features/pre-registration/format';
+import { CustomerDetailDialog } from './CustomerDetailDialog';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
@@ -37,6 +38,7 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [sellerFilter, setSellerFilter] = useState<string>('all');
+  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
 
   const set = (field: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
@@ -315,6 +317,9 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
                         </SelectContent>
                       </Select>
                     )}
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDetailCustomer(c)} title="Ver ficha completa">
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}>
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>
@@ -328,6 +333,13 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
           })}
         </div>
       )}
+
+      <CustomerDetailDialog
+        customer={detailCustomer}
+        sales={sales}
+        open={!!detailCustomer}
+        onOpenChange={(v) => { if (!v) setDetailCustomer(null); }}
+      />
     </div>
   );
 }
