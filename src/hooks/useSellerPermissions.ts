@@ -39,26 +39,37 @@ export const ALL_PERMISSIONS = [
 ] as const;
 
 export function useSellerPermissions(userId: string | null) {
-  const [isAdmin, setIsAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [sellerRecord, setSellerRecord] = useState<SellerUser | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [sellers, setSellers] = useState<SellerUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setIsAdmin(false);
+      setSellerRecord(null);
+      setPermissions([]);
+      setSellers([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    // Check if current user is a seller (linked to an admin)
-    const { data: sellerData } = await supabase
+    // 1) Check if current user is an active seller linked to an admin
+    const { data: sellerData, error: sellerError } = await supabase
       .from('seller_users')
       .select('*')
       .eq('seller_auth_id', userId)
       .eq('is_active', true)
       .maybeSingle();
 
+    if (sellerError) {
+      console.error('Erro ao buscar vendedor:', sellerError.message);
+    }
+
     if (sellerData) {
-      // User is a seller - load their permissions
       setIsAdmin(false);
       setSellerRecord(sellerData as SellerUser);
 
@@ -69,13 +80,25 @@ export function useSellerPermissions(userId: string | null) {
 
       setPermissions((permsRes.data || []).map((p: any) => p.permission));
       setSellers((sellersRes.data || []) as SellerUser[]);
-    } else {
-      // User is admin - full access
+      setLoading(false);
+      return;
+    }
+
+    // 2) If not seller, check admin role explicitly
+    const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
+      _user_id: userId,
+      _role: 'admin',
+    });
+
+    if (roleError) {
+      console.error('Erro ao validar papel admin:', roleError.message);
+    }
+
+    if (hasAdminRole) {
       setIsAdmin(true);
       setSellerRecord(null);
       setPermissions([]);
 
-      // Load admin's sellers
       const { data: sellersData } = await supabase
         .from('seller_users')
         .select('*')
@@ -83,6 +106,12 @@ export function useSellerPermissions(userId: string | null) {
         .order('name');
 
       setSellers((sellersData || []) as SellerUser[]);
+    } else {
+      // Safety fallback: user without vínculo de vendedor e sem papel admin
+      setIsAdmin(false);
+      setSellerRecord(null);
+      setPermissions([]);
+      setSellers([]);
     }
 
     setLoading(false);
