@@ -82,10 +82,16 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ---- Customers ----
-  const addCustomer = useCallback(async (data: { name: string; phone?: string; email?: string; notes?: string }) => {
+  const addCustomer = useCallback(async (data: { name: string; phone?: string; email?: string; notes?: string; seller_auth_id?: string | null }) => {
     if (!userId) return null;
     const insertData: any = { ...data, user_id: userId };
-    if (sellerAuthId) insertData.seller_auth_id = sellerAuthId;
+
+    if (sellerAuthId) {
+      insertData.seller_auth_id = sellerAuthId;
+    } else if (typeof data.seller_auth_id !== 'undefined') {
+      insertData.seller_auth_id = data.seller_auth_id;
+    }
+
     const { data: row, error } = await supabase.from('customers').insert(insertData).select().single();
     if (error) { toast.error('Erro ao salvar cliente'); return null; }
     setCustomers(prev => [...prev, row as Customer]);

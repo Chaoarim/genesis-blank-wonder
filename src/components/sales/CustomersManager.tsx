@@ -14,7 +14,7 @@ import type { SellerUser } from '@/hooks/useSellerPermissions';
 interface CustomersManagerProps {
   customers: Customer[];
   sales: Sale[];
-  onAdd: (data: { name: string; phone?: string; email?: string; notes?: string }) => Promise<any>;
+  onAdd: (data: { name: string; phone?: string; email?: string; notes?: string; seller_auth_id?: string | null }) => Promise<any>;
   onUpdate: (id: string, data: Partial<Customer>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   isAdmin?: boolean;
