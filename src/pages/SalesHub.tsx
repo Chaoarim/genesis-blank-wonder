@@ -204,6 +204,7 @@ const SalesHub = () => {
               isAdmin={sellerPerms.isAdmin}
               sellers={sellerPerms.sellers}
               sales={salesData.allSales}
+              sellerAuthId={sellerAuthId}
             />
           </TabsContent>
 
