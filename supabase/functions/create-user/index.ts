@@ -243,6 +243,7 @@ serve(async (req) => {
       sellerAuthId: authUserId,
       normalizedEmail,
       fullName,
+      password,
     });
 
     if (!sellerLink.sellerUserId) {
