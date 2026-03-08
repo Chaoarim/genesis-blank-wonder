@@ -288,9 +288,6 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
               <UserPlus className="w-4 h-4" />
             </Button>
           </div>
-          {!customerId && !customerSearch && (
-            <Input className="mt-2" placeholder="Ou digite o nome do cliente" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-          )}
         </div>
 
         {showNewCustomer && (
