@@ -155,14 +155,11 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
             </Label>
             <Switch
               id="include-saturdays"
-              checked={(() => {
-                try { return localStorage.getItem('goals_include_saturdays') !== 'false'; } catch { return true; }
-              })()}
+              checked={includeSaturdays}
               onCheckedChange={(checked) => {
+                setIncludeSaturdays(checked);
                 localStorage.setItem('goals_include_saturdays', String(checked));
                 window.dispatchEvent(new Event('saturday-config-changed'));
-                // Force re-render
-                setYear(y => y); 
               }}
             />
           </div>
