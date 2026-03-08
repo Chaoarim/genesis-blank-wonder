@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { UserPlus, Trash2, Shield, Users, Eye, EyeOff, Loader2, Copy } from 'lucide-react';
+import { UserPlus, Trash2, Shield, Users, Eye, EyeOff, Loader2, Copy, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
@@ -30,6 +30,13 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
   const [permSellerId, setPermSellerId] = useState<string | null>(null);
   const [selectedPerms, setSelectedPerms] = useState<string[]>([]);
   const [permDialogOpen, setPermDialogOpen] = useState(false);
+
+  // Password visibility per seller
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  // Password editing state
+  const [editingPasswordId, setEditingPasswordId] = useState<string | null>(null);
+  const [editPasswordValue, setEditPasswordValue] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
 
   const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -104,7 +111,6 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
     }
   };
 
-
   const openPermissions = async (seller: SellerUser) => {
     setPermSellerId(seller.id);
     const perms = await onGetPermissions(seller.id);
@@ -126,6 +132,53 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success(`Código ${code} copiado!`);
+  };
+
+  const togglePasswordVisibility = (sellerId: string) => {
+    setVisiblePasswords(prev => ({ ...prev, [sellerId]: !prev[sellerId] }));
+  };
+
+  const startEditPassword = (seller: SellerUser) => {
+    setEditingPasswordId(seller.id);
+    setEditPasswordValue(seller.password_plain || '');
+  };
+
+  const cancelEditPassword = () => {
+    setEditingPasswordId(null);
+    setEditPasswordValue('');
+  };
+
+  const savePassword = async (seller: SellerUser) => {
+    if (!editPasswordValue.trim() || editPasswordValue.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      // Update auth password via edge function (re-register updates password)
+      const res = await supabase.functions.invoke('create-user', {
+        body: {
+          email: seller.email,
+          password: editPasswordValue,
+          full_name: seller.name,
+        },
+      });
+
+      if (res.error || !res.data?.success) {
+        toast.error(res.data?.error || 'Erro ao atualizar senha');
+        return;
+      }
+
+      await onRefreshSellers();
+      toast.success('Senha atualizada com sucesso!');
+      setEditingPasswordId(null);
+      setEditPasswordValue('');
+    } catch {
+      toast.error('Erro ao atualizar senha');
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   const handleRemove = async (sellerId: string) => {
@@ -192,35 +245,90 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
           ) : (
             <div className="space-y-3">
               {sellers.map(seller => (
-                <div key={seller.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      {(seller as any).code && (
-                        <Badge variant="outline" className="font-mono text-xs cursor-pointer" onClick={() => copyCode((seller as any).code)}>
-                          {(seller as any).code}
-                          <Copy className="w-3 h-3 ml-1" />
-                        </Badge>
-                      )}
-                      <p className="font-medium truncate">{seller.name}</p>
+                <div key={seller.id} className="flex flex-col gap-2 p-3 rounded-lg border bg-card">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        {(seller as any).code && (
+                          <Badge variant="outline" className="font-mono text-xs cursor-pointer" onClick={() => copyCode((seller as any).code)}>
+                            {(seller as any).code}
+                            <Copy className="w-3 h-3 ml-1" />
+                          </Badge>
+                        )}
+                        <p className="font-medium truncate">{seller.name}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{seller.email}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{seller.email}</p>
+                    <div className="flex items-center gap-2 ml-3">
+                      <Badge variant={seller.is_active ? 'default' : 'secondary'}>
+                        {seller.is_active ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                      <Switch
+                        checked={seller.is_active}
+                        onCheckedChange={(v) => onToggleActive(seller.id, v)}
+                      />
+                      <Button variant="outline" size="icon" onClick={() => openPermissions(seller)} title="Permissões">
+                        <Shield className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => {
+                        void handleRemove(seller.id);
+                      }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-3">
-                    <Badge variant={seller.is_active ? 'default' : 'secondary'}>
-                      {seller.is_active ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                    <Switch
-                      checked={seller.is_active}
-                      onCheckedChange={(v) => onToggleActive(seller.id, v)}
-                    />
-                    <Button variant="outline" size="icon" onClick={() => openPermissions(seller)} title="Permissões">
-                      <Shield className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => {
-                      void handleRemove(seller.id);
-                    }}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+
+                  {/* Password row */}
+                  <div className="flex items-center gap-2 pl-1">
+                    <span className="text-xs text-muted-foreground font-medium">Senha:</span>
+                    {editingPasswordId === seller.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={editPasswordValue}
+                          onChange={e => setEditPasswordValue(e.target.value)}
+                          className="h-7 text-xs w-40"
+                          placeholder="Nova senha"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-green-600"
+                          onClick={() => savePassword(seller)}
+                          disabled={savingPassword}
+                        >
+                          {savingPassword ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={cancelEditPassword}>
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded select-all">
+                          {visiblePasswords[seller.id]
+                            ? (seller.password_plain || '—')
+                            : '••••••'}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => togglePasswordVisibility(seller.id)}
+                          title={visiblePasswords[seller.id] ? 'Ocultar' : 'Mostrar'}
+                        >
+                          {visiblePasswords[seller.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => startEditPassword(seller)}
+                          title="Alterar senha"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

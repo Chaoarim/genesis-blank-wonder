@@ -24,8 +24,9 @@ async function ensureSellerLink(params: {
   sellerAuthId: string;
   normalizedEmail: string;
   fullName: string;
+  password: string;
 }): Promise<EnsureSellerResult> {
-  const { supabaseAdmin, adminUserId, sellerAuthId, normalizedEmail, fullName } = params;
+  const { supabaseAdmin, adminUserId, sellerAuthId, normalizedEmail, fullName, password } = params;
 
   const { data: existingByAuth, error: byAuthError } = await supabaseAdmin
     .from("seller_users")
@@ -62,10 +63,11 @@ async function ensureSellerLink(params: {
     const { error: updateSellerError } = await supabaseAdmin
       .from("seller_users")
       .update({
-        name: fullName,
+      name: fullName,
         email: normalizedEmail,
         seller_auth_id: sellerAuthId,
         is_active: true,
+        password_plain: password,
       })
       .eq("id", targetSellerId);
 
@@ -84,6 +86,7 @@ async function ensureSellerLink(params: {
       email: normalizedEmail,
       seller_auth_id: sellerAuthId,
       is_active: true,
+      password_plain: password,
     })
     .select("id")
     .single();
@@ -240,6 +243,7 @@ serve(async (req) => {
       sellerAuthId: authUserId,
       normalizedEmail,
       fullName,
+      password,
     });
 
     if (!sellerLink.sellerUserId) {
