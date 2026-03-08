@@ -198,9 +198,6 @@ const SalesHub = () => {
             <div className="px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <SidebarTrigger className="shrink-0" />
-                <Button variant="ghost" size="icon" onClick={() => navigate('/sales')} className="shrink-0" title="Página inicial">
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
                     <BarChart3 className="w-4 h-4 text-primary-foreground" />
