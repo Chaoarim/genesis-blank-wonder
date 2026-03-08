@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Send } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
+import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
 
 interface SalesDashboardProps {
   stats: {
@@ -75,12 +76,13 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
       {sellerName && stats.individualGoal && (() => {
         const now = new Date();
         const goalAmount = Number(stats.individualGoal!.goal_amount);
-        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        const currentDay = now.getDate();
-        const remainingDays = daysInMonth - currentDay + 1; // including today
-        const dailyGoal = goalAmount / daysInMonth;
-        const dailyRemaining = Math.max(dailyGoal - stats.todayTotal, 0);
-        const dailyProgress = dailyGoal > 0 ? Math.min((stats.todayTotal / dailyGoal) * 100, 100) : 0;
+        const includeSaturdays = true; // loja funciona aos sábados
+        const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
+        const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
+        const todayIsBusinessDay = isBusinessDay(now, includeSaturdays);
+        const dailyGoal = businessDaysInMonth > 0 ? goalAmount / businessDaysInMonth : 0;
+        const dailyRemaining = todayIsBusinessDay ? Math.max(dailyGoal - stats.todayTotal, 0) : 0;
+        const dailyProgress = dailyGoal > 0 && todayIsBusinessDay ? Math.min((stats.todayTotal / dailyGoal) * 100, 100) : 0;
         const monthlyRemaining = Math.max(goalAmount - stats.monthTotal, 0);
         const monthlyProgress = stats.individualGoalProgress ?? 0;
 
@@ -124,7 +126,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground text-right">
-                {remainingDays} dias restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia
+                {remainingDays} dias úteis restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia útil
               </p>
             </div>
           </Card>
