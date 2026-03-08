@@ -112,39 +112,60 @@ export type Database = {
       customers: {
         Row: {
           code: string | null
+          comprador: string | null
+          cpf_cnpj: string | null
           created_at: string
           email: string | null
+          empresa: string | null
+          endereco: string | null
           id: string
+          inscricao_estadual: string | null
+          limite_credito: number | null
           name: string
           notes: string | null
           phone: string | null
           seller_auth_id: string | null
           updated_at: string
           user_id: string
+          whatsapp: string | null
         }
         Insert: {
           code?: string | null
+          comprador?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          empresa?: string | null
+          endereco?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          limite_credito?: number | null
           name: string
           notes?: string | null
           phone?: string | null
           seller_auth_id?: string | null
           updated_at?: string
           user_id: string
+          whatsapp?: string | null
         }
         Update: {
           code?: string | null
+          comprador?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           email?: string | null
+          empresa?: string | null
+          endereco?: string | null
           id?: string
+          inscricao_estadual?: string | null
+          limite_credito?: number | null
           name?: string
           notes?: string | null
           phone?: string | null
           seller_auth_id?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
