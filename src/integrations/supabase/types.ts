@@ -372,6 +372,39 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_term_rules: {
+        Row: {
+          created_at: string
+          day_intervals: string
+          id: string
+          installments: number
+          max_amount: number | null
+          min_amount: number
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_intervals?: string
+          id?: string
+          installments?: number
+          max_amount?: number | null
+          min_amount?: number
+          name?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_intervals?: string
+          id?: string
+          installments?: number
+          max_amount?: number | null
+          min_amount?: number
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       popular_car_parts: {
         Row: {
           aplicacao: string | null
