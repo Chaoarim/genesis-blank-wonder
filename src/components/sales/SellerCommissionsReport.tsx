@@ -148,40 +148,89 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
         </Card>
       </div>
 
-      {/* Seller table */}
+      {/* Seller summary table */}
+      {!sellerName && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumo por Vendedor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sellers.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">Nenhuma venda no período selecionado</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vendedor</TableHead>
+                    <TableHead className="text-center">Vendas</TableHead>
+                    <TableHead className="text-right">Total Vendido</TableHead>
+                    <TableHead className="text-right">Comissão</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sellers.map(s => (
+                    <TableRow key={s.sellerAuthId || 'admin'}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{s.sellerName}</span>
+                          {!s.sellerAuthId && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">{s.totalSales}</TableCell>
+                      <TableCell className="text-right font-medium">{fmt(s.totalAmount)}</TableCell>
+                      <TableCell className="text-right font-medium text-amber-600">{fmt(s.commissionAmount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Detailed sales list with customer and date */}
       <Card>
         <CardHeader>
-          <CardTitle>Detalhamento por Vendedor</CardTitle>
+          <CardTitle>{sellerName ? 'Minhas Vendas Detalhadas' : 'Todas as Vendas Detalhadas'}</CardTitle>
         </CardHeader>
         <CardContent>
-          {sellers.length === 0 ? (
+          {filteredSales.length === 0 ? (
             <p className="text-muted-foreground text-sm text-center py-6">Nenhuma venda no período selecionado</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Vendedor</TableHead>
-                  <TableHead className="text-center">Vendas</TableHead>
-                  <TableHead className="text-right">Total Vendido</TableHead>
-                  <TableHead className="text-right">Comissão</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sellers.map(s => (
-                  <TableRow key={s.sellerAuthId || 'admin'}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{s.sellerName}</span>
-                        {!s.sellerAuthId && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">{s.totalSales}</TableCell>
-                    <TableCell className="text-right font-medium">{fmt(s.totalAmount)}</TableCell>
-                    <TableCell className="text-right font-medium text-amber-600">{fmt(s.commissionAmount)}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {!sellerName && <TableHead>Vendedor</TableHead>}
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="text-right">Comissão</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredSales.map(sale => (
+                    <TableRow key={sale.id}>
+                      {!sellerName && (
+                        <TableCell>
+                          <span className="font-medium text-sm">{sale.seller_name || 'Administrador'}</span>
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        <span className="text-sm">{sale.customer_name || 'Cliente balcão'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(sale.created_at).toLocaleDateString('pt-BR')} {new Date(sale.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-sm">{fmt(Number(sale.total))}</TableCell>
+                      <TableCell className="text-right text-sm text-amber-600">{fmt(calcCommission(sale))}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
