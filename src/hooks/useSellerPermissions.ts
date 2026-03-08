@@ -142,7 +142,26 @@ export function useSellerPermissions(userId: string | null) {
   }, [userId]);
 
   const removeSeller = useCallback(async (id: string) => {
-    await supabase.from('seller_users').delete().eq('id', id);
+    const { error: permsError } = await supabase
+      .from('seller_permissions')
+      .delete()
+      .eq('seller_user_id', id);
+
+    if (permsError) {
+      console.error('Erro ao remover permissões do vendedor:', permsError.message);
+      throw new Error('Não foi possível remover as permissões do vendedor.');
+    }
+
+    const { error: deleteError } = await supabase
+      .from('seller_users')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      console.error('Erro ao remover vendedor:', deleteError.message);
+      throw new Error('Não foi possível remover vendedor.');
+    }
+
     setSellers(prev => prev.filter(s => s.id !== id));
   }, []);
 

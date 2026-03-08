@@ -64,14 +64,16 @@ export function SellersManager({ sellers, onAddSeller, onRemoveSeller, onToggleA
       const [existingByEmailRes, existingByAuthRes] = await Promise.all([
         supabase
           .from('seller_users')
-          .select('id')
-          .eq('email', normalizedEmail)
-          .maybeSingle(),
+          .select('id, created_at')
+          .ilike('email', normalizedEmail)
+          .order('created_at', { ascending: false })
+          .limit(1),
         supabase
           .from('seller_users')
-          .select('id')
+          .select('id, created_at')
           .eq('seller_auth_id', authId)
-          .maybeSingle(),
+          .order('created_at', { ascending: false })
+          .limit(1),
       ]);
 
       if (existingByEmailRes.error || existingByAuthRes.error) {

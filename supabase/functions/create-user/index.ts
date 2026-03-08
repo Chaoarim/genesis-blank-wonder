@@ -81,7 +81,10 @@ serve(async (req) => {
       if (createError.message.includes("already been registered")) {
         console.log("User already exists, looking up by email:", normalizedEmail);
         
-        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000,
+        });
         
         if (listError) {
           console.error("Error listing users:", listError);
