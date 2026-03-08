@@ -59,6 +59,7 @@ const ALL_TABS: TabDef[] = [
   { value: 'payment-terms', icon: Calendar, label: 'Prazos' },
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia' },
   { value: 'credit', icon: CreditCard, label: 'Crédito' },
+  { value: 'accounts-payable', icon: Receipt, label: 'Contas' },
   { value: 'report', icon: FileBarChart, label: 'Relatório' },
 ];
 
