@@ -62,12 +62,13 @@ export function useSellerPermissions(userId: string | null) {
       setIsAdmin(false);
       setSellerRecord(sellerData as SellerUser);
 
-      const { data: perms } = await supabase
-        .from('seller_permissions')
-        .select('*')
-        .eq('seller_user_id', sellerData.id);
+      const [permsRes, sellersRes] = await Promise.all([
+        supabase.from('seller_permissions').select('*').eq('seller_user_id', sellerData.id),
+        supabase.from('seller_users').select('*').eq('admin_user_id', sellerData.admin_user_id).order('name'),
+      ]);
 
-      setPermissions((perms || []).map((p: any) => p.permission));
+      setPermissions((permsRes.data || []).map((p: any) => p.permission));
+      setSellers((sellersRes.data || []) as SellerUser[]);
     } else {
       // User is admin - full access
       setIsAdmin(true);
