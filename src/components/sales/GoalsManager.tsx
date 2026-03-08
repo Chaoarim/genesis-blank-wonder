@@ -175,8 +175,8 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
           <h3 className="font-semibold mb-3">Histórico de Metas</h3>
           <div className="space-y-2">
             {visibleGoals.map(g => {
-              const gAny = g as any;
-              const progress = isAdmin && sales ? getSellerGoalProgress(gAny) : null;
+              const progress = sales ? getSellerGoalProgress(g) : null;
+              return (
               return (
                 <div key={g.id} className="rounded-lg border border-border p-3 space-y-2">
                   <div className="flex items-center justify-between text-sm">
