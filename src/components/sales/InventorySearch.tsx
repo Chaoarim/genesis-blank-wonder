@@ -218,7 +218,6 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 200).map(item => {
-                const precoRevenda = markup > 0 ? item.preco * (1 + markup / 100) : item.preco;
                 return (
                   <TableRow key={item.id}>
                     <TableCell className="p-1">
