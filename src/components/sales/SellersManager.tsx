@@ -132,13 +132,9 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
     toast.success(`Código ${code} copiado!`);
   };
 
-  const togglePasswordVisibility = (sellerId: string) => {
-    setVisiblePasswords(prev => ({ ...prev, [sellerId]: !prev[sellerId] }));
-  };
-
   const startEditPassword = (seller: SellerUser) => {
     setEditingPasswordId(seller.id);
-    setEditPasswordValue(seller.password_plain || '');
+    setEditPasswordValue('');
   };
 
   const cancelEditPassword = () => {
