@@ -514,8 +514,8 @@ const Sales = () => {
               },
               {
                 emoji: "🧠",
-                title: "Sistema que Entende Auto Peças",
-                desc: "Não é uma ferramenta genérica. Nosso sistema inteligente foi construído para o universo automotivo — entende lateralidade, modelos, anos, fabricantes e aplicações."
+                title: "Feito para Auto Peças",
+                desc: "Não é uma ferramenta genérica. O sistema foi construído para o universo automotivo — entende lateralidade, modelos, anos, fabricantes e aplicações."
               },
               {
                 emoji: "📊",
