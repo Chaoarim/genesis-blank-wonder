@@ -4,7 +4,7 @@ import {
   Check, Zap, Database, Search, MessageSquare, Shield, ArrowRight, Settings,
   Globe, Users, Wrench, Car, Clock, TrendingUp, BarChart3, Package,
   ChevronRight, Star, BookOpen, ShoppingCart, Target, Layers, Percent,
-  PlusCircle, History, Link2, ImageIcon, FileSpreadsheet, Smartphone
+  PlusCircle, History, Link2, ImageIcon, FileSpreadsheet, Smartphone, Receipt
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
