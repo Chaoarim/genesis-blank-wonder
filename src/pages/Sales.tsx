@@ -93,11 +93,11 @@ const Sales = () => {
             Consulte, venda e gerencie{" "}
             <br className="hidden md:block" />
             peças automotivas com{" "}
-            <span className="text-gradient">inteligência</span>
+            <span className="text-gradient">eficiência</span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Busca inteligente de peças, chat especializado, catálogos por fornecedor, central de vendas completa
+            Busca avançada de peças, catálogos por fornecedor, central de vendas completa com 21 módulos
             e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
           </p>
 
