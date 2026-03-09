@@ -2,7 +2,7 @@ import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
-  FileBarChart, BellRing
+  FileBarChart, BellRing, Contact
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
