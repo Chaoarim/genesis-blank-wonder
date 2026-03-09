@@ -166,6 +166,29 @@ export function CatalogsDialog({ open, onOpenChange, parts, onAddToQuote }: Cata
                     >
                       <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
+                    
+                    {part.codigosSimilares && part.codigosSimilares.trim() !== '' && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 mt-0.5"
+                            title="Itens Similares"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link className="w-3.5 h-3.5 text-blue-500" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-3 shadow-md" side="top" onClick={(e) => e.stopPropagation()}>
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm">Códigos Similares (Conversão)</h4>
+                            <p className="text-sm text-muted-foreground">{part.codigosSimilares}</p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+
                     {onAddToQuote && (
                       <Button
                         variant="ghost"

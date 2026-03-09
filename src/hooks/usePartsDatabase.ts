@@ -181,6 +181,7 @@ export function usePartsDatabase() {
               ano: (values[anosAplicacaoIdx] || '').trim(),
               chaveDeBusca: (values[chaveIdx] || '').trim(),
               contextoIA: (values[contextoIAIdx] || '').trim(),
+              codigosSimilares: (values[codigosSimilaresIdx] || '').trim(),
             });
           }
         }

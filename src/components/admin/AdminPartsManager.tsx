@@ -320,7 +320,7 @@ export function AdminPartsManager() {
                             <TableCell className="text-xs">{part.descricao || '—'}</TableCell>
                             <TableCell className="text-xs">{part.marca_veiculo || '—'}</TableCell>
                             <TableCell className="text-xs">{part.modelo_veiculo || '—'}</TableCell>
-                            <TableCell className="text-xs">{part.anos_aplicacao || '—'}</TableCell>
+                            <TableCell className="text-xs">{part.codigos_similares || '—'}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(part)}>
