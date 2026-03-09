@@ -184,7 +184,7 @@ export function AdminPartsManager() {
               <PackagePlus className="w-5 h-5 text-primary" />
               Cadastrar Peça Manualmente
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label>Fabricante</Label>
                 <Input placeholder="Ex: FRAS-LE" value={fab} onChange={e => setFab(e.target.value)} />
@@ -208,6 +208,10 @@ export function AdminPartsManager() {
               <div className="space-y-1">
                 <Label>Anos Aplicação</Label>
                 <Input placeholder="Ex: 2010-2014" value={anos} onChange={e => setAnos(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Códigos Similares</Label>
+                <Input placeholder="Ex: SYL1086, COBREQ N250" value={codSimilares} onChange={e => setCodSimilares(e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label>Chave de Busca</Label>
