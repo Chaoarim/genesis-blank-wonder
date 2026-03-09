@@ -449,6 +449,7 @@ export type Database = {
           anos_aplicacao: string | null
           chave_de_busca: string | null
           codigo_peca: string | null
+          codigos_similares: string | null
           contexto_ia: string | null
           created_at: string
           descricao: string | null
@@ -462,6 +463,7 @@ export type Database = {
           anos_aplicacao?: string | null
           chave_de_busca?: string | null
           codigo_peca?: string | null
+          codigos_similares?: string | null
           contexto_ia?: string | null
           created_at?: string
           descricao?: string | null
@@ -475,6 +477,7 @@ export type Database = {
           anos_aplicacao?: string | null
           chave_de_busca?: string | null
           codigo_peca?: string | null
+          codigos_similares?: string | null
           contexto_ia?: string | null
           created_at?: string
           descricao?: string | null

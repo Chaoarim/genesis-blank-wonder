@@ -23,6 +23,7 @@ export interface Part {
   ano: string;
   chaveDeBusca: string;
   contextoIA: string;
+  codigosSimilares?: string;
   imageUrl?: string;
 }
 
@@ -77,6 +78,7 @@ export function usePartsDatabase() {
                   ano: row.anos_aplicacao || '',
                   chaveDeBusca: row.chave_de_busca || '',
                   contextoIA: row.contexto_ia || '',
+                  codigosSimilares: row.codigos_similares || '',
                   imageUrl: row.image_url || undefined,
                 });
               }
@@ -155,6 +157,7 @@ export function usePartsDatabase() {
       const modeloVeiculoIdx = Math.max(normalizedHeader.indexOf('MODELO_VEICULO'), 5);
       const anosAplicacaoIdx = Math.max(normalizedHeader.indexOf('ANOS_APLICACAO'), 6);
       const contextoIAIdx = Math.max(normalizedHeader.indexOf('CONTEXTO_IA'), 7);
+      const codigosSimilaresIdx = Math.max(normalizedHeader.indexOf('CODIGOS_SIMILARES'), 8);
 
       setLoadProgress(60);
 
@@ -178,6 +181,7 @@ export function usePartsDatabase() {
               ano: (values[anosAplicacaoIdx] || '').trim(),
               chaveDeBusca: (values[chaveIdx] || '').trim(),
               contextoIA: (values[contextoIAIdx] || '').trim(),
+              codigosSimilares: (values[codigosSimilaresIdx] || '').trim(),
             });
           }
         }

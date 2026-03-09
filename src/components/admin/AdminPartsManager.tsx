@@ -20,6 +20,7 @@ interface PartRow {
   modelo_veiculo: string | null;
   anos_aplicacao: string | null;
   contexto_ia: string | null;
+  codigos_similares: string | null;
 }
 
 export function AdminPartsManager() {
@@ -32,6 +33,7 @@ export function AdminPartsManager() {
   const [modelo, setModelo] = useState('');
   const [anos, setAnos] = useState('');
   const [ctx, setCtx] = useState('');
+  const [codSimilares, setCodSimilares] = useState('');
   const [saving, setSaving] = useState(false);
 
   // --- Search / edit state ---
@@ -68,7 +70,7 @@ export function AdminPartsManager() {
     }
     setSaving(true);
 
-    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos].filter(Boolean).join(' ');
+    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos, codSimilares].filter(Boolean).join(' ');
 
     const { error } = await supabase.from('parts').insert({
       fabricante: fab.trim() || null,
@@ -79,6 +81,7 @@ export function AdminPartsManager() {
       modelo_veiculo: modelo.trim() || null,
       anos_aplicacao: anos.trim() || null,
       contexto_ia: ctx.trim() || null,
+      codigos_similares: codSimilares.trim() || null,
     });
 
     setSaving(false);
@@ -87,8 +90,8 @@ export function AdminPartsManager() {
       return;
     }
     toast.success('Peça cadastrada com sucesso!');
-    setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx('');
-  }, [fab, cod, desc, chave, marca, modelo, anos, ctx]);
+    setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx(''); setCodSimilares('');
+  }, [fab, cod, desc, chave, marca, modelo, anos, ctx, codSimilares]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim() && !filterFab) {
@@ -97,7 +100,7 @@ export function AdminPartsManager() {
     }
     setSearching(true);
 
-    let query = supabase.from('parts').select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, contexto_ia');
+    let query = supabase.from('parts').select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, contexto_ia, codigos_similares');
 
     if (filterFab) {
       query = query.eq('fabricante', filterFab);
@@ -140,6 +143,7 @@ export function AdminPartsManager() {
       modelo_veiculo: editData.modelo_veiculo || null,
       anos_aplicacao: editData.anos_aplicacao || null,
       contexto_ia: editData.contexto_ia || null,
+      codigos_similares: editData.codigos_similares || null,
     }).eq('id', editingId);
 
     if (error) {
@@ -180,7 +184,7 @@ export function AdminPartsManager() {
               <PackagePlus className="w-5 h-5 text-primary" />
               Cadastrar Peça Manualmente
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label>Fabricante</Label>
                 <Input placeholder="Ex: FRAS-LE" value={fab} onChange={e => setFab(e.target.value)} />
@@ -204,6 +208,10 @@ export function AdminPartsManager() {
               <div className="space-y-1">
                 <Label>Anos Aplicação</Label>
                 <Input placeholder="Ex: 2010-2014" value={anos} onChange={e => setAnos(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Códigos Similares</Label>
+                <Input placeholder="Ex: SYL1086, COBREQ N250" value={codSimilares} onChange={e => setCodSimilares(e.target.value)} />
               </div>
               <div className="space-y-1">
                 <Label>Chave de Busca</Label>
@@ -267,7 +275,7 @@ export function AdminPartsManager() {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Marca</TableHead>
                       <TableHead>Modelo</TableHead>
-                      <TableHead>Anos</TableHead>
+                      <TableHead>Similares</TableHead>
                       <TableHead className="w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -292,7 +300,7 @@ export function AdminPartsManager() {
                               <Input className="h-8 text-xs" value={editData.modelo_veiculo || ''} onChange={e => setEditData(d => ({ ...d, modelo_veiculo: e.target.value }))} />
                             </TableCell>
                             <TableCell>
-                              <Input className="h-8 text-xs" value={editData.anos_aplicacao || ''} onChange={e => setEditData(d => ({ ...d, anos_aplicacao: e.target.value }))} />
+                              <Input className="h-8 text-xs" value={editData.codigos_similares || ''} onChange={e => setEditData(d => ({ ...d, codigos_similares: e.target.value }))} />
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
@@ -312,7 +320,7 @@ export function AdminPartsManager() {
                             <TableCell className="text-xs">{part.descricao || '—'}</TableCell>
                             <TableCell className="text-xs">{part.marca_veiculo || '—'}</TableCell>
                             <TableCell className="text-xs">{part.modelo_veiculo || '—'}</TableCell>
-                            <TableCell className="text-xs">{part.anos_aplicacao || '—'}</TableCell>
+                            <TableCell className="text-xs">{part.codigos_similares || '—'}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
                                 <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => startEdit(part)}>
