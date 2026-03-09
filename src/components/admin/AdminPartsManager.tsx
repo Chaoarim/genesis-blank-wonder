@@ -20,6 +20,7 @@ interface PartRow {
   modelo_veiculo: string | null;
   anos_aplicacao: string | null;
   contexto_ia: string | null;
+  codigos_similares: string | null;
 }
 
 export function AdminPartsManager() {
@@ -32,6 +33,7 @@ export function AdminPartsManager() {
   const [modelo, setModelo] = useState('');
   const [anos, setAnos] = useState('');
   const [ctx, setCtx] = useState('');
+  const [codSimilares, setCodSimilares] = useState('');
   const [saving, setSaving] = useState(false);
 
   // --- Search / edit state ---
