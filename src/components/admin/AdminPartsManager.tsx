@@ -100,7 +100,7 @@ export function AdminPartsManager() {
     }
     setSearching(true);
 
-    let query = supabase.from('parts').select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, contexto_ia');
+    let query = supabase.from('parts').select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, contexto_ia, codigos_similares');
 
     if (filterFab) {
       query = query.eq('fabricante', filterFab);
