@@ -78,6 +78,7 @@ export function usePartsDatabase() {
                   ano: row.anos_aplicacao || '',
                   chaveDeBusca: row.chave_de_busca || '',
                   contextoIA: row.contexto_ia || '',
+                  codigosSimilares: row.codigos_similares || '',
                   imageUrl: row.image_url || undefined,
                 });
               }
