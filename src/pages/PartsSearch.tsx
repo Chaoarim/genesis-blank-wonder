@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, ArrowLeft, BookOpen, Compass, Plus } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, ArrowLeft, BookOpen, Compass, Plus, Link } from 'lucide-react';
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const PAGE_SIZE = 50;
 
@@ -278,6 +279,27 @@ const PartsSearch = () => {
                     >
                       <Sparkles className="w-4 h-4 text-muted-foreground" />
                     </Button>
+                    
+                    {part.codigosSimilares && part.codigosSimilares.trim() !== '' && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 mt-0.5"
+                            title="Códigos Similares"
+                          >
+                            <Link className="w-4 h-4 text-blue-500" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-3 shadow-md" side="top">
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm">Códigos Similares (Conversão)</h4>
+                            <p className="text-sm text-muted-foreground">{part.codigosSimilares}</p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                 </div>
               ))}
