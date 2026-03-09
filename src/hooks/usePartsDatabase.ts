@@ -157,6 +157,7 @@ export function usePartsDatabase() {
       const modeloVeiculoIdx = Math.max(normalizedHeader.indexOf('MODELO_VEICULO'), 5);
       const anosAplicacaoIdx = Math.max(normalizedHeader.indexOf('ANOS_APLICACAO'), 6);
       const contextoIAIdx = Math.max(normalizedHeader.indexOf('CONTEXTO_IA'), 7);
+      const codigosSimilaresIdx = Math.max(normalizedHeader.indexOf('CODIGOS_SIMILARES'), 8);
 
       setLoadProgress(60);
 
