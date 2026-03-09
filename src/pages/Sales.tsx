@@ -551,7 +551,7 @@ const Sales = () => {
             {[
               { name: "Ricardo M.", role: "Auto Peças — SP", text: "Reduzi o tempo de consulta de 5 minutos para 10 segundos. Meus vendedores atendem o dobro de clientes agora." },
               { name: "Carla S.", role: "Auto Center — MG", text: "A busca por veículo é sensacional. O mecânico fala o carro e a gente acha a peça na hora, sem erro." },
-              { name: "João P.", role: "Oficina Mecânica — RJ", text: "O chat inteligente me salvou várias vezes. Pergunto a aplicação e ele responde certinho. Melhor que ligar pra distribuidora." },
+              { name: "João P.", role: "Oficina Mecânica — RJ", text: "O catálogo B2B me salvou. Meus clientes fazem pedido direto pelo celular, não preciso nem atender telefone." },
             ].map((t, i) => (
               <Card key={i} className="p-6 glass-card">
                 <div className="flex gap-0.5 mb-3">
