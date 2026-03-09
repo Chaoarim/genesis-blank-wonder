@@ -34,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, ArrowLeft, Zap, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
+import { HelpGuide } from '@/components/sales/HelpGuide';
 
 const SalesHub = () => {
   const navigate = useNavigate();
