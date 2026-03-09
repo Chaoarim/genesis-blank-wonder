@@ -22,7 +22,7 @@ export function HelpGuide() {
               <AccordionItem value="item-1" className="border rounded-lg px-4 bg-background">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <BarChart3 className="w-5 h-5 text-blue-500" />
+                    <BarChart3 className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-lg">Principal (Dashboard e Pedidos)</span>
                   </div>
                 </AccordionTrigger>
@@ -37,7 +37,7 @@ export function HelpGuide() {
               <AccordionItem value="item-2" className="border rounded-lg px-4 bg-background">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-orange-500" />
+                    <Users className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-lg">Gestão de Clientes</span>
                   </div>
                 </AccordionTrigger>
@@ -51,7 +51,7 @@ export function HelpGuide() {
               <AccordionItem value="item-3" className="border rounded-lg px-4 bg-background">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <Package className="w-5 h-5 text-indigo-500" />
+                    <Package className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-lg">Gestão de Estoque</span>
                   </div>
                 </AccordionTrigger>
@@ -66,7 +66,7 @@ export function HelpGuide() {
               <AccordionItem value="item-4" className="border rounded-lg px-4 bg-background">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <Tag className="w-5 h-5 text-green-500" />
+                    <Tag className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-lg">Comercial (Regras e Preços)</span>
                   </div>
                 </AccordionTrigger>
@@ -80,7 +80,7 @@ export function HelpGuide() {
               <AccordionItem value="item-5" className="border rounded-lg px-4 bg-background">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <Target className="w-5 h-5 text-red-500" />
+                    <Target className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-lg">Equipe e Metas</span>
                   </div>
                 </AccordionTrigger>
@@ -94,7 +94,7 @@ export function HelpGuide() {
               <AccordionItem value="item-6" className="border rounded-lg px-4 bg-background">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <Receipt className="w-5 h-5 text-purple-500" />
+                    <Receipt className="w-5 h-5 text-primary" />
                     <span className="font-semibold text-lg">Financeiro</span>
                   </div>
                 </AccordionTrigger>
