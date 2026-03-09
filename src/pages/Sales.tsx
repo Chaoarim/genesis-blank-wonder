@@ -362,28 +362,59 @@ const Sales = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
               Central de Vendas Completa
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Gerencie todo o ciclo de vendas: do orçamento à entrega. Dashboard, estoque, clientes, metas e markup — tudo integrado.
+            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+              Todas as funcionalidades operacionais da sua loja em um só lugar: vendas, clientes, estoque, comercial, equipe e financeiro.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: BarChart3, label: "Dashboard", desc: "Resumo de faturamento, vendas e metas do mês", color: "from-blue-500 to-blue-700" },
-              { icon: PlusCircle, label: "Nova Venda", desc: "Crie vendas com preenchimento automático de preços", color: "from-green-500 to-green-700" },
-              { icon: ShoppingCart, label: "Pedidos B2B", desc: "Receba e gerencie pedidos do catálogo online", color: "from-purple-500 to-purple-700" },
-              { icon: Package, label: "Estoque", desc: "Controle quantidades, importe planilhas, fotos em lote", color: "from-amber-500 to-amber-700" },
-              { icon: History, label: "Histórico", desc: "Todas as vendas com detalhes, impressão e filtros", color: "from-cyan-500 to-cyan-700" },
-              { icon: Users, label: "Clientes (CRM)", desc: "Cadastre clientes com telefone, email e notas", color: "from-pink-500 to-pink-700" },
-              { icon: Target, label: "Metas", desc: "Defina metas mensais e acompanhe o progresso", color: "from-red-500 to-red-700" },
-              { icon: Percent, label: "Markup", desc: "Configure margens por tipo (distribuidor/revenda)", color: "from-indigo-500 to-indigo-700" },
-            ].map((item, i) => (
-              <Card key={i} className="p-4 glass-card hover:border-primary/30 transition-all text-center group">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mx-auto mb-3`}>
-                  <item.icon className="w-6 h-6 text-white" />
+              {
+                icon: BarChart3,
+                title: 'Principal',
+                items: ['Dashboard', 'Nova Venda', 'Pedidos B2B', 'Histórico', 'Guia Como Usar'],
+              },
+              {
+                icon: Users,
+                title: 'Clientes',
+                items: ['Clientes (CRM)', 'Carteira de clientes', 'Aprovação de crédito'],
+              },
+              {
+                icon: Package,
+                title: 'Estoque',
+                items: ['Consulta de estoque', 'Estoque baixo', 'Importar planilhas', 'Cadastro manual de produto'],
+              },
+              {
+                icon: Percent,
+                title: 'Comercial',
+                items: ['Markup', 'Promoções', 'Cupons', 'Prazos de pagamento', 'Alertas de recompra', 'Fornecedores'],
+              },
+              {
+                icon: Target,
+                title: 'Equipe',
+                items: ['Metas por loja e vendedor', 'Gestão de vendedores', 'Comissões', 'Relatórios'],
+              },
+              {
+                icon: Receipt,
+                title: 'Financeiro',
+                items: ['Garantias e devoluções', 'Contas a pagar'],
+              },
+            ].map((group, i) => (
+              <Card key={i} className="p-5 glass-card hover:border-primary/30 transition-all">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <group.icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <h4 className="font-bold text-sm">{group.title}</h4>
                 </div>
-                <h4 className="font-bold text-sm mb-1">{item.label}</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                <ul className="space-y-1.5">
+                  {group.items.map((item) => (
+                    <li key={item} className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </Card>
             ))}
           </div>
