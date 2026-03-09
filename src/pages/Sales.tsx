@@ -610,15 +610,16 @@ const Sales = () => {
 
             <ul className="space-y-2 mb-8">
               {[
-                "Busca inteligente de peças (código, descrição, veículo)",
-                "Chat inteligente especializado em auto peças",
-                "Catálogos visuais por fornecedor",
-                "Central de Vendas completa (8 módulos)",
+                "Busca avançada de peças (código, descrição, veículo)",
+                "Catálogos visuais por fornecedor (30+)",
+                "Central de Vendas completa (21 módulos)",
                 "Catálogo B2B online com link exclusivo",
                 "Controle de estoque com importação de planilhas",
                 "Upload de fotos em lote por código",
-                "Gestão de clientes (CRM)",
+                "Gestão de clientes (CRM) e carteira",
                 "Markup configurável (distribuidor/revenda)",
+                "Comissões, metas e relatórios de equipe",
+                "Garantias, devoluções e contas a pagar",
                 "Suporte via WhatsApp",
               ].map((b, i) => (
                 <li key={i} className="flex items-center gap-2.5">
