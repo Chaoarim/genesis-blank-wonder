@@ -43,6 +43,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'report', icon: FileBarChart, label: 'Relatório', group: 'Equipe' },
 
   { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas de Recompra', group: 'Comercial' },
+  { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Comercial' },
 
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Financeiro' },
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
