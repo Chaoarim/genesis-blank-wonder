@@ -23,6 +23,7 @@ export interface Part {
   ano: string;
   chaveDeBusca: string;
   contextoIA: string;
+  codigosSimilares?: string;
   imageUrl?: string;
 }
 
