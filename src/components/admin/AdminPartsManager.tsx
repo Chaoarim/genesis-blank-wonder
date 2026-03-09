@@ -70,7 +70,7 @@ export function AdminPartsManager() {
     }
     setSaving(true);
 
-    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos].filter(Boolean).join(' ');
+    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos, codSimilares].filter(Boolean).join(' ');
 
     const { error } = await supabase.from('parts').insert({
       fabricante: fab.trim() || null,
@@ -81,6 +81,7 @@ export function AdminPartsManager() {
       modelo_veiculo: modelo.trim() || null,
       anos_aplicacao: anos.trim() || null,
       contexto_ia: ctx.trim() || null,
+      codigos_similares: codSimilares.trim() || null,
     });
 
     setSaving(false);
@@ -89,8 +90,8 @@ export function AdminPartsManager() {
       return;
     }
     toast.success('Peça cadastrada com sucesso!');
-    setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx('');
-  }, [fab, cod, desc, chave, marca, modelo, anos, ctx]);
+    setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx(''); setCodSimilares('');
+  }, [fab, cod, desc, chave, marca, modelo, anos, ctx, codSimilares]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim() && !filterFab) {
