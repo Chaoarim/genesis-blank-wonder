@@ -27,6 +27,9 @@ import { WarrantyReturnsManager } from '@/components/sales/WarrantyReturnsManage
 import { CreditApprovalsManager } from '@/components/sales/CreditApprovalsManager';
 import { AccountsPayableManager } from '@/components/sales/AccountsPayableManager';
 import { SalesHubSidebar, ALL_TAB_VALUES } from '@/components/sales/SalesHubSidebar';
+import { AccountsReceivableManager } from '@/components/sales/AccountsReceivableManager';
+import { AbcCurveReport } from '@/components/sales/AbcCurveReport';
+import { RepurchaseAlerts } from '@/components/sales/RepurchaseAlerts';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, ArrowLeft, Zap, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
