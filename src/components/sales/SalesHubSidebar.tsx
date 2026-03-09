@@ -2,7 +2,7 @@ import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
-  FileBarChart
+  FileBarChart, BellRing
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -41,6 +41,8 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'sellers', icon: UserCog, label: 'Vendedores', group: 'Equipe' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões', group: 'Equipe' },
   { value: 'report', icon: FileBarChart, label: 'Relatório', group: 'Equipe' },
+
+  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas de Recompra', group: 'Comercial' },
 
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Financeiro' },
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },

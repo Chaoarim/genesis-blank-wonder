@@ -27,6 +27,7 @@ import { WarrantyReturnsManager } from '@/components/sales/WarrantyReturnsManage
 import { CreditApprovalsManager } from '@/components/sales/CreditApprovalsManager';
 import { AccountsPayableManager } from '@/components/sales/AccountsPayableManager';
 import { SalesHubSidebar, ALL_TAB_VALUES } from '@/components/sales/SalesHubSidebar';
+import { RepurchaseAlerts } from '@/components/sales/RepurchaseAlerts';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, ArrowLeft, Zap, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
@@ -175,6 +176,8 @@ const SalesHub = () => {
         return sellerPerms.isAdmin && user ? <CreditApprovalsManager userId={user.id} reviewerName="Admin" /> : null;
       case 'accounts-payable':
         return user ? <AccountsPayableManager userId={sellerPerms.adminUserId || user.id} /> : null;
+      case 'repurchase-alerts':
+        return <RepurchaseAlerts sales={salesData.sales} customers={salesData.customers} />;
       case 'report':
         if (sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />;
         if (!sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />;

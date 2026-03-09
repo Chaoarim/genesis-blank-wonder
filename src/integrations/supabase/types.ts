@@ -800,6 +800,7 @@ export type Database = {
           discount: number
           id: string
           notes: string | null
+          paid_at: string | null
           payment_deadline: string | null
           payment_method: string
           seller_auth_id: string | null
@@ -818,6 +819,7 @@ export type Database = {
           discount?: number
           id?: string
           notes?: string | null
+          paid_at?: string | null
           payment_deadline?: string | null
           payment_method?: string
           seller_auth_id?: string | null
@@ -836,6 +838,7 @@ export type Database = {
           discount?: number
           id?: string
           notes?: string | null
+          paid_at?: string | null
           payment_deadline?: string | null
           payment_method?: string
           seller_auth_id?: string | null
