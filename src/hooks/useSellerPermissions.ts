@@ -37,6 +37,7 @@ export const ALL_PERMISSIONS = [
   { key: 'sellers', label: 'Vendedores' },
   { key: 'commissions', label: 'Comissões' },
   { key: 'report', label: 'Relatório' },
+  { key: 'supplier-contacts', label: 'Fornecedores' },
 ] as const;
 
 export function useSellerPermissions(userId: string | null) {

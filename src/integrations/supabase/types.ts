@@ -983,6 +983,45 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_contacts: {
+        Row: {
+          created_at: string
+          distributor_name: string
+          email: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          seller_name: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          distributor_name: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          seller_name?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          distributor_name?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          seller_name?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
