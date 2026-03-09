@@ -147,7 +147,7 @@ export function RepurchaseAlerts({ sales, customers }: RepurchaseAlertsProps) {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
+                          className="text-primary hover:bg-primary/10 border-primary/20"
                           onClick={() => handleWhatsApp(alert.customer, alert.daysSinceLastPurchase)}
                           disabled={!alert.customer.phone && !alert.customer.whatsapp}
                         >
