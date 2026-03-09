@@ -1075,73 +1075,9 @@ serve(async (req) => {
       ? groupBySameCode(parts, safeRanked[0])
       : safeRanked;
 
-    // ========= Resposta via IA (Google Gemini) =========
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      const text = buildMarkdownTable(finalRows);
-      return streamDeterministicAnswer(text, corsHeaders);
-    }
-
-    // IMPORTANTE: Sempre incluir aplicacao (que é a versão CONSOLIDADA de todas as linhas do mesmo código)
-    // contextoIA pode vir de apenas 1 linha; aplicacao contém TODAS as aplicações merged.
-    const contextForAI = finalRows
-      .map((r) => {
-        const base = `Fabricante: ${r.fornecedor}. Código: ${r.fabricante}. ${r.produto}. Aplicação: ${r.aplicacao}`;
-        // Se contextoIA existir e for diferente da aplicacao, incluir como info extra
-        if (r.contextoIA && r.contextoIA.trim() && r.contextoIA !== r.aplicacao) {
-          return `${base}\nContexto adicional: ${r.contextoIA}`;
-        }
-        return base;
-      })
-      .join("\n\n");
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...sanitizedMessages.slice(-4).map((m: { role: string; content: string }) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          { role: "user", content: `Consulta do cliente: "${query}"\n\nPeças encontradas na base de dados:\n${contextForAI}` },
-        ],
-        stream: true,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições da IA excedido." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA insuficientes." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("AI gateway error:", aiResponse.status, await aiResponse.text());
-      const text = buildMarkdownTable(finalRows);
-      return streamDeterministicAnswer(text, corsHeaders);
-    }
-
-    return new Response(aiResponse.body, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
+    // ========= Resposta determinística (IA desativada) =========
+    const text = buildMarkdownTable(finalRows);
+    return streamDeterministicAnswer(text, corsHeaders);
   } catch (e) {
     console.error("Chat error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
