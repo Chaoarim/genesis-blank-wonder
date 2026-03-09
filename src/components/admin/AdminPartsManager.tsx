@@ -300,7 +300,7 @@ export function AdminPartsManager() {
                               <Input className="h-8 text-xs" value={editData.modelo_veiculo || ''} onChange={e => setEditData(d => ({ ...d, modelo_veiculo: e.target.value }))} />
                             </TableCell>
                             <TableCell>
-                              <Input className="h-8 text-xs" value={editData.anos_aplicacao || ''} onChange={e => setEditData(d => ({ ...d, anos_aplicacao: e.target.value }))} />
+                              <Input className="h-8 text-xs" value={editData.codigos_similares || ''} onChange={e => setEditData(d => ({ ...d, codigos_similares: e.target.value }))} />
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
