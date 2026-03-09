@@ -143,6 +143,7 @@ export function AdminPartsManager() {
       modelo_veiculo: editData.modelo_veiculo || null,
       anos_aplicacao: editData.anos_aplicacao || null,
       contexto_ia: editData.contexto_ia || null,
+      codigos_similares: editData.codigos_similares || null,
     }).eq('id', editingId);
 
     if (error) {
