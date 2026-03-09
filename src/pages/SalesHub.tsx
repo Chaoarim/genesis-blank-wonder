@@ -176,10 +176,6 @@ const SalesHub = () => {
         return sellerPerms.isAdmin && user ? <CreditApprovalsManager userId={user.id} reviewerName="Admin" /> : null;
       case 'accounts-payable':
         return user ? <AccountsPayableManager userId={sellerPerms.adminUserId || user.id} /> : null;
-      case 'accounts-receivable':
-        return <AccountsReceivableManager sales={salesData.allSales} markSaleAsPaid={salesData.markSaleAsPaid} />;
-      case 'abc-curve':
-        return user ? <AbcCurveReport userId={sellerPerms.adminUserId || user.id} /> : null;
       case 'repurchase-alerts':
         return <RepurchaseAlerts sales={salesData.sales} customers={salesData.customers} />;
       case 'report':

@@ -46,7 +46,6 @@ const MENU_ITEMS: TabDef[] = [
 
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Financeiro' },
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
-  { value: 'accounts-receivable', icon: DollarSign, label: 'Contas a Receber', group: 'Financeiro' },
 ];
 
 const GROUPS = ['Principal', 'Clientes', 'Estoque', 'Comercial', 'Equipe', 'Financeiro'];
