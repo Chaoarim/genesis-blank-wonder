@@ -186,6 +186,8 @@ const SalesHub = () => {
         if (sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />;
         if (!sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />;
         return null;
+      case 'help':
+        return <HelpGuide />;
       default:
         return null;
     }
