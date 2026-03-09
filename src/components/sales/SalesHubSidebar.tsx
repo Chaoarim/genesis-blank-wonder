@@ -42,8 +42,11 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'commissions', icon: DollarSign, label: 'Comissões', group: 'Equipe' },
   { value: 'report', icon: FileBarChart, label: 'Relatório', group: 'Equipe' },
 
+  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas de Recompra', group: 'Comercial' },
+
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Financeiro' },
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
+  { value: 'accounts-receivable', icon: DollarSign, label: 'Contas a Receber', group: 'Financeiro' },
 ];
 
 const GROUPS = ['Principal', 'Clientes', 'Estoque', 'Comercial', 'Equipe', 'Financeiro'];
