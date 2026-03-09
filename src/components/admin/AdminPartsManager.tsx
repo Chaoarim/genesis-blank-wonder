@@ -275,7 +275,7 @@ export function AdminPartsManager() {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Marca</TableHead>
                       <TableHead>Modelo</TableHead>
-                      <TableHead>Anos</TableHead>
+                      <TableHead>Similares</TableHead>
                       <TableHead className="w-[120px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
