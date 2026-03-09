@@ -93,11 +93,11 @@ const Sales = () => {
             Consulte, venda e gerencie{" "}
             <br className="hidden md:block" />
             peças automotivas com{" "}
-            <span className="text-gradient">inteligência</span>
+            <span className="text-gradient">eficiência</span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Busca inteligente de peças, chat especializado, catálogos por fornecedor, central de vendas completa
+            Busca avançada de peças, catálogos por fornecedor, central de vendas completa com 21 módulos
             e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
           </p>
 
@@ -514,8 +514,8 @@ const Sales = () => {
               },
               {
                 emoji: "🧠",
-                title: "Sistema que Entende Auto Peças",
-                desc: "Não é uma ferramenta genérica. Nosso sistema inteligente foi construído para o universo automotivo — entende lateralidade, modelos, anos, fabricantes e aplicações."
+                title: "Feito para Auto Peças",
+                desc: "Não é uma ferramenta genérica. O sistema foi construído para o universo automotivo — entende lateralidade, modelos, anos, fabricantes e aplicações."
               },
               {
                 emoji: "📊",
@@ -551,7 +551,7 @@ const Sales = () => {
             {[
               { name: "Ricardo M.", role: "Auto Peças — SP", text: "Reduzi o tempo de consulta de 5 minutos para 10 segundos. Meus vendedores atendem o dobro de clientes agora." },
               { name: "Carla S.", role: "Auto Center — MG", text: "A busca por veículo é sensacional. O mecânico fala o carro e a gente acha a peça na hora, sem erro." },
-              { name: "João P.", role: "Oficina Mecânica — RJ", text: "O chat inteligente me salvou várias vezes. Pergunto a aplicação e ele responde certinho. Melhor que ligar pra distribuidora." },
+              { name: "João P.", role: "Oficina Mecânica — RJ", text: "O catálogo B2B me salvou. Meus clientes fazem pedido direto pelo celular, não preciso nem atender telefone." },
             ].map((t, i) => (
               <Card key={i} className="p-6 glass-card">
                 <div className="flex gap-0.5 mb-3">
@@ -657,10 +657,10 @@ const Sales = () => {
           <div className="space-y-3">
             {[
               { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar e fazer login." },
-              { q: "Como funciona o chat inteligente?", a: "Você digita sua dúvida em português normal (ex: 'qual pastilha serve no Gol G5?') e o sistema consulta toda a base para dar a resposta mais precisa." },
+              { q: "Como funciona a busca de peças?", a: "Você digita código, descrição ou veículo e o sistema consulta toda a base para encontrar as peças corretas. Entende lateralidade (dianteiro/traseiro, esquerdo/direito) automaticamente." },
               { q: "Posso importar meu estoque de uma planilha?", a: "Sim! O sistema aceita arquivos Excel e CSV. Ele reconhece variações de cabeçalho e formatos de moeda brasileira automaticamente." },
               { q: "O que é o Catálogo B2B?", a: "É uma loja online do seu estoque com link exclusivo. Seus clientes acessam, pesquisam e fazem pedidos direto pelo celular." },
-              { q: "A base de peças é atualizada?", a: "Sim! Adicionamos novos fornecedores e peças constantemente. Você sempre terá acesso aos dados mais recentes." },
+              { q: "Quantos módulos tem a Central de Vendas?", a: "São 21 módulos: Dashboard, Nova Venda, Pedidos, Histórico, Clientes, Carteira, Crédito, Estoque, Estoque Baixo, Importar, Cadastrar Produto, Markup, Ofertas, Cupons, Prazos, Alertas de Recompra, Fornecedores, Metas, Vendedores, Comissões, Garantias e Contas a Pagar." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
             ].map((faq, i) => (
               <Card key={i} className="p-5 glass-card">
