@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, ArrowLeft, BookOpen, Compass, Plus } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, ArrowLeft, BookOpen, Compass, Plus, Link } from 'lucide-react';
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const PAGE_SIZE = 50;
 
