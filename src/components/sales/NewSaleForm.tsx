@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Send, CheckCircle, UserPlus, Plus, Calendar } from 'lucide-react';
+import { Trash2, Send, CheckCircle, UserPlus, Plus, Calendar, Package, BookOpen } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { Customer } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 import { InventorySearchInline } from './InventorySearchInline';
+import { CatalogSearchInline } from './CatalogSearchInline';
 
 interface SaleItemDraft {
   id: string;
