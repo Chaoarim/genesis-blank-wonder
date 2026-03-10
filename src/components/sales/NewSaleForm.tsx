@@ -70,6 +70,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   const [items, setItems] = useState<SaleItemDraft[]>([]);
   const [saving, setSaving] = useState(false);
   const [showFinalize, setShowFinalize] = useState(false);
+  const [itemSource, setItemSource] = useState<'estoque' | 'catalogo'>('estoque');
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
