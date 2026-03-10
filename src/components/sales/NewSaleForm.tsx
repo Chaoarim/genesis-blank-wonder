@@ -304,31 +304,79 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
         )}
       </Card>
 
-      {/* Inventory Search */}
-      <Card className="p-4 space-y-2">
-        <h3 className="font-semibold text-sm">🔍 Consultar Estoque</h3>
-      <InventorySearchInline
-          adminUserId={adminUserId}
-          onAddItem={(item, precoRevenda) => {
-            setItems(prev => {
-              const existing = prev.find(i => i.codigo === item.codigo);
-              if (existing) {
-                toast.error(`${item.codigo} já está no pedido. Ajuste a quantidade se necessário.`);
-                return prev;
-              }
-              toast.success(`${item.codigo} adicionado ao pedido`);
-              return [...prev, {
-                id: crypto.randomUUID(),
-                codigo: item.codigo,
-                produto: item.produto,
-                fornecedor: item.fornecedor,
-                aplicacao: item.aplicacao,
-                quantidade: 1,
-                preco_unitario: Math.round(precoRevenda * 100) / 100,
-              }];
-            });
-          }}
-        />
+      {/* Source Toggle + Search */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Button
+            variant={itemSource === 'estoque' ? 'default' : 'outline'}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setItemSource('estoque')}
+          >
+            <Package className="w-4 h-4" /> Meu Estoque
+          </Button>
+          <Button
+            variant={itemSource === 'catalogo' ? 'default' : 'outline'}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setItemSource('catalogo')}
+          >
+            <BookOpen className="w-4 h-4" /> Catálogo Fornecedores
+          </Button>
+        </div>
+
+        {itemSource === 'estoque' ? (
+          <>
+            <h3 className="font-semibold text-sm">🔍 Consultar Estoque</h3>
+            <InventorySearchInline
+              adminUserId={adminUserId}
+              onAddItem={(item, precoRevenda) => {
+                setItems(prev => {
+                  const existing = prev.find(i => i.codigo === item.codigo);
+                  if (existing) {
+                    toast.error(`${item.codigo} já está no pedido. Ajuste a quantidade se necessário.`);
+                    return prev;
+                  }
+                  toast.success(`${item.codigo} adicionado ao pedido`);
+                  return [...prev, {
+                    id: crypto.randomUUID(),
+                    codigo: item.codigo,
+                    produto: item.produto,
+                    fornecedor: item.fornecedor,
+                    aplicacao: item.aplicacao,
+                    quantidade: 1,
+                    preco_unitario: Math.round(precoRevenda * 100) / 100,
+                  }];
+                });
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <h3 className="font-semibold text-sm">📚 Consultar Catálogo de Fornecedores</h3>
+            <CatalogSearchInline
+              onAddItem={(catalogItem) => {
+                setItems(prev => {
+                  const existing = prev.find(i => i.codigo === catalogItem.codigo);
+                  if (existing) {
+                    toast.error(`${catalogItem.codigo} já está no pedido.`);
+                    return prev;
+                  }
+                  toast.success(`${catalogItem.codigo} adicionado ao pedido`);
+                  return [...prev, {
+                    id: crypto.randomUUID(),
+                    codigo: catalogItem.codigo,
+                    produto: catalogItem.produto,
+                    fornecedor: catalogItem.fornecedor,
+                    aplicacao: catalogItem.aplicacao,
+                    quantidade: catalogItem.quantidade,
+                    preco_unitario: catalogItem.preco_unitario,
+                  }];
+                });
+              }}
+            />
+          </>
+        )}
       </Card>
 
       {/* Items List */}
