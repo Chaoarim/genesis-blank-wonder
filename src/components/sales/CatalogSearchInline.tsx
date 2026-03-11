@@ -3,8 +3,62 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { smartFilterParts, normalizeForSearch } from '@/lib/partsSearchEngine';
+import { normalizeForSearch } from '@/lib/partsSearchEngine';
 import type { Part } from '@/hooks/usePartsDatabase';
+
+const SYNONYMS: Record<string, string[]> = {
+  'embreagem': ['disco', 'plato', 'rolamento'],
+  'kit': ['jogo', 'conjunto'],
+  'suspensao': ['amortecedor', 'mola', 'bandeja', 'bieleta'],
+  'freio': ['pastilha', 'disco', 'lona', 'sapata'],
+  'distribuicao': ['correia', 'tensor', 'polia'],
+};
+
+/** Strict search: ALL query terms must match somewhere in the part text */
+function strictFilterParts(parts: Part[], query: string): Part[] {
+  const q = normalizeForSearch(query);
+  if (q.length < 2) return [];
+  const terms = q.split(' ').filter(t => t.length >= 2);
+  if (terms.length === 0) return [];
+
+  const scored: { part: Part; score: number }[] = [];
+
+  for (const part of parts) {
+    const fullText = normalizeForSearch(
+      `${part.fabricante} ${part.produto} ${part.chaveDeBusca} ${part.marca} ${part.modelo} ${part.ano} ${part.fornecedor} ${part.contextoIA || ''} ${part.codigosSimilares || ''}`
+    );
+
+    // ALL terms must be present (exact substring or synonym match)
+    let allMatch = true;
+    let score = 0;
+
+    for (const term of terms) {
+      if (fullText.includes(term)) {
+        // Direct match — score by field
+        const prod = normalizeForSearch(part.produto);
+        const code = normalizeForSearch(part.fabricante);
+        if (code.includes(term)) score += 5;
+        if (prod.includes(term)) score += 3;
+        score += 1;
+      } else {
+        // Check if any synonym of this term matches
+        const syns = SYNONYMS[term];
+        let synFound = false;
+        if (syns) {
+          for (const syn of syns) {
+            if (fullText.includes(syn)) { synFound = true; score += 1; break; }
+          }
+        }
+        if (!synFound) { allMatch = false; break; }
+      }
+    }
+
+    if (!allMatch || score <= 0) continue;
+    scored.push({ part, score });
+  }
+
+  return scored.sort((a, b) => b.score - a.score).map(s => s.part);
+}
 
 interface CatalogSearchInlineProps {
   onAddItem: (item: {
