@@ -65,8 +65,9 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
         contextoIA: r.contexto_ia || '',
         codigosSimilares: r.codigos_similares || '',
         imageUrl: r.image_url || '',
+        aplicacao: `${r.marca_veiculo || ''} ${r.modelo_veiculo || ''} ${r.anos_aplicacao || ''}`.trim(),
         _dbId: r.id,
-      }));
+      })) as Part[];
 
       setAllParts(mapped);
       setLoading(false);
