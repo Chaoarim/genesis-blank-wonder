@@ -14,6 +14,38 @@ const SYNONYMS: Record<string, string[]> = {
   'distribuicao': ['correia', 'tensor', 'polia'],
 };
 
+// Common abbreviations found in parts catalogs
+const ABBREVIATIONS: Record<string, string[]> = {
+  'dianteiro': ['diant', 'dianteira', 'dianteiro'],
+  'dianteira': ['diant', 'dianteiro', 'dianteira'],
+  'traseiro': ['tras', 'traseira', 'traseiro'],
+  'traseira': ['tras', 'traseiro', 'traseira'],
+  'esquerdo': ['esq', 'esquerda', 'esquerdo'],
+  'esquerda': ['esq', 'esquerdo', 'esquerda'],
+  'direito': ['dir', 'direita', 'direito'],
+  'direita': ['dir', 'direito', 'direita'],
+  'superior': ['sup'],
+  'inferior': ['inf'],
+  'amortecedor': ['amort'],
+};
+
+/** Check if term matches in text (including abbreviations) */
+function termMatchesText(text: string, term: string): boolean {
+  if (text.includes(term)) return true;
+  // Check abbreviations
+  const abbrs = ABBREVIATIONS[term];
+  if (abbrs) {
+    for (const abbr of abbrs) {
+      if (text.includes(abbr)) return true;
+    }
+  }
+  // Also check if the term is an abbreviation of something in the text
+  for (const [full, abbrList] of Object.entries(ABBREVIATIONS)) {
+    if (abbrList.includes(term) && text.includes(full)) return true;
+  }
+  return false;
+}
+
 /** Strict search: ALL query terms must match somewhere in the part text */
 function strictFilterParts(parts: Part[], query: string): Part[] {
   const q = normalizeForSearch(query);
@@ -28,25 +60,23 @@ function strictFilterParts(parts: Part[], query: string): Part[] {
       `${part.fabricante} ${part.produto} ${part.chaveDeBusca} ${part.marca} ${part.modelo} ${part.ano} ${part.fornecedor} ${part.contextoIA || ''} ${part.codigosSimilares || ''}`
     );
 
-    // ALL terms must be present (exact substring or synonym match)
     let allMatch = true;
     let score = 0;
 
     for (const term of terms) {
-      if (fullText.includes(term)) {
-        // Direct match — score by field
+      if (termMatchesText(fullText, term)) {
         const prod = normalizeForSearch(part.produto);
         const code = normalizeForSearch(part.fabricante);
         if (code.includes(term)) score += 5;
-        if (prod.includes(term)) score += 3;
+        if (prod.includes(term) || termMatchesText(prod, term)) score += 3;
         score += 1;
       } else {
-        // Check if any synonym of this term matches
+        // Check synonyms
         const syns = SYNONYMS[term];
         let synFound = false;
         if (syns) {
           for (const syn of syns) {
-            if (fullText.includes(syn)) { synFound = true; score += 1; break; }
+            if (termMatchesText(fullText, syn)) { synFound = true; score += 1; break; }
           }
         }
         if (!synFound) { allMatch = false; break; }
