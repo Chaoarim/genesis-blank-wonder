@@ -86,35 +86,19 @@ export function useSellerPermissions(userId: string | null) {
       return;
     }
 
-    // 2) If not seller, check admin role explicitly
-    const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
-      _user_id: userId,
-      _role: 'admin',
-    });
+    // 2) Not a seller — treat as admin/owner of their own sales hub
+    // Any authenticated user who is not a seller gets full access to all modules
+    setIsAdmin(true);
+    setSellerRecord(null);
+    setPermissions([]);
 
-    if (roleError) {
-      console.error('Erro ao validar papel admin:', roleError.message);
-    }
+    const { data: sellersData } = await supabase
+      .from('seller_users')
+      .select('*')
+      .eq('admin_user_id', userId)
+      .order('name');
 
-    if (hasAdminRole) {
-      setIsAdmin(true);
-      setSellerRecord(null);
-      setPermissions([]);
-
-      const { data: sellersData } = await supabase
-        .from('seller_users')
-        .select('*')
-        .eq('admin_user_id', userId)
-        .order('name');
-
-      setSellers((sellersData || []).map((s: any) => ({ ...s } as SellerUser)));
-    } else {
-      // Safety fallback: user without vínculo de vendedor e sem papel admin
-      setIsAdmin(false);
-      setSellerRecord(null);
-      setPermissions([]);
-      setSellers([]);
-    }
+    setSellers((sellersData || []).map((s: any) => ({ ...s } as SellerUser)));
 
     setLoading(false);
   }, [userId]);
