@@ -134,7 +134,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
     clearTimeout(debounceRef.current);
     if (value.trim().length < 2) { setResults([]); return; }
     debounceRef.current = setTimeout(() => {
-      const found = smartFilterParts(allParts, value).slice(0, 30);
+      const found = strictFilterParts(allParts, value).slice(0, 30);
       setResults(found);
       setOpen(true);
     }, 250);
