@@ -115,7 +115,7 @@ const SalesHub = () => {
       case 'inventory':
         return <InventorySearch adminUserId={sellerPerms.adminUserId} />;
       case 'low-stock':
-        return <LowStockReport />;
+        return <LowStockReport adminUserId={sellerPerms.adminUserId} />;
       case 'history':
         return <SalesHistory sales={salesData.sales} onDeleteSale={salesData.deleteSale} getSaleItems={salesData.getSaleItems} />;
       case 'customers':
