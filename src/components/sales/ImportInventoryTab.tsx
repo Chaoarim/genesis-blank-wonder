@@ -30,7 +30,8 @@ export function ImportInventoryTab({ adminUserId: propAdminUserId }: { adminUser
   const refreshItems = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const allItems = await fetchAllInventory(user.id);
+    const effectiveId = propAdminUserId || user.id;
+    const allItems = await fetchAllInventory(effectiveId);
     setInventoryItems(allItems.map(r => ({
       id: r.id, codigo: r.codigo, produto: r.produto,
       fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
