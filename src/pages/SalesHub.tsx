@@ -148,7 +148,7 @@ const SalesHub = () => {
       case 'markup':
         return <MarkupManager />;
       case 'import-inventory':
-        return <ImportInventoryTab />;
+        return <ImportInventoryTab adminUserId={sellerPerms.adminUserId} />;
       case 'manual-product':
         return <ManualProductForm onProductAdded={() => toast.success('Produto cadastrado! Veja na aba Estoque.')} />;
       case 'promotions':
