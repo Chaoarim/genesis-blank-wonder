@@ -15,7 +15,7 @@ interface LowStockItem {
   qtd_estoque: number;
 }
 
-export function LowStockReport() {
+export function LowStockReport({ adminUserId }: { adminUserId?: string | null }) {
   const [items, setItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
 
