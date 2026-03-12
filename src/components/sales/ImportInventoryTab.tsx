@@ -21,7 +21,7 @@ interface InventoryItem {
   visible_catalog?: boolean;
 }
 
-export function ImportInventoryTab() {
+export function ImportInventoryTab({ adminUserId: propAdminUserId }: { adminUserId?: string | null }) {
   const [markup, setMarkup] = useState(0);
   const [loading, setLoading] = useState(true);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
