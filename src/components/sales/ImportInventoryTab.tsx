@@ -44,11 +44,12 @@ export function ImportInventoryTab({ adminUserId: propAdminUserId }: { adminUser
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      setUserId(user.id);
+      const effectiveId = propAdminUserId || user.id;
+      setUserId(effectiveId);
 
       const [markupRes, allItems] = await Promise.all([
-        supabase.from('markup_settings').select('*').eq('user_id', user.id).maybeSingle(),
-        fetchAllInventory(user.id),
+        supabase.from('markup_settings').select('*').eq('user_id', effectiveId).maybeSingle(),
+        fetchAllInventory(effectiveId),
       ]);
 
       if (markupRes.data) setMarkup(Number(markupRes.data.markup_revenda) || 0);

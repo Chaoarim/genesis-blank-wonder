@@ -23,11 +23,12 @@ export function LowStockReport({ adminUserId }: { adminUserId?: string | null })
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      const effectiveId = adminUserId || user.id;
 
       const { data } = await supabase
         .from('inventory_items')
         .select('id, codigo, produto, fornecedor, aplicacao, qtd_estoque')
-        .eq('user_id', user.id)
+        .eq('user_id', effectiveId)
         .lte('qtd_estoque', 2)
         .order('qtd_estoque', { ascending: true });
 

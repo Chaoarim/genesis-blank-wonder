@@ -31,9 +31,10 @@ export function ManualProductForm({ onProductAdded, adminUserId }: ManualProduct
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+    const effectiveId = adminUserId || user.id;
 
     const { error } = await supabase.from('inventory_items').insert({
-      user_id: user.id,
+      user_id: effectiveId,
       codigo: codigo.trim(),
       produto: produto.trim(),
       fornecedor: fornecedor.trim(),
