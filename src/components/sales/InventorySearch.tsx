@@ -24,7 +24,7 @@ interface InventoryItem {
 
 type EditField = 'qtd_estoque' | 'codigo' | 'produto' | 'fornecedor' | 'aplicacao' | 'vendidos_display' | 'preco';
 
-export function InventorySearch({ adminUserId }: { adminUserId?: string | null }) {
+export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -39,11 +39,10 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const effectiveId = adminUserId || user.id;
 
       const [allItems, markupRes] = await Promise.all([
-        fetchAllInventory(effectiveId, 'produto', true),
-        supabase.from('markup_settings').select('markup_revenda').eq('user_id', effectiveId).maybeSingle(),
+        fetchAllInventory(user.id, 'produto', true),
+        supabase.from('markup_settings').select('markup_revenda').eq('user_id', user.id).maybeSingle(),
       ]);
 
       setItems(allItems.map(r => ({
@@ -56,7 +55,7 @@ export function InventorySearch({ adminUserId }: { adminUserId?: string | null }
       setLoading(false);
     };
     load();
-  }, [adminUserId]);
+  }, []);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
