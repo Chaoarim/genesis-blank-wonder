@@ -9,9 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ManualProductFormProps {
   onProductAdded: () => void;
+  adminUserId?: string | null;
 }
 
-export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
+export function ManualProductForm({ onProductAdded, adminUserId }: ManualProductFormProps) {
   const [codigo, setCodigo] = useState('');
   const [produto, setProduto] = useState('');
   const [fornecedor, setFornecedor] = useState('');
