@@ -9,9 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ManualProductFormProps {
   onProductAdded: () => void;
+  adminUserId?: string | null;
 }
 
-export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
+export function ManualProductForm({ onProductAdded, adminUserId }: ManualProductFormProps) {
   const [codigo, setCodigo] = useState('');
   const [produto, setProduto] = useState('');
   const [fornecedor, setFornecedor] = useState('');
@@ -30,9 +31,10 @@ export function ManualProductForm({ onProductAdded }: ManualProductFormProps) {
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
+    const effectiveId = adminUserId || user.id;
 
     const { error } = await supabase.from('inventory_items').insert({
-      user_id: user.id,
+      user_id: effectiveId,
       codigo: codigo.trim(),
       produto: produto.trim(),
       fornecedor: fornecedor.trim(),

@@ -115,7 +115,7 @@ const SalesHub = () => {
       case 'inventory':
         return <InventorySearch adminUserId={sellerPerms.adminUserId} />;
       case 'low-stock':
-        return <LowStockReport />;
+        return <LowStockReport adminUserId={sellerPerms.adminUserId} />;
       case 'history':
         return <SalesHistory sales={salesData.sales} onDeleteSale={salesData.deleteSale} getSaleItems={salesData.getSaleItems} />;
       case 'customers':
@@ -148,9 +148,9 @@ const SalesHub = () => {
       case 'markup':
         return <MarkupManager />;
       case 'import-inventory':
-        return <ImportInventoryTab />;
+        return <ImportInventoryTab adminUserId={sellerPerms.adminUserId} />;
       case 'manual-product':
-        return <ManualProductForm onProductAdded={() => toast.success('Produto cadastrado! Veja na aba Estoque.')} />;
+        return <ManualProductForm adminUserId={sellerPerms.adminUserId} onProductAdded={() => toast.success('Produto cadastrado! Veja na aba Estoque.')} />;
       case 'promotions':
         return <PromotionsManager />;
       case 'coupons':
