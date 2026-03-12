@@ -12,7 +12,7 @@ interface ManualProductFormProps {
   adminUserId?: string | null;
 }
 
-export function ManualProductForm({ onProductAdded, adminUserId }: ManualProductFormProps) {
+export function ManualProductForm({ onProductAdded, adminUserId: _adminUserId }: ManualProductFormProps) {
   const [codigo, setCodigo] = useState('');
   const [produto, setProduto] = useState('');
   const [fornecedor, setFornecedor] = useState('');
@@ -31,10 +31,9 @@ export function ManualProductForm({ onProductAdded, adminUserId }: ManualProduct
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
-    const effectiveId = adminUserId || user.id;
 
     const { error } = await supabase.from('inventory_items').insert({
-      user_id: effectiveId,
+      user_id: user.id,
       codigo: codigo.trim(),
       produto: produto.trim(),
       fornecedor: fornecedor.trim(),

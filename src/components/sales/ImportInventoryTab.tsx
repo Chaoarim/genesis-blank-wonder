@@ -21,7 +21,7 @@ interface InventoryItem {
   visible_catalog?: boolean;
 }
 
-export function ImportInventoryTab({ adminUserId: propAdminUserId }: { adminUserId?: string | null }) {
+export function ImportInventoryTab({ adminUserId: _adminUserId }: { adminUserId?: string | null }) {
   const [markup, setMarkup] = useState(0);
   const [loading, setLoading] = useState(true);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -30,8 +30,7 @@ export function ImportInventoryTab({ adminUserId: propAdminUserId }: { adminUser
   const refreshItems = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const effectiveId = propAdminUserId || user.id;
-    const allItems = await fetchAllInventory(effectiveId);
+    const allItems = await fetchAllInventory(user.id);
     setInventoryItems(allItems.map(r => ({
       id: r.id, codigo: r.codigo, produto: r.produto,
       fornecedor: r.fornecedor || '', aplicacao: r.aplicacao || '',
@@ -44,12 +43,11 @@ export function ImportInventoryTab({ adminUserId: propAdminUserId }: { adminUser
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const effectiveId = propAdminUserId || user.id;
-      setUserId(effectiveId);
+      setUserId(user.id);
 
       const [markupRes, allItems] = await Promise.all([
-        supabase.from('markup_settings').select('*').eq('user_id', effectiveId).maybeSingle(),
-        fetchAllInventory(effectiveId),
+        supabase.from('markup_settings').select('*').eq('user_id', user.id).maybeSingle(),
+        fetchAllInventory(user.id),
       ]);
 
       if (markupRes.data) setMarkup(Number(markupRes.data.markup_revenda) || 0);
