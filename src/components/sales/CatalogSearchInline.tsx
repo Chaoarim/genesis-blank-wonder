@@ -6,13 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { normalizeForSearch } from '@/lib/partsSearchEngine';
 import type { Part } from '@/hooks/usePartsDatabase';
 
-const SYNONYMS: Record<string, string[]> = {
-  'embreagem': ['disco', 'plato', 'rolamento'],
-  'kit': ['jogo', 'conjunto'],
-  'suspensao': ['amortecedor', 'mola', 'bandeja', 'bieleta'],
-  'freio': ['pastilha', 'disco', 'lona', 'sapata'],
-  'distribuicao': ['correia', 'tensor', 'polia'],
-};
 
 // Common abbreviations found in parts catalogs
 const ABBREVIATIONS: Record<string, string[]> = {
