@@ -286,14 +286,12 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
   const productTerms: string[] = [];
   const vehicleTerms: string[] = [];
   const lateralityTerms: string[] = [];
+
   for (const term of terms) {
     if (LATERALITY_TERMS.has(term)) lateralityTerms.push(term);
     else if (VEHICLE_TERMS.has(term)) vehicleTerms.push(term);
     else productTerms.push(term);
   }
-
-  // Expand with synonyms
-  const synonymExpanded = expandWithSynonyms(productTerms);
 
   const scored: { item: T; score: number }[] = [];
 
@@ -306,10 +304,10 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
 
     // MANDATORY: ALL laterality terms must match
     if (lateralityTerms.length > 0) {
-      if (!lateralityTerms.every(lt => fuzzyMatch(fullText, lt))) continue;
+      if (!lateralityTerms.every(lt => fullText.includes(lt))) continue;
     }
 
-    // Vehicle terms must match in aplicacao or produto (using word boundary)
+    // MANDATORY: ALL vehicle terms must match in aplicacao or produto
     if (vehicleTerms.length > 0) {
       const matchesVehicle = (text: string, term: string) => {
         const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
@@ -318,39 +316,28 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
       if (!vehicleTerms.every(vt => matchesVehicle(aplicacao, vt) || matchesVehicle(produto, vt))) continue;
     }
 
-    let score = 0;
-    let matched = 0;
-    const totalRequired = productTerms.length;
+    let score = vehicleTerms.length * 4 + lateralityTerms.length * 5;
+    let allProductTermsMatch = true;
 
-    // Vehicle and laterality bonuses
-    score += vehicleTerms.length * 4;
-    score += lateralityTerms.length * 5;
-
-    // Score product terms
+    // STRICT: every searched product term must exist in at least one field
     for (const term of productTerms) {
-      let ts = 0;
-      if (codigo === term) ts += 10;
-      else if (codigo.includes(term)) ts += 6;
-      if (produto.includes(term)) ts += 4;
-      else if (fuzzyMatch(produto, term)) ts += 2;
-      if (fornecedor.includes(term)) ts += 2;
-      if (aplicacao.includes(term)) ts += 1;
-      else if (fuzzyMatch(aplicacao, term)) ts += 0.5;
-      if (ts > 0) { matched++; score += ts; }
-    }
+      let matched = false;
 
-    // Synonym bonus
-    for (const syn of synonymExpanded) {
-      if (!productTerms.includes(syn)) {
-        if (fullText.includes(syn)) { score += 2; matched = Math.max(matched, 1); }
+      if (codigo === term) { score += 12; matched = true; }
+      else if (codigo.includes(term)) { score += 8; matched = true; }
+
+      if (produto.includes(term)) { score += 5; matched = true; }
+      if (fornecedor.includes(term)) { score += 3; matched = true; }
+      if (aplicacao.includes(term)) { score += 2; matched = true; }
+
+      if (!matched) {
+        allProductTermsMatch = false;
+        break;
       }
     }
 
-    if (vehicleTerms.length > 0) matched = Math.max(matched, 1);
-
-    // At least half of product terms must match
-    if (totalRequired > 0 && matched / totalRequired < 0.5) continue;
-    if (score <= 0 && vehicleTerms.length === 0) continue;
+    if (!allProductTermsMatch) continue;
+    if (score <= 0 && productTerms.length === 0 && vehicleTerms.length === 0 && lateralityTerms.length === 0) continue;
 
     scored.push({ item, score });
   }
