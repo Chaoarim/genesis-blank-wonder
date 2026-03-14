@@ -346,20 +346,20 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
                       </div>
                     </TableCell>
                     {/* Código - editable */}
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs align-top break-all">
                       <EditableCell id={item.id} field="codigo" value={item.codigo} />
                     </TableCell>
                     {/* Produto - editable */}
-                    <TableCell className="text-sm">
-                      <EditableCell id={item.id} field="produto" value={item.produto} />
+                    <TableCell className="text-sm align-top">
+                      <EditableCell id={item.id} field="produto" value={item.produto} className="whitespace-normal break-words" />
                     </TableCell>
                     {/* Fornecedor - editable */}
-                    <TableCell className="text-sm text-muted-foreground">
-                      <EditableCell id={item.id} field="fornecedor" value={item.fornecedor} />
+                    <TableCell className="text-sm text-muted-foreground align-top">
+                      <EditableCell id={item.id} field="fornecedor" value={item.fornecedor} className="whitespace-normal break-words" />
                     </TableCell>
                     {/* Aplicação - editable */}
-                    <TableCell className="text-sm text-muted-foreground">
-                      <EditableCell id={item.id} field="aplicacao" value={item.aplicacao} />
+                    <TableCell className="text-sm text-muted-foreground align-top">
+                      <EditableCell id={item.id} field="aplicacao" value={item.aplicacao} className="whitespace-normal break-words" />
                     </TableCell>
                     {/* Vendidos - editable */}
                     <TableCell className="text-center">
