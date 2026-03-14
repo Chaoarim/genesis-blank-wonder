@@ -238,9 +238,9 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       );
     }
     return (
-      <div className={`flex items-center gap-1 group ${className}`}>
-        <span className="truncate">{value || '—'}</span>
-        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" onClick={() => startEdit(id, field, value)}>
+      <div className={`flex items-start gap-1 group ${className}`}>
+        <span className="whitespace-normal break-words leading-snug">{value || '—'}</span>
+        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-40 group-hover:opacity-100 shrink-0 transition-opacity mt-0.5" onClick={() => startEdit(id, field, value)}>
           <Pencil className="w-3 h-3 text-muted-foreground" />
         </Button>
       </div>
@@ -307,20 +307,20 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
             <Input placeholder="Filtrar por código, produto, fornecedor ou aplicação..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
 
-          <div className="overflow-auto max-h-[500px] rounded-lg border">
-            <Table>
+          <div className="overflow-y-auto max-h-[500px] rounded-lg border">
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-14">Foto</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Fornecedor</TableHead>
+                  <TableHead className="w-[90px]">Código</TableHead>
+                  <TableHead className="w-[24%]">Produto</TableHead>
+                  <TableHead className="w-[110px]">Fornecedor</TableHead>
                   <TableHead>Aplicação</TableHead>
-                  <TableHead className="text-center w-20">Vendidos</TableHead>
-                  <TableHead className="text-center">Catálogo</TableHead>
-                  <TableHead className="text-center">Estoque</TableHead>
-                  <TableHead className="text-right">Preço Custo</TableHead>
-                  {markup > 0 && <TableHead className="text-right">Preço Revenda</TableHead>}
+                  <TableHead className="text-center w-[74px]">Vendidos</TableHead>
+                  <TableHead className="text-center w-[70px]">Catálogo</TableHead>
+                  <TableHead className="text-center w-[74px]">Estoque</TableHead>
+                  <TableHead className="text-right w-[110px]">Preço Custo</TableHead>
+                  {markup > 0 && <TableHead className="text-right w-[120px]">Preço Revenda</TableHead>}
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -346,20 +346,20 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
                       </div>
                     </TableCell>
                     {/* Código - editable */}
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs align-top break-all">
                       <EditableCell id={item.id} field="codigo" value={item.codigo} />
                     </TableCell>
                     {/* Produto - editable */}
-                    <TableCell className="text-sm">
-                      <EditableCell id={item.id} field="produto" value={item.produto} />
+                    <TableCell className="text-sm align-top">
+                      <EditableCell id={item.id} field="produto" value={item.produto} className="whitespace-normal break-words" />
                     </TableCell>
                     {/* Fornecedor - editable */}
-                    <TableCell className="text-sm text-muted-foreground">
-                      <EditableCell id={item.id} field="fornecedor" value={item.fornecedor} />
+                    <TableCell className="text-sm text-muted-foreground align-top">
+                      <EditableCell id={item.id} field="fornecedor" value={item.fornecedor} className="whitespace-normal break-words" />
                     </TableCell>
                     {/* Aplicação - editable */}
-                    <TableCell className="text-sm text-muted-foreground">
-                      <EditableCell id={item.id} field="aplicacao" value={item.aplicacao} />
+                    <TableCell className="text-sm text-muted-foreground align-top">
+                      <EditableCell id={item.id} field="aplicacao" value={item.aplicacao} className="whitespace-normal break-words" />
                     </TableCell>
                     {/* Vendidos - editable */}
                     <TableCell className="text-center">
