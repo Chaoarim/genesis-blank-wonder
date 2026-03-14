@@ -307,21 +307,21 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
             <Input placeholder="Filtrar por código, produto, fornecedor ou aplicação..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
 
-          <div className="overflow-y-auto max-h-[500px] rounded-lg border">
-            <Table className="table-fixed w-full">
+          <div className="overflow-x-auto max-h-[500px] rounded-lg border">
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-14">Foto</TableHead>
-                  <TableHead className="w-[90px]">Código</TableHead>
-                  <TableHead className="w-[24%]">Produto</TableHead>
-                  <TableHead className="w-[110px]">Fornecedor</TableHead>
+                  <TableHead>Foto</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Fornecedor</TableHead>
                   <TableHead>Aplicação</TableHead>
-                  <TableHead className="text-center w-[74px]">Vendidos</TableHead>
-                  <TableHead className="text-center w-[70px]">Catálogo</TableHead>
-                  <TableHead className="text-center w-[74px]">Estoque</TableHead>
-                  <TableHead className="text-right w-[110px]">Preço Custo</TableHead>
-                  {markup > 0 && <TableHead className="text-right w-[120px]">Preço Revenda</TableHead>}
-                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="text-center">Vendidos</TableHead>
+                  <TableHead className="text-center">Catálogo</TableHead>
+                  <TableHead className="text-center">Estoque</TableHead>
+                  <TableHead className="text-right">Preço Custo</TableHead>
+                  {markup > 0 && <TableHead className="text-right">Preço Revenda</TableHead>}
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
