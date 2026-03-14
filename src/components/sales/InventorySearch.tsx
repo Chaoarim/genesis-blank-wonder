@@ -130,27 +130,31 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
       return (
         <div className="flex items-center gap-1">
           <Input
-            type={(['qtd_estoque', 'vendidos_display', 'preco'].includes(field)) ? 'text' : 'text'}
+            type="text"
             value={editValue}
             onChange={e => setEditValue(e.target.value)}
-            className="h-7 text-xs p-1 min-w-[60px]"
+            className="h-8 text-sm px-2 py-1 min-w-[80px] border-primary/50 focus:border-primary bg-muted/30"
             autoFocus
             onKeyDown={e => { if (e.key === 'Enter') saveEdit(item.id); if (e.key === 'Escape') setEditingId(null); }}
           />
-          <Button variant="ghost" size="icon" className="h-6 w-6 text-green-600 shrink-0" onClick={() => saveEdit(item.id)}>
-            <Check className="w-3 h-3" />
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:bg-green-600/10 shrink-0" onClick={() => saveEdit(item.id)}>
+            <Check className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive shrink-0" onClick={() => setEditingId(null)}>
-            <X className="w-3 h-3" />
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0" onClick={() => setEditingId(null)}>
+            <X className="w-4 h-4" />
           </Button>
         </div>
       );
     }
 
     return (
-      <div className="flex items-center gap-1 group/cell cursor-pointer" onClick={() => startEdit(item.id, field, value)}>
+      <div
+        className="flex items-center gap-1.5 group/cell cursor-pointer rounded px-1 py-0.5 -mx-1 hover:bg-muted/50 transition-colors"
+        onClick={() => startEdit(item.id, field, value)}
+        title="Clique para editar"
+      >
         <span className={className}>{value}</span>
-        <Pencil className="w-3 h-3 opacity-0 group-hover/cell:opacity-50 shrink-0" />
+        <Pencil className="w-3 h-3 text-muted-foreground opacity-40 group-hover/cell:opacity-100 shrink-0 transition-opacity" />
       </div>
     );
   };
