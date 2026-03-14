@@ -238,9 +238,9 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
       );
     }
     return (
-      <div className={`flex items-center gap-1 group ${className}`}>
-        <span className="truncate">{value || '—'}</span>
-        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" onClick={() => startEdit(id, field, value)}>
+      <div className={`flex items-start gap-1 group ${className}`}>
+        <span className="whitespace-normal break-words leading-snug">{value || '—'}</span>
+        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-40 group-hover:opacity-100 shrink-0 transition-opacity mt-0.5" onClick={() => startEdit(id, field, value)}>
           <Pencil className="w-3 h-3 text-muted-foreground" />
         </Button>
       </div>
