@@ -202,22 +202,22 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
           <p className="text-xs text-muted-foreground">{filtered.length} resultado(s)</p>
         )}
 
-        <div className="overflow-auto max-h-[600px] rounded-lg border">
-          <Table>
+        <div className="overflow-y-auto max-h-[600px] rounded-lg border">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">Foto</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Fornecedor</TableHead>
+                <TableHead className="w-[40px]">Foto</TableHead>
+                <TableHead className="w-[80px]">Código</TableHead>
+                <TableHead className="w-[25%]">Produto</TableHead>
+                <TableHead className="w-[70px]">Fornec.</TableHead>
                 <TableHead>Aplicação</TableHead>
-                <TableHead className="text-center">Estoque</TableHead>
-                <TableHead className="text-center">
-                  <span className="flex items-center justify-center gap-1"><Flame className="w-3 h-3" />Vendidos</span>
+                <TableHead className="text-center w-[50px]">Est.</TableHead>
+                <TableHead className="text-center w-[50px]">
+                  <span className="flex items-center justify-center gap-0.5"><Flame className="w-3 h-3" />Vend.</span>
                 </TableHead>
-                <TableHead className="text-right">Preço Custo</TableHead>
-                <TableHead className="text-right">Preço Revenda</TableHead>
-                <TableHead className="w-20">Ações</TableHead>
+                <TableHead className="text-right w-[75px]">P.Custo</TableHead>
+                <TableHead className="text-right w-[80px]">P.Revenda</TableHead>
+                <TableHead className="w-[60px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -233,10 +233,10 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
                         }
                       }}>
                         {uploadingId === item.id ? (
-                          <div className="w-10 h-10 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin" /></div>
+                          <div className="w-9 h-9 flex items-center justify-center"><Loader2 className="w-4 h-4 animate-spin" /></div>
                         ) : (
                           <>
-                            <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-10 h-10" />
+                            <PartThumbnail imageUrl={item.image_url} alt={`${item.codigo} - ${item.produto}`} className="w-9 h-9" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/photo:opacity-100 transition-opacity rounded flex items-center justify-center">
                               <ImagePlus className="w-4 h-4 text-white" />
                             </div>
@@ -244,34 +244,40 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs break-all">
                       {renderEditableCell(item, 'codigo', item.codigo)}
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {renderEditableCell(item, 'produto', item.produto, 'font-medium')}
+                    <TableCell className="text-xs">
+                      <div className="whitespace-normal break-words">
+                        {renderEditableCell(item, 'produto', item.produto, 'font-medium')}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {renderEditableCell(item, 'fornecedor', item.fornecedor, 'text-muted-foreground')}
+                    <TableCell className="text-xs">
+                      <div className="whitespace-normal break-words">
+                        {renderEditableCell(item, 'fornecedor', item.fornecedor, 'text-muted-foreground')}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      {renderEditableCell(item, 'aplicacao', item.aplicacao, 'text-muted-foreground')}
+                    <TableCell className="text-xs">
+                      <div className="whitespace-normal break-words">
+                        {renderEditableCell(item, 'aplicacao', item.aplicacao, 'text-muted-foreground')}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center text-xs">
                       {renderEditableCell(item, 'qtd_estoque', item.qtd_estoque,
                         `font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : item.qtd_estoque <= 3 ? 'text-amber-500' : 'text-green-600'}`
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center text-xs">
                       {renderEditableCell(item, 'vendidos_display', item.vendidos_display,
                         `font-bold ${item.vendidos_display > 0 ? 'text-orange-500' : 'text-muted-foreground'}`
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right text-xs">
                       {renderEditableCell(item, 'preco', item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
                         'font-bold text-primary'
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right text-xs">
                       <span className="font-bold text-green-600">
                         {markup > 0
                           ? (item.preco * (1 + markup / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -279,14 +285,14 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                      <div className="flex items-center gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                           const q = `${item.codigo} ${item.produto} ${item.fornecedor}`;
                           window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`, '_blank');
                         }}>
                           <ExternalLink className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteItem(item.id, item.codigo)}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteItem(item.id, item.codigo)}>
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
