@@ -445,6 +445,12 @@ const Admin = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!catalogName.trim()) {
+      toast.error('Digite o nome do catálogo (veículo) antes de importar');
+      e.target.value = '';
+      return;
+    }
     
     setImportingParts(true);
     setImportProgress('Lendo arquivo CSV...');
@@ -477,32 +483,36 @@ const Admin = () => {
       const norm = (h: string) => h.replace(/^\uFEFF/, '').trim().toUpperCase();
       const nh = header.map(norm);
 
-      const idx = {
-        fab: Math.max(nh.indexOf('FABRICANTE'), 0),
-        cod: Math.max(nh.indexOf('CODIGO_PECA'), 1),
-        desc: Math.max(nh.indexOf('DESCRICAO'), 2),
-        chave: Math.max(nh.indexOf('CHAVE_DE_BUSCA'), 3),
-        marca: Math.max(nh.indexOf('MARCA_VEICULO'), 4),
-        modelo: Math.max(nh.indexOf('MODELO_VEICULO'), 5),
-        anos: Math.max(nh.indexOf('ANOS_APLICACAO'), 6),
-        ctx: Math.max(nh.indexOf('CONTEXTO_IA'), 7),
-      };
+      // New format: Código, Produto, Fornecedor, Aplicação
+      // Also support old format
+      const idxCodigo = Math.max(nh.indexOf('CÓDIGO'), nh.indexOf('CODIGO'), nh.indexOf('CODIGO_PECA'), 0);
+      const idxProduto = Math.max(nh.indexOf('PRODUTO'), nh.indexOf('DESCRICAO'), 1);
+      const idxFornecedor = Math.max(nh.indexOf('FORNECEDOR'), nh.indexOf('FABRICANTE'), 2);
+      const idxAplicacao = Math.max(nh.indexOf('APLICAÇÃO'), nh.indexOf('APLICACAO'), nh.indexOf('CHAVE_DE_BUSCA'), 3);
 
       const allParts: any[] = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const v = parseCSVLine(line);
-        if (v.length >= 4) {
+        if (v.length >= 3) {
+          const codigo = (v[idxCodigo] || '').trim();
+          const produto = (v[idxProduto] || '').trim();
+          const fornecedor = (v[idxFornecedor] || '').trim();
+          const aplicacao = (v[idxAplicacao] || '').trim();
+
+          // Build chave_de_busca from all fields
+          const chave = [fornecedor, codigo, produto, aplicacao, catalogName.trim()].filter(Boolean).join(' ');
+
           allParts.push({
-            fabricante: (v[idx.fab] || '').trim(),
-            codigo_peca: (v[idx.cod] || '').trim(),
-            descricao: (v[idx.desc] || '').trim(),
-            chave_de_busca: (v[idx.chave] || '').trim(),
-            marca_veiculo: (v[idx.marca] || '').trim(),
-            modelo_veiculo: (v[idx.modelo] || '').trim(),
-            anos_aplicacao: (v[idx.anos] || '').trim(),
-            contexto_ia: (v[idx.ctx] || '').trim(),
+            fabricante: fornecedor,
+            codigo_peca: codigo,
+            descricao: produto,
+            chave_de_busca: chave,
+            marca_veiculo: '',
+            modelo_veiculo: '',
+            anos_aplicacao: '',
+            contexto_ia: aplicacao,
           });
         }
       }
@@ -512,7 +522,8 @@ const Admin = () => {
         return;
       }
 
-      setImportProgress(`Limpando tabela e enviando ${allParts.length} peças...`);
+      const clearFirst = importMode === 'replace';
+      setImportProgress(`${clearFirst ? 'Substituindo' : 'Adicionando'} ${allParts.length} peças ao catálogo "${catalogName}"...`);
 
       const chunkSize = 5000;
       let totalInserted = 0;
@@ -529,7 +540,11 @@ const Admin = () => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${session.access_token}`,
             },
-            body: JSON.stringify({ parts: chunk, clearFirst: i === 0 }),
+            body: JSON.stringify({
+              parts: chunk,
+              clearFirst: clearFirst && i === 0,
+              catalogo: catalogName.trim(),
+            }),
           }
         );
 
@@ -538,16 +553,42 @@ const Admin = () => {
         totalInserted += result.inserted || 0;
       }
 
-      setImportProgress(`✅ ${totalInserted} peças importadas com sucesso!`);
-      toast.success(`${totalInserted} peças importadas para o banco de dados!`);
+      setImportProgress(`✅ ${totalInserted} peças importadas no catálogo "${catalogName}"!`);
+      toast.success(`${totalInserted} peças importadas no catálogo "${catalogName}"!`);
+      setCatalogName('');
+      fetchCatalogos();
     } catch (error) {
       console.error('Import error:', error);
       setImportProgress('');
       toast.error(error instanceof Error ? error.message : 'Erro na importação');
     } finally {
       setImportingParts(false);
-      // Reset file input
       e.target.value = '';
+    }
+  };
+
+  const handleDeleteCatalog = async (catalogoName: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-parts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ action: 'delete_catalog', catalogo: catalogoName }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Erro ao excluir');
+      toast.success(`Catálogo "${catalogoName}" excluído!`);
+      fetchCatalogos();
+    } catch (error) {
+      toast.error('Erro ao excluir catálogo');
     }
   };
 
