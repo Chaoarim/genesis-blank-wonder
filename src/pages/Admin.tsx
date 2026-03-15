@@ -107,6 +107,20 @@ const Admin = () => {
     };
   }, [isAdmin]);
 
+  const fetchCatalogos = async () => {
+    const { data } = await supabase
+      .from('parts')
+      .select('catalogo');
+    if (data) {
+      const map = new Map<string, number>();
+      for (const row of data) {
+        const name = row.catalogo || 'Sem catálogo';
+        map.set(name, (map.get(name) || 0) + 1);
+      }
+      setCatalogos(Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name)));
+    }
+  };
+
   const checkAdminAccess = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -115,7 +129,6 @@ const Admin = () => {
       return;
     }
 
-    // Verificar se é admin
     const { data: hasRole } = await supabase.rpc('has_role', {
       _user_id: session.user.id,
       _role: 'admin'
@@ -131,6 +144,7 @@ const Admin = () => {
     setLoading(false);
     fetchData();
     fetchStats();
+    fetchCatalogos();
   };
 
   const fetchData = async () => {
