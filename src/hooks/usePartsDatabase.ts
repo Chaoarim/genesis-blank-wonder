@@ -81,6 +81,7 @@ export function usePartsDatabase() {
                   contextoIA: row.contexto_ia || '',
                   codigosSimilares: row.codigos_similares || '',
                   imageUrl: row.image_url || undefined,
+                  catalogo: (row as any).catalogo || '',
                 });
               }
             }
