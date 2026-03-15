@@ -1036,40 +1036,107 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="database">
-            <Card className="p-6 glass-card">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
+            {/* Catálogos existentes */}
+            {catalogos.length > 0 && (
+              <Card className="p-6 glass-card mb-6">
+                <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
                   <Database className="w-5 h-5 text-primary" />
-                  Atualizar Base de Peças
+                  Catálogos por Veículo ({catalogos.length})
                 </h2>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Faça upload de um arquivo CSV para substituir toda a base de peças.
-                A tabela será limpa e os novos dados serão importados automaticamente.
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {catalogos.map((cat) => (
+                    <div key={cat.name} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                      <div>
+                        <p className="font-semibold text-sm">{cat.name}</p>
+                        <p className="text-xs text-muted-foreground">{cat.count.toLocaleString()} peças</p>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Catálogo</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Excluir o catálogo <strong>{cat.name}</strong> com {cat.count} peças? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCatalog(cat.name)} className="bg-destructive text-destructive-foreground">
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Upload novo catálogo */}
+            <Card className="p-6 glass-card">
+              <h2 className="text-xl font-bold flex items-center gap-2 mb-2">
+                <Upload className="w-5 h-5 text-primary" />
+                Importar Catálogo de Veículo
+              </h2>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Suba uma planilha CSV por veículo (colunas: Código, Produto, Fornecedor, Aplicação). Cada planilha gera um catálogo individual.
               </p>
-              <div className="flex items-center gap-4">
-                <label
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
-                    importingParts 
-                      ? 'bg-muted text-muted-foreground cursor-not-allowed' 
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  }`}
-                >
-                  {importingParts ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Upload className="w-4 h-4" />
-                  )}
-                  {importingParts ? 'Importando...' : 'Selecionar CSV'}
-                  <input
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={importingParts}
-                  />
-                </label>
+
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-1 block">Nome do Catálogo (Veículo) *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Ford Ka, Chevrolet Onix..."
+                      value={catalogName}
+                      onChange={e => setCatalogName(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Se já existe</label>
+                    <select
+                      value={importMode}
+                      onChange={e => setImportMode(e.target.value as 'replace' | 'merge')}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="replace">Substituir catálogo</option>
+                      <option value="merge">Mesclar (adicionar)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <label
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
+                      importingParts || !catalogName.trim()
+                        ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    }`}
+                  >
+                    {importingParts ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                    {importingParts ? 'Importando...' : 'Selecionar CSV'}
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={importingParts || !catalogName.trim()}
+                    />
+                  </label>
+                </div>
               </div>
+
               {importProgress && (
                 <div className="mt-4 p-3 rounded-lg bg-muted text-sm">
                   {importProgress}
