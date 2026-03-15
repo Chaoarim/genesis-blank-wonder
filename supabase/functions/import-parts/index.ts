@@ -45,7 +45,26 @@ serve(async (req) => {
       });
     }
 
-    const { parts, clearFirst } = await req.json();
+    const { parts, clearFirst, catalogo, action } = await req.json();
+
+    // Handle catalog deletion
+    if (action === "delete_catalog" && catalogo) {
+      const { error: deleteError } = await supabase
+        .from("parts")
+        .delete()
+        .eq("catalogo", catalogo);
+
+      if (deleteError) {
+        return new Response(JSON.stringify({ error: "Erro ao excluir catálogo: " + deleteError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ success: true, message: `Catálogo "${catalogo}" excluído` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!Array.isArray(parts) || parts.length === 0) {
       return new Response(JSON.stringify({ error: "Nenhuma peça recebida" }), {
@@ -54,12 +73,27 @@ serve(async (req) => {
       });
     }
 
-    // Clear table if requested (only on first batch)
-    if (clearFirst) {
+    // Clear only the specific catalog if requested (replace mode)
+    if (clearFirst && catalogo) {
       const { error: deleteError } = await supabase
         .from("parts")
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000"); // delete all rows
+        .eq("catalogo", catalogo);
+
+      if (deleteError) {
+        console.error("Error clearing catalog:", deleteError);
+        return new Response(JSON.stringify({ error: "Erro ao limpar catálogo: " + deleteError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      console.log(`Catalog "${catalogo}" cleared successfully`);
+    } else if (clearFirst && !catalogo) {
+      // Legacy: clear all
+      const { error: deleteError } = await supabase
+        .from("parts")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
 
       if (deleteError) {
         console.error("Error clearing parts table:", deleteError);
@@ -68,7 +102,6 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      console.log("Parts table cleared successfully");
     }
 
     // Insert in batches of 500
@@ -86,6 +119,7 @@ serve(async (req) => {
         modelo_veiculo: p.modelo_veiculo || "",
         anos_aplicacao: p.anos_aplicacao || "",
         contexto_ia: p.contexto_ia || "",
+        catalogo: catalogo || null,
       }));
 
       const { error: insertError } = await supabase

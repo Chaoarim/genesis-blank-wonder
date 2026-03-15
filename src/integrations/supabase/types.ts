@@ -447,6 +447,7 @@ export type Database = {
       parts: {
         Row: {
           anos_aplicacao: string | null
+          catalogo: string | null
           chave_de_busca: string | null
           codigo_peca: string | null
           codigos_similares: string | null
@@ -461,6 +462,7 @@ export type Database = {
         }
         Insert: {
           anos_aplicacao?: string | null
+          catalogo?: string | null
           chave_de_busca?: string | null
           codigo_peca?: string | null
           codigos_similares?: string | null
@@ -475,6 +477,7 @@ export type Database = {
         }
         Update: {
           anos_aplicacao?: string | null
+          catalogo?: string | null
           chave_de_busca?: string | null
           codigo_peca?: string | null
           codigos_similares?: string | null

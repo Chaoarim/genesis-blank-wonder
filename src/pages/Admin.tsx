@@ -62,6 +62,9 @@ const Admin = () => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [importingParts, setImportingParts] = useState(false);
   const [importProgress, setImportProgress] = useState('');
+  const [catalogos, setCatalogos] = useState<{name: string; count: number}[]>([]);
+  const [catalogName, setCatalogName] = useState('');
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -104,6 +107,20 @@ const Admin = () => {
     };
   }, [isAdmin]);
 
+  const fetchCatalogos = async () => {
+    const { data } = await supabase
+      .from('parts')
+      .select('catalogo');
+    if (data) {
+      const map = new Map<string, number>();
+      for (const row of data) {
+        const name = row.catalogo || 'Sem catálogo';
+        map.set(name, (map.get(name) || 0) + 1);
+      }
+      setCatalogos(Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name)));
+    }
+  };
+
   const checkAdminAccess = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -112,7 +129,6 @@ const Admin = () => {
       return;
     }
 
-    // Verificar se é admin
     const { data: hasRole } = await supabase.rpc('has_role', {
       _user_id: session.user.id,
       _role: 'admin'
@@ -128,6 +144,7 @@ const Admin = () => {
     setLoading(false);
     fetchData();
     fetchStats();
+    fetchCatalogos();
   };
 
   const fetchData = async () => {
@@ -428,6 +445,12 @@ const Admin = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!catalogName.trim()) {
+      toast.error('Digite o nome do catálogo (veículo) antes de importar');
+      e.target.value = '';
+      return;
+    }
     
     setImportingParts(true);
     setImportProgress('Lendo arquivo CSV...');
@@ -460,32 +483,36 @@ const Admin = () => {
       const norm = (h: string) => h.replace(/^\uFEFF/, '').trim().toUpperCase();
       const nh = header.map(norm);
 
-      const idx = {
-        fab: Math.max(nh.indexOf('FABRICANTE'), 0),
-        cod: Math.max(nh.indexOf('CODIGO_PECA'), 1),
-        desc: Math.max(nh.indexOf('DESCRICAO'), 2),
-        chave: Math.max(nh.indexOf('CHAVE_DE_BUSCA'), 3),
-        marca: Math.max(nh.indexOf('MARCA_VEICULO'), 4),
-        modelo: Math.max(nh.indexOf('MODELO_VEICULO'), 5),
-        anos: Math.max(nh.indexOf('ANOS_APLICACAO'), 6),
-        ctx: Math.max(nh.indexOf('CONTEXTO_IA'), 7),
-      };
+      // New format: Código, Produto, Fornecedor, Aplicação
+      // Also support old format
+      const idxCodigo = Math.max(nh.indexOf('CÓDIGO'), nh.indexOf('CODIGO'), nh.indexOf('CODIGO_PECA'), 0);
+      const idxProduto = Math.max(nh.indexOf('PRODUTO'), nh.indexOf('DESCRICAO'), 1);
+      const idxFornecedor = Math.max(nh.indexOf('FORNECEDOR'), nh.indexOf('FABRICANTE'), 2);
+      const idxAplicacao = Math.max(nh.indexOf('APLICAÇÃO'), nh.indexOf('APLICACAO'), nh.indexOf('CHAVE_DE_BUSCA'), 3);
 
       const allParts: any[] = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const v = parseCSVLine(line);
-        if (v.length >= 4) {
+        if (v.length >= 3) {
+          const codigo = (v[idxCodigo] || '').trim();
+          const produto = (v[idxProduto] || '').trim();
+          const fornecedor = (v[idxFornecedor] || '').trim();
+          const aplicacao = (v[idxAplicacao] || '').trim();
+
+          // Build chave_de_busca from all fields
+          const chave = [fornecedor, codigo, produto, aplicacao, catalogName.trim()].filter(Boolean).join(' ');
+
           allParts.push({
-            fabricante: (v[idx.fab] || '').trim(),
-            codigo_peca: (v[idx.cod] || '').trim(),
-            descricao: (v[idx.desc] || '').trim(),
-            chave_de_busca: (v[idx.chave] || '').trim(),
-            marca_veiculo: (v[idx.marca] || '').trim(),
-            modelo_veiculo: (v[idx.modelo] || '').trim(),
-            anos_aplicacao: (v[idx.anos] || '').trim(),
-            contexto_ia: (v[idx.ctx] || '').trim(),
+            fabricante: fornecedor,
+            codigo_peca: codigo,
+            descricao: produto,
+            chave_de_busca: chave,
+            marca_veiculo: '',
+            modelo_veiculo: '',
+            anos_aplicacao: '',
+            contexto_ia: aplicacao,
           });
         }
       }
@@ -495,7 +522,8 @@ const Admin = () => {
         return;
       }
 
-      setImportProgress(`Limpando tabela e enviando ${allParts.length} peças...`);
+      const clearFirst = importMode === 'replace';
+      setImportProgress(`${clearFirst ? 'Substituindo' : 'Adicionando'} ${allParts.length} peças ao catálogo "${catalogName}"...`);
 
       const chunkSize = 5000;
       let totalInserted = 0;
@@ -512,7 +540,11 @@ const Admin = () => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${session.access_token}`,
             },
-            body: JSON.stringify({ parts: chunk, clearFirst: i === 0 }),
+            body: JSON.stringify({
+              parts: chunk,
+              clearFirst: clearFirst && i === 0,
+              catalogo: catalogName.trim(),
+            }),
           }
         );
 
@@ -521,16 +553,42 @@ const Admin = () => {
         totalInserted += result.inserted || 0;
       }
 
-      setImportProgress(`✅ ${totalInserted} peças importadas com sucesso!`);
-      toast.success(`${totalInserted} peças importadas para o banco de dados!`);
+      setImportProgress(`✅ ${totalInserted} peças importadas no catálogo "${catalogName}"!`);
+      toast.success(`${totalInserted} peças importadas no catálogo "${catalogName}"!`);
+      setCatalogName('');
+      fetchCatalogos();
     } catch (error) {
       console.error('Import error:', error);
       setImportProgress('');
       toast.error(error instanceof Error ? error.message : 'Erro na importação');
     } finally {
       setImportingParts(false);
-      // Reset file input
       e.target.value = '';
+    }
+  };
+
+  const handleDeleteCatalog = async (catalogoName: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-parts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ action: 'delete_catalog', catalogo: catalogoName }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Erro ao excluir');
+      toast.success(`Catálogo "${catalogoName}" excluído!`);
+      fetchCatalogos();
+    } catch (error) {
+      toast.error('Erro ao excluir catálogo');
     }
   };
 
@@ -978,40 +1036,107 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="database">
-            <Card className="p-6 glass-card">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
+            {/* Catálogos existentes */}
+            {catalogos.length > 0 && (
+              <Card className="p-6 glass-card mb-6">
+                <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
                   <Database className="w-5 h-5 text-primary" />
-                  Atualizar Base de Peças
+                  Catálogos por Veículo ({catalogos.length})
                 </h2>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Faça upload de um arquivo CSV para substituir toda a base de peças.
-                A tabela será limpa e os novos dados serão importados automaticamente.
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {catalogos.map((cat) => (
+                    <div key={cat.name} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
+                      <div>
+                        <p className="font-semibold text-sm">{cat.name}</p>
+                        <p className="text-xs text-muted-foreground">{cat.count.toLocaleString()} peças</p>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Catálogo</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Excluir o catálogo <strong>{cat.name}</strong> com {cat.count} peças? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCatalog(cat.name)} className="bg-destructive text-destructive-foreground">
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Upload novo catálogo */}
+            <Card className="p-6 glass-card">
+              <h2 className="text-xl font-bold flex items-center gap-2 mb-2">
+                <Upload className="w-5 h-5 text-primary" />
+                Importar Catálogo de Veículo
+              </h2>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Suba uma planilha CSV por veículo (colunas: Código, Produto, Fornecedor, Aplicação). Cada planilha gera um catálogo individual.
               </p>
-              <div className="flex items-center gap-4">
-                <label
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
-                    importingParts 
-                      ? 'bg-muted text-muted-foreground cursor-not-allowed' 
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  }`}
-                >
-                  {importingParts ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Upload className="w-4 h-4" />
-                  )}
-                  {importingParts ? 'Importando...' : 'Selecionar CSV'}
-                  <input
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={importingParts}
-                  />
-                </label>
+
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium mb-1 block">Nome do Catálogo (Veículo) *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Ford Ka, Chevrolet Onix..."
+                      value={catalogName}
+                      onChange={e => setCatalogName(e.target.value)}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Se já existe</label>
+                    <select
+                      value={importMode}
+                      onChange={e => setImportMode(e.target.value as 'replace' | 'merge')}
+                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="replace">Substituir catálogo</option>
+                      <option value="merge">Mesclar (adicionar)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <label
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
+                      importingParts || !catalogName.trim()
+                        ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    }`}
+                  >
+                    {importingParts ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                    {importingParts ? 'Importando...' : 'Selecionar CSV'}
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={importingParts || !catalogName.trim()}
+                    />
+                  </label>
+                </div>
               </div>
+
               {importProgress && (
                 <div className="mt-4 p-3 rounded-lg bg-muted text-sm">
                   {importProgress}
