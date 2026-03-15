@@ -25,6 +25,7 @@ export interface Part {
   contextoIA: string;
   codigosSimilares?: string;
   imageUrl?: string;
+  catalogo?: string;
 }
 
 export function usePartsDatabase() {
