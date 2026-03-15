@@ -62,6 +62,9 @@ const Admin = () => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [importingParts, setImportingParts] = useState(false);
   const [importProgress, setImportProgress] = useState('');
+  const [catalogos, setCatalogos] = useState<{name: string; count: number}[]>([]);
+  const [catalogName, setCatalogName] = useState('');
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 0,
     activeUsers: 0,
