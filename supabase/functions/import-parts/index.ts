@@ -48,11 +48,14 @@ serve(async (req) => {
     const { parts, clearFirst, catalogo, action } = await req.json();
 
     // Handle catalog deletion
-    if (action === "delete_catalog" && catalogo) {
-      const { error: deleteError } = await supabase
-        .from("parts")
-        .delete()
-        .eq("catalogo", catalogo);
+    if (action === "delete_catalog") {
+      let deleteQuery = supabase.from("parts").delete();
+      if (catalogo === "__null__" || !catalogo) {
+        deleteQuery = deleteQuery.is("catalogo", null);
+      } else {
+        deleteQuery = deleteQuery.eq("catalogo", catalogo);
+      }
+      const { error: deleteError } = await deleteQuery;
 
       if (deleteError) {
         return new Response(JSON.stringify({ error: "Erro ao excluir catálogo: " + deleteError.message }), {

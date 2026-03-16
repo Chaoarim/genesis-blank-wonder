@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Plus, X, Car, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeForSearch } from '@/lib/partsSearchEngine';
+import { Card } from '@/components/ui/card';
 import type { Part } from '@/hooks/usePartsDatabase';
-
 
 // Common abbreviations found in parts catalogs
 const ABBREVIATIONS: Record<string, string[]> = {
@@ -22,24 +22,20 @@ const ABBREVIATIONS: Record<string, string[]> = {
   'amortecedor': ['amort'],
 };
 
-/** Check if term matches in text (including abbreviations) */
 function termMatchesText(text: string, term: string): boolean {
   if (text.includes(term)) return true;
-  // Check abbreviations
   const abbrs = ABBREVIATIONS[term];
   if (abbrs) {
     for (const abbr of abbrs) {
       if (text.includes(abbr)) return true;
     }
   }
-  // Also check if the term is an abbreviation of something in the text
   for (const [full, abbrList] of Object.entries(ABBREVIATIONS)) {
     if (abbrList.includes(term) && text.includes(full)) return true;
   }
   return false;
 }
 
-/** Strict search: ALL query terms must match somewhere in the part text */
 function strictFilterParts(parts: Part[], query: string): Part[] {
   const q = normalizeForSearch(query);
   if (q.length < 2) return [];
@@ -96,13 +92,14 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
   const [pendingItem, setPendingItem] = useState<Part | null>(null);
   const [manualPreco, setManualPreco] = useState('');
   const [manualQtd, setManualQtd] = useState('1');
+  const [selectedCatalog, setSelectedCatalog] = useState<string | null>(null);
+  const [catalogSearch, setCatalogSearch] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Load all parts once (they are shared/global catalog)
+  // Load all parts once
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      // Fetch in batches to bypass the 1000-row limit
       let all: any[] = [];
       let from = 0;
       const batchSize = 1000;
@@ -111,7 +108,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
       while (hasMore) {
         const { data, error } = await supabase
           .from('parts')
-          .select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, image_url, codigos_similares, contexto_ia')
+          .select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, image_url, codigos_similares, contexto_ia, catalogo')
           .range(from, from + batchSize - 1);
 
         if (error || !data || data.length === 0) {
@@ -123,7 +120,6 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
         }
       }
 
-      // Map DB rows to Part interface used by smartFilterParts
       const mapped: Part[] = all.map((r: any) => ({
         fabricante: r.codigo_peca || r.fabricante || '',
         produto: r.descricao || '',
@@ -136,6 +132,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
         codigosSimilares: r.codigos_similares || '',
         imageUrl: r.image_url || '',
         aplicacao: `${r.marca_veiculo || ''} ${r.modelo_veiculo || ''} ${r.anos_aplicacao || ''}`.trim(),
+        catalogo: r.catalogo || 'Sem catálogo',
         _dbId: r.id,
       })) as Part[];
 
@@ -145,16 +142,40 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
     load();
   }, []);
 
+  // Catalog stats
+  const catalogStats = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of allParts) {
+      const cat = (p as any).catalogo || 'Sem catálogo';
+      map.set(cat, (map.get(cat) || 0) + 1);
+    }
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allParts]);
+
+  const filteredCatalogs = useMemo(() => {
+    if (!catalogSearch) return catalogStats;
+    const q = catalogSearch.toLowerCase();
+    return catalogStats.filter(c => c.name.toLowerCase().includes(q));
+  }, [catalogStats, catalogSearch]);
+
+  // Parts for selected catalog
+  const catalogParts = useMemo(() => {
+    if (!selectedCatalog) return [];
+    return allParts.filter(p => (p as any).catalogo === selectedCatalog);
+  }, [allParts, selectedCatalog]);
+
   const handleSearch = useCallback((value: string) => {
     setQuery(value);
     clearTimeout(debounceRef.current);
     if (value.trim().length < 2) { setResults([]); return; }
     debounceRef.current = setTimeout(() => {
-      const found = strictFilterParts(allParts, value).slice(0, 30);
+      const found = strictFilterParts(catalogParts, value).slice(0, 30);
       setResults(found);
       setOpen(true);
     }, 250);
-  }, [allParts]);
+  }, [catalogParts]);
 
   const handleSelect = (item: Part) => {
     setPendingItem(item);
@@ -183,17 +204,74 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
 
   if (loading) return <p className="text-xs text-muted-foreground">Carregando catálogo de fornecedores...</p>;
 
+  // Vehicle catalog selection
+  if (!selectedCatalog) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">Selecione o veículo para consultar peças:</p>
+        {catalogStats.length > 6 && (
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar veículo..."
+              value={catalogSearch}
+              onChange={e => setCatalogSearch(e.target.value)}
+              className="pl-9 h-8 text-sm"
+            />
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+          {filteredCatalogs.map(cat => (
+            <Button
+              key={cat.name}
+              variant="outline"
+              size="sm"
+              className="justify-start gap-2 h-auto py-2 text-left"
+              onClick={() => {
+                setSelectedCatalog(cat.name);
+                setQuery('');
+                setResults([]);
+              }}
+            >
+              <Car className="w-3.5 h-3.5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <span className="text-xs font-medium truncate block">{cat.name}</span>
+                <span className="text-[10px] text-muted-foreground">{cat.count} peças</span>
+              </div>
+            </Button>
+          ))}
+        </div>
+        {filteredCatalogs.length === 0 && (
+          <p className="text-xs text-muted-foreground text-center py-2">Nenhum veículo encontrado</p>
+        )}
+      </div>
+    );
+  }
+
+  // Search within selected catalog
   return (
     <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { setSelectedCatalog(null); setQuery(''); setResults([]); setPendingItem(null); }}>
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+          <Car className="w-3.5 h-3.5" />
+          {selectedCatalog}
+        </div>
+        <span className="text-[10px] text-muted-foreground">({catalogParts.length} peças)</span>
+      </div>
+
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar no catálogo por código, descrição, veículo..."
+            placeholder="Buscar código, descrição, fornecedor..."
             value={query}
             onChange={e => { handleSearch(e.target.value); setOpen(true); }}
             onFocus={() => results.length > 0 && setOpen(true)}
             className="pl-9"
+            autoFocus
           />
         </div>
         {query && (
