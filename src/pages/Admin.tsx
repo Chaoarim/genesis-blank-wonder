@@ -580,7 +580,7 @@ const Admin = () => {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ action: 'delete_catalog', catalogo: catalogoName }),
+          body: JSON.stringify({ action: 'delete_catalog', catalogo: catalogoName === 'Sem catálogo' ? '__null__' : catalogoName }),
         }
       );
 
