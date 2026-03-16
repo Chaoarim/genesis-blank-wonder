@@ -321,7 +321,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
             className="gap-1.5"
             onClick={() => setItemSource('catalogo')}
           >
-            <BookOpen className="w-4 h-4" /> Catálogo Fornecedores
+            <BookOpen className="w-4 h-4" /> Consulta por Veículos
           </Button>
         </div>
 
