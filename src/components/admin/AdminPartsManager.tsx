@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { PackagePlus, Save, Search, Pencil, Trash2, X, Check, Loader2, Filter } from 'lucide-react';
+import { PackagePlus, Save, Search, Pencil, Trash2, X, Check, Loader2, Car } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,6 +21,7 @@ interface PartRow {
   anos_aplicacao: string | null;
   contexto_ia: string | null;
   codigos_similares: string | null;
+  catalogo: string | null;
 }
 
 export function AdminPartsManager() {
@@ -34,33 +35,39 @@ export function AdminPartsManager() {
   const [anos, setAnos] = useState('');
   const [ctx, setCtx] = useState('');
   const [codSimilares, setCodSimilares] = useState('');
+  const [addCatalogo, setAddCatalogo] = useState('');
   const [saving, setSaving] = useState(false);
 
   // --- Search / edit state ---
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFab, setFilterFab] = useState('');
+  const [filterCatalogo, setFilterCatalogo] = useState('');
   const [results, setResults] = useState<PartRow[]>([]);
   const [searching, setSearching] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<PartRow>>({});
   const [fabricantes, setFabricantes] = useState<string[]>([]);
+  const [catalogos, setCatalogos] = useState<string[]>([]);
 
-  // Load distinct fabricantes
+  // Load distinct fabricantes + catalogos
   useEffect(() => {
-    const loadFabricantes = async () => {
-      const { data } = await supabase
-        .from('parts')
-        .select('fabricante')
-        .not('fabricante', 'is', null)
-        .not('fabricante', 'eq', '')
-        .limit(1000);
-      if (data) {
-        const unique = [...new Set(data.map(d => d.fabricante).filter(Boolean))] as string[];
+    const load = async () => {
+      const [{ data: fabData }, { data: catData }] = await Promise.all([
+        supabase.from('parts').select('fabricante').not('fabricante', 'is', null).not('fabricante', 'eq', '').limit(1000),
+        supabase.from('parts').select('catalogo').not('catalogo', 'is', null).not('catalogo', 'eq', '').limit(1000),
+      ]);
+      if (fabData) {
+        const unique = [...new Set(fabData.map(d => d.fabricante).filter(Boolean))] as string[];
         unique.sort();
         setFabricantes(unique);
       }
+      if (catData) {
+        const unique = [...new Set(catData.map(d => d.catalogo).filter(Boolean))] as string[];
+        unique.sort();
+        setCatalogos(unique);
+      }
     };
-    loadFabricantes();
+    load();
   }, []);
 
   const handleAdd = useCallback(async () => {
@@ -68,9 +75,14 @@ export function AdminPartsManager() {
       toast.error('Código e Descrição são obrigatórios');
       return;
     }
+    if (!addCatalogo.trim()) {
+      toast.error('Selecione ou digite o Catálogo (Veículo)');
+      return;
+    }
     setSaving(true);
 
-    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos, codSimilares].filter(Boolean).join(' ');
+    const catName = addCatalogo.trim();
+    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos, codSimilares, catName].filter(Boolean).join(' ');
 
     const { error } = await supabase.from('parts').insert({
       fabricante: fab.trim() || null,
@@ -82,6 +94,7 @@ export function AdminPartsManager() {
       anos_aplicacao: anos.trim() || null,
       contexto_ia: ctx.trim() || null,
       codigos_similares: codSimilares.trim() || null,
+      catalogo: catName,
     });
 
     setSaving(false);
@@ -90,20 +103,28 @@ export function AdminPartsManager() {
       return;
     }
     toast.success('Peça cadastrada com sucesso!');
+    // Add new catalog to list if not present
+    if (!catalogos.includes(catName)) {
+      setCatalogos(prev => [...prev, catName].sort());
+    }
     setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx(''); setCodSimilares('');
-  }, [fab, cod, desc, chave, marca, modelo, anos, ctx, codSimilares]);
+  }, [fab, cod, desc, chave, marca, modelo, anos, ctx, codSimilares, addCatalogo, catalogos]);
 
   const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim() && !filterFab) {
-      toast.error('Digite algo para buscar ou selecione um fornecedor');
+    if (!searchQuery.trim() && !filterFab && !filterCatalogo) {
+      toast.error('Digite algo para buscar ou selecione um filtro');
       return;
     }
     setSearching(true);
 
-    let query = supabase.from('parts').select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, contexto_ia, codigos_similares');
+    let query = supabase.from('parts').select('id, fabricante, codigo_peca, descricao, chave_de_busca, marca_veiculo, modelo_veiculo, anos_aplicacao, contexto_ia, codigos_similares, catalogo');
 
     if (filterFab) {
       query = query.eq('fabricante', filterFab);
+    }
+
+    if (filterCatalogo) {
+      query = query.eq('catalogo', filterCatalogo);
     }
 
     if (searchQuery.trim()) {
@@ -120,7 +141,7 @@ export function AdminPartsManager() {
     }
     setResults(data || []);
     if (!data?.length) toast.info('Nenhuma peça encontrada');
-  }, [searchQuery, filterFab]);
+  }, [searchQuery, filterFab, filterCatalogo]);
 
   const startEdit = (part: PartRow) => {
     setEditingId(part.id);
@@ -144,6 +165,7 @@ export function AdminPartsManager() {
       anos_aplicacao: editData.anos_aplicacao || null,
       contexto_ia: editData.contexto_ia || null,
       codigos_similares: editData.codigos_similares || null,
+      catalogo: editData.catalogo || null,
     }).eq('id', editingId);
 
     if (error) {
@@ -184,6 +206,36 @@ export function AdminPartsManager() {
               <PackagePlus className="w-5 h-5 text-primary" />
               Cadastrar Peça Manualmente
             </h3>
+
+            {/* Catalog selector - prominent */}
+            <div className="p-3 rounded-lg border border-primary/30 bg-primary/5 space-y-2">
+              <Label className="flex items-center gap-2 font-semibold">
+                <Car className="w-4 h-4 text-primary" />
+                Catálogo (Veículo) *
+              </Label>
+              <div className="flex gap-2">
+                <select
+                  className="flex-1 h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  value={catalogos.includes(addCatalogo) ? addCatalogo : '__custom__'}
+                  onChange={e => {
+                    if (e.target.value === '__custom__') return;
+                    setAddCatalogo(e.target.value);
+                  }}
+                >
+                  <option value="__custom__">Selecionar ou digitar novo...</option>
+                  {catalogos.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <Input
+                  placeholder="Ou digite novo catálogo"
+                  value={addCatalogo}
+                  onChange={e => setAddCatalogo(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label>Fabricante</Label>
@@ -249,6 +301,18 @@ export function AdminPartsManager() {
               <div className="sm:w-48">
                 <select
                   className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  value={filterCatalogo}
+                  onChange={e => setFilterCatalogo(e.target.value)}
+                >
+                  <option value="">Todos Catálogos</option>
+                  {catalogos.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="sm:w-48">
+                <select
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
                   value={filterFab}
                   onChange={e => setFilterFab(e.target.value)}
                 >
@@ -270,11 +334,10 @@ export function AdminPartsManager() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Catálogo</TableHead>
                       <TableHead>Fabricante</TableHead>
                       <TableHead>Código</TableHead>
                       <TableHead>Descrição</TableHead>
-                      <TableHead>Marca</TableHead>
-                      <TableHead>Modelo</TableHead>
                       <TableHead>Similares</TableHead>
                       <TableHead className="w-[120px]">Ações</TableHead>
                     </TableRow>
@@ -285,6 +348,9 @@ export function AdminPartsManager() {
                         {editingId === part.id ? (
                           <>
                             <TableCell>
+                              <Input className="h-8 text-xs" value={editData.catalogo || ''} onChange={e => setEditData(d => ({ ...d, catalogo: e.target.value }))} />
+                            </TableCell>
+                            <TableCell>
                               <Input className="h-8 text-xs" value={editData.fabricante || ''} onChange={e => setEditData(d => ({ ...d, fabricante: e.target.value }))} />
                             </TableCell>
                             <TableCell>
@@ -292,12 +358,6 @@ export function AdminPartsManager() {
                             </TableCell>
                             <TableCell>
                               <Input className="h-8 text-xs" value={editData.descricao || ''} onChange={e => setEditData(d => ({ ...d, descricao: e.target.value }))} />
-                            </TableCell>
-                            <TableCell>
-                              <Input className="h-8 text-xs" value={editData.marca_veiculo || ''} onChange={e => setEditData(d => ({ ...d, marca_veiculo: e.target.value }))} />
-                            </TableCell>
-                            <TableCell>
-                              <Input className="h-8 text-xs" value={editData.modelo_veiculo || ''} onChange={e => setEditData(d => ({ ...d, modelo_veiculo: e.target.value }))} />
                             </TableCell>
                             <TableCell>
                               <Input className="h-8 text-xs" value={editData.codigos_similares || ''} onChange={e => setEditData(d => ({ ...d, codigos_similares: e.target.value }))} />
@@ -315,11 +375,10 @@ export function AdminPartsManager() {
                           </>
                         ) : (
                           <>
+                            <TableCell className="text-xs font-medium text-primary">{part.catalogo || '—'}</TableCell>
                             <TableCell className="text-xs">{part.fabricante || '—'}</TableCell>
                             <TableCell className="text-xs font-mono">{part.codigo_peca || '—'}</TableCell>
                             <TableCell className="text-xs">{part.descricao || '—'}</TableCell>
-                            <TableCell className="text-xs">{part.marca_veiculo || '—'}</TableCell>
-                            <TableCell className="text-xs">{part.modelo_veiculo || '—'}</TableCell>
                             <TableCell className="text-xs">{part.codigos_similares || '—'}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
