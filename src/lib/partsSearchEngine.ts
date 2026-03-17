@@ -183,9 +183,13 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     const vehicleText = `${chave} ${marca} ${modelo} ${ano} ${contexto}`;
     const fullText = `${produto} ${vehicleText} ${fornecedor}`;
 
-    // MANDATORY: ALL laterality terms must match
+    // MANDATORY: ALL laterality terms must match with STRICT word-boundary
     if (lateralityTerms.length > 0) {
-      if (!lateralityTerms.every(lt => fuzzyMatch(fullText, lt))) continue;
+      const wordBoundaryMatch = (text: string, term: string) => {
+        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
+        return regex.test(text);
+      };
+      if (!lateralityTerms.every(lt => wordBoundaryMatch(fullText, lt))) continue;
     }
 
     // MANDATORY: ALL vehicle terms must match in vehicle-related fields
