@@ -183,9 +183,13 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     const vehicleText = `${chave} ${marca} ${modelo} ${ano} ${contexto}`;
     const fullText = `${produto} ${vehicleText} ${fornecedor}`;
 
-    // MANDATORY: ALL laterality terms must match
+    // MANDATORY: ALL laterality terms must match with STRICT word-boundary
     if (lateralityTerms.length > 0) {
-      if (!lateralityTerms.every(lt => fuzzyMatch(fullText, lt))) continue;
+      const wordBoundaryMatch = (text: string, term: string) => {
+        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
+        return regex.test(text);
+      };
+      if (!lateralityTerms.every(lt => wordBoundaryMatch(fullText, lt))) continue;
     }
 
     // MANDATORY: ALL vehicle terms must match in vehicle-related fields
@@ -237,7 +241,6 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
       if (code === term) termScore += 10;
       else if (code.includes(term)) termScore += 5;
       if (produto.includes(term)) termScore += 3;
-      else if (fuzzyMatch(produto, term)) termScore += 1.5;
       if (chave.includes(term)) termScore += 1;
       if (fornecedor.includes(term)) termScore += 2;
 
@@ -247,14 +250,8 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
       }
     }
 
-    // Also check synonym-expanded terms for additional score
-    for (const syn of synonymExpanded) {
-      if (!productTerms.includes(syn)) {
-        if (fullText.includes(syn)) score += 2;
-      }
-    }
-
-    if (productTerms.length > 0 && matchedProduct / productTerms.length < 0.5) continue;
+    // ALL product terms must match (100% strict)
+    if (productTerms.length > 0 && matchedProduct < productTerms.length) continue;
     if (score <= 0) continue;
 
     scored.push({ part, score });
