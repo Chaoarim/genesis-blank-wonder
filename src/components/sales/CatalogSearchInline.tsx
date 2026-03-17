@@ -85,6 +85,7 @@ const KNOWN_BRANDS = new Set([
   'fremax', 'hipper', 'eixocar',
 ]);
 
+function strictFilterParts(parts: Part[], query: string): Part[] {
   const q = normalizeForSearch(query);
   if (q.length < 2) return [];
   const terms = q.split(' ').filter(t => t.length >= 2);
