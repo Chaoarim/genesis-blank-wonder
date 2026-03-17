@@ -7,16 +7,23 @@ import { normalizeForSearch } from '@/lib/partsSearchEngine';
 import { Card } from '@/components/ui/card';
 import type { Part } from '@/hooks/usePartsDatabase';
 
+// Laterality terms that require STRICT word-boundary matching
+const LATERALITY_TERMS = new Set([
+  'dianteiro', 'dianteira', 'traseiro', 'traseira',
+  'esquerdo', 'esquerda', 'direito', 'direita',
+  'superior', 'inferior',
+]);
+
 // Common abbreviations found in parts catalogs
 const ABBREVIATIONS: Record<string, string[]> = {
-  'dianteiro': ['diant', 'dianteira', 'dianteiro'],
-  'dianteira': ['diant', 'dianteiro', 'dianteira'],
-  'traseiro': ['tras', 'traseira', 'traseiro'],
-  'traseira': ['tras', 'traseiro', 'traseira'],
-  'esquerdo': ['esq', 'esquerda', 'esquerdo'],
-  'esquerda': ['esq', 'esquerdo', 'esquerda'],
-  'direito': ['dir', 'direita', 'direito'],
-  'direita': ['dir', 'direito', 'direita'],
+  'dianteiro': ['diant'],
+  'dianteira': ['diant'],
+  'traseiro': ['tras'],
+  'traseira': ['tras'],
+  'esquerdo': ['esq'],
+  'esquerda': ['esq'],
+  'direito': ['dir'],
+  'direita': ['dir'],
   'superior': ['sup'],
   'inferior': ['inf'],
   'amortecedor': ['amort'],
@@ -26,26 +33,25 @@ const ABBREVIATIONS: Record<string, string[]> = {
   'distribuicao': ['distrib'],
 };
 
-// Known manufacturer/brand names to identify in queries
-const KNOWN_BRANDS = new Set([
-  'luk', 'sachs', 'valeo', 'ina', 'skf', 'nsk', 'fag', 'timken',
-  'bosch', 'delphi', 'denso', 'ngk', 'mahle', 'metal leve',
-  'nakata', 'cofap', 'monroe', 'kayaba', 'kyb', 'tokico',
-  'fras le', 'cobreq', 'jurid', 'ferodo', 'trw', 'ate',
-  'gates', 'dayco', 'continental', 'contitech', 'goodyear',
-  'urba', 'marwal', 'brosol', 'weber',
-  'mobensani', 'axios', 'sampel', 'viemar', 'perfect',
-  'heliar', 'moura', 'acdelco', 'motorcraft', 'genuina',
-  'wega', 'tecfil', 'mann', 'fram', 'purolator',
-  'syl', 'osram', 'philips', 'hella',
-  'mte', 'wahler', 'borg warner', 'garrett',
-  'takao', 'gm', 'ford', 'fiat', 'vw', 'volkswagen',
-  'honda', 'toyota', 'hyundai', 'renault', 'nissan', 'kia',
-  'chevrolet', 'peugeot', 'citroen', 'mitsubishi', 'jeep',
-  'nachi', 'koyo', 'zen', 'sku', 'irb', 'axor', 'remanufaturada',
-]);
+// Word-boundary match: checks if `term` appears as a whole word in `text`
+function wordMatch(text: string, term: string): boolean {
+  const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
+  return regex.test(text);
+}
 
-function termMatchesText(text: string, term: string): boolean {
+function termMatchesText(text: string, term: string, strict = false): boolean {
+  if (strict) {
+    // Strict mode: word-boundary only (for laterality terms)
+    if (wordMatch(text, term)) return true;
+    const abbrs = ABBREVIATIONS[term];
+    if (abbrs) {
+      for (const abbr of abbrs) {
+        if (wordMatch(text, abbr)) return true;
+      }
+    }
+    return false;
+  }
+  // Normal mode: substring match
   if (text.includes(term)) return true;
   const abbrs = ABBREVIATIONS[term];
   if (abbrs) {
