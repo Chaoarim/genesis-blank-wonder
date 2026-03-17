@@ -20,7 +20,30 @@ const ABBREVIATIONS: Record<string, string[]> = {
   'superior': ['sup'],
   'inferior': ['inf'],
   'amortecedor': ['amort'],
+  'embreagem': ['embr'],
+  'suspensao': ['susp'],
+  'freio': ['freios'],
+  'distribuicao': ['distrib'],
 };
+
+// Known manufacturer/brand names to identify in queries
+const KNOWN_BRANDS = new Set([
+  'luk', 'sachs', 'valeo', 'ina', 'skf', 'nsk', 'fag', 'timken',
+  'bosch', 'delphi', 'denso', 'ngk', 'mahle', 'metal leve',
+  'nakata', 'cofap', 'monroe', 'kayaba', 'kyb', 'tokico',
+  'fras le', 'cobreq', 'jurid', 'ferodo', 'trw', 'ate',
+  'gates', 'dayco', 'continental', 'contitech', 'goodyear',
+  'urba', 'marwal', 'brosol', 'weber',
+  'mobensani', 'axios', 'sampel', 'viemar', 'perfect',
+  'heliar', 'moura', 'acdelco', 'motorcraft', 'genuina',
+  'wega', 'tecfil', 'mann', 'fram', 'purolator',
+  'syl', 'osram', 'philips', 'hella',
+  'mte', 'wahler', 'borg warner', 'garrett',
+  'takao', 'gm', 'ford', 'fiat', 'vw', 'volkswagen',
+  'honda', 'toyota', 'hyundai', 'renault', 'nissan', 'kia',
+  'chevrolet', 'peugeot', 'citroen', 'mitsubishi', 'jeep',
+  'nachi', 'koyo', 'zen', 'sku', 'irb', 'axor', 'remanufaturada',
+]);
 
 function termMatchesText(text: string, term: string): boolean {
   if (text.includes(term)) return true;
@@ -42,24 +65,81 @@ function strictFilterParts(parts: Part[], query: string): Part[] {
   const terms = q.split(' ').filter(t => t.length >= 2);
   if (terms.length === 0) return [];
 
+  // Classify each term: brand, product, or general
+  const brandTerms: string[] = [];
+  const productTerms: string[] = [];
+
+  for (const term of terms) {
+    if (KNOWN_BRANDS.has(term)) {
+      brandTerms.push(term);
+    } else {
+      productTerms.push(term);
+    }
+  }
+
+  // Also check bigram brands (e.g. "metal leve", "fras le")
+  for (let i = 0; i < terms.length - 1; i++) {
+    const bigram = `${terms[i]} ${terms[i + 1]}`;
+    if (KNOWN_BRANDS.has(bigram)) {
+      brandTerms.push(bigram);
+      // Remove individual terms from productTerms
+      productTerms.splice(productTerms.indexOf(terms[i]), 1);
+      const idx2 = productTerms.indexOf(terms[i + 1]);
+      if (idx2 >= 0) productTerms.splice(idx2, 1);
+    }
+  }
+
   const scored: { part: Part; score: number }[] = [];
 
   for (const part of parts) {
-    const fullText = normalizeForSearch(
-      `${part.fabricante} ${part.produto} ${part.chaveDeBusca} ${part.marca} ${part.modelo} ${part.ano} ${part.fornecedor} ${part.contextoIA || ''} ${part.codigosSimilares || ''}`
-    );
+    const code = normalizeForSearch(part.fabricante);
+    const produto = normalizeForSearch(part.produto);
+    const fornecedor = normalizeForSearch(part.fornecedor);
+    const chave = normalizeForSearch(part.chaveDeBusca);
+    const vehicleText = normalizeForSearch(`${part.marca} ${part.modelo} ${part.ano}`);
+    const contexto = normalizeForSearch(part.contextoIA || '');
+    const similares = normalizeForSearch(part.codigosSimilares || '');
 
-    let allMatch = true;
     let score = 0;
+    let allMatch = true;
 
-    for (const term of terms) {
-      if (termMatchesText(fullText, term)) {
-        const prod = normalizeForSearch(part.produto);
-        const code = normalizeForSearch(part.fabricante);
-        if (code.includes(term)) score += 5;
-        if (prod.includes(term) || termMatchesText(prod, term)) score += 3;
-        score += 1;
+    // BRAND TERMS: must match in fornecedor (manufacturer) field
+    for (const bt of brandTerms) {
+      if (termMatchesText(fornecedor, bt)) {
+        score += 8;
       } else {
+        // Also accept if brand is in produto or code (some parts have brand in description)
+        if (termMatchesText(produto, bt) || termMatchesText(code, bt)) {
+          score += 4;
+        } else {
+          allMatch = false;
+          break;
+        }
+      }
+    }
+    if (!allMatch) continue;
+
+    // PRODUCT TERMS: must match in produto, code, or chave fields
+    for (const pt of productTerms) {
+      let matched = false;
+
+      if (code === pt) { score += 12; matched = true; }
+      else if (code.includes(pt)) { score += 6; matched = true; }
+      
+      if (termMatchesText(produto, pt)) { score += 5; matched = true; }
+      if (termMatchesText(chave, pt)) { score += 2; matched = true; }
+      if (termMatchesText(contexto, pt)) { score += 1; matched = true; }
+      if (termMatchesText(similares, pt)) { score += 3; matched = true; }
+
+      if (!matched) {
+        // Last resort: check vehicle text (some terms like model names)
+        if (termMatchesText(vehicleText, pt)) {
+          score += 2;
+          matched = true;
+        }
+      }
+
+      if (!matched) {
         allMatch = false;
         break;
       }
