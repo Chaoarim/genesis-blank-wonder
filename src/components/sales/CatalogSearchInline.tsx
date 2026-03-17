@@ -65,7 +65,26 @@ function termMatchesText(text: string, term: string, strict = false): boolean {
   return false;
 }
 
-function strictFilterParts(parts: Part[], query: string): Part[] {
+// Known manufacturer/brand names to identify in queries
+const KNOWN_BRANDS = new Set([
+  'luk', 'sachs', 'valeo', 'ina', 'skf', 'nsk', 'fag', 'timken',
+  'bosch', 'delphi', 'denso', 'ngk', 'mahle', 'metal leve',
+  'nakata', 'cofap', 'monroe', 'kayaba', 'kyb', 'tokico',
+  'fras le', 'cobreq', 'jurid', 'ferodo', 'trw', 'ate',
+  'gates', 'dayco', 'continental', 'contitech', 'goodyear',
+  'urba', 'marwal', 'brosol', 'weber',
+  'mobensani', 'axios', 'sampel', 'viemar', 'perfect',
+  'heliar', 'moura', 'acdelco', 'motorcraft', 'genuina',
+  'wega', 'tecfil', 'mann', 'fram', 'purolator',
+  'syl', 'osram', 'philips', 'hella',
+  'mte', 'wahler', 'borg warner', 'garrett',
+  'takao', 'gm', 'ford', 'fiat', 'vw', 'volkswagen',
+  'honda', 'toyota', 'hyundai', 'renault', 'nissan', 'kia',
+  'chevrolet', 'peugeot', 'citroen', 'mitsubishi', 'jeep',
+  'nachi', 'koyo', 'zen', 'sku', 'irb', 'axor', 'remanufaturada',
+  'fremax', 'hipper', 'eixocar',
+]);
+
   const q = normalizeForSearch(query);
   if (q.length < 2) return [];
   const terms = q.split(' ').filter(t => t.length >= 2);
