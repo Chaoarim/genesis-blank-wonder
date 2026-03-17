@@ -91,15 +91,27 @@ function strictFilterParts(parts: Part[], query: string): Part[] {
   const terms = q.split(' ').filter(t => t.length >= 2);
   if (terms.length === 0) return [];
 
-  // Classify each term: brand, product, or general
+  // Classify each term: brand, laterality, or product
   const brandTerms: string[] = [];
+  const lateralityTerms: string[] = [];
   const productTerms: string[] = [];
 
   for (const term of terms) {
     if (KNOWN_BRANDS.has(term)) {
       brandTerms.push(term);
+    } else if (LATERALITY_TERMS.has(term)) {
+      lateralityTerms.push(term);
     } else {
-      productTerms.push(term);
+      // Check if it's an abbreviation for a laterality term
+      let isLateralityAbbr = false;
+      for (const [full, abbrs] of Object.entries(ABBREVIATIONS)) {
+        if (LATERALITY_TERMS.has(full) && abbrs.includes(term)) {
+          lateralityTerms.push(term);
+          isLateralityAbbr = true;
+          break;
+        }
+      }
+      if (!isLateralityAbbr) productTerms.push(term);
     }
   }
 
@@ -108,8 +120,8 @@ function strictFilterParts(parts: Part[], query: string): Part[] {
     const bigram = `${terms[i]} ${terms[i + 1]}`;
     if (KNOWN_BRANDS.has(bigram)) {
       brandTerms.push(bigram);
-      // Remove individual terms from productTerms
-      productTerms.splice(productTerms.indexOf(terms[i]), 1);
+      const idx1 = productTerms.indexOf(terms[i]);
+      if (idx1 >= 0) productTerms.splice(idx1, 1);
       const idx2 = productTerms.indexOf(terms[i + 1]);
       if (idx2 >= 0) productTerms.splice(idx2, 1);
     }
@@ -125,16 +137,27 @@ function strictFilterParts(parts: Part[], query: string): Part[] {
     const vehicleText = normalizeForSearch(`${part.marca} ${part.modelo} ${part.ano}`);
     const contexto = normalizeForSearch(part.contextoIA || '');
     const similares = normalizeForSearch(part.codigosSimilares || '');
+    const fullText = `${produto} ${chave} ${contexto} ${similares}`;
 
     let score = 0;
     let allMatch = true;
+
+    // LATERALITY TERMS: STRICT word-boundary match — "dianteiro" must NOT match "traseiro"
+    for (const lt of lateralityTerms) {
+      if (termMatchesText(fullText, lt, true)) {
+        score += 10;
+      } else {
+        allMatch = false;
+        break;
+      }
+    }
+    if (!allMatch) continue;
 
     // BRAND TERMS: must match in fornecedor (manufacturer) field
     for (const bt of brandTerms) {
       if (termMatchesText(fornecedor, bt)) {
         score += 8;
       } else {
-        // Also accept if brand is in produto or code (some parts have brand in description)
         if (termMatchesText(produto, bt) || termMatchesText(code, bt)) {
           score += 4;
         } else {
@@ -158,7 +181,6 @@ function strictFilterParts(parts: Part[], query: string): Part[] {
       if (termMatchesText(similares, pt)) { score += 3; matched = true; }
 
       if (!matched) {
-        // Last resort: check vehicle text (some terms like model names)
         if (termMatchesText(vehicleText, pt)) {
           score += 2;
           matched = true;
