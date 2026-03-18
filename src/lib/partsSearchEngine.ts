@@ -1,8 +1,17 @@
 import { Part } from '@/hooks/usePartsDatabase';
 
+const STOP_TERMS = new Set([
+  'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
+  'de', 'da', 'do', 'das', 'dos', 'd',
+  'em', 'no', 'na', 'nos', 'nas',
+  'para', 'pra', 'por', 'pelo', 'pela', 'pelos', 'pelas',
+  'com', 'sem', 'e', 'ou', 'ao', 'aos', 'qual', 'quais', 'que',
+]);
+
 const LATERALITY_TERMS = new Set([
   'dianteiro', 'dianteira', 'traseiro', 'traseira',
   'esquerdo', 'esquerda', 'direito', 'direita',
+  'superior', 'inferior',
 ]);
 
 const VEHICLE_TERMS = new Set([
@@ -24,62 +33,61 @@ const VEHICLE_TERMS = new Set([
   'picanto', 'cerato', 'sportage', 'sorento', 'soul',
 ]);
 
-const PRODUCT_PREFIXES_TO_EXCLUDE = ['coxim', 'batente', 'coifa', 'suporte', 'prato', 'base', 'reparo'];
+const KNOWN_BRANDS = new Set([
+  'luk', 'sachs', 'valeo', 'ina', 'skf', 'nsk', 'fag', 'timken',
+  'bosch', 'delphi', 'denso', 'ngk', 'mahle', 'metal leve',
+  'nakata', 'cofap', 'monroe', 'kayaba', 'kyb', 'tokico',
+  'fras le', 'cobreq', 'jurid', 'ferodo', 'trw', 'ate',
+  'gates', 'dayco', 'continental', 'contitech', 'goodyear',
+  'urba', 'marwal', 'brosol', 'weber', 'viemar', 'perfect',
+  'mobensani', 'axios', 'sampel', 'moura', 'acdelco', 'motorcraft',
+  'wega', 'tecfil', 'mann', 'fram', 'purolator',
+  'osram', 'philips', 'hella', 'mte', 'wahler', 'garrett',
+  'takao', 'zen', 'koyo', 'nachi', 'irb', 'axor',
+  'fremax', 'hipper', 'eixocar', 'gm', 'ford', 'fiat', 'vw', 'volkswagen',
+  'honda', 'toyota', 'hyundai', 'renault', 'nissan', 'kia',
+  'chevrolet', 'peugeot', 'citroen', 'mitsubishi', 'jeep',
+]);
 
-// Synonyms / compound terms mapping for intelligent search
-const SYNONYMS: Record<string, string[]> = {
-  'kit distribuicao': ['kit correia dentada', 'correia dentada', 'tensor', 'polia', 'distribuicao'],
-  'kit embreagem': ['disco embreagem', 'plato', 'rolamento embreagem', 'embreagem'],
-  'kit suspensao': ['amortecedor', 'mola', 'batente', 'coxim', 'bandeja', 'bieleta', 'terminal', 'pivo'],
-  'kit freio': ['pastilha', 'disco freio', 'lona', 'tambor', 'sapata'],
-  'kit corrente': ['corrente motor', 'tensor corrente', 'guia corrente'],
-  'kit turbina': ['turbina', 'atuador', 'valvula turbina'],
-  'kit direcao': ['terminal direcao', 'barra direcao', 'pivo', 'caixa direcao', 'bomba direcao'],
-  'amortecedor': ['amortecedor dianteiro', 'amortecedor traseiro'],
-  'vela': ['vela ignicao', 'vela aquecimento'],
-  'filtro': ['filtro oleo', 'filtro ar', 'filtro combustivel', 'filtro cabine', 'elemento filtrante'],
-  'correia': ['correia poly v', 'correia alternador', 'correia dentada', 'correia acessorio'],
-  'jogo': ['kit', 'conjunto'],
-  'kit': ['jogo', 'conjunto'],
-  'pastilha': ['pastilha freio', 'pastilha dianteira', 'pastilha traseira'],
-  'disco': ['disco freio', 'disco dianteiro', 'disco traseiro', 'disco ventilado'],
-  'lona': ['lona freio', 'sapata'],
-  'sapata': ['lona freio', 'lona'],
-  'bomba': ['bomba agua', 'bomba oleo', 'bomba combustivel', 'bomba direcao'],
-  'radiador': ['radiador agua', 'radiador oleo'],
-  'sensor': ['sensor temperatura', 'sensor rotacao', 'sensor abs', 'sensor oxigenio', 'sonda lambda'],
-  'sonda': ['sonda lambda', 'sensor oxigenio'],
-  'bobina': ['bobina ignicao', 'modulo ignicao'],
-  'bieleta': ['bieleta estabilizadora', 'barra estabilizadora'],
-  'bandeja': ['braco suspensao', 'bandeja suspensao'],
-  'terminal': ['terminal direcao', 'ponteira direcao'],
-  'ponteira': ['terminal direcao', 'ponteira direcao'],
-  'pivo': ['pivo suspensao', 'rotula'],
-  'rotula': ['pivo suspensao', 'pivo'],
-  'rolamento': ['rolamento roda', 'rolamento embreagem'],
-  'coxim': ['coxim motor', 'coxim cambio', 'calco motor'],
-  'calco': ['coxim motor', 'coxim'],
-  'retrovisor': ['espelho retrovisor'],
-  'espelho': ['espelho retrovisor', 'retrovisor'],
-  'lanterna': ['lanterna traseira', 'lanterna dianteira', 'farol'],
-  'farol': ['farol dianteiro', 'farol milha', 'farol neblina'],
-  'para choque': ['parachoque'],
-  'parachoque': ['para choque'],
-  'junta': ['junta cabecote', 'junta motor', 'junta homocinetica'],
-  'homocinetica': ['junta homocinetica', 'tulipa', 'trizeta'],
-  'tulipa': ['homocinetica'],
-  'trizeta': ['homocinetica'],
-  'cabo': ['cabo embreagem', 'cabo acelerador', 'cabo freio'],
-  'bucha': ['bucha bandeja', 'bucha estabilizadora', 'bucha suspensao'],
+const PRODUCT_PREFIXES_TO_EXCLUDE = [
+  'kit', 'jogo', 'jg', 'par',
+  'coxim', 'batente', 'coifa', 'suporte', 'prato', 'base', 'reparo', 'calco',
+];
+
+const ABBREVIATIONS: Record<string, string[]> = {
+  dianteiro: ['diant'],
+  dianteira: ['diant'],
+  traseiro: ['tras'],
+  traseira: ['tras'],
+  esquerdo: ['esq'],
+  esquerda: ['esq'],
+  direito: ['dir'],
+  direita: ['dir'],
+  superior: ['sup'],
+  inferior: ['inf'],
+  amortecedor: ['amort'],
+  embreagem: ['embr'],
+  suspensao: ['susp'],
+  distribuicao: ['distrib'],
 };
 
-// Generate bigrams from an array of words
+interface SearchBuckets {
+  brandTerms: string[];
+  lateralityTerms: string[];
+  productTerms: string[];
+  vehicleTerms: string[];
+}
+
 function bigrams(words: string[]): string[] {
   const result: string[] = [];
   for (let i = 0; i < words.length - 1; i++) {
     result.push(`${words[i]} ${words[i + 1]}`);
   }
   return result;
+}
+
+function unique(items: string[]): string[] {
+  return Array.from(new Set(items));
 }
 
 export function normalizeForSearch(text: string): string {
@@ -92,178 +100,231 @@ export function normalizeForSearch(text: string): string {
     .trim();
 }
 
-// Levenshtein distance for fuzzy matching
-function levenshtein(a: string, b: string): number {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-  const matrix: number[][] = [];
-  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      const cost = b[i - 1] === a[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
-    }
-  }
-  return matrix[b.length][a.length];
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Check if term fuzzy-matches any word in text
-function fuzzyMatch(text: string, term: string, threshold = 0.25): boolean {
-  if (text.includes(term)) return true;
-  const words = text.split(' ');
-  for (const word of words) {
-    if (word.length < 3 || term.length < 3) continue;
-    const maxDist = Math.max(1, Math.floor(Math.min(term.length, word.length) * threshold));
-    if (levenshtein(term, word) <= maxDist) return true;
-    // Prefix match (typing partial words)
-    if (word.startsWith(term) || term.startsWith(word)) return true;
+function tokenizeQuery(query: string): string[] {
+  return normalizeForSearch(query)
+    .split(' ')
+    .filter(term => term.length >= 2 && !STOP_TERMS.has(term));
+}
+
+function wordBoundaryMatch(text: string, term: string): boolean {
+  if (!text || !term) return false;
+  const regex = new RegExp(`(^|\\s)${escapeRegExp(term)}(\\s|$)`);
+  return regex.test(text);
+}
+
+function getEquivalentTerms(term: string): string[] {
+  const normalizedTerm = normalizeForSearch(term);
+  const equivalents = new Set([normalizedTerm]);
+
+  const directAbbreviations = ABBREVIATIONS[normalizedTerm] || [];
+  directAbbreviations.forEach(abbr => equivalents.add(abbr));
+
+  for (const [fullTerm, abbreviations] of Object.entries(ABBREVIATIONS)) {
+    if (abbreviations.includes(normalizedTerm)) {
+      equivalents.add(fullTerm);
+    }
   }
+
+  return Array.from(equivalents);
+}
+
+function findCanonicalLaterality(term: string): string | null {
+  if (LATERALITY_TERMS.has(term)) return term;
+
+  for (const laterality of LATERALITY_TERMS) {
+    if ((ABBREVIATIONS[laterality] || []).includes(term)) {
+      return laterality;
+    }
+  }
+
+  return null;
+}
+
+function termMatchesText(text: string, term: string, strictWord = false): boolean {
+  const normalizedText = normalizeForSearch(text);
+  const textWords = normalizedText.split(' ').filter(Boolean);
+
+  for (const candidate of getEquivalentTerms(term)) {
+    if (wordBoundaryMatch(normalizedText, candidate)) return true;
+
+    if (!strictWord && candidate.length >= 3) {
+      if (textWords.some(word => word.startsWith(candidate))) return true;
+    }
+
+    if (!strictWord && candidate.includes(' ') && normalizedText.includes(candidate)) {
+      return true;
+    }
+  }
+
   return false;
 }
 
-// Expand query terms using synonyms
-function expandWithSynonyms(terms: string[]): string[] {
-  const expanded = new Set(terms);
-  const queryStr = terms.join(' ');
-  
-  // Check bigrams first (compound terms like "kit distribuição")
+function codeMatches(code: string, term: string): boolean {
+  const normalizedCode = normalizeForSearch(code);
+  const normalizedTerm = normalizeForSearch(term);
+
+  if (!normalizedCode || !normalizedTerm) return false;
+
+  return normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm);
+}
+
+function hasConflictingProductPrefix(productText: string, requestedProductTerms: string[]): boolean {
+  if (requestedProductTerms.length === 0) return false;
+
+  const productWords = tokenizeQuery(productText);
+  if (productWords.length === 0) return false;
+
+  const requestedWords = new Set(requestedProductTerms.flatMap(term => term.split(' ')));
+
+  for (const prefix of PRODUCT_PREFIXES_TO_EXCLUDE) {
+    if (productWords[0] !== prefix) continue;
+    if (!requestedWords.has(prefix)) return true;
+  }
+
+  return false;
+}
+
+function parseSearchBuckets(query: string): SearchBuckets {
+  const terms = tokenizeQuery(query);
+  const consumedIndexes = new Set<number>();
+  const brandTerms: string[] = [];
+  const lateralityTerms: string[] = [];
+  const productTerms: string[] = [];
+  const vehicleTerms: string[] = [];
+
   const queryBigrams = bigrams(terms);
-  for (const bg of queryBigrams) {
-    if (SYNONYMS[bg]) {
-      for (const syn of SYNONYMS[bg]) expanded.add(syn);
+  queryBigrams.forEach((bigram, index) => {
+    if (KNOWN_BRANDS.has(bigram)) {
+      brandTerms.push(bigram);
+      consumedIndexes.add(index);
+      consumedIndexes.add(index + 1);
     }
-  }
-  
-  // Check individual terms
-  for (const term of terms) {
-    if (SYNONYMS[term]) {
-      for (const syn of SYNONYMS[term]) expanded.add(syn);
+  });
+
+  terms.forEach((term, index) => {
+    if (consumedIndexes.has(index)) return;
+
+    const canonicalLaterality = findCanonicalLaterality(term);
+    if (canonicalLaterality) {
+      lateralityTerms.push(canonicalLaterality);
+      return;
     }
-  }
-  
-  return Array.from(expanded);
+
+    if (KNOWN_BRANDS.has(term)) {
+      brandTerms.push(term);
+      return;
+    }
+
+    if (VEHICLE_TERMS.has(term)) {
+      vehicleTerms.push(term);
+      return;
+    }
+
+    productTerms.push(term);
+  });
+
+  return {
+    brandTerms: unique(brandTerms),
+    lateralityTerms: unique(lateralityTerms),
+    productTerms: unique(productTerms),
+    vehicleTerms: unique(vehicleTerms),
+  };
 }
 
 export function smartFilterParts(partsSource: Part[], query: string): Part[] {
   const q = normalizeForSearch(query);
   if (q.length < 2) return [];
 
-  const terms = q.split(' ').filter(t => t.length >= 2);
-  if (terms.length === 0) return [];
-
-  const productTerms: string[] = [];
-  const vehicleTerms: string[] = [];
-  const lateralityTerms: string[] = [];
-
-  for (const term of terms) {
-    if (LATERALITY_TERMS.has(term)) {
-      lateralityTerms.push(term);
-    } else if (VEHICLE_TERMS.has(term)) {
-      vehicleTerms.push(term);
-    } else {
-      productTerms.push(term);
-    }
+  const { brandTerms, lateralityTerms, productTerms, vehicleTerms } = parseSearchBuckets(query);
+  if (brandTerms.length === 0 && lateralityTerms.length === 0 && productTerms.length === 0 && vehicleTerms.length === 0) {
+    return [];
   }
-
-  // Expand product terms with synonyms
-  const synonymExpanded = expandWithSynonyms(productTerms);
 
   const scored: { part: Part; score: number }[] = [];
 
   for (const part of partsSource) {
-    const code = normalizeForSearch(part.fabricante);
-    const produto = normalizeForSearch(part.produto);
-    const chave = normalizeForSearch(part.chaveDeBusca);
-    const marca = normalizeForSearch(part.marca || '');
-    const modelo = normalizeForSearch(part.modelo || '');
-    const ano = normalizeForSearch(part.ano || '');
+    const code = normalizeForSearch(part.fabricante || '');
+    const produto = normalizeForSearch(part.produto || '');
+    const chave = normalizeForSearch(part.chaveDeBusca || '');
+    const aplicacao = normalizeForSearch(part.aplicacao || '');
+    const marcaModeloAno = normalizeForSearch(`${part.marca || ''} ${part.modelo || ''} ${part.ano || ''}`);
     const fornecedor = normalizeForSearch(part.fornecedor || '');
     const contexto = normalizeForSearch(part.contextoIA || '');
-    const vehicleText = `${chave} ${marca} ${modelo} ${ano} ${contexto}`;
-    const fullText = `${produto} ${vehicleText} ${fornecedor}`;
+    const similares = normalizeForSearch(part.codigosSimilares || '');
+    const vehicleText = `${marcaModeloAno} ${aplicacao} ${chave}`.trim();
+    const fullText = `${produto} ${vehicleText} ${fornecedor} ${contexto} ${similares}`.trim();
 
-    // MANDATORY: ALL laterality terms must match with STRICT word-boundary
-    if (lateralityTerms.length > 0) {
-      const wordBoundaryMatch = (text: string, term: string) => {
-        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
-        return regex.test(text);
-      };
-      if (!lateralityTerms.every(lt => wordBoundaryMatch(fullText, lt))) continue;
+    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesText(fullText, term, true))) {
+      continue;
     }
 
-    // MANDATORY: ALL vehicle terms must match in vehicle-related fields
-    if (vehicleTerms.length > 0) {
-      const matchesVehicle = (text: string, term: string) => {
-        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
-        return regex.test(text);
-      };
-      if (!vehicleTerms.every(vt => matchesVehicle(vehicleText, vt) || matchesVehicle(produto, vt))) continue;
+    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesText(vehicleText, term, true) || termMatchesText(produto, term, true))) {
+      continue;
     }
 
-    // Product exclusion logic
-    if (productTerms.length > 0) {
-      let excluded = false;
-      for (const term of productTerms) {
-        const produtoWords = produto.split(' ').filter(w => w.length >= 2);
-        const termIndex = produtoWords.indexOf(term);
-
-        if (termIndex > 0) {
-          const precedingWords = produtoWords.slice(0, termIndex);
-          if (precedingWords.some(pw => PRODUCT_PREFIXES_TO_EXCLUDE.includes(pw))) {
-            excluded = true;
-            break;
-          }
-        }
-
-        if (produto.includes(term)) {
-          for (const prefix of PRODUCT_PREFIXES_TO_EXCLUDE) {
-            if (produto.startsWith(prefix) && !productTerms.includes(prefix)) {
-              excluded = true;
-              break;
-            }
-          }
-        }
-        if (excluded) break;
-      }
-      if (excluded) continue;
+    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesText(fornecedor, term) || termMatchesText(produto, term) || codeMatches(code, term))) {
+      continue;
     }
 
-    let score = 0;
-    let matchedProduct = 0;
+    if (hasConflictingProductPrefix(produto, productTerms)) {
+      continue;
+    }
 
-    // Bonus for matching laterality and vehicle
-    score += lateralityTerms.length * 5;
-    score += vehicleTerms.length * 4;
+    let score = lateralityTerms.length * 8 + vehicleTerms.length * 6 + brandTerms.length * 7;
+    let matchedProductTerms = 0;
 
     for (const term of productTerms) {
-      let termScore = 0;
-      if (code === term) termScore += 10;
-      else if (code.includes(term)) termScore += 5;
-      if (produto.includes(term)) termScore += 3;
-      if (chave.includes(term)) termScore += 1;
-      if (fornecedor.includes(term)) termScore += 2;
+      let matched = false;
 
-      if (termScore > 0) {
-        matchedProduct++;
-        score += termScore;
+      if (codeMatches(code, term)) {
+        score += code === term ? 14 : 9;
+        matched = true;
       }
+
+      if (termMatchesText(produto, term)) {
+        score += 7;
+        matched = true;
+      }
+
+      if (termMatchesText(chave, term, true)) {
+        score += 4;
+        matched = true;
+      }
+
+      if (termMatchesText(aplicacao, term, true)) {
+        score += 3;
+        matched = true;
+      }
+
+      if (termMatchesText(contexto, term, true)) {
+        score += 2;
+        matched = true;
+      }
+
+      if (termMatchesText(similares, term)) {
+        score += 1;
+        matched = true;
+      }
+
+      if (!matched) break;
+      matchedProductTerms++;
     }
 
-    // ALL product terms must match (100% strict)
-    if (productTerms.length > 0 && matchedProduct < productTerms.length) continue;
-    if (score <= 0) continue;
+    if (productTerms.length > 0 && matchedProductTerms < productTerms.length) {
+      continue;
+    }
 
+    if (score <= 0) continue;
     scored.push({ part, score });
   }
 
-  return scored.sort((a, b) => b.score - a.score).map(s => s.part);
+  return scored.sort((a, b) => b.score - a.score).map(entry => entry.part);
 }
 
-// ============================================================
-// Universal smart search for inventory items (used by InventorySearch,
-// InventorySearchInline, CatalogB2B, etc.)
-// ============================================================
 export interface SearchableItem {
   codigo: string;
   produto: string;
@@ -276,68 +337,73 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
   const q = normalizeForSearch(query);
   if (q.length < 2) return [];
 
-  const terms = q.split(' ').filter(t => t.length >= 2);
-  if (terms.length === 0) return [];
-
-  // Separate vehicle terms, laterality terms, and product terms
-  const productTerms: string[] = [];
-  const vehicleTerms: string[] = [];
-  const lateralityTerms: string[] = [];
-
-  for (const term of terms) {
-    if (LATERALITY_TERMS.has(term)) lateralityTerms.push(term);
-    else if (VEHICLE_TERMS.has(term)) vehicleTerms.push(term);
-    else productTerms.push(term);
+  const { brandTerms, lateralityTerms, productTerms, vehicleTerms } = parseSearchBuckets(query);
+  if (brandTerms.length === 0 && lateralityTerms.length === 0 && productTerms.length === 0 && vehicleTerms.length === 0) {
+    return [];
   }
 
   const scored: { item: T; score: number }[] = [];
 
   for (const item of items) {
-    const codigo = normalizeForSearch(item.codigo);
-    const produto = normalizeForSearch(item.produto);
-    const fornecedor = normalizeForSearch(item.fornecedor);
-    const aplicacao = normalizeForSearch(item.aplicacao);
-    const fullText = `${codigo} ${produto} ${fornecedor} ${aplicacao}`;
+    const codigo = normalizeForSearch(item.codigo || '');
+    const produto = normalizeForSearch(item.produto || '');
+    const fornecedor = normalizeForSearch(item.fornecedor || '');
+    const aplicacao = normalizeForSearch(item.aplicacao || '');
+    const fullText = `${codigo} ${produto} ${fornecedor} ${aplicacao}`.trim();
 
-    // MANDATORY: ALL laterality terms must match
-    if (lateralityTerms.length > 0) {
-      if (!lateralityTerms.every(lt => fullText.includes(lt))) continue;
+    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesText(fullText, term, true))) {
+      continue;
     }
 
-    // MANDATORY: ALL vehicle terms must match in aplicacao or produto
-    if (vehicleTerms.length > 0) {
-      const matchesVehicle = (text: string, term: string) => {
-        const regex = new RegExp(`(^|\\s)${term}(\\s|$)`);
-        return regex.test(text);
-      };
-      if (!vehicleTerms.every(vt => matchesVehicle(aplicacao, vt) || matchesVehicle(produto, vt))) continue;
+    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesText(aplicacao, term, true) || termMatchesText(produto, term, true))) {
+      continue;
     }
 
-    let score = vehicleTerms.length * 4 + lateralityTerms.length * 5;
-    let allProductTermsMatch = true;
+    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesText(fornecedor, term) || termMatchesText(produto, term) || codeMatches(codigo, term))) {
+      continue;
+    }
 
-    // STRICT: every searched product term must exist in at least one field
+    if (hasConflictingProductPrefix(produto, productTerms)) {
+      continue;
+    }
+
+    let score = lateralityTerms.length * 8 + vehicleTerms.length * 6 + brandTerms.length * 7;
+    let matchedProductTerms = 0;
+
     for (const term of productTerms) {
       let matched = false;
 
-      if (codigo === term) { score += 12; matched = true; }
-      else if (codigo.includes(term)) { score += 8; matched = true; }
-
-      if (produto.includes(term)) { score += 5; matched = true; }
-      if (fornecedor.includes(term)) { score += 3; matched = true; }
-      if (aplicacao.includes(term)) { score += 2; matched = true; }
-
-      if (!matched) {
-        allProductTermsMatch = false;
-        break;
+      if (codeMatches(codigo, term)) {
+        score += codigo === term ? 14 : 9;
+        matched = true;
       }
+
+      if (termMatchesText(produto, term)) {
+        score += 7;
+        matched = true;
+      }
+
+      if (termMatchesText(fornecedor, term)) {
+        score += 3;
+        matched = true;
+      }
+
+      if (termMatchesText(aplicacao, term, true)) {
+        score += 4;
+        matched = true;
+      }
+
+      if (!matched) break;
+      matchedProductTerms++;
     }
 
-    if (!allProductTermsMatch) continue;
-    if (score <= 0 && productTerms.length === 0 && vehicleTerms.length === 0 && lateralityTerms.length === 0) continue;
+    if (productTerms.length > 0 && matchedProductTerms < productTerms.length) {
+      continue;
+    }
 
+    if (score <= 0) continue;
     scored.push({ item, score });
   }
 
-  return scored.sort((a, b) => b.score - a.score).map(s => s.item);
+  return scored.sort((a, b) => b.score - a.score).map(entry => entry.item);
 }
