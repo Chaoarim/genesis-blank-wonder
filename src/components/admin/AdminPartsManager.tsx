@@ -82,7 +82,15 @@ export function AdminPartsManager() {
     setSaving(true);
 
     const catName = addCatalogo.trim();
-    const chaveGerada = chave.trim() || [fab, cod, desc, marca, modelo, anos, codSimilares, catName].filter(Boolean).join(' ');
+
+    // Auto-generate CHAVE_DE_BUSCA in CSV format: "MARCA MODELO ANO_INICIO/ANO_FIM"
+    const anosAbrev = anos.trim().replace(/\s*a\s*/i, '/').replace(/\d{2}(\d{2})/g, '$1');
+    const chaveGerada = chave.trim() || [marca.trim(), modelo.trim(), anosAbrev].filter(Boolean).join(' ');
+
+    // Auto-generate CONTEXTO_IA in CSV format
+    const ctxGerado = ctx.trim() || (desc.trim()
+      ? `${desc.trim()} compatível com ${marca.trim()} ${modelo.trim()}. Aplicação: ${anos.trim()}. Fabricante: ${fab.trim()}. Código: ${cod.trim()}.`.replace(/\s+/g, ' ').trim()
+      : '');
 
     const { error } = await supabase.from('parts').insert({
       fabricante: fab.trim() || null,
@@ -92,7 +100,7 @@ export function AdminPartsManager() {
       marca_veiculo: marca.trim() || null,
       modelo_veiculo: modelo.trim() || null,
       anos_aplicacao: anos.trim() || null,
-      contexto_ia: ctx.trim() || null,
+      contexto_ia: ctxGerado || null,
       codigos_similares: codSimilares.trim() || null,
       catalogo: catName,
     });
