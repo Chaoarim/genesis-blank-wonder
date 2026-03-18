@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, X, Car, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizeForSearch } from '@/lib/partsSearchEngine';
+import { normalizeForSearch, smartFilterParts } from '@/lib/partsSearchEngine';
 import { Card } from '@/components/ui/card';
 import type { Part } from '@/hooks/usePartsDatabase';
 
