@@ -629,8 +629,11 @@ const Sales = () => {
             <ul className="space-y-2 mb-8">
               {[
                 "Busca avançada de peças (código, descrição, veículo)",
-                "Catálogos visuais por fornecedor (30+)",
+                "Catálogos por Veículo — 61+ modelos organizados",
+                "Catálogos por Fornecedor (45+ fornecedores)",
+                "Motor de busca estrita com lateralidade e exclusão inteligente",
                 "Central de Vendas completa (21 módulos)",
+                "Consulta por Veículos integrada na Nova Venda",
                 "Catálogo B2B online com link exclusivo",
                 "Controle de estoque com importação de planilhas",
                 "Upload de fotos em lote por código",
@@ -638,6 +641,7 @@ const Sales = () => {
                 "Markup configurável (distribuidor/revenda)",
                 "Comissões, metas e relatórios de equipe",
                 "Garantias, devoluções e contas a pagar",
+                "Cadastro manual de peças com geração automática de chave de busca",
                 "Suporte via WhatsApp",
               ].map((b, i) => (
                 <li key={i} className="flex items-center gap-2.5">
