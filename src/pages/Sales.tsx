@@ -390,7 +390,7 @@ const Sales = () => {
               {
                 icon: BarChart3,
                 title: 'Principal',
-                items: ['Dashboard', 'Nova Venda', 'Pedidos B2B', 'Histórico', 'Guia Como Usar'],
+                items: ['Dashboard', 'Nova Venda (Estoque + Catálogo Global)', 'Pedidos B2B', 'Histórico', 'Guia Como Usar'],
               },
               {
                 icon: Users,
