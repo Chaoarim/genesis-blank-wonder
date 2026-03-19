@@ -28,7 +28,8 @@ export function HelpGuide() {
                 </AccordionTrigger>
                 <AccordionContent className="text-base text-muted-foreground space-y-3 pt-2">
                   <p><strong>Dashboard:</strong> Acompanhe o resumo das suas vendas diárias e mensais, veja seu ticket médio e acesse as vendas mais recentes.</p>
-                  <p><strong>Nova Venda (PDV):</strong> Use esta tela para criar um novo pedido. Adicione o cliente, busque os produtos diretamente do seu estoque, defina o tipo de entrega e a forma de pagamento (Dinheiro, PIX, Cartão ou Faturado).</p>
+                   <p><strong>Nova Venda (PDV):</strong> Use esta tela para criar um novo pedido. Alterne entre <em>"Meu Estoque"</em> (seu estoque local) e <em>"Consulta por Veículos"</em> (base global com 61+ veículos e 45+ fornecedores). No catálogo global, selecione o veículo, busque a peça e insira preço e quantidade manualmente.</p>
+                  <p><strong>Consulta por Veículos:</strong> Dentro da Nova Venda, acesse catálogos organizados por modelo de veículo (Gol, Onix, HB20, Hilux, Civic...). A busca é estrita: só mostra o que foi pedido, entende lateralidade (dianteiro/traseiro) e exclui peças irrelevantes automaticamente.</p>
                   <p><strong>Pedidos (Catálogo B2B):</strong> Todos os pedidos feitos pelos seus clientes através do seu link exclusivo de catálogo caem aqui. Você pode aprovar e iniciar o atendimento direto no WhatsApp.</p>
                   <p><strong>Histórico:</strong> Consulte todas as vendas finalizadas, reimprima recibos ou cancele vendas se necessário (itens voltarão para o estoque).</p>
                 </AccordionContent>
