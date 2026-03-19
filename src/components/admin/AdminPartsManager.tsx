@@ -52,20 +52,22 @@ export function AdminPartsManager() {
   // Load distinct fabricantes + catalogos
   useEffect(() => {
     const load = async () => {
-      const [{ data: fabData }, { data: catData }] = await Promise.all([
+      const [{ data: fabData }, { data: catData }, { data: carsData }] = await Promise.all([
         supabase.from('parts').select('fabricante').not('fabricante', 'is', null).not('fabricante', 'eq', '').limit(1000),
         supabase.from('parts').select('catalogo').not('catalogo', 'is', null).not('catalogo', 'eq', '').limit(1000),
+        supabase.from('popular_cars').select('name').eq('is_active', true),
       ]);
       if (fabData) {
         const unique = [...new Set(fabData.map(d => d.fabricante).filter(Boolean))] as string[];
         unique.sort();
         setFabricantes(unique);
       }
-      if (catData) {
-        const unique = [...new Set(catData.map(d => d.catalogo).filter(Boolean))] as string[];
-        unique.sort();
-        setCatalogos(unique);
-      }
+      // Merge catalogs from parts + popular_cars
+      const partsCats = catData?.map(d => d.catalogo).filter(Boolean) as string[] || [];
+      const carsCats = carsData?.map(d => d.name).filter(Boolean) || [];
+      const allCats = [...new Set([...partsCats, ...carsCats])];
+      allCats.sort();
+      setCatalogos(allCats);
     };
     load();
   }, []);
