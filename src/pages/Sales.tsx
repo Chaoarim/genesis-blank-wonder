@@ -97,8 +97,8 @@ const Sales = () => {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Busca avançada de peças, catálogos por fornecedor, central de vendas completa com 21 módulos
-            e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
+            Busca avançada de peças, catálogos por fornecedor, catálogos por veículo com 61+ modelos,
+            central de vendas completa com 21 módulos e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
