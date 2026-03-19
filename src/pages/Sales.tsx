@@ -220,10 +220,26 @@ const Sales = () => {
 
             {/* Simulação visual */}
             <Card className="p-6 glass-card border-primary/20">
-              <div className="flex items-center gap-3 mb-4">
+               <div className="flex items-center gap-3 mb-4">
                 <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm font-medium text-primary">Catálogos por Fornecedor</span>
-                <span className="ml-auto text-xs text-muted-foreground">30+ fornecedores</span>
+                <span className="text-sm font-medium text-primary">Catálogos por Veículo</span>
+                <span className="ml-auto text-xs text-muted-foreground">61+ veículos</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {["GOL", "ONIX", "HB20", "HILUX", "CIVIC", "RENEGADE"].map((name) => (
+                  <div key={name} className="bg-muted/50 rounded-lg p-3 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                      <Car className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold">{name}</p>
+                      <p className="text-[10px] text-muted-foreground">Ver peças</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center mb-4">
+                <span className="text-[10px] text-muted-foreground">+ 55 veículos disponíveis</span>
               </div>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {["FRAS-LE", "NAKATA", "COFAP", "URBA", "MARCON", "VIEMAR"].map((name) => (
