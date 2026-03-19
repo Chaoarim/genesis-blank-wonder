@@ -194,7 +194,7 @@ const Sales = () => {
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Busca Inteligente de Peças
               </h2>
-              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
                 Pesquise por código do fabricante, descrição do produto, veículo ou fornecedor.
                 O motor de busca entende lateralidade (dianteiro/traseiro, esquerdo/direito),
                 filtra por modelo de veículo com precisão e exclui peças irrelevantes automaticamente.
@@ -202,10 +202,11 @@ const Sales = () => {
 
               <div className="space-y-3">
                 {[
-                  { icon: BookOpen, text: "Catálogos organizados por fornecedor com contagem de peças" },
-                  { icon: Search, text: "Busca por código, produto, veículo, marca e modelo" },
+                  { icon: Car, text: "Catálogos por Veículo — 61+ modelos organizados (Gol, Onix, HB20, Hilux...)" },
+                  { icon: BookOpen, text: "Catálogos por Fornecedor com contagem de peças (45+ fornecedores)" },
+                  { icon: Search, text: "Busca estrita por código, produto, veículo, marca e lateralidade" },
                   { icon: ImageIcon, text: "Pesquisa visual integrada — veja fotos reais via Google" },
-                  { icon: Database, text: "Base com milhares de peças sempre atualizada" },
+                  { icon: Database, text: "Base global com milhares de peças sempre atualizada" },
                 ].map((f, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
