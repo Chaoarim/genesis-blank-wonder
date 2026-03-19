@@ -679,10 +679,11 @@ const Sales = () => {
           <div className="space-y-3">
             {[
               { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar e fazer login." },
-              { q: "Como funciona a busca de peças?", a: "Você digita código, descrição ou veículo e o sistema consulta toda a base para encontrar as peças corretas. Entende lateralidade (dianteiro/traseiro, esquerdo/direito) automaticamente." },
+              { q: "Como funciona a busca de peças?", a: "Você digita código, descrição ou veículo e o sistema consulta toda a base para encontrar as peças corretas. Entende lateralidade (dianteiro/traseiro, esquerdo/direito) automaticamente e exclui resultados irrelevantes." },
+              { q: "O que são os Catálogos por Veículo?", a: "São 61+ catálogos organizados por modelo de veículo (ex: Gol, Onix, HB20, Hilux, Civic...). Ao selecionar um veículo, você vê todas as peças disponíveis para aquele modelo, podendo buscar dentro do catálogo com precisão total." },
               { q: "Posso importar meu estoque de uma planilha?", a: "Sim! O sistema aceita arquivos Excel e CSV. Ele reconhece variações de cabeçalho e formatos de moeda brasileira automaticamente." },
               { q: "O que é o Catálogo B2B?", a: "É uma loja online do seu estoque com link exclusivo. Seus clientes acessam, pesquisam e fazem pedidos direto pelo celular." },
-              { q: "Quantos módulos tem a Central de Vendas?", a: "São 21 módulos: Dashboard, Nova Venda, Pedidos, Histórico, Clientes, Carteira, Crédito, Estoque, Estoque Baixo, Importar, Cadastrar Produto, Markup, Ofertas, Cupons, Prazos, Alertas de Recompra, Fornecedores, Metas, Vendedores, Comissões, Garantias e Contas a Pagar." },
+              { q: "Quantos módulos tem a Central de Vendas?", a: "São 21 módulos: Dashboard, Nova Venda (com Consulta por Veículos integrada), Pedidos B2B, Histórico, Clientes, Carteira, Crédito, Estoque, Estoque Baixo, Importar, Cadastrar Produto, Markup, Ofertas, Cupons, Prazos, Alertas de Recompra, Fornecedores, Metas, Vendedores, Comissões, Garantias e Contas a Pagar." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
             ].map((faq, i) => (
               <Card key={i} className="p-5 glass-card">
