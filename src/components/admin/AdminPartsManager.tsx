@@ -52,22 +52,39 @@ export function AdminPartsManager() {
   // Load distinct fabricantes + catalogos
   useEffect(() => {
     const load = async () => {
-      const [{ data: fabData }, { data: catData }, { data: carsData }] = await Promise.all([
-        supabase.from('parts').select('fabricante').not('fabricante', 'is', null).not('fabricante', 'eq', '').limit(1000),
-        supabase.from('parts').select('catalogo').not('catalogo', 'is', null).not('catalogo', 'eq', '').limit(1000),
-        supabase.from('popular_cars').select('name').eq('is_active', true),
-      ]);
-      if (fabData) {
-        const unique = [...new Set(fabData.map(d => d.fabricante).filter(Boolean))] as string[];
-        unique.sort();
-        setFabricantes(unique);
+      // Fetch ALL distinct fabricantes and catalogos using pagination to bypass the 1000-row limit
+      const allFabs: string[] = [];
+      const allCats: string[] = [];
+      
+      // Fetch all fabricantes
+      let fabOffset = 0;
+      while (true) {
+        const { data } = await supabase.from('parts').select('fabricante').not('fabricante', 'is', null).not('fabricante', 'eq', '').range(fabOffset, fabOffset + 999);
+        if (!data || data.length === 0) break;
+        data.forEach(d => { if (d.fabricante) allFabs.push(d.fabricante); });
+        if (data.length < 1000) break;
+        fabOffset += 1000;
       }
-      // Merge catalogs from parts + popular_cars
-      const partsCats = catData?.map(d => d.catalogo).filter(Boolean) as string[] || [];
+      
+      // Fetch all catalogos
+      let catOffset = 0;
+      while (true) {
+        const { data } = await supabase.from('parts').select('catalogo').not('catalogo', 'is', null).not('catalogo', 'eq', '').range(catOffset, catOffset + 999);
+        if (!data || data.length === 0) break;
+        data.forEach(d => { if (d.catalogo) allCats.push(d.catalogo); });
+        if (data.length < 1000) break;
+        catOffset += 1000;
+      }
+
+      // Fetch popular_cars as fallback
+      const { data: carsData } = await supabase.from('popular_cars').select('name').eq('is_active', true);
       const carsCats = carsData?.map(d => d.name).filter(Boolean) || [];
-      const allCats = [...new Set([...partsCats, ...carsCats])];
-      allCats.sort();
-      setCatalogos(allCats);
+
+      const uniqueFabs = [...new Set(allFabs)].sort();
+      setFabricantes(uniqueFabs);
+
+      const uniqueCats = [...new Set([...allCats, ...carsCats])].sort();
+      setCatalogos(uniqueCats);
     };
     load();
   }, []);
