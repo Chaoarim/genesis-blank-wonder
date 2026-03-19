@@ -349,9 +349,10 @@ const Sales = () => {
               </p>
               <div className="space-y-3">
                 {[
-                  "Navegue por 30+ fornecedores organizados em cards visuais",
-                  "Busca dentro de cada catálogo por código, peça ou veículo",
-                  "Indicador Online/Carregando em tempo real",
+                  "Navegue por 45+ fornecedores organizados em cards visuais",
+                  "Catálogos por Veículo com 61+ modelos (Gol, Onix, Creta, Hilux...)",
+                  "Busca estrita dentro de cada catálogo — só mostra o que foi pedido",
+                  "Motor inteligente com lateralidade e exclusão de família de produtos",
                   "Pesquisa visual integrada com Google Imagens",
                   "Resultados com código, fabricante, produto e aplicação",
                 ].map((t, i) => (
