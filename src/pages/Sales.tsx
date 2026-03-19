@@ -97,8 +97,8 @@ const Sales = () => {
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Busca avançada de peças, catálogos por fornecedor, central de vendas completa com 21 módulos
-            e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
+            Busca avançada de peças, catálogos por fornecedor, catálogos por veículo com 61+ modelos,
+            central de vendas completa com 21 módulos e catálogo B2B online — tudo em uma única plataforma feita para lojas de auto peças, auto centers e oficinas.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
@@ -194,7 +194,7 @@ const Sales = () => {
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Busca Inteligente de Peças
               </h2>
-              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
                 Pesquise por código do fabricante, descrição do produto, veículo ou fornecedor.
                 O motor de busca entende lateralidade (dianteiro/traseiro, esquerdo/direito),
                 filtra por modelo de veículo com precisão e exclui peças irrelevantes automaticamente.
@@ -202,10 +202,11 @@ const Sales = () => {
 
               <div className="space-y-3">
                 {[
-                  { icon: BookOpen, text: "Catálogos organizados por fornecedor com contagem de peças" },
-                  { icon: Search, text: "Busca por código, produto, veículo, marca e modelo" },
+                  { icon: Car, text: "Catálogos por Veículo — 61+ modelos organizados (Gol, Onix, HB20, Hilux...)" },
+                  { icon: BookOpen, text: "Catálogos por Fornecedor com contagem de peças (45+ fornecedores)" },
+                  { icon: Search, text: "Busca estrita por código, produto, veículo, marca e lateralidade" },
                   { icon: ImageIcon, text: "Pesquisa visual integrada — veja fotos reais via Google" },
-                  { icon: Database, text: "Base com milhares de peças sempre atualizada" },
+                  { icon: Database, text: "Base global com milhares de peças sempre atualizada" },
                 ].map((f, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -219,10 +220,26 @@ const Sales = () => {
 
             {/* Simulação visual */}
             <Card className="p-6 glass-card border-primary/20">
-              <div className="flex items-center gap-3 mb-4">
+               <div className="flex items-center gap-3 mb-4">
                 <div className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-                <span className="text-sm font-medium text-primary">Catálogos por Fornecedor</span>
-                <span className="ml-auto text-xs text-muted-foreground">30+ fornecedores</span>
+                <span className="text-sm font-medium text-primary">Catálogos por Veículo</span>
+                <span className="ml-auto text-xs text-muted-foreground">61+ veículos</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {["GOL", "ONIX", "HB20", "HILUX", "CIVIC", "RENEGADE"].map((name) => (
+                  <div key={name} className="bg-muted/50 rounded-lg p-3 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0">
+                      <Car className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold">{name}</p>
+                      <p className="text-[10px] text-muted-foreground">Ver peças</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center mb-4">
+                <span className="text-[10px] text-muted-foreground">+ 55 veículos disponíveis</span>
               </div>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {["FRAS-LE", "NAKATA", "COFAP", "URBA", "MARCON", "VIEMAR"].map((name) => (
@@ -332,9 +349,10 @@ const Sales = () => {
               </p>
               <div className="space-y-3">
                 {[
-                  "Navegue por 30+ fornecedores organizados em cards visuais",
-                  "Busca dentro de cada catálogo por código, peça ou veículo",
-                  "Indicador Online/Carregando em tempo real",
+                  "Navegue por 45+ fornecedores organizados em cards visuais",
+                  "Catálogos por Veículo com 61+ modelos (Gol, Onix, Creta, Hilux...)",
+                  "Busca estrita dentro de cada catálogo — só mostra o que foi pedido",
+                  "Motor inteligente com lateralidade e exclusão de família de produtos",
                   "Pesquisa visual integrada com Google Imagens",
                   "Resultados com código, fabricante, produto e aplicação",
                 ].map((t, i) => (
@@ -372,7 +390,7 @@ const Sales = () => {
               {
                 icon: BarChart3,
                 title: 'Principal',
-                items: ['Dashboard', 'Nova Venda', 'Pedidos B2B', 'Histórico', 'Guia Como Usar'],
+                items: ['Dashboard', 'Nova Venda (Estoque + Catálogo Global)', 'Pedidos B2B', 'Histórico', 'Guia Como Usar'],
               },
               {
                 icon: Users,
@@ -611,8 +629,11 @@ const Sales = () => {
             <ul className="space-y-2 mb-8">
               {[
                 "Busca avançada de peças (código, descrição, veículo)",
-                "Catálogos visuais por fornecedor (30+)",
+                "Catálogos por Veículo — 61+ modelos organizados",
+                "Catálogos por Fornecedor (45+ fornecedores)",
+                "Motor de busca estrita com lateralidade e exclusão inteligente",
                 "Central de Vendas completa (21 módulos)",
+                "Consulta por Veículos integrada na Nova Venda",
                 "Catálogo B2B online com link exclusivo",
                 "Controle de estoque com importação de planilhas",
                 "Upload de fotos em lote por código",
@@ -620,6 +641,7 @@ const Sales = () => {
                 "Markup configurável (distribuidor/revenda)",
                 "Comissões, metas e relatórios de equipe",
                 "Garantias, devoluções e contas a pagar",
+                "Cadastro manual de peças com geração automática de chave de busca",
                 "Suporte via WhatsApp",
               ].map((b, i) => (
                 <li key={i} className="flex items-center gap-2.5">
@@ -657,10 +679,11 @@ const Sales = () => {
           <div className="space-y-3">
             {[
               { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar e fazer login." },
-              { q: "Como funciona a busca de peças?", a: "Você digita código, descrição ou veículo e o sistema consulta toda a base para encontrar as peças corretas. Entende lateralidade (dianteiro/traseiro, esquerdo/direito) automaticamente." },
+              { q: "Como funciona a busca de peças?", a: "Você digita código, descrição ou veículo e o sistema consulta toda a base para encontrar as peças corretas. Entende lateralidade (dianteiro/traseiro, esquerdo/direito) automaticamente e exclui resultados irrelevantes." },
+              { q: "O que são os Catálogos por Veículo?", a: "São 61+ catálogos organizados por modelo de veículo (ex: Gol, Onix, HB20, Hilux, Civic...). Ao selecionar um veículo, você vê todas as peças disponíveis para aquele modelo, podendo buscar dentro do catálogo com precisão total." },
               { q: "Posso importar meu estoque de uma planilha?", a: "Sim! O sistema aceita arquivos Excel e CSV. Ele reconhece variações de cabeçalho e formatos de moeda brasileira automaticamente." },
               { q: "O que é o Catálogo B2B?", a: "É uma loja online do seu estoque com link exclusivo. Seus clientes acessam, pesquisam e fazem pedidos direto pelo celular." },
-              { q: "Quantos módulos tem a Central de Vendas?", a: "São 21 módulos: Dashboard, Nova Venda, Pedidos, Histórico, Clientes, Carteira, Crédito, Estoque, Estoque Baixo, Importar, Cadastrar Produto, Markup, Ofertas, Cupons, Prazos, Alertas de Recompra, Fornecedores, Metas, Vendedores, Comissões, Garantias e Contas a Pagar." },
+              { q: "Quantos módulos tem a Central de Vendas?", a: "São 21 módulos: Dashboard, Nova Venda (com Consulta por Veículos integrada), Pedidos B2B, Histórico, Clientes, Carteira, Crédito, Estoque, Estoque Baixo, Importar, Cadastrar Produto, Markup, Ofertas, Cupons, Prazos, Alertas de Recompra, Fornecedores, Metas, Vendedores, Comissões, Garantias e Contas a Pagar." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
             ].map((faq, i) => (
               <Card key={i} className="p-5 glass-card">
