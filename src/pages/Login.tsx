@@ -37,7 +37,16 @@ const Login = () => {
 
       if (data.user) {
         toast.success("Login realizado com sucesso!");
-        navigate("/app");
+        
+        // Check if user is a seller → redirect to /vendas
+        const { data: sellerData } = await supabase
+          .from('seller_users')
+          .select('id')
+          .eq('seller_auth_id', data.user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        navigate("/vendas");
       }
     } catch (error) {
       toast.error("Erro ao fazer login. Tente novamente.");

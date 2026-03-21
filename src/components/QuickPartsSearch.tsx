@@ -1,74 +1,30 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Search, X, Package, ChevronDown, Globe } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Part } from '@/hooks/usePartsDatabase';
+import { smartFilterParts } from '@/lib/partsSearchEngine';
+import { PartThumbnail } from './PartThumbnail';
+import { toast } from 'sonner';
 
 interface QuickPartsSearchProps {
   parts: Part[];
   disabled?: boolean;
+  onAddToQuote?: (part: { codigo: string; fornecedor: string; produto: string; aplicacao: string }) => void;
 }
 
 const PAGE_SIZE = 50;
 
-export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
+export function QuickPartsSearch({ parts, disabled, onAddToQuote }: QuickPartsSearchProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const normalizeForSearch = (text: string) =>
-    text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
   const allResults = useMemo(() => {
-    const q = normalizeForSearch(search);
-    if (q.length < 2) return [];
-
-    const terms = q.split(' ').filter(t => t.length >= 2);
-    if (terms.length === 0) return [];
-
-    const scored: { part: Part; score: number }[] = [];
-
-    for (const part of parts) {
-      const code = normalizeForSearch(part.fabricante);
-      const produto = normalizeForSearch(part.produto);
-      const fornecedor = normalizeForSearch(part.fornecedor);
-      const chave = normalizeForSearch(part.chaveDeBusca);
-
-      let score = 0;
-      let matched = 0;
-
-      for (const term of terms) {
-        let termScore = 0;
-        if (code === term) termScore += 10;
-        else if (code.includes(term)) termScore += 5;
-
-        if (fornecedor.includes(term)) termScore += 3;
-        if (produto.includes(term)) termScore += 2;
-        if (chave.includes(term)) termScore += 1;
-
-        if (termScore > 0) {
-          matched++;
-          score += termScore;
-        }
-      }
-
-      const ratio = matched / terms.length;
-      if (ratio >= 0.5 && score > 0) {
-        scored.push({ part, score });
-      }
-    }
-
-    return scored
-      .sort((a, b) => b.score - a.score)
-      .map(s => s.part);
+    if (search.length < 2) return [];
+    return smartFilterParts(parts, search);
   }, [search, parts]);
 
   const visibleResults = useMemo(() => allResults.slice(0, visibleCount), [allResults, visibleCount]);
@@ -175,9 +131,9 @@ export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
                             key={`${part.fabricante}-${fornecedor}-${idx}`}
                             className="px-4 py-2.5 hover:bg-accent/50 transition-colors"
                           >
-                            <div className="flex items-start gap-2">
-                              <Package className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                              <div className="min-w-0 flex-1">
+                          <div className="flex items-start gap-2">
+                            <PartThumbnail imageUrl={part.imageUrl} alt={part.produto} className="w-9 h-9 mt-0.5" />
+                            <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-mono font-semibold text-sm text-primary">
                                     {part.fabricante}
@@ -200,11 +156,31 @@ export function QuickPartsSearch({ parts, disabled }: QuickPartsSearchProps) {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
-                                  window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=isch`, '_blank');
+                                  window.open(`https://gemini.google.com/app?q=${encodeURIComponent(query)}`, '_blank');
                                 }}
                               >
-                                <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                                <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
                               </Button>
+                              {onAddToQuote && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0 mt-0.5 text-green-500 hover:text-green-400"
+                                  title="Adicionar ao orçamento"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddToQuote({
+                                      codigo: part.fabricante || '',
+                                      fornecedor: part.fornecedor || '',
+                                      produto: part.produto || '',
+                                      aplicacao: [part.marca, part.modelo, part.ano].filter(Boolean).join(' '),
+                                    });
+                                    toast.success('Peça adicionada ao orçamento');
+                                  }}
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ))}

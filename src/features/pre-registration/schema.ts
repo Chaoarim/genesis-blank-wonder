@@ -8,6 +8,11 @@ export const passwordSchema = z
   .regex(/[0-9]/, "Senha deve ter pelo menos um número");
 
 export const preRegistrationSchema = z.object({
+  company_name: z
+    .string()
+    .trim()
+    .min(2, "Nome da empresa deve ter pelo menos 2 caracteres")
+    .max(100, "Nome da empresa muito longo"),
   full_name: z
     .string()
     .trim()

@@ -4,13 +4,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Sales from "./pages/Sales";
+import SalesHub from "./pages/SalesHub";
+import CatalogB2B from "./pages/CatalogB2B";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import PartsSearch from "./pages/PartsSearch";
 import Admin from "./pages/Admin";
 import PaymentControl from "./pages/PaymentControl";
 import PreRegistration from "./pages/PreRegistration";
 import PixPayment from "./pages/PixPayment";
+import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
 import NotFound from "./pages/NotFound";
 
@@ -31,12 +35,18 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           
-          {/* Área logada */}
-          <Route path="/app" element={<Dashboard />} />
+          {/* Área logada — /app redireciona para /vendas */}
+          <Route path="/app" element={<Navigate to="/vendas" replace />} />
+          <Route path="/buscar-pecas" element={<PartsSearch />} />
+          <Route path="/vendas" element={<SalesHub />} />
+          
+          {/* Catálogo B2B público */}
+          <Route path="/catalogo/:sellerId" element={<CatalogB2B />} />
           
           {/* Pré-Cadastro e Pagamento */}
           <Route path="/pre-cadastro" element={<PreRegistration />} />
           <Route path="/pagamento-pix" element={<PixPayment />} />
+          <Route path="/renovacao-pix" element={<PixRenewal />} />
           
           {/* Admin */}
           <Route path="/admin" element={<Admin />} />

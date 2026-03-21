@@ -1,0 +1,1 @@
+ALTER TABLE public.seller_users ADD COLUMN IF NOT EXISTS password_plain text;

@@ -23,6 +23,9 @@ export interface Part {
   ano: string;
   chaveDeBusca: string;
   contextoIA: string;
+  codigosSimilares?: string;
+  imageUrl?: string;
+  catalogo?: string;
 }
 
 export function usePartsDatabase() {
@@ -30,6 +33,11 @@ export function usePartsDatabase() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refreshParts = useCallback(() => {
+    setRefreshKey(k => k + 1);
+  }, []);
 
   useEffect(() => {
     const loadDatabase = async () => {
@@ -71,6 +79,9 @@ export function usePartsDatabase() {
                   ano: row.anos_aplicacao || '',
                   chaveDeBusca: row.chave_de_busca || '',
                   contextoIA: row.contexto_ia || '',
+                  codigosSimilares: row.codigos_similares || '',
+                  imageUrl: row.image_url || undefined,
+                  catalogo: (row as any).catalogo || '',
                 });
               }
             }
@@ -82,7 +93,8 @@ export function usePartsDatabase() {
           setParts(allParts);
           setLoadProgress(100);
           setIsLoading(false);
-          console.log(`Base de dados carregada do banco: ${allParts.length} peças`);
+          const withImages = allParts.filter(p => p.imageUrl).length;
+          console.log(`Base de dados carregada do banco: ${allParts.length} peças (${withImages} com imagem)`);
           return;
         }
 
@@ -147,6 +159,7 @@ export function usePartsDatabase() {
       const modeloVeiculoIdx = Math.max(normalizedHeader.indexOf('MODELO_VEICULO'), 5);
       const anosAplicacaoIdx = Math.max(normalizedHeader.indexOf('ANOS_APLICACAO'), 6);
       const contextoIAIdx = Math.max(normalizedHeader.indexOf('CONTEXTO_IA'), 7);
+      const codigosSimilaresIdx = Math.max(normalizedHeader.indexOf('CODIGOS_SIMILARES'), 8);
 
       setLoadProgress(60);
 
@@ -170,6 +183,7 @@ export function usePartsDatabase() {
               ano: (values[anosAplicacaoIdx] || '').trim(),
               chaveDeBusca: (values[chaveIdx] || '').trim(),
               contextoIA: (values[contextoIAIdx] || '').trim(),
+              codigosSimilares: (values[codigosSimilaresIdx] || '').trim(),
             });
           }
         }
@@ -185,7 +199,7 @@ export function usePartsDatabase() {
     };
 
     loadDatabase();
-  }, []);
+  }, [refreshKey]);
 
   const normalizeForSearch = useCallback((text: string) => {
     return text
@@ -288,5 +302,6 @@ export function usePartsDatabase() {
     totalParts: parts.length,
     searchParts,
     getRelevantPartsForAI,
+    refreshParts,
   };
 }

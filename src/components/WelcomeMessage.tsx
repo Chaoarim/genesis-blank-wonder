@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Car, Bot, BookOpen, Search } from 'lucide-react';
+import { Car, Package, BookOpen, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Part } from '@/hooks/usePartsDatabase';
-import { SupplierChatDialog } from './SupplierChatDialog';
+import { SupplierQuickSearch } from './SupplierQuickSearch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -15,7 +15,6 @@ interface WelcomeMessageProps {
 
 export function WelcomeMessage({ onExampleClick, parts, onAddToQuote, quoteItems = [] }: WelcomeMessageProps) {
   const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
-  const [loadingSupplier, setLoadingSupplier] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Extract unique suppliers and count parts per supplier
@@ -92,11 +91,7 @@ export function WelcomeMessage({ onExampleClick, parts, onAddToQuote, quoteItems
   }, [suppliers, searchTerm]);
 
   const handleOpenCatalog = (supplierName: string) => {
-    setLoadingSupplier(supplierName);
-    setTimeout(() => {
-      setSelectedSupplier(supplierName);
-      setLoadingSupplier(null);
-    }, 500);
+    setSelectedSupplier(supplierName);
   };
 
   return (
@@ -150,11 +145,7 @@ export function WelcomeMessage({ onExampleClick, parts, onAddToQuote, quoteItems
                     {/* Header com ícone/robô */}
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 group-hover:bg-primary/20">
-                        {loadingSupplier === supplier.name ? (
-                          <Bot className="w-5 h-5 text-primary animate-bounce" />
-                        ) : (
-                          supplier.name.substring(0, 2)
-                        )}
+                        {supplier.name.substring(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{supplier.name}</p>
@@ -172,23 +163,13 @@ export function WelcomeMessage({ onExampleClick, parts, onAddToQuote, quoteItems
                     {/* Botão de ação */}
                     <div className="mt-auto">
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="sm"
                         onClick={() => handleOpenCatalog(supplier.name)}
-                        disabled={loadingSupplier === supplier.name}
                         className="h-7 text-xs gap-1.5 w-full justify-center"
                       >
-                        {loadingSupplier === supplier.name ? (
-                          <>
-                            <Bot className="w-3.5 h-3.5 animate-bounce" />
-                            Consultando...
-                          </>
-                        ) : (
-                          <>
-                            <Bot className="w-3.5 h-3.5" />
-                            Consultar IA
-                          </>
-                        )}
+                        <Package className="w-3.5 h-3.5" />
+                        Consulta rápida
                       </Button>
                     </div>
                   </div>
@@ -215,13 +196,12 @@ export function WelcomeMessage({ onExampleClick, parts, onAddToQuote, quoteItems
         </div>
       </div>
 
-      <SupplierChatDialog
+      <SupplierQuickSearch
         open={!!selectedSupplier}
         onOpenChange={(open) => !open && setSelectedSupplier(null)}
         supplierName={selectedSupplier || ''}
         parts={parts}
         onAddToQuote={onAddToQuote}
-        quoteItems={quoteItems}
       />
     </>
   );

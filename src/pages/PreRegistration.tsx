@@ -14,6 +14,7 @@ const PreRegistration = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    company_name: "",
     full_name: "",
     email: "",
     whatsapp: "",
@@ -80,10 +81,11 @@ const PreRegistration = () => {
 
     try {
       const { error } = await supabase.from("pre_registrations").insert({
+        company_name: formData.company_name.trim(),
         full_name: formData.full_name.trim(),
         email: formData.email.trim().toLowerCase(),
         whatsapp: digitsOnly(formData.whatsapp),
-        password_hash: formData.password, // Será hasheado no backend ao criar usuário
+        password_hash: formData.password,
         status: "pending",
       });
 
@@ -150,12 +152,29 @@ const PreRegistration = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="full_name">Nome Completo *</Label>
+              <Label htmlFor="company_name">Nome da Empresa *</Label>
+              <Input
+                id="company_name"
+                name="company_name"
+                type="text"
+                placeholder="Digite o nome da sua empresa"
+                value={formData.company_name}
+                onChange={handleChange}
+                autoComplete="organization"
+                className={errors.company_name ? "border-destructive" : ""}
+              />
+              {errors.company_name && (
+                <p className="text-sm text-destructive">{errors.company_name}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Seu Nome *</Label>
               <Input
                 id="full_name"
                 name="full_name"
                 type="text"
-                placeholder="Digite seu nome completo"
+                placeholder="Digite seu nome"
                 value={formData.full_name}
                 onChange={handleChange}
                 autoComplete="name"

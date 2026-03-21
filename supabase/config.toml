@@ -1,10 +1,4 @@
-project_id = "usoezyigkgpnnvcvciwo"
+project_id = "orqysvmrmyqebjntloac"
 
-[functions.kiwify-webhook]
-verify_jwt = false
-
-[functions.simulate-webhook]
-verify_jwt = false
-
-[functions.import-parts]
+[functions.catalog-login]
 verify_jwt = false

@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory_items ADD COLUMN visible_catalog boolean NOT NULL DEFAULT false;
