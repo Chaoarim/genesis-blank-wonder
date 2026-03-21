@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import PartsSearch from "./pages/PartsSearch";
-import Admin from "./pages/Admin";
+import Admin from "./pages/AdminNew";
 import PaymentControl from "./pages/PaymentControl";
 import PreRegistration from "./pages/PreRegistration";
 import PixPayment from "./pages/PixPayment";

@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPlus, UserMinus, UserCheck, BarChart3, Users, DollarSign, TrendingUp, Activity, Database, Zap, Trash2, Eye, EyeOff, Copy, Key, Upload } from "lucide-react";
+import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPlus, UserMinus, UserCheck, BarChart3, Users, DollarSign, TrendingUp, Activity, Database, Zap, Trash2, Eye, EyeOff, Copy, Key, Upload, Search, Pencil } from "lucide-react";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { PartImageUploader } from "@/components/admin/PartImageUploader";
 import { AdminPartsManager } from "@/components/admin/AdminPartsManager";
@@ -65,6 +67,9 @@ const Admin = () => {
   const [catalogos, setCatalogos] = useState<{name: string; count: number}[]>([]);
   const [catalogName, setCatalogName] = useState('');
   const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [renamingCatalog, setRenamingCatalog] = useState<{oldName: string, newName: string} | null>(null);
+  const [renamingCatalogLoading, setRenamingCatalogLoading] = useState(false);
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -108,16 +113,48 @@ const Admin = () => {
   }, [isAdmin]);
 
   const fetchCatalogos = async () => {
-    const { data } = await supabase
-      .from('parts')
-      .select('catalogo');
-    if (data) {
+    try {
+      setLoadingData(true);
+      const allCatalogos: { catalogo: string | null }[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('parts')
+          .select('catalogo')
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allCatalogos.push(...data);
+          if (data.length < pageSize) hasMore = false;
+          else page++;
+        } else {
+          hasMore = false;
+        }
+        
+        // Safety break to prevent infinite loops (max 50k items)
+        if (page > 50) break;
+      }
+
       const map = new Map<string, number>();
-      for (const row of data) {
+      allCatalogos.forEach(row => {
         const name = row.catalogo || 'Sem catálogo';
         map.set(name, (map.get(name) || 0) + 1);
-      }
-      setCatalogos(Array.from(map.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name)));
+      });
+      
+      const sortedCatalogos = Array.from(map.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      setCatalogos(sortedCatalogos);
+    } catch (error) {
+      console.error("Erro ao buscar catálogos:", error);
+      toast.error("Erro ao carregar lista de catálogos");
+    } finally {
+      setLoadingData(false);
     }
   };
 
@@ -592,6 +629,40 @@ const Admin = () => {
     }
   };
 
+  const handleRenameCatalog = async () => {
+    if (!renamingCatalog || !renamingCatalog.newName.trim() || renamingCatalog.newName === renamingCatalog.oldName) return;
+    try {
+      setRenamingCatalogLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-parts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ 
+            action: 'rename_catalog', 
+            catalogo: renamingCatalog.oldName === 'Sem catálogo' ? '__null__' : renamingCatalog.oldName,
+            new_catalogo: renamingCatalog.newName.trim()
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Erro ao renomear');
+      toast.success(`Catálogo renomeado com sucesso!`);
+      fetchCatalogos();
+      setRenamingCatalog(null);
+    } catch (error) {
+      toast.error('Erro ao renomear catálogo');
+    } finally {
+      setRenamingCatalogLoading(false);
+    }
+  };
+
   const formatWhatsapp = (value: string) => {
     return value.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
   };
@@ -766,7 +837,7 @@ const Admin = () => {
           <TabsList>
             <TabsTrigger value="registrations" className="relative">
               <UserPlus className="w-4 h-4 mr-2" />
-              Pré-Cadastros
+              Pré-Cadastros (V3)
               {pendingCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
                   {pendingCount}
@@ -778,11 +849,11 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="payments" onClick={() => navigate('/pagamentos')}>
               <DollarSign className="w-4 h-4 mr-2" />
-              Pagamentos
+              Pagamentos (V3)
             </TabsTrigger>
             <TabsTrigger value="database">
               <Database className="w-4 h-4 mr-2" />
-              Importar Catálogo de Veículo
+              Veículos (V3)
             </TabsTrigger>
           </TabsList>
 
@@ -1036,24 +1107,77 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="database">
-            {/* Catálogos existentes */}
-            {catalogos.length > 0 && (
-              <Card className="p-6 glass-card mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
-                  <Database className="w-5 h-5 text-primary" />
+            {/* Seção de Catálogos */}
+            <Card className="p-6 glass-card mb-6">
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center gap-2 w-full p-2 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                    <Input
+                      placeholder="PESQUISAR VEÍCULO / CATÁLOGO..."
+                      value={catalogSearch}
+                      onChange={(e) => setCatalogSearch(e.target.value)}
+                      className="pl-9 h-11 border-primary/30 bg-background text-lg font-bold"
+                    />
+                  </div>
+                  <Button variant="default" size="icon" className="h-11 w-11 shadow-lg" onClick={fetchCatalogos} title="Atualizar lista">
+                    <RefreshCw className="w-5 h-5" />
+                  </Button>
+                </div>
 
-                  Catálogos por Veículo ({catalogos.length})
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {catalogos.map((cat) => (
-                    <div key={cat.name} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-                      <div>
-                        <p className="font-semibold text-sm">{cat.name}</p>
-                        <p className="text-xs text-muted-foreground">{cat.count.toLocaleString()} peças</p>
-                      </div>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-black flex items-center gap-2 text-primary uppercase tracking-tighter">
+                    <Database className="w-6 h-6" />
+                    Gestão de Veículos (V3) {catalogos.length > 0 && `(${catalogos.length})`}
+                  </h2>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {catalogos.filter(cat => cat.name.toLowerCase().includes(catalogSearch.toLowerCase())).map((cat) => (
+                  <div key={cat.name} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:border-primary/30 transition-colors">
+                    <div className="min-w-0 pr-2">
+                      <p className="font-semibold text-sm truncate" title={cat.name}>{cat.name}</p>
+                      <p className="text-xs text-muted-foreground">{cat.count.toLocaleString()} peças</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Dialog open={renamingCatalog?.oldName === cat.name} onOpenChange={(open) => !open && setRenamingCatalog(null)}>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => setRenamingCatalog({ oldName: cat.name, newName: cat.name })}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Renomear Catálogo</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Novo nome para '<span className="text-primary">{cat.name}</span>'</label>
+                              <Input 
+                                value={renamingCatalog?.newName || ''} 
+                                onChange={(e) => setRenamingCatalog(prev => prev ? { ...prev, newName: e.target.value } : null)} 
+                                placeholder="Digite o novo nome..."
+                                className="h-10"
+                                autoFocus
+                              />
+                            </div>
+                            <Button 
+                              className="w-full h-10" 
+                              onClick={handleRenameCatalog} 
+                              disabled={renamingCatalogLoading || !renamingCatalog?.newName.trim() || renamingCatalog?.newName === cat.name}
+                            >
+                              {renamingCatalogLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                              Salvar Alterações
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -1061,22 +1185,38 @@ const Admin = () => {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Excluir Catálogo</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Excluir o catálogo <strong>{cat.name}</strong> com {cat.count} peças? Esta ação não pode ser desfeita.
+                              Deseja excluir permanentemente o catálogo <strong>{cat.name}</strong> contendo {cat.count.toLocaleString()} peças?<br/><br/>
+                              Esta ação removerá todas as peças vinculadas e não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteCatalog(cat.name)} className="bg-destructive text-destructive-foreground">
-                              Excluir
+                            <AlertDialogAction onClick={() => handleDeleteCatalog(cat.name)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Confirmar Exclusão
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+                  </div>
+                ))}
+                
+                {(catalogos.length === 0 || catalogos.filter(cat => cat.name.toLowerCase().includes(catalogSearch.toLowerCase())).length === 0) && (
+                  <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-lg">
+                    <Database className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm font-medium">
+                      {catalogos.length === 0 
+                        ? 'Nenhum catálogo encontrado no banco de dados.' 
+                        : `Nenhum catálogo corresponde a "${catalogSearch}".`}
+                    </p>
+                    {catalogos.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">Use o formulário abaixo para importar seu primeiro arquivo CSV.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
+
 
             {/* Upload novo catálogo */}
             <Card className="p-6 glass-card">

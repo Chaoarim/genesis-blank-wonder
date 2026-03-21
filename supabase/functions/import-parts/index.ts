@@ -45,9 +45,8 @@ serve(async (req) => {
       });
     }
 
-    const { parts, clearFirst, catalogo, action } = await req.json();
+    const { parts, clearFirst, catalogo, action, new_catalogo } = await req.json();
 
-    // Handle catalog deletion
     if (action === "delete_catalog") {
       let deleteQuery = supabase.from("parts").delete();
       if (catalogo === "__null__" || !catalogo) {
@@ -65,6 +64,27 @@ serve(async (req) => {
       }
       return new Response(
         JSON.stringify({ success: true, message: `Catálogo "${catalogo}" excluído` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "rename_catalog") {
+      let updateQuery = supabase.from("parts").update({ catalogo: new_catalogo });
+      if (catalogo === "__null__" || !catalogo) {
+        updateQuery = updateQuery.is("catalogo", null);
+      } else {
+        updateQuery = updateQuery.eq("catalogo", catalogo);
+      }
+      const { error: updateError } = await updateQuery;
+
+      if (updateError) {
+        return new Response(JSON.stringify({ error: "Erro ao renomear catálogo: " + updateError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ success: true, message: `Catálogo renomeado para "${new_catalogo}"` }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
