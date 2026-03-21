@@ -441,7 +441,6 @@ const AdminNew = () => {
         <Tabs defaultValue="registrations" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="registrations" className="bg-primary/5">USUÁRIOS (TODOS)</TabsTrigger>
-            <TabsTrigger value="logs">LOGS DE WEBHOOK</TabsTrigger>
             <TabsTrigger value="database" className="bg-primary/10 font-bold">BASE DE DADOS V4</TabsTrigger>
             <TabsTrigger value="analytics">VENDAS & MÉTRICAS</TabsTrigger>
           </TabsList>
