@@ -255,25 +255,138 @@ const AdminNew = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !catalogName.trim()) return;
+    if (!file) return;
+
+    if (!catalogName.trim()) {
+      toast.error('Digite o nome do catálogo (veículo) antes de importar');
+      e.target.value = '';
+      return;
+    }
+    
     setImportingParts(true);
-    setImportProgress('Processando...');
+    setImportProgress('Lendo arquivo CSV...');
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error('Sessão expirada');
+        return;
+      }
+
       const text = await file.text();
+
+      const parseCSVLine = (line: string): string[] => {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        // Detectar delimitador (vírgula ou ponto e vírgula)
+        const delimiter = line.includes(';') && !line.includes(',') ? ';' : ',';
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') inQuotes = !inQuotes;
+          else if (char === delimiter && !inQuotes) { result.push(current.trim()); current = ''; }
+          else current += char;
+        }
+        result.push(current.trim());
+        return result;
+      };
+
       const lines = text.split('\n');
-      const parts = lines.slice(1).map(line => {
-        const v = line.split(',');
-        if (v.length < 3) return null;
-        return { fabricante: v[2] || '', codigo_peca: v[0] || '', descricao: v[1] || '', chave_de_busca: `${v[2]} ${v[0]} ${v[1]} ${catalogName}`, contexto_ia: v[3] || '' };
-      }).filter(Boolean);
-      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-parts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ parts, clearFirst: importMode === 'replace', catalogo: catalogName.trim() }),
-      });
-      toast.success('Importado!'); fetchCatalogos();
-    } catch (e) { toast.error('Erro'); } finally { setImportingParts(false); e.target.value = ''; }
+      if (lines.length < 2) {
+        toast.error('Arquivo CSV vazio ou inválido');
+        return;
+      }
+
+      const header = parseCSVLine(lines[0]);
+      const norm = (h: string) => h.replace(/^\uFEFF/, '').trim().toUpperCase();
+      const nh = header.map(norm);
+
+      // Mapeamento flexível de colunas
+      const idxCodigo = Math.max(nh.indexOf('CÓDIGO'), nh.indexOf('CODIGO'), nh.indexOf('CODIGO_PECA'), 0);
+      const idxProduto = Math.max(nh.indexOf('PRODUTO'), nh.indexOf('DESCRICAO'), 1);
+      const idxFornecedor = Math.max(nh.indexOf('FORNECEDOR'), nh.indexOf('FABRICANTE'), 2);
+      const idxAplicacao = Math.max(nh.indexOf('APLICAÇÃO'), nh.indexOf('APLICACAO'), nh.indexOf('CHAVE_DE_BUSCA'), 3);
+
+      const allParts: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const v = parseCSVLine(line);
+        if (v.length >= 2) {
+          const codigo = (v[idxCodigo] || '').trim();
+          const produto = (v[idxProduto] || '').trim();
+          const fornecedor = (v[idxFornecedor] || '').trim();
+          const aplicacao = (v[idxAplicacao] || '').trim();
+
+          // Concatenar campos para a chave de busca para facilitar a vida da IA/Busca
+          const chave = [fornecedor, codigo, produto, aplicacao, catalogName.trim()].filter(Boolean).join(' ');
+
+          allParts.push({
+            fabricante: fornecedor,
+            codigo_peca: codigo,
+            descricao: produto,
+            chave_de_busca: chave,
+            marca_veiculo: '',
+            modelo_veiculo: '',
+            anos_aplicacao: '',
+            contexto_ia: aplicacao,
+          });
+        }
+      }
+
+      if (allParts.length === 0) {
+        toast.error('Nenhuma peça encontrada no CSV. Verifique o formato.');
+        return;
+      }
+
+      const clearFirst = importMode === 'replace';
+      setImportProgress(`${clearFirst ? 'Substituindo' : 'Adicionando'} ${allParts.length} peças ao catálogo "${catalogName}"...`);
+
+      const chunkSize = 2000; // Chunk menor para maior estabilidade
+      let totalInserted = 0;
+
+      for (let i = 0; i < allParts.length; i += chunkSize) {
+        const chunk = allParts.slice(i, i + chunkSize);
+        setImportProgress(`Enviando lote ${Math.floor(i / chunkSize) + 1} (${i + 1}-${Math.min(i + chunkSize, allParts.length)}) de ${allParts.length}...`);
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-parts`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              parts: chunk,
+              clearFirst: clearFirst && i === 0,
+              catalogo: catalogName.trim(),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const result = await response.json();
+          throw new Error(result.error || 'Erro na importação');
+        }
+        
+        const result = await response.json();
+        totalInserted += result.inserted || 0;
+      }
+
+      setImportProgress(`✅ SUCESSO! ${totalInserted} peças importadas no catálogo "${catalogName}".`);
+      toast.success(`${totalInserted} peças importadas com sucesso!`);
+      setCatalogName('');
+      fetchCatalogos();
+    } catch (error) {
+      console.error('Import error:', error);
+      setImportProgress('❌ Erro na importação. Verifique o console.');
+      toast.error(error instanceof Error ? error.message : 'Erro na importação');
+    } finally {
+      setImportingParts(false);
+      e.target.value = '';
+    }
   };
 
   const handleDeleteCatalog = async (name: string) => {
@@ -446,14 +559,72 @@ const AdminNew = () => {
               </div>
             </Card>
 
-            <Card className="p-6 mt-6 bg-secondary/20">
-              <h3 className="text-lg font-bold mb-4">Importar Planilha (.CSV)</h3>
-              <div className="flex flex-col md:flex-row gap-4">
-                <Input placeholder="Nome do Veículo" value={catalogName} onChange={e => setCatalogName(e.target.value)} className="h-10" />
-                <Button variant="default" className="h-10 relative">
-                  <Upload className="w-4 h-4 mr-2" /> SELECIONAR ARQUIVO
-                  <input type="file" accept=".csv" onChange={handleFileUpload} className="absolute inset-0 opacity-0" />
-                </Button>
+            <Card className="p-6 mt-6 bg-secondary/10 border-primary/20">
+              <h3 className="text-xl font-black mb-4 flex items-center gap-2 text-primary">
+                <Upload className="w-6 h-6" /> IMPORTAR PLANILHA (.CSV)
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Colunas esperadas: <strong>Código, Produto, Fornecedor, Aplicação</strong>. 
+                O sistema detecta automaticamente se você usar ";" ou ",".
+              </p>
+              
+              <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Nome do Veículo / Catálogo *</label>
+                    <Input 
+                      placeholder="Ex: Toyota Hilux 2024..." 
+                      value={catalogName} 
+                      onChange={e => setCatalogName(e.target.value)} 
+                      className="h-12 border-primary/30" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Se o catálogo já existir</label>
+                    <select
+                      value={importMode}
+                      onChange={e => setImportMode(e.target.value as 'replace' | 'merge')}
+                      className="w-full h-12 rounded-md border border-primary/30 bg-background px-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                    >
+                      <option value="replace">Substituir tudo (Recomendado)</option>
+                      <option value="merge">Mesclar (Adicionar ao final)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <Button 
+                    variant="default" 
+                    className={`h-14 relative font-bold text-lg shadow-lg transition-all ${importingParts ? 'opacity-70' : 'hover:scale-[1.02]'}`}
+                    disabled={importingParts || !catalogName.trim()}
+                  >
+                    {importingParts ? (
+                      <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                    ) : (
+                      <Upload className="w-6 h-6 mr-3" />
+                    )}
+                    {importingParts ? 'IMPORTANDO DADOS...' : 'SELECIONAR ARQUIVO E INICIAR'}
+                    <input 
+                      type="file" 
+                      accept=".csv" 
+                      onChange={handleFileUpload} 
+                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                      disabled={importingParts || !catalogName.trim()}
+                    />
+                  </Button>
+
+                  {importProgress && (
+                    <div className={`p-4 rounded-xl text-sm font-medium border animate-in fade-in slide-in-from-top-2 ${
+                      importProgress.includes('✅') 
+                        ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+                        : importProgress.includes('❌')
+                        ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                        : 'bg-primary/10 border-primary/30 text-primary'
+                    }`}>
+                      {importProgress}
+                    </div>
+                  )}
+                </div>
               </div>
             </Card>
           </TabsContent>
