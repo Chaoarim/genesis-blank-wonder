@@ -23,6 +23,7 @@ const PartsSearch = () => {
   const [placa, setPlaca] = useState('');
   const [searchingPlaca, setSearchingPlaca] = useState(false);
   const [vehicleData, setVehicleData] = useState<any>(null);
+  const [placaPartsSearch, setPlacaPartsSearch] = useState('');
   
   // Catalogs State
   const [selectedCatalog, setSelectedCatalog] = useState<string | null>(null);
@@ -75,7 +76,9 @@ const PartsSearch = () => {
       return smartFilterParts(catalogParts, search);
     }
     if (activeTab === 'placa' && vehicleData) {
-      const query = `${vehicleData.MARCA || ''} ${vehicleData.MODELO || ''} ${vehicleData.ANO || ''}`.trim();
+      const modelFirstWord = (vehicleData.MODELO || '').split(' ')[0];
+      const modelQuery = modelFirstWord ? modelFirstWord : (vehicleData.MARCA || '');
+      const query = placaPartsSearch.trim() ? `${modelQuery} ${placaPartsSearch}` : modelQuery;
       return smartFilterParts(parts, query);
     }
     if (search.length < 2) return [];
@@ -259,6 +262,25 @@ const PartsSearch = () => {
                       <p className="text-xs mt-0.5 opacity-80">{vehicleData.chassi ? `Chassi: ${vehicleData.chassi}` : ''} {vehicleData.municipio ? `• ${vehicleData.municipio}` : ''}</p>
                     </div>
                   </div>
+                  
+                  <div className="relative mb-6">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder={`Buscar peças para ${vehicleData.MODELO?.split(' ')[0] || 'este veículo'} (ex: Pastilha, Filtro)...`}
+                      value={placaPartsSearch}
+                      onChange={(e) => { setPlacaPartsSearch(e.target.value); setVisibleCount(PAGE_SIZE); }}
+                      className="pl-10 pr-9 h-12 bg-card border-2"
+                    />
+                    {placaPartsSearch && (
+                      <button
+                        onClick={() => setPlacaPartsSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
                   {renderPartList()}
                 </div>
               )}
