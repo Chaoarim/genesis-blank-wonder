@@ -70,6 +70,7 @@ const Admin = () => {
   const [catalogSearch, setCatalogSearch] = useState('');
   const [renamingCatalog, setRenamingCatalog] = useState<{oldName: string, newName: string} | null>(null);
   const [renamingCatalogLoading, setRenamingCatalogLoading] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -892,7 +893,13 @@ const Admin = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      registrations.map((reg) => (
+                      registrations
+                        .filter(reg => 
+                          reg.full_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) || 
+                          reg.email?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+                          reg.company_name?.toLowerCase().includes(userSearchTerm.toLowerCase())
+                        )
+                        .map((reg) => (
                         <TableRow key={reg.id}>
                           <TableCell className="font-mono text-sm">
                             {format(new Date(reg.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
