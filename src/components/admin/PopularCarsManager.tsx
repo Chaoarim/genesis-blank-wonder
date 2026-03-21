@@ -36,6 +36,7 @@ export function PopularCarsManager() {
   const [newFabricante, setNewFabricante] = useState("");
   const [newProduto, setNewProduto] = useState("");
   const [newAplicacao, setNewAplicacao] = useState("");
+  const [newSimilares, setNewSimilares] = useState("");
   const [addingPart, setAddingPart] = useState(false);
 
   // Edit state
@@ -82,10 +83,17 @@ export function PopularCarsManager() {
   };
 
   const deleteCar = async (id: string) => {
+    // Excluir as peças vinculadas para evitar erro de violação de chave estrangeira (FK Constraint)
+    const { error: partsError } = await supabase.from("popular_car_parts").delete().eq("car_id", id);
+    if (partsError) {
+      toast.error("Erro ao excluir peças deste catálogo");
+      return;
+    }
+
     const { error } = await supabase.from("popular_cars").delete().eq("id", id);
-    if (error) toast.error("Erro ao excluir");
+    if (error) toast.error("Erro ao excluir catálogo");
     else {
-      toast.success("Carro excluído!");
+      toast.success("Catálogo excluído!");
       if (selectedCarId === id) setSelectedCarId(null);
       fetchCars();
     }
@@ -124,7 +132,7 @@ export function PopularCarsManager() {
         fornecedor: newFornecedor.trim() || null,
         fabricante: newFabricante.trim() || null,
         produto: newProduto.trim(),
-        aplicacao: newAplicacao.trim() || null,
+        aplicacao: (newAplicacao.trim() + (newSimilares.trim() ? ` | Similares: ${newSimilares.trim()}` : '')).trim() || null,
       });
     if (error) toast.error("Erro ao adicionar peça");
     else {
@@ -133,6 +141,7 @@ export function PopularCarsManager() {
       setNewFabricante("");
       setNewProduto("");
       setNewAplicacao("");
+      setNewSimilares("");
       fetchLinkedParts(selectedCarId);
     }
     setAddingPart(false);
@@ -184,7 +193,7 @@ export function PopularCarsManager() {
       <Card className="p-6 glass-card">
         <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
           <Car className="w-5 h-5 text-primary" />
-          Carros Mais Vendidos
+          Catálogos por Veículo
         </h2>
         <div className="flex gap-2 mb-4">
           <Input
@@ -246,17 +255,18 @@ export function PopularCarsManager() {
       {selectedCarId && (
         <Card className="p-6 glass-card">
           <h3 className="text-lg font-bold mb-4">
-            Peças do {cars.find(c => c.id === selectedCarId)?.name}
+            Cadastrar Peça Manualmente para {cars.find(c => c.id === selectedCarId)?.name}
           </h3>
 
           {/* Add part form */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
-            <Input placeholder="Fornecedor" value={newFornecedor} onChange={e => setNewFornecedor(e.target.value)} />
-            <Input placeholder="Fabricante" value={newFabricante} onChange={e => setNewFabricante(e.target.value)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-4">
+            <Input placeholder="Código *" value={newFabricante} onChange={e => setNewFabricante(e.target.value)} />
             <Input placeholder="Produto *" value={newProduto} onChange={e => setNewProduto(e.target.value)} />
+            <Input placeholder="Fornecedor" value={newFornecedor} onChange={e => setNewFornecedor(e.target.value)} />
             <Input placeholder="Aplicação" value={newAplicacao} onChange={e => setNewAplicacao(e.target.value)} />
+            <Input placeholder="Códigos Similares" value={newSimilares} onChange={e => setNewSimilares(e.target.value)} title="Será incluído junto à Aplicação" />
           </div>
-          <Button onClick={addPart} disabled={addingPart || !newProduto.trim()} className="mb-4">
+          <Button onClick={addPart} disabled={addingPart || !newProduto.trim() || !newFabricante.trim()} className="mb-4">
             {addingPart ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
             Adicionar Peça
           </Button>
@@ -271,10 +281,10 @@ export function PopularCarsManager() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Fabricante</TableHead>
+                  <TableHead>Código</TableHead>
                   <TableHead>Produto</TableHead>
-                  <TableHead>Aplicação</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Aplicação / Similares</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -283,10 +293,11 @@ export function PopularCarsManager() {
                   <TableRow key={lp.id}>
                     {editingPartId === lp.id ? (
                       <>
-                        <TableCell><Input value={editFornecedor} onChange={e => setEditFornecedor(e.target.value)} className="h-8 text-sm" /></TableCell>
-                        <TableCell><Input value={editFabricante} onChange={e => setEditFabricante(e.target.value)} className="h-8 text-sm" /></TableCell>
-                        <TableCell><Input value={editProduto} onChange={e => setEditProduto(e.target.value)} className="h-8 text-sm" /></TableCell>
-                        <TableCell><Input value={editAplicacao} onChange={e => setEditAplicacao(e.target.value)} className="h-8 text-sm" /></TableCell>
+                        <TableCell><Input value={editFabricante} onChange={e => setEditFabricante(e.target.value)} className="h-8 text-sm" placeholder="Código" /></TableCell>
+                        <TableCell><Input value={editProduto} onChange={e => setEditProduto(e.target.value)} className="h-8 text-sm" placeholder="Produto" /></TableCell>
+                        <TableCell><Input value={editFornecedor} onChange={e => setEditFornecedor(e.target.value)} className="h-8 text-sm" placeholder="Fornecedor" /></TableCell>
+                        <TableCell><Input value={editAplicacao} onChange={e => setEditAplicacao(e.target.value)} className="h-8 text-sm" placeholder="Aplicação" /></TableCell>
+
                         <TableCell>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="sm" onClick={saveEdit} disabled={savingEdit || !editProduto.trim()}>
@@ -300,10 +311,11 @@ export function PopularCarsManager() {
                       </>
                     ) : (
                       <>
-                        <TableCell className="text-sm">{lp.fornecedor}</TableCell>
                         <TableCell className="text-sm">{lp.fabricante}</TableCell>
                         <TableCell className="text-sm">{lp.produto}</TableCell>
+                        <TableCell className="text-sm">{lp.fornecedor}</TableCell>
                         <TableCell className="text-sm">{lp.aplicacao}</TableCell>
+
                         <TableCell>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => startEdit(lp)}>

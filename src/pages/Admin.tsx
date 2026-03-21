@@ -720,7 +720,7 @@ const Admin = () => {
             </TabsTrigger>
             <TabsTrigger value="database">
               <Database className="w-4 h-4 mr-2" />
-              Base de Dados
+              Importar Catálogo de Veículo
             </TabsTrigger>
           </TabsList>
 
@@ -976,12 +976,12 @@ const Admin = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <Database className="w-5 h-5 text-primary" />
-                  Atualizar Base de Peças
+                  Importar Catálogo de Veículo
                 </h2>
               </div>
               <p className="text-muted-foreground mb-4">
-                Faça upload de um arquivo CSV para substituir toda a base de peças.
-                A tabela será limpa e os novos dados serão importados automaticamente.
+                Faça upload de um arquivo CSV para substituir todo o catálogo atual.
+                Os novos incluídos aparecerão no Consultar Catálogo de Fornecedores.
               </p>
               <div className="flex items-center gap-4">
                 <label
@@ -996,7 +996,7 @@ const Admin = () => {
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  {importingParts ? 'Importando...' : 'Selecionar CSV'}
+                  {importingParts ? 'Substituindo...' : 'Substituir Catálogo'}
                   <input
                     type="file"
                     accept=".csv"
