@@ -88,7 +88,7 @@ const PartsSearch = () => {
     }
     
     return smartFilterParts(parts, search);
-  }, [search, catalogParts, selectedCatalog, activeTab, vehicleData, parts]);
+  }, [search, catalogParts, selectedCatalog, activeTab, vehicleData, parts, placaPartsSearch]);
 
   const visibleResults = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
   const hasMore = visibleCount < filtered.length;
