@@ -515,6 +515,9 @@ const AdminNew = () => {
                         <TableHead>Email</TableHead>
                         <TableHead>WhatsApp</TableHead>
                         <TableHead>Senha</TableHead>
+                        <TableHead>Compra</TableHead>
+                        <TableHead>Renovação</TableHead>
+                        <TableHead>Obs</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -524,7 +527,9 @@ const AdminNew = () => {
                         (r.full_name || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                         (r.email || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                         (r.company_name || '').toLowerCase().includes(userSearchTerm.toLowerCase())
-                      ).map(reg => (
+                      ).map(reg => {
+                        const sub = subscriptionsMap[reg.email];
+                        return (
                         <TableRow key={reg.id} className="hover:bg-muted/30">
                           <TableCell className="text-xs">{format(new Date(reg.created_at), "dd/MM/yyyy")}</TableCell>
                           <TableCell className="font-bold text-primary">{reg.company_name}</TableCell>
@@ -555,6 +560,42 @@ const AdminNew = () => {
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {sub?.started_at ? format(new Date(sub.started_at), "dd/MM/yyyy") : '—'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {sub?.expires_at ? (
+                              <span className={new Date(sub.expires_at) < new Date() ? 'text-red-400 font-bold' : new Date(sub.expires_at) < new Date(Date.now() + 7 * 86400000) ? 'text-yellow-400 font-bold' : ''}>
+                                {format(new Date(sub.expires_at), "dd/MM/yyyy")}
+                              </span>
+                            ) : '—'}
+                          </TableCell>
+                          <TableCell>
+                            {editingNotes?.email === reg.email ? (
+                              <div className="flex items-center gap-1">
+                                <Textarea 
+                                  className="text-xs h-16 w-32 min-h-0" 
+                                  value={editingNotes.notes} 
+                                  onChange={e => setEditingNotes({ email: reg.email, notes: e.target.value })}
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400" onClick={handleSaveNotes} disabled={savingNotes}>
+                                    <Save className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingNotes(null)}>
+                                    <XCircle className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 max-w-[120px]">
+                                <span className="text-xs truncate" title={sub?.notes || ''}>{sub?.notes || '—'}</span>
+                                <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={() => setEditingNotes({ email: reg.email, notes: sub?.notes || '' })}>
+                                  <MessageSquare className="w-3 h-3" />
+                                </Button>
+                              </div>
                             )}
                           </TableCell>
                           <TableCell>{getStatusBadge(reg.status)}</TableCell>
