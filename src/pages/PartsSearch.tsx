@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, ArrowLeft, Car, Link as LinkIcon, Loader2, Globe, ExternalLink } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, ArrowLeft, Car, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
@@ -33,8 +33,6 @@ const PartsSearch = () => {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   
-  // Consulta Web State
-  const [webSearch, setWebSearch] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -155,6 +153,19 @@ const PartsSearch = () => {
                     </p>
                   )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 mt-0.5"
+                  title="Consulta Web (Google Imagens)"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
+                    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`, '_blank');
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 text-muted-foreground" />
+                </Button>
                 {part.codigosSimilares && part.codigosSimilares.trim() !== '' && (
                   <Popover>
                     <PopoverTrigger asChild>
@@ -215,12 +226,11 @@ const PartsSearch = () => {
             setVisibleCount(PAGE_SIZE);
             if (v !== 'veiculo') setSelectedCatalog(null);
           }}>
-            <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="placa" className="text-xs sm:text-sm">PLACA</TabsTrigger>
               <TabsTrigger value="veiculo" className="text-xs sm:text-sm">VEÍCULO</TabsTrigger>
               <TabsTrigger value="codigo" className="text-xs sm:text-sm">CÓDIGO</TabsTrigger>
               <TabsTrigger value="geral" className="text-xs sm:text-sm">GERAL</TabsTrigger>
-              <TabsTrigger value="web" className="text-xs sm:text-sm gap-1"><Globe className="w-3 h-3" />WEB</TabsTrigger>
             </TabsList>
 
             {/* TAB: PLACA */}
@@ -376,48 +386,8 @@ const PartsSearch = () => {
               </div>
             </TabsContent>
 
-            {/* TAB: CONSULTA WEB */}
-            <TabsContent value="web">
-              <div className="space-y-4">
-                <Card className="p-6 border-2 border-primary/10">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="w-5 h-5 text-primary" />
-                    <h3 className="font-bold text-lg">Consulta Web — Imagens Google</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Digite o código ou nome da peça para buscar imagens diretamente no Google.
-                  </p>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        autoFocus
-                        placeholder="Ex: 0986AB2618, Pastilha Freio Civic..."
-                        value={webSearch}
-                        onChange={(e) => setWebSearch(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && webSearch.trim()) {
-                            window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(webSearch.trim() + ' peça automotiva')}`, '_blank');
-                          }
-                        }}
-                        className="pl-10 h-12 border-2 text-lg"
-                      />
-                    </div>
-                    <Button
-                      size="lg"
-                      disabled={!webSearch.trim()}
-                      onClick={() => {
-                        window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(webSearch.trim() + ' peça automotiva')}`, '_blank');
-                      }}
-                      className="h-12 gap-2 px-6"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Buscar Imagens
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            </TabsContent>
+
+
 
           </Tabs>
         </div>
