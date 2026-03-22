@@ -254,40 +254,24 @@ export function AdminPartsManager() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label>Fabricante</Label>
-                <Input placeholder="Ex: FRAS-LE" value={fab} onChange={e => setFab(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Código Peça *</Label>
+                <Label>Código *</Label>
                 <Input placeholder="Ex: PD/123" value={cod} onChange={e => setCod(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Descrição *</Label>
+                <Label>Produto *</Label>
                 <Input placeholder="Ex: Pastilha de Freio" value={desc} onChange={e => setDesc(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Marca Veículo</Label>
-                <Input placeholder="Ex: Volkswagen" value={marca} onChange={e => setMarca(e.target.value)} />
+                <Label>Fornecedor</Label>
+                <Input placeholder="Ex: FRAS-LE" value={fab} onChange={e => setFab(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Modelo Veículo</Label>
-                <Input placeholder="Ex: Gol G5" value={modelo} onChange={e => setModelo(e.target.value)} />
+                <Label>Aplicação</Label>
+                <Input placeholder="Ex: Gol G5 2010-2014" value={aplicacao} onChange={e => setAplicacao(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Anos Aplicação</Label>
-                <Input placeholder="Ex: 2010-2014" value={anos} onChange={e => setAnos(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Códigos Similares</Label>
+                <Label>Similares</Label>
                 <Input placeholder="Ex: SYL1086, COBREQ N250" value={codSimilares} onChange={e => setCodSimilares(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Chave de Busca</Label>
-                <Input placeholder="Auto-gerada se vazio" value={chave} onChange={e => setChave(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Contexto IA</Label>
-                <Input placeholder="Info extra para IA" value={ctx} onChange={e => setCtx(e.target.value)} />
               </div>
             </div>
             <Button onClick={handleAdd} disabled={saving} className="gap-2">
