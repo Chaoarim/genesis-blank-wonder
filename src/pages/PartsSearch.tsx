@@ -33,8 +33,6 @@ const PartsSearch = () => {
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   
-  // Consulta Web State
-  const [webSearch, setWebSearch] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
