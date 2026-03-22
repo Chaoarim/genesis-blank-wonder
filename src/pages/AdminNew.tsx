@@ -735,6 +735,14 @@ const AdminNew = () => {
                 </div>
               </div>
             </Card>
+
+            <div className="mt-6">
+              <PartImageUploader />
+            </div>
+
+            <div className="mt-6">
+              <AdminPartsManager />
+            </div>
           </TabsContent>
 
           <TabsContent value="analytics">
