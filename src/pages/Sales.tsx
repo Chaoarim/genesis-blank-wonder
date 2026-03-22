@@ -104,7 +104,7 @@ const Sales = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <Link to="/pre-cadastro">
               <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2 w-full sm:w-auto">
-                Começar Agora — R$ 49/mês
+                Começar Agora — R$ 14,99/mês
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -611,8 +611,8 @@ const Sales = () => {
             <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-4 mb-6 text-primary-foreground">
               <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Preço Especial de Lançamento</p>
               <div className="flex items-center justify-center gap-3 mb-2">
-                <span className="text-lg line-through opacity-70">R$ 97,00</span>
-                <span className="text-4xl font-bold">R$ 49,00</span>
+                <span className="text-lg line-through opacity-70">R$ 49,00</span>
+                <span className="text-4xl font-bold">R$ 14,99</span>
                 <span className="text-sm opacity-80">/mês</span>
               </div>
               <div className="flex items-center justify-center gap-2 bg-primary-foreground/15 rounded-full py-1.5 px-4">
@@ -716,12 +716,12 @@ const Sales = () => {
           </p>
           <Link to="/pre-cadastro">
             <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-              Começar Agora — R$ 49/mês
+              Começar Agora — R$ 14,99/mês
               <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground mt-4">
-            R$ 49/mês · Sem contrato · Ativação em até 24h
+            R$ 14,99/mês · Sem contrato · Ativação em até 24h
           </p>
         </div>
       </section>
