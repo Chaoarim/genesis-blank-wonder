@@ -55,6 +55,16 @@ interface CostEstimate {
   isCurrentTier: boolean;
 }
 
+interface UserSubscription {
+  id: string;
+  email: string;
+  started_at: string | null;
+  expires_at: string | null;
+  notes: string | null;
+  status: string | null;
+  plan: string | null;
+}
+
 const AdminNew = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
