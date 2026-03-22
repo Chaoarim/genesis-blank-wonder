@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, ArrowLeft, Car, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, ArrowLeft, Car, Link as LinkIcon, Loader2, Globe, ExternalLink } from 'lucide-react';
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
