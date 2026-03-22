@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPlus, UserMinus, UserCheck, BarChart3, Users, DollarSign, TrendingUp, Activity, Database, Zap, Trash2, Eye, EyeOff, Copy, Key, Upload, Search, Pencil } from "lucide-react";
+import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPlus, UserMinus, UserCheck, BarChart3, Users, DollarSign, TrendingUp, Activity, Database, Zap, Trash2, Eye, EyeOff, Copy, Key, Upload, Search, Pencil, Save, MessageSquare } from "lucide-react";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { PartImageUploader } from "@/components/admin/PartImageUploader";
 import { AdminPartsManager } from "@/components/admin/AdminPartsManager";
+import { Textarea } from "@/components/ui/textarea";
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -54,6 +55,16 @@ interface CostEstimate {
   isCurrentTier: boolean;
 }
 
+interface UserSubscription {
+  id: string;
+  email: string;
+  started_at: string | null;
+  expires_at: string | null;
+  notes: string | null;
+  status: string | null;
+  plan: string | null;
+}
+
 const AdminNew = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -71,6 +82,9 @@ const AdminNew = () => {
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [renamingCatalog, setRenamingCatalog] = useState<{oldName: string, newName: string} | null>(null);
   const [renamingCatalogLoading, setRenamingCatalogLoading] = useState(false);
+  const [subscriptionsMap, setSubscriptionsMap] = useState<Record<string, UserSubscription>>({});
+  const [editingNotes, setEditingNotes] = useState<{email: string, notes: string} | null>(null);
+  const [savingNotes, setSavingNotes] = useState(false);
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -168,13 +182,39 @@ const AdminNew = () => {
 
   const fetchData = async () => {
     setLoadingData(true);
-    const { data: regData, error: regError } = await supabase.from('pre_registrations').select('*').order('created_at', { ascending: false });
+    const [{ data: regData, error: regError }, { data: subData }, { data: logData, error: logError }] = await Promise.all([
+      supabase.from('pre_registrations').select('*').order('created_at', { ascending: false }),
+      supabase.from('user_subscriptions').select('id, email, started_at, expires_at, notes, status, plan'),
+      supabase.from('webhook_logs').select('*').order('data_hora', { ascending: false }).limit(10),
+    ]);
+    
     if (regError) toast.error("Erro ao carregar usuários");
     else setRegistrations(regData || []);
     
-    const { data: logData, error: logError } = await supabase.from('webhook_logs').select('*').order('data_hora', { ascending: false }).limit(10);
+    if (subData) {
+      const map: Record<string, UserSubscription> = {};
+      subData.forEach(s => { map[s.email] = s; });
+      setSubscriptionsMap(map);
+    }
+    
     if (!logError) setLogs(logData || []);
     setLoadingData(false);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!editingNotes) return;
+    setSavingNotes(true);
+    const sub = subscriptionsMap[editingNotes.email];
+    if (sub) {
+      const { error } = await supabase.from('user_subscriptions').update({ notes: editingNotes.notes }).eq('id', sub.id);
+      if (error) { toast.error("Erro ao salvar"); } 
+      else {
+        toast.success("Observação salva!");
+        setSubscriptionsMap(prev => ({ ...prev, [editingNotes.email]: { ...prev[editingNotes.email], notes: editingNotes.notes } }));
+      }
+    }
+    setSavingNotes(false);
+    setEditingNotes(null);
   };
 
   const fetchStats = async () => {
@@ -475,6 +515,9 @@ const AdminNew = () => {
                         <TableHead>Email</TableHead>
                         <TableHead>WhatsApp</TableHead>
                         <TableHead>Senha</TableHead>
+                        <TableHead>Compra</TableHead>
+                        <TableHead>Renovação</TableHead>
+                        <TableHead>Obs</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -484,7 +527,9 @@ const AdminNew = () => {
                         (r.full_name || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                         (r.email || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                         (r.company_name || '').toLowerCase().includes(userSearchTerm.toLowerCase())
-                      ).map(reg => (
+                      ).map(reg => {
+                        const sub = subscriptionsMap[reg.email];
+                        return (
                         <TableRow key={reg.id} className="hover:bg-muted/30">
                           <TableCell className="text-xs">{format(new Date(reg.created_at), "dd/MM/yyyy")}</TableCell>
                           <TableCell className="font-bold text-primary">{reg.company_name}</TableCell>
@@ -517,6 +562,42 @@ const AdminNew = () => {
                               <span className="text-muted-foreground text-xs">-</span>
                             )}
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {sub?.started_at ? format(new Date(sub.started_at), "dd/MM/yyyy") : '—'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {sub?.expires_at ? (
+                              <span className={new Date(sub.expires_at) < new Date() ? 'text-red-400 font-bold' : new Date(sub.expires_at) < new Date(Date.now() + 7 * 86400000) ? 'text-yellow-400 font-bold' : ''}>
+                                {format(new Date(sub.expires_at), "dd/MM/yyyy")}
+                              </span>
+                            ) : '—'}
+                          </TableCell>
+                          <TableCell>
+                            {editingNotes?.email === reg.email ? (
+                              <div className="flex items-center gap-1">
+                                <Textarea 
+                                  className="text-xs h-16 w-32 min-h-0" 
+                                  value={editingNotes.notes} 
+                                  onChange={e => setEditingNotes({ email: reg.email, notes: e.target.value })}
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Button size="icon" variant="ghost" className="h-6 w-6 text-green-400" onClick={handleSaveNotes} disabled={savingNotes}>
+                                    <Save className="w-3 h-3" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingNotes(null)}>
+                                    <XCircle className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 max-w-[120px]">
+                                <span className="text-xs truncate" title={sub?.notes || ''}>{sub?.notes || '—'}</span>
+                                <Button size="icon" variant="ghost" className="h-5 w-5 shrink-0" onClick={() => setEditingNotes({ email: reg.email, notes: sub?.notes || '' })}>
+                                  <MessageSquare className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell>{getStatusBadge(reg.status)}</TableCell>
                           <TableCell className="flex gap-2">
                             {reg.status === 'pending' && <Button size="sm" onClick={() => handleApprove(reg)}><CheckCircle className="w-4 h-4 mr-1" /> Ativar</Button>}
@@ -531,7 +612,8 @@ const AdminNew = () => {
                             </AlertDialog>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
