@@ -26,14 +26,10 @@ interface PartRow {
 
 export function AdminPartsManager() {
   // --- Add form state ---
-  const [fab, setFab] = useState('');
-  const [cod, setCod] = useState('');
-  const [desc, setDesc] = useState('');
-  const [chave, setChave] = useState('');
-  const [marca, setMarca] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [anos, setAnos] = useState('');
-  const [ctx, setCtx] = useState('');
+  const [fab, setFab] = useState(''); // Fornecedor
+  const [cod, setCod] = useState(''); // Código
+  const [desc, setDesc] = useState(''); // Produto
+  const [aplicacao, setAplicacao] = useState(''); // Aplicação
   const [codSimilares, setCodSimilares] = useState('');
   const [addCatalogo, setAddCatalogo] = useState('');
   const [saving, setSaving] = useState(false);
