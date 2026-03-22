@@ -182,13 +182,39 @@ const AdminNew = () => {
 
   const fetchData = async () => {
     setLoadingData(true);
-    const { data: regData, error: regError } = await supabase.from('pre_registrations').select('*').order('created_at', { ascending: false });
+    const [{ data: regData, error: regError }, { data: subData }, { data: logData, error: logError }] = await Promise.all([
+      supabase.from('pre_registrations').select('*').order('created_at', { ascending: false }),
+      supabase.from('user_subscriptions').select('id, email, started_at, expires_at, notes, status, plan'),
+      supabase.from('webhook_logs').select('*').order('data_hora', { ascending: false }).limit(10),
+    ]);
+    
     if (regError) toast.error("Erro ao carregar usuários");
     else setRegistrations(regData || []);
     
-    const { data: logData, error: logError } = await supabase.from('webhook_logs').select('*').order('data_hora', { ascending: false }).limit(10);
+    if (subData) {
+      const map: Record<string, UserSubscription> = {};
+      subData.forEach(s => { map[s.email] = s; });
+      setSubscriptionsMap(map);
+    }
+    
     if (!logError) setLogs(logData || []);
     setLoadingData(false);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!editingNotes) return;
+    setSavingNotes(true);
+    const sub = subscriptionsMap[editingNotes.email];
+    if (sub) {
+      const { error } = await supabase.from('user_subscriptions').update({ notes: editingNotes.notes }).eq('id', sub.id);
+      if (error) { toast.error("Erro ao salvar"); } 
+      else {
+        toast.success("Observação salva!");
+        setSubscriptionsMap(prev => ({ ...prev, [editingNotes.email]: { ...prev[editingNotes.email], notes: editingNotes.notes } }));
+      }
+    }
+    setSavingNotes(false);
+    setEditingNotes(null);
   };
 
   const fetchStats = async () => {
