@@ -612,7 +612,8 @@ const AdminNew = () => {
                             </AlertDialog>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
