@@ -26,14 +26,10 @@ interface PartRow {
 
 export function AdminPartsManager() {
   // --- Add form state ---
-  const [fab, setFab] = useState('');
-  const [cod, setCod] = useState('');
-  const [desc, setDesc] = useState('');
-  const [chave, setChave] = useState('');
-  const [marca, setMarca] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [anos, setAnos] = useState('');
-  const [ctx, setCtx] = useState('');
+  const [fab, setFab] = useState(''); // Fornecedor
+  const [cod, setCod] = useState(''); // Código
+  const [desc, setDesc] = useState(''); // Produto
+  const [aplicacao, setAplicacao] = useState(''); // Aplicação
   const [codSimilares, setCodSimilares] = useState('');
   const [addCatalogo, setAddCatalogo] = useState('');
   const [saving, setSaving] = useState(false);
@@ -91,7 +87,7 @@ export function AdminPartsManager() {
 
   const handleAdd = useCallback(async () => {
     if (!cod.trim() || !desc.trim()) {
-      toast.error('Código e Descrição são obrigatórios');
+      toast.error('Código e Produto são obrigatórios');
       return;
     }
     if (!addCatalogo.trim()) {
@@ -102,23 +98,17 @@ export function AdminPartsManager() {
 
     const catName = addCatalogo.trim();
 
-    // Auto-generate CHAVE_DE_BUSCA in CSV format: "MARCA MODELO ANO_INICIO/ANO_FIM"
-    const anosAbrev = anos.trim().replace(/\s*a\s*/i, '/').replace(/\d{2}(\d{2})/g, '$1');
-    const chaveGerada = chave.trim() || [marca.trim(), modelo.trim(), anosAbrev].filter(Boolean).join(' ');
+    // Auto-generate chave_de_busca from catálogo + produto + código
+    const chaveGerada = [catName, desc.trim(), cod.trim(), fab.trim()].filter(Boolean).join(' ');
 
-    // Auto-generate CONTEXTO_IA in CSV format
-    const ctxGerado = ctx.trim() || (desc.trim()
-      ? `${desc.trim()} compatível com ${marca.trim()} ${modelo.trim()}. Aplicação: ${anos.trim()}. Fabricante: ${fab.trim()}. Código: ${cod.trim()}.`.replace(/\s+/g, ' ').trim()
-      : '');
+    // Auto-generate contexto_ia
+    const ctxGerado = `${desc.trim()} - ${aplicacao.trim() || catName}. Fornecedor: ${fab.trim()}. Código: ${cod.trim()}.`.replace(/\s+/g, ' ').trim();
 
     const { error } = await supabase.from('parts').insert({
       fabricante: fab.trim() || null,
       codigo_peca: cod.trim(),
       descricao: desc.trim(),
       chave_de_busca: chaveGerada,
-      marca_veiculo: marca.trim() || null,
-      modelo_veiculo: modelo.trim() || null,
-      anos_aplicacao: anos.trim() || null,
       contexto_ia: ctxGerado || null,
       codigos_similares: codSimilares.trim() || null,
       catalogo: catName,
@@ -130,12 +120,11 @@ export function AdminPartsManager() {
       return;
     }
     toast.success('Peça cadastrada com sucesso!');
-    // Add new catalog to list if not present
     if (!catalogos.includes(catName)) {
       setCatalogos(prev => [...prev, catName].sort());
     }
-    setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx(''); setCodSimilares('');
-  }, [fab, cod, desc, chave, marca, modelo, anos, ctx, codSimilares, addCatalogo, catalogos]);
+    setFab(''); setCod(''); setDesc(''); setAplicacao(''); setCodSimilares('');
+  }, [fab, cod, desc, aplicacao, codSimilares, addCatalogo, catalogos]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim() && !filterFab && !filterCatalogo) {
@@ -265,40 +254,24 @@ export function AdminPartsManager() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label>Fabricante</Label>
-                <Input placeholder="Ex: FRAS-LE" value={fab} onChange={e => setFab(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Código Peça *</Label>
+                <Label>Código *</Label>
                 <Input placeholder="Ex: PD/123" value={cod} onChange={e => setCod(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Descrição *</Label>
+                <Label>Produto *</Label>
                 <Input placeholder="Ex: Pastilha de Freio" value={desc} onChange={e => setDesc(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Marca Veículo</Label>
-                <Input placeholder="Ex: Volkswagen" value={marca} onChange={e => setMarca(e.target.value)} />
+                <Label>Fornecedor</Label>
+                <Input placeholder="Ex: FRAS-LE" value={fab} onChange={e => setFab(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Modelo Veículo</Label>
-                <Input placeholder="Ex: Gol G5" value={modelo} onChange={e => setModelo(e.target.value)} />
+                <Label>Aplicação</Label>
+                <Input placeholder="Ex: Gol G5 2010-2014" value={aplicacao} onChange={e => setAplicacao(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Anos Aplicação</Label>
-                <Input placeholder="Ex: 2010-2014" value={anos} onChange={e => setAnos(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Códigos Similares</Label>
+                <Label>Similares</Label>
                 <Input placeholder="Ex: SYL1086, COBREQ N250" value={codSimilares} onChange={e => setCodSimilares(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Chave de Busca</Label>
-                <Input placeholder="Auto-gerada se vazio" value={chave} onChange={e => setChave(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Contexto IA</Label>
-                <Input placeholder="Info extra para IA" value={ctx} onChange={e => setCtx(e.target.value)} />
               </div>
             </div>
             <Button onClick={handleAdd} disabled={saving} className="gap-2">
