@@ -628,9 +628,6 @@ const AdminNew = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="logs">
-            <Card className="p-6">Logs de sistema ativos.</Card>
-          </TabsContent>
           <TabsContent value="analytics">
             <Card className="p-6">Métricas de vendas em tempo real.</Card>
           </TabsContent>
