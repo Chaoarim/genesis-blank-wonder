@@ -386,48 +386,8 @@ const PartsSearch = () => {
               </div>
             </TabsContent>
 
-            {/* TAB: CONSULTA WEB */}
-            <TabsContent value="web">
-              <div className="space-y-4">
-                <Card className="p-6 border-2 border-primary/10">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Globe className="w-5 h-5 text-primary" />
-                    <h3 className="font-bold text-lg">Consulta Web — Imagens Google</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Digite o código ou nome da peça para buscar imagens diretamente no Google.
-                  </p>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        autoFocus
-                        placeholder="Ex: 0986AB2618, Pastilha Freio Civic..."
-                        value={webSearch}
-                        onChange={(e) => setWebSearch(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && webSearch.trim()) {
-                            window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(webSearch.trim() + ' peça automotiva')}`, '_blank');
-                          }
-                        }}
-                        className="pl-10 h-12 border-2 text-lg"
-                      />
-                    </div>
-                    <Button
-                      size="lg"
-                      disabled={!webSearch.trim()}
-                      onClick={() => {
-                        window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(webSearch.trim() + ' peça automotiva')}`, '_blank');
-                      }}
-                      className="h-12 gap-2 px-6"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Buscar Imagens
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            </TabsContent>
+
+
 
           </Tabs>
         </div>
