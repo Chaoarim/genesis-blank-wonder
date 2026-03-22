@@ -82,6 +82,9 @@ const AdminNew = () => {
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [renamingCatalog, setRenamingCatalog] = useState<{oldName: string, newName: string} | null>(null);
   const [renamingCatalogLoading, setRenamingCatalogLoading] = useState(false);
+  const [subscriptionsMap, setSubscriptionsMap] = useState<Record<string, UserSubscription>>({});
+  const [editingNotes, setEditingNotes] = useState<{email: string, notes: string} | null>(null);
+  const [savingNotes, setSavingNotes] = useState(false);
   const [stats, setStats] = useState<PlatformStats>({
     totalUsers: 0,
     activeUsers: 0,
