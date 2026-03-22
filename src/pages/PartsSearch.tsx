@@ -153,6 +153,19 @@ const PartsSearch = () => {
                     </p>
                   )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 mt-0.5"
+                  title="Consulta Web (Google Imagens)"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const query = [part.fabricante, part.produto, part.marca, part.modelo].filter(Boolean).join(' ');
+                    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`, '_blank');
+                  }}
+                >
+                  <Sparkles className="w-4 h-4 text-muted-foreground" />
+                </Button>
                 {part.codigosSimilares && part.codigosSimilares.trim() !== '' && (
                   <Popover>
                     <PopoverTrigger asChild>
