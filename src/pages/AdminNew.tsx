@@ -466,7 +466,7 @@ const AdminNew = () => {
                 </div>
 
                 <div className="overflow-x-auto border rounded-xl">
-                  <Table>
+                   <Table>
                     <TableHeader className="bg-muted/50">
                       <TableRow>
                         <TableHead>Data</TableHead>
@@ -474,6 +474,7 @@ const AdminNew = () => {
                         <TableHead>Nome</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>WhatsApp</TableHead>
+                        <TableHead>Senha</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -489,7 +490,33 @@ const AdminNew = () => {
                           <TableCell className="font-bold text-primary">{reg.company_name}</TableCell>
                           <TableCell className="font-bold">{reg.full_name}</TableCell>
                           <TableCell>{reg.email}</TableCell>
-                          <TableCell className="font-mono text-xs">{reg.whatsapp}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            <a href={`https://wa.me/55${reg.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {reg.whatsapp}
+                            </a>
+                          </TableCell>
+                          <TableCell>
+                            {reg.password_hash ? (
+                              <div className="flex items-center gap-1">
+                                <code className="text-xs bg-muted px-2 py-1 rounded max-w-[120px] truncate">
+                                  {reg.password_hash}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(reg.password_hash || "");
+                                    toast.success("Senha copiada!");
+                                  }}
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </TableCell>
                           <TableCell>{getStatusBadge(reg.status)}</TableCell>
                           <TableCell className="flex gap-2">
                             {reg.status === 'pending' && <Button size="sm" onClick={() => handleApprove(reg)}><CheckCircle className="w-4 h-4 mr-1" /> Ativar</Button>}
