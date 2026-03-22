@@ -86,20 +86,19 @@ const Sales = () => {
 
         <div className="container mx-auto text-center max-w-5xl relative z-10">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-full text-sm font-medium mb-8">
-            <Zap className="w-4 h-4" />
-            Plataforma Completa para o Setor Automotivo
+            <Car className="w-4 h-4" />
+            Busca de Peças por Veículo — partsai.online/buscar-pecas
           </div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1]">
-            Encontre a peça certa{" "}
+            Busque peças pelo{" "}
             <br className="hidden md:block" />
-            pela <span className="text-gradient">placa do veículo</span>
+            <span className="text-gradient">veículo do cliente</span>
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Digite a placa, identifique o veículo automaticamente e encontre peças compatíveis em segundos.
-            Consulta por placa, por veículo, por código e busca geral — tudo integrado com catálogo B2B online,
-            central de vendas com 21 módulos e controle total do seu negócio.
+            Selecione o veículo entre 61+ modelos catalogados ou digite a placa — o sistema identifica marca, modelo, motor e ano automaticamente.
+            Em segundos você tem todas as peças compatíveis na tela, prontas para orçar e vender.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
