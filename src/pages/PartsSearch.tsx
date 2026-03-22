@@ -112,6 +112,7 @@ const PartsSearch = () => {
       const response = await fetch(`https://wdapi2.com.br/consulta/${cleanPlaca}/${token}`);
       if (!response.ok) throw new Error('Falha na consulta');
       const data = await response.json();
+      console.log('API Placa response:', JSON.stringify(data, null, 2));
       
       if (data && data.MARCA) {
         setVehicleData(data);
@@ -274,9 +275,11 @@ const PartsSearch = () => {
                         {vehicleData.MARCA} {vehicleData.MODELO}
                       </h3>
                       <p className="text-xs mt-0.5 opacity-80 flex flex-wrap gap-x-3">
-                        {vehicleData.ano && <span>Ano: {vehicleData.ano}</span>}
-                        {vehicleData.cilindrada && <span>Motor: {vehicleData.cilindrada}</span>}
-                        {vehicleData.combustivel && <span>Combustível: {vehicleData.combustivel}</span>}
+                        {(vehicleData.ano || vehicleData.anoModelo) && <span>Ano: {vehicleData.ano || vehicleData.anoModelo}</span>}
+                        {(vehicleData.cilindrada || vehicleData.cilindradas || vehicleData.potencia || vehicleData.motor) && (
+                          <span>Motor: {vehicleData.cilindrada || vehicleData.cilindradas || vehicleData.potencia || vehicleData.motor}</span>
+                        )}
+                        {(vehicleData.combustivel || vehicleData.COMBUSTIVEL) && <span>Combustível: {vehicleData.combustivel || vehicleData.COMBUSTIVEL}</span>}
                       </p>
                     </div>
                   </div>
