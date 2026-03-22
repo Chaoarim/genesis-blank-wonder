@@ -271,9 +271,13 @@ const PartsSearch = () => {
                     <div>
                       <span className="text-xs font-bold uppercase opacity-80">Veículo Identificado:</span>
                       <h3 className="text-lg font-bold">
-                        {vehicleData.MARCA} {vehicleData.MODELO} {vehicleData.ANO && `- ${vehicleData.ANO}`}
+                        {vehicleData.MARCA} {vehicleData.MODELO}
                       </h3>
-                      <p className="text-xs mt-0.5 opacity-80">{vehicleData.chassi ? `Chassi: ${vehicleData.chassi}` : ''} {vehicleData.municipio ? `• ${vehicleData.municipio}` : ''}</p>
+                      <p className="text-xs mt-0.5 opacity-80 flex flex-wrap gap-x-3">
+                        {vehicleData.ano && <span>Ano: {vehicleData.ano}</span>}
+                        {vehicleData.cilindrada && <span>Motor: {vehicleData.cilindrada}</span>}
+                        {vehicleData.combustivel && <span>Combustível: {vehicleData.combustivel}</span>}
+                      </p>
                     </div>
                   </div>
                   
