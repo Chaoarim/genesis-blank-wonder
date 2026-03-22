@@ -112,6 +112,7 @@ const PartsSearch = () => {
       const response = await fetch(`https://wdapi2.com.br/consulta/${cleanPlaca}/${token}`);
       if (!response.ok) throw new Error('Falha na consulta');
       const data = await response.json();
+      console.log('API Placa response:', JSON.stringify(data, null, 2));
       
       if (data && data.MARCA) {
         setVehicleData(data);
