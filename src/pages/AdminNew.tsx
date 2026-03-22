@@ -466,7 +466,7 @@ const AdminNew = () => {
                 </div>
 
                 <div className="overflow-x-auto border rounded-xl">
-                  <Table>
+                   <Table>
                     <TableHeader className="bg-muted/50">
                       <TableRow>
                         <TableHead>Data</TableHead>
@@ -474,6 +474,7 @@ const AdminNew = () => {
                         <TableHead>Nome</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>WhatsApp</TableHead>
+                        <TableHead>Senha</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Ações</TableHead>
                       </TableRow>
@@ -489,7 +490,33 @@ const AdminNew = () => {
                           <TableCell className="font-bold text-primary">{reg.company_name}</TableCell>
                           <TableCell className="font-bold">{reg.full_name}</TableCell>
                           <TableCell>{reg.email}</TableCell>
-                          <TableCell className="font-mono text-xs">{reg.whatsapp}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            <a href={`https://wa.me/55${reg.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {reg.whatsapp}
+                            </a>
+                          </TableCell>
+                          <TableCell>
+                            {reg.password_hash ? (
+                              <div className="flex items-center gap-1">
+                                <code className="text-xs bg-muted px-2 py-1 rounded max-w-[120px] truncate">
+                                  {reg.password_hash}
+                                </code>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(reg.password_hash || "");
+                                    toast.success("Senha copiada!");
+                                  }}
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </TableCell>
                           <TableCell>{getStatusBadge(reg.status)}</TableCell>
                           <TableCell className="flex gap-2">
                             {reg.status === 'pending' && <Button size="sm" onClick={() => handleApprove(reg)}><CheckCircle className="w-4 h-4 mr-1" /> Ativar</Button>}
@@ -629,7 +656,97 @@ const AdminNew = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <Card className="p-6">Métricas de vendas em tempo real.</Card>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  Métricas de Uso
+                </h2>
+                <Button variant="outline" size="sm" onClick={() => { fetchStats(); fetchData(); }} disabled={loadingData}>
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loadingData ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { label: "Total de Usuários", value: stats.totalUsers, icon: Users, color: "text-blue-400", bgColor: "bg-blue-500/20" },
+                  { label: "Usuários Ativos", value: stats.activeUsers, icon: UserCheck, color: "text-green-400", bgColor: "bg-green-500/20" },
+                  { label: "Aguardando Aprovação", value: stats.pendingUsers, icon: Clock, color: "text-yellow-400", bgColor: "bg-yellow-500/20" },
+                  { label: "Pré-Cadastros", value: stats.preRegistrations, icon: Activity, color: "text-purple-400", bgColor: "bg-purple-500/20" },
+                  { label: "Eventos de Webhook", value: stats.webhookEvents, icon: Zap, color: "text-primary", bgColor: "bg-primary/20" },
+                  { label: "Taxa de Aprovação", value: stats.preRegistrations > 0 ? `${Math.round((stats.approvedRegistrations / stats.preRegistrations) * 100)}%` : "0%", icon: TrendingUp, color: "text-emerald-400", bgColor: "bg-emerald-500/20" },
+                ].map((metric, index) => (
+                  <Card key={index} className="p-6 hover:border-primary/30 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl ${metric.bgColor} flex items-center justify-center`}>
+                        <metric.icon className={`w-6 h-6 ${metric.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">{metric.label}</p>
+                        <p className="text-2xl font-bold">{metric.value}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-bold">Estimativa de Custos</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { tier: "Gratuito", estimate: "R$ 0", features: ["Até 50.000 req/mês", "500 MB banco", "1 GB transferência", "Edge Functions"], isCurrent: stats.activeUsers <= 50 },
+                    { tier: "Pro", estimate: "R$ 125/mês", features: ["Requisições ilimitadas", "8 GB banco", "50 GB transferência", "Backups diários"], isCurrent: stats.activeUsers > 50 && stats.activeUsers <= 200 },
+                    { tier: "Team", estimate: "R$ 300/mês", features: ["Tudo do Pro", "Colaboração em equipe", "Suporte prioritário", "SLA garantido"], isCurrent: stats.activeUsers > 200 },
+                  ].map((t, i) => (
+                    <Card key={i} className={`p-6 transition-all ${t.isCurrent ? 'border-primary ring-2 ring-primary/20' : ''}`}>
+                      {t.isCurrent && (
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-primary/20 text-primary mb-3">
+                          <Activity className="w-3 h-3" /> Faixa Atual
+                        </div>
+                      )}
+                      <h3 className="text-lg font-bold">{t.tier}</h3>
+                      <p className="text-2xl font-bold text-primary mt-2">{t.estimate}</p>
+                      <ul className="mt-4 space-y-2">
+                        {t.features.map((f, fi) => (
+                          <li key={fi} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Database className="w-3 h-3 text-primary" /> {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              <Card className="p-6">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  Dicas de Otimização
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-secondary/50">
+                    <p className="font-medium">Rate Limiting Ativo</p>
+                    <p className="text-sm text-muted-foreground mt-1">Limite de 10 req/min por usuário.</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-secondary/50">
+                    <p className="font-medium">Cache de Respostas</p>
+                    <p className="text-sm text-muted-foreground mt-1">Respostas similares são cacheadas.</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-secondary/50">
+                    <p className="font-medium">Escalabilidade Automática</p>
+                    <p className="text-sm text-muted-foreground mt-1">Infraestrutura escala automaticamente.</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-secondary/50">
+                    <p className="font-medium">Monitoramento em Tempo Real</p>
+                    <p className="text-sm text-muted-foreground mt-1">Acompanhe o uso nesta página.</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
