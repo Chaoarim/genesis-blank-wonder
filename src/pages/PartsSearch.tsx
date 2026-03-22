@@ -215,11 +215,12 @@ const PartsSearch = () => {
             setVisibleCount(PAGE_SIZE);
             if (v !== 'veiculo') setSelectedCatalog(null);
           }}>
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-5 mb-8">
               <TabsTrigger value="placa" className="text-xs sm:text-sm">PLACA</TabsTrigger>
               <TabsTrigger value="veiculo" className="text-xs sm:text-sm">VEÍCULO</TabsTrigger>
-              <TabsTrigger value="codigo" className="text-xs sm:text-sm">CÓDIGO DA PEÇA</TabsTrigger>
-              <TabsTrigger value="geral" className="text-xs sm:text-sm">BUSCA GERAL</TabsTrigger>
+              <TabsTrigger value="codigo" className="text-xs sm:text-sm">CÓDIGO</TabsTrigger>
+              <TabsTrigger value="geral" className="text-xs sm:text-sm">GERAL</TabsTrigger>
+              <TabsTrigger value="web" className="text-xs sm:text-sm gap-1"><Globe className="w-3 h-3" />WEB</TabsTrigger>
             </TabsList>
 
             {/* TAB: PLACA */}
