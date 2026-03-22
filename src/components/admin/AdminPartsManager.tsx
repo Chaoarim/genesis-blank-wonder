@@ -87,7 +87,7 @@ export function AdminPartsManager() {
 
   const handleAdd = useCallback(async () => {
     if (!cod.trim() || !desc.trim()) {
-      toast.error('Código e Descrição são obrigatórios');
+      toast.error('Código e Produto são obrigatórios');
       return;
     }
     if (!addCatalogo.trim()) {
@@ -98,23 +98,17 @@ export function AdminPartsManager() {
 
     const catName = addCatalogo.trim();
 
-    // Auto-generate CHAVE_DE_BUSCA in CSV format: "MARCA MODELO ANO_INICIO/ANO_FIM"
-    const anosAbrev = anos.trim().replace(/\s*a\s*/i, '/').replace(/\d{2}(\d{2})/g, '$1');
-    const chaveGerada = chave.trim() || [marca.trim(), modelo.trim(), anosAbrev].filter(Boolean).join(' ');
+    // Auto-generate chave_de_busca from catálogo + produto + código
+    const chaveGerada = [catName, desc.trim(), cod.trim(), fab.trim()].filter(Boolean).join(' ');
 
-    // Auto-generate CONTEXTO_IA in CSV format
-    const ctxGerado = ctx.trim() || (desc.trim()
-      ? `${desc.trim()} compatível com ${marca.trim()} ${modelo.trim()}. Aplicação: ${anos.trim()}. Fabricante: ${fab.trim()}. Código: ${cod.trim()}.`.replace(/\s+/g, ' ').trim()
-      : '');
+    // Auto-generate contexto_ia
+    const ctxGerado = `${desc.trim()} - ${aplicacao.trim() || catName}. Fornecedor: ${fab.trim()}. Código: ${cod.trim()}.`.replace(/\s+/g, ' ').trim();
 
     const { error } = await supabase.from('parts').insert({
       fabricante: fab.trim() || null,
       codigo_peca: cod.trim(),
       descricao: desc.trim(),
       chave_de_busca: chaveGerada,
-      marca_veiculo: marca.trim() || null,
-      modelo_veiculo: modelo.trim() || null,
-      anos_aplicacao: anos.trim() || null,
       contexto_ia: ctxGerado || null,
       codigos_similares: codSimilares.trim() || null,
       catalogo: catName,
@@ -126,12 +120,11 @@ export function AdminPartsManager() {
       return;
     }
     toast.success('Peça cadastrada com sucesso!');
-    // Add new catalog to list if not present
     if (!catalogos.includes(catName)) {
       setCatalogos(prev => [...prev, catName].sort());
     }
-    setFab(''); setCod(''); setDesc(''); setChave(''); setMarca(''); setModelo(''); setAnos(''); setCtx(''); setCodSimilares('');
-  }, [fab, cod, desc, chave, marca, modelo, anos, ctx, codSimilares, addCatalogo, catalogos]);
+    setFab(''); setCod(''); setDesc(''); setAplicacao(''); setCodSimilares('');
+  }, [fab, cod, desc, aplicacao, codSimilares, addCatalogo, catalogos]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim() && !filterFab && !filterCatalogo) {
