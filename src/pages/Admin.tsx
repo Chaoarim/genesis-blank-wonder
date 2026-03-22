@@ -845,9 +845,6 @@ const Admin = () => {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="logs">
-              Logs de Webhook
-            </TabsTrigger>
             <TabsTrigger value="payments" onClick={() => navigate('/pagamentos')}>
               <DollarSign className="w-4 h-4 mr-2" />
               Pagamentos (V3)
