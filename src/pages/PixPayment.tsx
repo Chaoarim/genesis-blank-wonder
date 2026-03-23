@@ -81,8 +81,8 @@ const PixPayment = () => {
             <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg p-4">
               <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Oferta Relâmpago</p>
               <div className="flex items-center justify-center gap-2">
-                <span className="text-lg line-through opacity-70">R$ 97,00</span>
-                <span className="text-3xl font-bold">R$ 49,00</span>
+                <span className="text-lg line-through opacity-70">R$ 49,00</span>
+                <span className="text-3xl font-bold">R$ 20,00</span>
               </div>
               <div className="flex items-center justify-center gap-2 mt-2 bg-white/20 rounded-full py-1 px-3">
                 <Users className="w-4 h-4" />
