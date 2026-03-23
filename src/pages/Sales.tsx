@@ -104,7 +104,7 @@ const Sales = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <Link to="/pre-cadastro">
               <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2 w-full sm:w-auto">
-                Começar Agora — R$ 14,99/mês
+                Começar Agora — R$ 20,00/mês
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
