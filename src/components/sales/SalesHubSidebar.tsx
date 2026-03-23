@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
-  FileBarChart, BellRing, Contact, HelpCircle
+  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
   SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 interface TabDef {
   value: string;
@@ -64,39 +66,96 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
 
   const filteredItems = MENU_ITEMS.filter(item => visibleTabs.includes(item.value));
 
+  // Find which group the active tab belongs to
+  const activeGroup = MENU_ITEMS.find(i => i.value === activeTab)?.group;
+
+  // Collapsible state: Principal always open, active group open
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = { Principal: true };
+    GROUPS.forEach(g => { initial[g] = g === 'Principal' || g === activeGroup; });
+    return initial;
+  });
+
+  const toggleGroup = (group: string) => {
+    setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
+  };
+
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
+    <Sidebar collapsible="icon" className="border-r border-border hidden md:flex">
       <SidebarContent className="pt-2">
         {GROUPS.map(group => {
           const items = filteredItems.filter(i => i.group === group);
           if (items.length === 0) return null;
+
+          const isOpen = openGroups[group] ?? false;
+          const hasActiveItem = items.some(i => i.value === activeTab);
+
+          // In collapsed mode, show all items without collapsible
+          if (collapsed) {
+            return (
+              <SidebarGroup key={group}>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {items.map(item => (
+                      <SidebarMenuItem key={item.value}>
+                        <SidebarMenuButton
+                          isActive={activeTab === item.value}
+                          onClick={() => onTabChange(item.value)}
+                          tooltip={item.label}
+                          className={
+                            activeTab === item.value
+                              ? 'bg-primary/10 text-primary font-medium'
+                              : 'hover:bg-muted/50'
+                          }
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          }
+
           return (
-            <SidebarGroup key={group}>
-              <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
-                {group}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {items.map(item => (
-                    <SidebarMenuItem key={item.value}>
-                      <SidebarMenuButton
-                        isActive={activeTab === item.value}
-                        onClick={() => onTabChange(item.value)}
-                        tooltip={item.label}
-                        className={
-                          activeTab === item.value
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'hover:bg-muted/50'
-                        }
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.label}</span>}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <Collapsible
+              key={group}
+              open={isOpen || hasActiveItem}
+              onOpenChange={() => toggleGroup(group)}
+            >
+              <SidebarGroup>
+                <CollapsibleTrigger asChild>
+                  <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold cursor-pointer hover:text-muted-foreground flex items-center justify-between pr-2">
+                    {group}
+                    <ChevronDown className={`w-3 h-3 transition-transform ${isOpen || hasActiveItem ? 'rotate-180' : ''}`} />
+                  </SidebarGroupLabel>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {items.map(item => (
+                        <SidebarMenuItem key={item.value}>
+                          <SidebarMenuButton
+                            isActive={activeTab === item.value}
+                            onClick={() => onTabChange(item.value)}
+                            tooltip={item.label}
+                            className={
+                              activeTab === item.value
+                                ? 'bg-primary/10 text-primary font-medium'
+                                : 'hover:bg-muted/50'
+                            }
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
           );
         })}
       </SidebarContent>
