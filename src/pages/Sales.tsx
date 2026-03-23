@@ -803,7 +803,7 @@ const Sales = () => {
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground mt-4">
-            R$ 14,99/mês · Sem contrato · Ativação em até 24h
+            R$ 20,00/mês · Sem contrato · Ativação em até 24h
           </p>
         </div>
       </section>
