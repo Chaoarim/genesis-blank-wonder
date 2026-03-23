@@ -29,9 +29,12 @@ import { AccountsPayableManager } from '@/components/sales/AccountsPayableManage
 import { SalesHubSidebar, ALL_TAB_VALUES } from '@/components/sales/SalesHubSidebar';
 import { RepurchaseAlerts } from '@/components/sales/RepurchaseAlerts';
 import { SupplierContactsManager } from '@/components/sales/SupplierContactsManager';
+import { CommandPalette } from '@/components/sales/CommandPalette';
+import { OnboardingWizard } from '@/components/sales/OnboardingWizard';
+import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { BarChart3, LogOut, ArrowLeft, Zap, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
+import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 import { HelpGuide } from '@/components/sales/HelpGuide';
