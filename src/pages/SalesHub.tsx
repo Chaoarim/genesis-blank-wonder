@@ -29,9 +29,12 @@ import { AccountsPayableManager } from '@/components/sales/AccountsPayableManage
 import { SalesHubSidebar, ALL_TAB_VALUES } from '@/components/sales/SalesHubSidebar';
 import { RepurchaseAlerts } from '@/components/sales/RepurchaseAlerts';
 import { SupplierContactsManager } from '@/components/sales/SupplierContactsManager';
+import { CommandPalette } from '@/components/sales/CommandPalette';
+import { OnboardingWizard } from '@/components/sales/OnboardingWizard';
+import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { BarChart3, LogOut, ArrowLeft, Zap, Search, Link2, ExternalLink, Copy, Share2 } from 'lucide-react';
+import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 import { HelpGuide } from '@/components/sales/HelpGuide';
@@ -222,6 +225,7 @@ const SalesHub = () => {
 
               {/* Quick links */}
               <div className="flex items-center gap-1">
+                <CommandPalette onNavigate={setActiveTab} visibleTabs={visibleTabs} />
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs hidden md:flex" onClick={() => navigate('/buscar-pecas')}>
                   <Search className="w-3.5 h-3.5" />
                   Buscar Peças
@@ -255,11 +259,14 @@ const SalesHub = () => {
             </div>
           </header>
 
-          <main className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full space-y-4">
+          <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6 max-w-6xl mx-auto w-full space-y-4">
             <RenewalWarning />
             {renderContent()}
           </main>
         </div>
+
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} visibleTabs={visibleTabs} />
+        <OnboardingWizard />
       </div>
     </SidebarProvider>
   );
