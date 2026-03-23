@@ -794,7 +794,7 @@ const Sales = () => {
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
             Busca por veículo, consulta por placa, catálogo B2B 24h e central de vendas completa.
-            Tudo que sua loja precisa por R$ 14,99/mês.
+            Tudo que sua loja precisa por R$ 20,00/mês.
           </p>
           <Link to="/pre-cadastro">
             <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
