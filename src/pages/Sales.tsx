@@ -759,10 +759,10 @@ const Sales = () => {
 
           <div className="space-y-3">
             {[
-              { q: "Como funciona a busca por veículo?", a: "Você acessa partsai.online/buscar-pecas, clica na aba VEÍCULO e seleciona entre 61+ modelos catalogados (Gol, Onix, HB20, Hilux, Civic...). Ao selecionar, todas as peças compatíveis aparecem. Você pode buscar dentro do catálogo por nome (pastilha, filtro, etc.) com precisão total." },
+              { q: "Como funciona a busca por veículo?", a: "Na plataforma, clique na aba VEÍCULO e selecione entre 61+ modelos catalogados (Gol, Onix, HB20, Hilux, Civic...). Ao selecionar, todas as peças compatíveis aparecem. Você pode buscar dentro do catálogo por nome (pastilha, filtro, etc.) com precisão total." },
               { q: "E a consulta por placa?", a: "Na aba PLACA, digite a placa do veículo. O sistema consulta o Detran em tempo real e retorna marca, modelo, motor (1.0, 1.4, 1.6...), ano e combustível. A partir daí, pesquise qualquer peça já filtrada para aquele veículo." },
-              { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar partsai.online e fazer login." },
-              { q: "O que é o Catálogo B2B Online?", a: "É uma loja virtual do seu estoque com link exclusivo (partsai.online/catalogo/sua-loja). Seus clientes acessam pelo celular, pesquisam peças, veem preços com markup e fazem pedidos — 24 horas por dia, sem precisar ligar." },
+              { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar a plataforma e fazer login." },
+              { q: "O que é o Catálogo B2B Online?", a: "É uma loja virtual do seu estoque com link exclusivo. Seus clientes acessam pelo celular, pesquisam peças, veem preços com markup e fazem pedidos — 24 horas por dia, sem precisar ligar." },
               { q: "Como importo meu estoque?", a: "Na Central de Vendas, vá em 'Importar'. O sistema aceita planilhas Excel e CSV, reconhece variações de cabeçalho e formatos de moeda brasileira automaticamente. Você também pode cadastrar produtos manualmente." },
               { q: "Quantos módulos tem a Central de Vendas?", a: "São 21 módulos: Dashboard, Nova Venda (com busca por veículo integrada), Pedidos B2B, Histórico, Clientes, Carteira, Crédito, Estoque, Estoque Baixo, Importar, Cadastrar Produto, Markup, Ofertas, Cupons, Prazos, Alertas de Recompra, Fornecedores, Metas, Vendedores, Comissões, Garantias e Contas a Pagar." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
