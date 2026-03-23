@@ -691,10 +691,10 @@ const Sales = () => {
             </div>
 
             <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-4 mb-6 text-primary-foreground">
-              <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Preço Especial de Lançamento</p>
+               <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Preço Especial de Lançamento</p>
               <div className="flex items-center justify-center gap-3 mb-2">
                 <span className="text-lg line-through opacity-70">R$ 49,00</span>
-                <span className="text-4xl font-bold">R$ 14,99</span>
+                <span className="text-4xl font-bold">R$ 20,00</span>
                 <span className="text-sm opacity-80">/mês</span>
               </div>
               <div className="flex items-center justify-center gap-2 bg-primary-foreground/15 rounded-full py-1.5 px-4">
