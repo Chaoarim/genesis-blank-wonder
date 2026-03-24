@@ -56,21 +56,24 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
         }
       }
 
-      const mapped: Part[] = all.map((r: any) => ({
-        fabricante: r.codigo_peca || r.fabricante || '',
-        produto: r.descricao || '',
-        chaveDeBusca: r.chave_de_busca || '',
-        marca: r.marca_veiculo || '',
-        modelo: r.modelo_veiculo || '',
-        ano: r.anos_aplicacao || '',
-        fornecedor: r.fabricante || '',
-        contextoIA: r.contexto_ia || '',
-        codigosSimilares: r.codigos_similares || '',
-        imageUrl: r.image_url || '',
-        aplicacao: `${r.marca_veiculo || ''} ${r.modelo_veiculo || ''} ${r.anos_aplicacao || ''}`.trim(),
-        catalogo: r.catalogo || 'Sem catálogo',
-        _dbId: r.id,
-      })) as Part[];
+      const mapped: Part[] = all.map((r: any) => {
+        const aplicacaoText = `${r.marca_veiculo || ''} ${r.modelo_veiculo || ''} ${r.anos_aplicacao || ''}`.trim();
+        return {
+          fabricante: r.codigo_peca || r.fabricante || '',
+          produto: r.descricao || '',
+          chaveDeBusca: r.chave_de_busca || '',
+          marca: r.marca_veiculo || r.catalogo || '',
+          modelo: r.modelo_veiculo || '',
+          ano: r.anos_aplicacao || '',
+          fornecedor: r.fabricante || '',
+          contextoIA: r.contexto_ia || '',
+          codigosSimilares: r.codigos_similares || '',
+          imageUrl: r.image_url || '',
+          aplicacao: aplicacaoText || r.catalogo || '',
+          catalogo: r.catalogo || 'Sem catálogo',
+          _dbId: r.id,
+        };
+      }) as Part[];
 
       setAllParts(mapped);
       setLoading(false);
