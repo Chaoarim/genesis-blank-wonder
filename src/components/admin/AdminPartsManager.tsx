@@ -112,6 +112,7 @@ export function AdminPartsManager() {
       contexto_ia: ctxGerado || null,
       codigos_similares: codSimilares.trim() || null,
       catalogo: catName,
+      marca_veiculo: aplicacao.trim() || catName,
     });
 
     setSaving(false);
