@@ -335,10 +335,10 @@ export function AdminPartsManager() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Catálogo</TableHead>
-                      <TableHead>Fabricante</TableHead>
                       <TableHead>Código</TableHead>
-                      <TableHead>Descrição</TableHead>
+                      <TableHead>Produto</TableHead>
+                      <TableHead>Fornecedor</TableHead>
+                      <TableHead>Aplicação</TableHead>
                       <TableHead>Similares</TableHead>
                       <TableHead className="w-[120px]">Ações</TableHead>
                     </TableRow>
@@ -349,16 +349,16 @@ export function AdminPartsManager() {
                         {editingId === part.id ? (
                           <>
                             <TableCell>
-                              <Input className="h-8 text-xs" value={editData.catalogo || ''} onChange={e => setEditData(d => ({ ...d, catalogo: e.target.value }))} />
+                              <Input className="h-8 text-xs" value={editData.codigo_peca || ''} onChange={e => setEditData(d => ({ ...d, codigo_peca: e.target.value }))} />
+                            </TableCell>
+                            <TableCell>
+                              <Input className="h-8 text-xs" value={editData.descricao || ''} onChange={e => setEditData(d => ({ ...d, descricao: e.target.value }))} />
                             </TableCell>
                             <TableCell>
                               <Input className="h-8 text-xs" value={editData.fabricante || ''} onChange={e => setEditData(d => ({ ...d, fabricante: e.target.value }))} />
                             </TableCell>
                             <TableCell>
-                              <Input className="h-8 text-xs" value={editData.codigo_peca || ''} onChange={e => setEditData(d => ({ ...d, codigo_peca: e.target.value }))} />
-                            </TableCell>
-                            <TableCell>
-                              <Input className="h-8 text-xs" value={editData.descricao || ''} onChange={e => setEditData(d => ({ ...d, descricao: e.target.value }))} />
+                              <Input className="h-8 text-xs" value={editData.marca_veiculo || ''} onChange={e => setEditData(d => ({ ...d, marca_veiculo: e.target.value }))} />
                             </TableCell>
                             <TableCell>
                               <Input className="h-8 text-xs" value={editData.codigos_similares || ''} onChange={e => setEditData(d => ({ ...d, codigos_similares: e.target.value }))} />
@@ -376,10 +376,10 @@ export function AdminPartsManager() {
                           </>
                         ) : (
                           <>
-                            <TableCell className="text-xs font-medium text-primary">{part.catalogo || '—'}</TableCell>
-                            <TableCell className="text-xs">{part.fabricante || '—'}</TableCell>
                             <TableCell className="text-xs font-mono">{part.codigo_peca || '—'}</TableCell>
                             <TableCell className="text-xs">{part.descricao || '—'}</TableCell>
+                            <TableCell className="text-xs">{part.fabricante || '—'}</TableCell>
+                            <TableCell className="text-xs font-medium text-primary">{part.marca_veiculo || part.catalogo || '—'}</TableCell>
                             <TableCell className="text-xs">{part.codigos_similares || '—'}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
