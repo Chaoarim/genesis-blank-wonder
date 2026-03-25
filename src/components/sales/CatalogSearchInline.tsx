@@ -57,11 +57,12 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
       }
 
       const mapped: Part[] = all.map((r: any) => {
-        const aplicacaoText = `${r.marca_veiculo || ''} ${r.modelo_veiculo || ''} ${r.anos_aplicacao || ''}`.trim();
+        const chaveBusca = (r.chave_de_busca || '').trim();
+        const aplicacaoFallback = `${r.marca_veiculo || ''} ${r.modelo_veiculo || ''} ${r.anos_aplicacao || ''}`.trim();
         return {
           fabricante: r.codigo_peca || r.fabricante || '',
           produto: r.descricao || '',
-          chaveDeBusca: r.chave_de_busca || '',
+          chaveDeBusca: chaveBusca,
           marca: r.marca_veiculo || r.catalogo || '',
           modelo: r.modelo_veiculo || '',
           ano: r.anos_aplicacao || '',
@@ -69,7 +70,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
           contextoIA: r.contexto_ia || '',
           codigosSimilares: r.codigos_similares || '',
           imageUrl: r.image_url || '',
-          aplicacao: aplicacaoText || r.catalogo || '',
+          aplicacao: chaveBusca || aplicacaoFallback || r.catalogo || '',
           catalogo: r.catalogo || 'Sem catálogo',
           _dbId: r.id,
         };
@@ -132,7 +133,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
       codigo: pendingItem.fabricante || '',
       produto: pendingItem.produto || '',
       fornecedor: pendingItem.fornecedor || '',
-      aplicacao: `${pendingItem.marca || ''} ${pendingItem.modelo || ''} ${pendingItem.ano || ''}`.trim(),
+      aplicacao: pendingItem.aplicacao || pendingItem.chaveDeBusca || `${pendingItem.marca || ''} ${pendingItem.modelo || ''} ${pendingItem.ano || ''}`.trim(),
       preco_unitario: Math.round(preco * 100) / 100,
       quantidade: qtd,
     });
@@ -237,9 +238,9 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
                   <span className="text-xs text-muted-foreground truncate">{item.fornecedor}</span>
                 </div>
                 <p className="text-sm truncate">{item.produto}</p>
-                {(item.marca || item.modelo) && (
+                {item.aplicacao && (
                   <p className="text-xs text-muted-foreground truncate">
-                    {item.marca} {item.modelo} {item.ano}
+                    {item.aplicacao}
                   </p>
                 )}
               </div>

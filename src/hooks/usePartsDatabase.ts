@@ -69,12 +69,13 @@ export function usePartsDatabase() {
 
             if (data) {
               for (const row of data) {
-                const aplicacaoText = `${row.marca_veiculo || ''} ${row.modelo_veiculo || ''} ${row.anos_aplicacao || ''}`.trim();
+                const chaveBusca = (row.chave_de_busca || '').trim();
+                const aplicacaoFallback = `${row.marca_veiculo || ''} ${row.modelo_veiculo || ''} ${row.anos_aplicacao || ''}`.trim();
                 allParts.push({
                   fornecedor: row.fabricante || '',
                   fabricante: row.codigo_peca || '',
                   produto: row.descricao || '',
-                  aplicacao: aplicacaoText || (row as any).catalogo || row.chave_de_busca || '',
+                  aplicacao: chaveBusca || aplicacaoFallback || (row as any).catalogo || '',
                   marca: row.marca_veiculo || (row as any).catalogo || '',
                   modelo: row.modelo_veiculo || '',
                   ano: row.anos_aplicacao || '',
