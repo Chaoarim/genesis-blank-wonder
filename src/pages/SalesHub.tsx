@@ -1,43 +1,51 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesData } from '@/hooks/useSalesData';
 import { usePartsDatabase } from '@/hooks/usePartsDatabase';
 import { useSellerPermissions } from '@/hooks/useSellerPermissions';
-import { SalesDashboard } from '@/components/sales/SalesDashboard';
 import { RenewalWarning } from '@/components/RenewalWarning';
-import { CustomersManager } from '@/components/sales/CustomersManager';
-import { CustomerPortfolio } from '@/components/sales/CustomerPortfolio';
-import { NewSaleForm } from '@/components/sales/NewSaleForm';
-import { SalesHistory } from '@/components/sales/SalesHistory';
-import { CatalogOrdersManager } from '@/components/sales/CatalogOrdersManager';
-import { GoalsManager } from '@/components/sales/GoalsManager';
-import { InventorySearch } from '@/components/sales/InventorySearch';
-import { LowStockReport } from '@/components/sales/LowStockReport';
-import { ImportInventoryTab } from '@/components/sales/ImportInventoryTab';
-import { PromotionsManager } from '@/components/sales/PromotionsManager';
-import { CouponsManager } from '@/components/sales/CouponsManager';
-import { ManualProductForm } from '@/components/sales/ManualProductForm';
-import { SellersManager } from '@/components/sales/SellersManager';
-import { CommissionsManager } from '@/components/sales/CommissionsManager';
-import { SellerCommissionsReport } from '@/components/sales/SellerCommissionsReport';
-import { MarkupManager } from '@/components/sales/MarkupManager';
-import { PaymentTermsManager } from '@/components/sales/PaymentTermsManager';
-import { WarrantyReturnsManager } from '@/components/sales/WarrantyReturnsManager';
-import { CreditApprovalsManager } from '@/components/sales/CreditApprovalsManager';
-import { AccountsPayableManager } from '@/components/sales/AccountsPayableManager';
 import { SalesHubSidebar, ALL_TAB_VALUES } from '@/components/sales/SalesHubSidebar';
-import { RepurchaseAlerts } from '@/components/sales/RepurchaseAlerts';
-import { SupplierContactsManager } from '@/components/sales/SupplierContactsManager';
 import { CommandPalette } from '@/components/sales/CommandPalette';
-import { OnboardingWizard } from '@/components/sales/OnboardingWizard';
 import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2 } from 'lucide-react';
+import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
-import { HelpGuide } from '@/components/sales/HelpGuide';
+
+// Lazy-loaded tab components
+const SalesDashboard = lazy(() => import('@/components/sales/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
+const NewSaleForm = lazy(() => import('@/components/sales/NewSaleForm').then(m => ({ default: m.NewSaleForm })));
+const CatalogOrdersManager = lazy(() => import('@/components/sales/CatalogOrdersManager').then(m => ({ default: m.CatalogOrdersManager })));
+const InventorySearch = lazy(() => import('@/components/sales/InventorySearch').then(m => ({ default: m.InventorySearch })));
+const LowStockReport = lazy(() => import('@/components/sales/LowStockReport').then(m => ({ default: m.LowStockReport })));
+const ImportInventoryTab = lazy(() => import('@/components/sales/ImportInventoryTab').then(m => ({ default: m.ImportInventoryTab })));
+const SalesHistory = lazy(() => import('@/components/sales/SalesHistory').then(m => ({ default: m.SalesHistory })));
+const CustomersManager = lazy(() => import('@/components/sales/CustomersManager').then(m => ({ default: m.CustomersManager })));
+const CustomerPortfolio = lazy(() => import('@/components/sales/CustomerPortfolio').then(m => ({ default: m.CustomerPortfolio })));
+const GoalsManager = lazy(() => import('@/components/sales/GoalsManager').then(m => ({ default: m.GoalsManager })));
+const MarkupManager = lazy(() => import('@/components/sales/MarkupManager').then(m => ({ default: m.MarkupManager })));
+const ManualProductForm = lazy(() => import('@/components/sales/ManualProductForm').then(m => ({ default: m.ManualProductForm })));
+const PromotionsManager = lazy(() => import('@/components/sales/PromotionsManager').then(m => ({ default: m.PromotionsManager })));
+const CouponsManager = lazy(() => import('@/components/sales/CouponsManager').then(m => ({ default: m.CouponsManager })));
+const SellersManager = lazy(() => import('@/components/sales/SellersManager').then(m => ({ default: m.SellersManager })));
+const CommissionsManager = lazy(() => import('@/components/sales/CommissionsManager').then(m => ({ default: m.CommissionsManager })));
+const SellerCommissionsReport = lazy(() => import('@/components/sales/SellerCommissionsReport').then(m => ({ default: m.SellerCommissionsReport })));
+const PaymentTermsManager = lazy(() => import('@/components/sales/PaymentTermsManager').then(m => ({ default: m.PaymentTermsManager })));
+const WarrantyReturnsManager = lazy(() => import('@/components/sales/WarrantyReturnsManager').then(m => ({ default: m.WarrantyReturnsManager })));
+const CreditApprovalsManager = lazy(() => import('@/components/sales/CreditApprovalsManager').then(m => ({ default: m.CreditApprovalsManager })));
+const AccountsPayableManager = lazy(() => import('@/components/sales/AccountsPayableManager').then(m => ({ default: m.AccountsPayableManager })));
+const RepurchaseAlerts = lazy(() => import('@/components/sales/RepurchaseAlerts').then(m => ({ default: m.RepurchaseAlerts })));
+const SupplierContactsManager = lazy(() => import('@/components/sales/SupplierContactsManager').then(m => ({ default: m.SupplierContactsManager })));
+const HelpGuide = lazy(() => import('@/components/sales/HelpGuide').then(m => ({ default: m.HelpGuide })));
+const OnboardingWizard = lazy(() => import('@/components/sales/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
+
+const TabLoader = () => (
+  <div className="flex items-center justify-center py-20">
+    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+  </div>
+);
 
 const SalesHub = () => {
   const navigate = useNavigate();
