@@ -169,7 +169,16 @@ function codeMatches(code: string, term: string): boolean {
 
   if (!normalizedCode || !normalizedTerm) return false;
 
-  return normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm);
+  // Direct comparison
+  if (normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm)) {
+    return true;
+  }
+
+  // Compare without spaces (handles "VKBA 4529A" vs "VKBA4529A")
+  const codeNoSpaces = normalizedCode.replace(/\s/g, '');
+  const termNoSpaces = normalizedTerm.replace(/\s/g, '');
+
+  return codeNoSpaces === termNoSpaces || codeNoSpaces.startsWith(termNoSpaces) || codeNoSpaces.includes(termNoSpaces);
 }
 
 function hasConflictingProductPrefix(productText: string, requestedProductTerms: string[]): boolean {
