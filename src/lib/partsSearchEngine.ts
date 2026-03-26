@@ -158,6 +158,12 @@ function termMatchesText(text: string, term: string, strictWord = false): boolea
     if (!strictWord && candidate.includes(' ') && normalizedText.includes(candidate)) {
       return true;
     }
+
+    // For alphanumeric codes (e.g. "vkba4529a"), try matching without spaces
+    if (candidate.length >= 4 && /\d/.test(candidate)) {
+      const textNoSpaces = normalizedText.replace(/\s/g, '');
+      if (textNoSpaces.includes(candidate.replace(/\s/g, ''))) return true;
+    }
   }
 
   return false;
