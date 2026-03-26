@@ -247,7 +247,7 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
   const scored: { part: Part; score: number }[] = [];
 
   for (const part of partsSource) {
-    const code = normalizeForSearch(part.codigo || '');
+    const code = normalizeForSearch(part.fabricante || '');
     const produto = normalizeForSearch(part.produto || '');
     const chave = normalizeForSearch(part.chaveDeBusca || '');
     const aplicacao = normalizeForSearch(part.aplicacao || '');
