@@ -158,6 +158,12 @@ function termMatchesText(text: string, term: string, strictWord = false): boolea
     if (!strictWord && candidate.includes(' ') && normalizedText.includes(candidate)) {
       return true;
     }
+
+    // For alphanumeric codes (e.g. "vkba4529a"), try matching without spaces
+    if (candidate.length >= 4 && /\d/.test(candidate)) {
+      const textNoSpaces = normalizedText.replace(/\s/g, '');
+      if (textNoSpaces.includes(candidate.replace(/\s/g, ''))) return true;
+    }
   }
 
   return false;
@@ -169,7 +175,16 @@ function codeMatches(code: string, term: string): boolean {
 
   if (!normalizedCode || !normalizedTerm) return false;
 
-  return normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm);
+  // Direct comparison
+  if (normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm)) {
+    return true;
+  }
+
+  // Compare without spaces (handles "VKBA 4529A" vs "VKBA4529A")
+  const codeNoSpaces = normalizedCode.replace(/\s/g, '');
+  const termNoSpaces = normalizedTerm.replace(/\s/g, '');
+
+  return codeNoSpaces === termNoSpaces || codeNoSpaces.startsWith(termNoSpaces) || codeNoSpaces.includes(termNoSpaces);
 }
 
 function hasConflictingProductPrefix(productText: string, requestedProductTerms: string[]): boolean {
