@@ -269,12 +269,16 @@ const SalesHub = () => {
 
           <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6 max-w-6xl mx-auto w-full space-y-4">
             <RenewalWarning />
-            {renderContent()}
+            <Suspense fallback={<TabLoader />}>
+              {renderContent()}
+            </Suspense>
           </main>
         </div>
 
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} visibleTabs={visibleTabs} />
-        <OnboardingWizard />
+        <Suspense fallback={null}>
+          <OnboardingWizard />
+        </Suspense>
       </div>
     </SidebarProvider>
   );
