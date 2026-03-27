@@ -85,7 +85,7 @@ const PartsSearch = () => {
     if (search.length < 2) return [];
     
     if (activeTab === 'codigo') {
-       return parts.filter(p => p.fabricante?.toLowerCase().includes(search.toLowerCase()) || p.codigosSimilares?.toLowerCase().includes(search.toLowerCase()));
+      return smartFilterParts(parts, search);
     }
     
     return smartFilterParts(parts, search);
