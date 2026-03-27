@@ -187,8 +187,14 @@ function codeMatches(code: string, term: string): boolean {
   return codeNoSpaces === termNoSpaces || codeNoSpaces.startsWith(termNoSpaces) || codeNoSpaces.includes(termNoSpaces);
 }
 
+function isLikelyPartCode(term: string): boolean {
+  const normalizedTerm = normalizeForSearch(term).replace(/\s/g, '');
+  return /^(?=.*\d)[a-z0-9-]{4,}$/i.test(normalizedTerm);
+}
+
 function hasConflictingProductPrefix(productText: string, requestedProductTerms: string[]): boolean {
   if (requestedProductTerms.length === 0) return false;
+  if (requestedProductTerms.some(isLikelyPartCode)) return false;
 
   const productWords = tokenizeQuery(productText);
   if (productWords.length === 0) return false;
