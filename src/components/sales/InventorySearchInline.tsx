@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchAllInventory } from '@/lib/fetchAllInventory';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
+import { isLikelyPartCodeQuery, prioritizeCodeMatches } from '@/lib/partCodeSearch';
 
 interface InventoryItem {
   id: string;
@@ -54,8 +55,21 @@ export function InventorySearchInline({ onAddItem, adminUserId }: InventorySearc
 
   const results = useMemo(() => {
     if (query.trim().length < 2) return [];
-    return smartFilterInventory(items, query).slice(0, 20);
+
+    const smartResults = smartFilterInventory(items, query);
+    return prioritizeCodeMatches(items, query, smartResults).slice(0, 20);
   }, [items, query]);
+
+  useEffect(() => {
+    if (!isLikelyPartCodeQuery(query)) return;
+
+    console.log('[InventorySearchInline] code-search', {
+      adminUserId,
+      totalItems: items.length,
+      query,
+      resultCodes: results.slice(0, 5).map((item) => item.codigo),
+    });
+  }, [adminUserId, items.length, query, results]);
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

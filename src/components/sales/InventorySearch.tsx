@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchAllInventory } from '@/lib/fetchAllInventory';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
+import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
 
 interface InventoryItem {
@@ -59,7 +60,8 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
 
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
-    return smartFilterInventory(items, search);
+    const smartResults = smartFilterInventory(items, search);
+    return prioritizeCodeMatches(items, search, smartResults);
   }, [items, search]);
 
   const startEdit = (id: string, field: EditField, currentValue: string | number) => {
