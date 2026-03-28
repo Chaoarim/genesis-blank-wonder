@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Percent, Trash2, Plus, Clock, Search, Tag, Users, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface InventoryItem {
   id: string;
@@ -133,7 +134,7 @@ export function PromotionsManager() {
   const activePromos = promotions.filter(p => new Date(p.expires_at) > new Date());
   const expiredPromos = promotions.filter(p => new Date(p.expires_at) <= new Date());
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando...</p>;
+  if (loading) return <ListSkeleton count={3} variant="card" />;
 
   return (
     <div className="space-y-6">

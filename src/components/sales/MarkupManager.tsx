@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Save, Percent } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ListSkeleton } from './ListSkeleton';
 
 export function MarkupManager() {
   const [markup, setMarkup] = useState(0);
@@ -41,7 +42,7 @@ export function MarkupManager() {
 
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando...</p>;
+  if (loading) return <ListSkeleton count={1} variant="card" />;
 
   return (
     <div className="space-y-4">

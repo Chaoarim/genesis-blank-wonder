@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link2, Copy } from 'lucide-react';
+import { ListSkeleton } from './ListSkeleton';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllInventory } from '@/lib/fetchAllInventory';
@@ -68,7 +69,7 @@ export function ImportInventoryTab({ adminUserId: _adminUserId }: { adminUserId?
     toast.success('Link copiado!');
   };
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando...</p>;
+  if (loading) return <ListSkeleton count={3} variant="card" />;
 
   return (
     <div className="space-y-4">

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CreditCard, CheckCircle, XCircle, Clock, AlertTriangle, Eye } from 'lucide-react';
+import { ListSkeleton } from './ListSkeleton';
 
 interface CreditApproval {
   id: string;
@@ -138,7 +139,7 @@ export function CreditApprovalsManager({ userId, reviewerName }: Props) {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7}><ListSkeleton count={3} variant="table-row" /></TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum registro</TableCell></TableRow>
             ) : filtered.map(r => {

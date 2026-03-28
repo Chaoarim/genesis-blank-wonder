@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ListSkeleton } from './ListSkeleton';
 import { toast } from 'sonner';
 import { ShieldCheck, RotateCcw, Plus, CheckCircle, XCircle, Clock, Eye, Printer, Download } from 'lucide-react';
 import { printHtml, downloadHtmlAsPdf } from '@/lib/htmlToPdf';
@@ -232,7 +233,7 @@ export function WarrantyReturnsManager({ userId, customers, sales, getSaleItems 
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7}><ListSkeleton count={3} variant="table-row" /></TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum registro encontrado</TableCell></TableRow>
             ) : filtered.map(r => {

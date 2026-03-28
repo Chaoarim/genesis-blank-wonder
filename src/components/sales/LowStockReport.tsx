@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertTriangle, Package, Printer, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadHtmlAsPdf, printHtml } from '@/lib/htmlToPdf';
+import { ListSkeleton } from './ListSkeleton';
 
 interface LowStockItem {
   id: string;
@@ -78,7 +79,7 @@ export function LowStockReport({ adminUserId: _adminUserId }: { adminUserId?: st
     downloadHtmlAsPdf(buildReportHtml(), `Estoque_Baixo_${new Date().toISOString().slice(0, 10)}`);
   };
 
-  if (loading) return <p className="text-center text-muted-foreground py-4">Carregando...</p>;
+  if (loading) return <ListSkeleton count={4} variant="card" />;
 
   return (
     <Card className="p-4 space-y-3">

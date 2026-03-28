@@ -10,6 +10,7 @@ import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface InventoryItem {
   id: string;
@@ -161,7 +162,7 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
     );
   };
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando estoque...</p>;
+  if (loading) return <ListSkeleton count={5} variant="card" />;
 
   if (items.length === 0) {
     return (

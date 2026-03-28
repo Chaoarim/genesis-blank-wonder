@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { PlusCircle, Search, Filter, CheckCircle2, Clock, AlertTriangle, Trash2, Edit, Receipt, Barcode, DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import { format, isPast, isToday, addDays, differenceInDays } from 'date-fns';
+import { ListSkeleton, StatsSkeleton } from './ListSkeleton';
 import { ptBR } from 'date-fns/locale';
 
 interface AccountPayable {
@@ -457,7 +458,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
 
           {/* Table */}
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <ListSkeleton count={4} variant="card" />
           ) : filtered.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Receipt className="w-12 h-12 mx-auto mb-3 opacity-30" />
