@@ -44,6 +44,7 @@ const SupplierContactsManager = lazy(() => import('@/components/sales/SupplierCo
 const HelpGuide = lazy(() => import('@/components/sales/HelpGuide').then(m => ({ default: m.HelpGuide })));
 const OnboardingWizard = lazy(() => import('@/components/sales/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 const ABCCurveReport = lazy(() => import('@/components/sales/ABCCurveReport').then(m => ({ default: m.ABCCurveReport })));
+const AuditLogsViewer = lazy(() => import('@/components/sales/AuditLogsViewer').then(m => ({ default: m.AuditLogsViewer })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -220,6 +221,8 @@ const SalesHub = () => {
         return null;
       case 'abc-curve':
         return <ABCCurveReport sales={salesData.allSales} getSaleItems={salesData.getSaleItems} />;
+      case 'audit-logs':
+        return sellerPerms.isAdmin ? <AuditLogsViewer /> : null;
       case 'help':
         return <HelpGuide />;
       default:
