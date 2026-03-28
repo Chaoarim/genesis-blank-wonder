@@ -3,9 +3,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Search, Send, Printer, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
-import { printSale, downloadPdf } from '@/lib/salePrint';
+import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SalesHistoryProps {
@@ -117,6 +117,9 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => downloadPdf(sale, itemsCache[sale.id])} className="gap-1">
                           <FileText className="w-3 h-3" /> PDF
+                        </Button>
+                        <Button variant="default" size="sm" onClick={() => downloadQuotePdf(sale, itemsCache[sale.id])} className="gap-1">
+                          <FileDown className="w-3 h-3" /> Orçamento PDF
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => resendWhatsApp(sale)} className="gap-1">
                           <Send className="w-3 h-3" /> WhatsApp
