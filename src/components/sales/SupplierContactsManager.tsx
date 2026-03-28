@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Plus, Phone, MessageSquare, Mail, Building2, User, FileText, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface SupplierContact {
   id: string;
@@ -188,7 +189,7 @@ export function SupplierContactsManager({ userId }: { userId: string }) {
       </div>
 
       {loading ? (
-        <p className="text-center text-muted-foreground py-8">Carregando...</p>
+        <ListSkeleton count={3} variant="card" />
       ) : filtered.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">Nenhum fornecedor encontrado.</p>
       ) : (

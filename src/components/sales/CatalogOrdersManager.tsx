@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface OrderItem {
   codigo: string;
@@ -91,7 +92,7 @@ export function CatalogOrdersManager() {
   const pendingCount = orders.filter(o => o.status === 'pending').length;
 
   if (loading) {
-    return <p className="text-center text-muted-foreground py-10">Carregando pedidos...</p>;
+    return <ListSkeleton count={3} variant="card" />;
   }
 
   return (

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Calendar, DollarSign, Edit2, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface PaymentTermRule {
   id: string;
@@ -122,7 +123,7 @@ export function PaymentTermsManager({ userId }: { userId: string | null }) {
 
   const parseDays = (intervals: string) => intervals.split('/').map(d => d.trim());
 
-  if (loading) return <p className="text-center text-muted-foreground py-6">Carregando...</p>;
+  if (loading) return <ListSkeleton count={2} variant="card" />;
 
   return (
     <div className="space-y-4">
