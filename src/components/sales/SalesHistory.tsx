@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Loader2, Calendar } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
@@ -15,6 +16,7 @@ interface SalesHistoryProps {
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const PAGE_SIZE = 30;
 
 const DELIVERY_LABELS: Record<string, string> = {
   retirada: 'Retirada',
@@ -30,15 +32,51 @@ const PAYMENT_LABELS: Record<string, string> = {
   faturado: 'Faturado',
 };
 
+const PERIOD_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'today', label: 'Hoje' },
+  { value: 'week', label: 'Esta semana' },
+  { value: 'month', label: 'Este mês' },
+  { value: '3months', label: 'Últimos 3 meses' },
+];
+
 export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistoryProps) {
   const [search, setSearch] = useState('');
+  const [period, setPeriod] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [itemsCache, setItemsCache] = useState<Record<string, SaleItem[]>>({});
 
-  const filtered = sales.filter(s => {
+  const filtered = useMemo(() => {
+    const now = new Date();
+    let result = sales;
+
+    // Period filter
+    if (period !== 'all') {
+      const cutoff = new Date();
+      if (period === 'today') cutoff.setHours(0, 0, 0, 0);
+      else if (period === 'week') { cutoff.setDate(now.getDate() - now.getDay()); cutoff.setHours(0, 0, 0, 0); }
+      else if (period === 'month') { cutoff.setDate(1); cutoff.setHours(0, 0, 0, 0); }
+      else if (period === '3months') { cutoff.setMonth(now.getMonth() - 3); cutoff.setHours(0, 0, 0, 0); }
+      result = result.filter(s => new Date(s.created_at) >= cutoff);
+    }
+
+    // Text filter
     const q = search.toLowerCase();
-    return !q || (s.customer_name || '').toLowerCase().includes(q) || s.id.includes(q) || (s.seller_name || '').toLowerCase().includes(q);
-  });
+    if (q) {
+      result = result.filter(s =>
+        (s.customer_name || '').toLowerCase().includes(q) ||
+        s.id.includes(q) ||
+        (s.seller_name || '').toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [sales, search, period]);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+  const totalFiltered = filtered.reduce((s, v) => s + Number(v.total), 0);
 
   const toggleExpand = async (id: string) => {
     if (expandedId === id) { setExpandedId(null); return; }
@@ -59,22 +97,42 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
 
   return (
     <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Buscar por cliente ou vendedor..." value={search} onChange={e => setSearch(e.target.value)} />
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Buscar por cliente ou vendedor..." value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(PAGE_SIZE); }} />
+        </div>
+        <Select value={period} onValueChange={v => { setPeriod(v); setVisibleCount(PAGE_SIZE); }}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <Calendar className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PERIOD_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Summary */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
+        <span>{filtered.length} venda{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="font-medium text-foreground">Total: {fmt(totalFiltered)}</span>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-center text-muted-foreground py-10">Nenhuma venda encontrada</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map(sale => (
+          {visible.map(sale => (
             <Card key={sale.id} className="overflow-hidden">
               <button onClick={() => toggleExpand(sale.id)} className="w-full p-4 flex items-center justify-between text-left hover:bg-muted/30 transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm truncate">{sale.customer_name || 'Cliente balcão'}</span>
-                    <Badge variant="outline" className="text-[10px]">{sale.channel === 'whatsapp' ? 'WhatsApp' : 'Balcão'}</Badge>
+                    <Badge variant="outline" className="text-[10px]">{sale.channel === 'whatsapp' ? 'WhatsApp' : sale.channel === 'catalogo_b2b' ? 'Catálogo' : 'Balcão'}</Badge>
                     {sale.seller_name && (
                       <Badge variant="secondary" className="text-[10px]">🧑‍💼 {sale.seller_name}</Badge>
                     )}
@@ -142,6 +200,20 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
               )}
             </Card>
           ))}
+
+          {/* Load more */}
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                className="gap-2"
+              >
+                <Loader2 className="w-3.5 h-3.5" />
+                Carregar mais ({filtered.length - visibleCount} restantes)
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
