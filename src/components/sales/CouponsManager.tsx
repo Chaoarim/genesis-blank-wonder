@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Trash2, Plus, Clock, Copy } from 'lucide-react';
+import { Ticket, Plus, Clock, Copy } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 

@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package, Trash2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 

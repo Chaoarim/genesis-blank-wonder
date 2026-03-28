@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Plus, Phone, MessageSquare, Mail, Building2, User, FileText, Trash2, Edit2 } from 'lucide-react';
+import { Search, Plus, Phone, MessageSquare, Mail, Building2, User, FileText, Edit2 } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 

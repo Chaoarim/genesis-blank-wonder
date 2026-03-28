@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { PlusCircle, Search, Filter, CheckCircle2, Clock, AlertTriangle, Trash2, Edit, Receipt, Barcode, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { PlusCircle, Search, Filter, CheckCircle2, Clock, AlertTriangle, Edit, Receipt, Barcode, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { format, isPast, isToday, addDays, differenceInDays } from 'date-fns';
 import { ListSkeleton, StatsSkeleton } from './ListSkeleton';
 import { ptBR } from 'date-fns/locale';

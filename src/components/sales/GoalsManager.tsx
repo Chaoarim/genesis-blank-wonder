@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Target, Trophy, Trash2, Users, CalendarDays } from 'lucide-react';
+import { Target, Trophy, Users, CalendarDays } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import type { SalesGoal, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
