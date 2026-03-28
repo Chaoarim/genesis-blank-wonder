@@ -1207,6 +1207,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_seller_module_access: { Args: { _module: string }; Returns: boolean }
       update_subscription_by_email: {
         Args: { p_email: string; p_plan: string; p_status: string }
         Returns: undefined
