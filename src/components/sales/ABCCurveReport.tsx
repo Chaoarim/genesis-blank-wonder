@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { Download, TrendingUp, Package, Filter } from "lucide-react";
+import { exportToExcel } from '@/lib/exportExcel';
 
 interface SaleItem {
   codigo: string;
@@ -292,6 +293,20 @@ export function ABCCurveReport({ sales, getSaleItems }: ABCCurveReportProps) {
             </div>
             <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
               <Download className="w-4 h-4" /> Exportar CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              exportToExcel(items.map(i => ({
+                Código: i.codigo,
+                Produto: i.produto,
+                Fornecedor: i.fornecedor,
+                Receita: i.totalRevenue,
+                Quantidade: i.totalQty,
+                '% Receita': Math.round(i.percentRevenue * 100) / 100,
+                '% Acumulado': Math.round(i.cumulativePercent * 100) / 100,
+                Classe: i.classification,
+              })), 'curva-abc', 'Curva ABC');
+            }} className="gap-1.5">
+              <Download className="w-4 h-4" /> Exportar Excel
             </Button>
           </div>
 

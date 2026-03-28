@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame, Tags } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame, Tags, Download } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
+import { exportToExcel } from '@/lib/exportExcel';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllInventory } from '@/lib/fetchAllInventory';
@@ -204,6 +205,28 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
           >
             <Tags className="w-4 h-4" />
             Imprimir Etiquetas
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              const data = (search.trim() ? filtered : items).map(item => ({
+                Código: item.codigo,
+                Produto: item.produto,
+                Fornecedor: item.fornecedor,
+                Aplicação: item.aplicacao,
+                Estoque: item.qtd_estoque,
+                'Preço Custo': item.preco,
+                'Preço Revenda': markup > 0 ? Math.round(item.preco * (1 + markup / 100) * 100) / 100 : item.preco,
+                Vendidos: item.vendidos_display,
+              }));
+              exportToExcel(data, 'estoque', 'Estoque');
+              toast.success('Exportando estoque...');
+            }}
+          >
+            <Download className="w-4 h-4" />
+            Exportar Excel
           </Button>
         </div>
 

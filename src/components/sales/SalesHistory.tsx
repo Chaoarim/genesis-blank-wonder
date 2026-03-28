@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Loader2, Calendar, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Loader2, Calendar, Download, Copy } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportExcel';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
@@ -14,6 +14,7 @@ interface SalesHistoryProps {
   sales: Sale[];
   onDeleteSale: (id: string) => void;
   getSaleItems: (saleId: string) => Promise<SaleItem[]>;
+  onDuplicateSale?: (sale: Sale, items: SaleItem[]) => void;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -41,7 +42,7 @@ const PERIOD_OPTIONS = [
   { value: '3months', label: 'Últimos 3 meses' },
 ];
 
-export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistoryProps) {
+export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSale }: SalesHistoryProps) {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -199,6 +200,11 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
                         <Button variant="outline" size="sm" onClick={() => resendWhatsApp(sale)} className="gap-1">
                           <Send className="w-3 h-3" /> WhatsApp
                         </Button>
+                        {onDuplicateSale && (
+                          <Button variant="outline" size="sm" onClick={() => onDuplicateSale(sale, itemsCache[sale.id])} className="gap-1">
+                            <Copy className="w-3 h-3" /> Duplicar
+                          </Button>
+                        )}
                         <ConfirmDeleteDialog
                           description="Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita."
                           onConfirm={() => onDeleteSale(sale.id)}

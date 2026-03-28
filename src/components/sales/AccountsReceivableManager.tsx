@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, AlertTriangle, CheckCircle, Clock, Search, MessageCircle, Filter, Download } from 'lucide-react';
+import { DollarSign, AlertTriangle, CheckCircle, Clock, Search, MessageCircle, Filter, Download, Calendar } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportExcel';
-import { format, differenceInDays, parseISO, isAfter } from 'date-fns';
+import { format, differenceInDays, parseISO, isAfter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Sale, Customer } from '@/hooks/useSalesData';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,7 @@ type StatusFilter = 'all' | 'pending' | 'overdue' | 'paid';
 export function AccountsReceivableManager({ sales, customers, onRefresh }: Props) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
 
   // Receivables = sales with payment_deadline (credit sales)
   const receivables = useMemo(() => {
@@ -57,13 +58,24 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
   const filtered = useMemo(() => {
     return receivables.filter(r => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (periodFilter !== 'all') {
+        const now = new Date();
+        const deadline = r.deadline;
+        if (periodFilter === 'week') {
+          if (deadline < startOfWeek(now, { weekStartsOn: 1 }) || deadline > endOfWeek(now, { weekStartsOn: 1 })) return false;
+        } else if (periodFilter === 'month') {
+          if (deadline < startOfMonth(now) || deadline > endOfMonth(now)) return false;
+        } else if (periodFilter === 'last3') {
+          if (deadline < subMonths(startOfMonth(now), 2) || deadline > endOfMonth(now)) return false;
+        }
+      }
       if (search) {
         const q = search.toLowerCase();
         return (r.customer_name?.toLowerCase().includes(q) || r.id.includes(q));
       }
       return true;
     });
-  }, [receivables, statusFilter, search]);
+  }, [receivables, statusFilter, search, periodFilter]);
 
   const totals = useMemo(() => {
     const pending = receivables.filter(r => r.status === 'pending').reduce((s, r) => s + r.total, 0);
@@ -144,6 +156,18 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
             <SelectItem value="pending">Pendentes</SelectItem>
             <SelectItem value="overdue">Vencidos</SelectItem>
             <SelectItem value="paid">Recebidos</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={periodFilter} onValueChange={setPeriodFilter}>
+          <SelectTrigger className="w-full sm:w-44">
+            <Calendar className="w-4 h-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os períodos</SelectItem>
+            <SelectItem value="week">Esta semana</SelectItem>
+            <SelectItem value="month">Este mês</SelectItem>
+            <SelectItem value="last3">Últimos 3 meses</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
