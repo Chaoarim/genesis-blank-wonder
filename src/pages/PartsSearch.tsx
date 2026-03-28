@@ -301,7 +301,7 @@ const PartsSearch = () => {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => handlePlacaSearch(search)}
+                      onClick={() => handlePlacaSearch(searchInput)}
                       disabled={searchingPlaca}
                       className="shrink-0 gap-1"
                     >
@@ -313,7 +313,7 @@ const PartsSearch = () => {
               )}
 
               {/* Quick access buttons */}
-              {search.length < 2 && (
+              {searchInput.length < 2 && (
                 <div className="grid grid-cols-2 gap-3">
                   <Card
                     className="p-4 cursor-pointer hover:border-primary transition-colors flex items-center gap-3"
@@ -343,7 +343,7 @@ const PartsSearch = () => {
               )}
 
               {/* Auto-detected type indicator */}
-              {search.length >= 2 && !showPlacaSuggestion && (
+              {searchInput.length >= 2 && !showPlacaSuggestion && (
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">
