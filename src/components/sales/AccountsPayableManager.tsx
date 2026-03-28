@@ -65,6 +65,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
   const [suppliers, setSuppliers] = useState<string[]>([]);
   const [newSupplier, setNewSupplier] = useState('');
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
@@ -227,6 +228,20 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
   // Filtered
   const filtered = bills.filter(b => {
     if (statusFilter !== 'all' && b.status !== statusFilter) return false;
+    if (periodFilter !== 'all') {
+      const due = new Date(b.due_date);
+      const now = new Date();
+      if (periodFilter === 'week') {
+        const diff = Math.abs(differenceInDays(due, now));
+        if (diff > 7 || due < new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())) return false;
+      } else if (periodFilter === 'month') {
+        if (due.getMonth() !== now.getMonth() || due.getFullYear() !== now.getFullYear()) return false;
+      } else if (periodFilter === 'last3') {
+        const threeMonthsAgo = new Date(now);
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        if (due < threeMonthsAgo) return false;
+      }
+    }
     if (search) {
       const q = search.toLowerCase();
       return b.supplier_name.toLowerCase().includes(q) || b.document_number.toLowerCase().includes(q) || b.description.toLowerCase().includes(q);
@@ -471,6 +486,18 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pending">Pendentes</SelectItem>
                 <SelectItem value="paid">Pagos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <SelectTrigger className="w-[160px]">
+                <Calendar className="w-4 h-4 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos períodos</SelectItem>
+                <SelectItem value="week">Esta semana</SelectItem>
+                <SelectItem value="month">Este mês</SelectItem>
+                <SelectItem value="last3">Últimos 3 meses</SelectItem>
               </SelectContent>
             </Select>
           </div>
