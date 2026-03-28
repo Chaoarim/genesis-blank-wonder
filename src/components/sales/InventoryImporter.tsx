@@ -190,14 +190,17 @@ export function InventoryImporter({ items, setItems, markup }: InventoryImporter
   }, [setItems]);
 
   const toggleCatalogVisibility = useCallback(async (id: string, visible: boolean) => {
-    await supabase.from('inventory_items').update({ visible_catalog: visible }).eq('id', id);
+    const { error } = await supabase.from('inventory_items').update({ visible_catalog: visible }).eq('id', id);
+    if (error) { toast.error('Erro ao atualizar visibilidade'); return; }
     setItems(items.map(i => i.id === id ? { ...i, visible_catalog: visible } : i));
     toast.success(visible ? 'Item visível no catálogo' : 'Item oculto do catálogo');
   }, [items, setItems]);
 
   const handleDeleteItem = useCallback(async (id: string) => {
-    await supabase.from('inventory_items').delete().eq('id', id);
+    const { error } = await supabase.from('inventory_items').delete().eq('id', id);
+    if (error) { toast.error('Erro ao excluir item'); return; }
     setItems(items.filter(i => i.id !== id));
+    toast.success('Item excluído do estoque');
   }, [items, setItems]);
 
   const handleClearAll = useCallback(async () => {
