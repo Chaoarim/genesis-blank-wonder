@@ -7,6 +7,7 @@ import { Zap, LogOut, AlertCircle, BarChart3, PlusCircle, ShoppingBag, Package, 
 import { RenewalWarning } from "@/components/RenewalWarning";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
+import { DashboardSummary } from "@/components/DashboardSummary";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -213,6 +214,9 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-6 max-w-4xl flex-1 space-y-6">
         {/* Renewal Warning */}
         <RenewalWarning />
+
+        {/* Daily Summary */}
+        {user && <DashboardSummary userId={user.id} />}
 
         {/* Busca de Peças - abre catálogos por fornecedor */}
         <Card
