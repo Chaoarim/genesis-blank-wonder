@@ -24,6 +24,8 @@ interface CustomersManagerProps {
   onDelete: (id: string) => Promise<void>;
   isAdmin?: boolean;
   sellers?: SellerUser[];
+  userId?: string | null;
+  onRefresh?: () => void;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -34,7 +36,7 @@ const emptyForm = {
   limite_credito: '', empresa: '', comprador: '',
 };
 
-export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, isAdmin, sellers }: CustomersManagerProps) {
+export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, isAdmin, sellers, userId, onRefresh }: CustomersManagerProps) {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [dialogOpen, setDialogOpen] = useState(false);
