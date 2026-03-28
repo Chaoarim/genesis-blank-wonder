@@ -437,7 +437,22 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+                exportToExcel(filtered.map(b => ({
+                  Fornecedor: b.supplier_name,
+                  Documento: b.document_number,
+                  Descrição: b.description,
+                  Categoria: CATEGORIES.find(c => c.value === b.category)?.label || b.category,
+                  Valor: Number(b.amount),
+                  Vencimento: format(new Date(b.due_date), 'dd/MM/yyyy'),
+                  Status: b.status === 'paid' ? 'Pago' : 'Pendente',
+                  'Valor Pago': Number(b.paid_amount || 0),
+                })), 'contas-pagar', 'Contas a Pagar');
+              }}>
+                <Download className="w-3.5 h-3.5" />
+                Exportar
+              </Button>
+            </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
