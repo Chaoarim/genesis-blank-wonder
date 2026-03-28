@@ -20,39 +20,53 @@ interface TabDef {
 }
 
 const MENU_ITEMS: TabDef[] = [
-  { value: 'dashboard', icon: BarChart3, label: 'Dashboard', group: 'Principal' },
-  { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Principal' },
-  { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Principal' },
-  { value: 'history', icon: History, label: 'Histórico', group: 'Principal' },
-  { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Principal' },
+  // 🛒 Vendas
+  { value: 'dashboard', icon: BarChart3, label: 'Dashboard', group: 'Vendas' },
+  { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vendas' },
+  { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vendas' },
+  { value: 'history', icon: History, label: 'Histórico', group: 'Vendas' },
 
+  // 👥 Clientes
   { value: 'customers', icon: Users, label: 'Clientes', group: 'Clientes' },
   { value: 'carteira', icon: BookUser, label: 'Carteira', group: 'Clientes' },
   { value: 'credit', icon: CreditCard, label: 'Crédito', group: 'Clientes' },
+  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas Recompra', group: 'Clientes' },
 
-  { value: 'inventory', icon: Package, label: 'Estoque', group: 'Estoque' },
+  // 📦 Estoque
+  { value: 'inventory', icon: Package, label: 'Consulta', group: 'Estoque' },
   { value: 'low-stock', icon: AlertTriangle, label: 'Estoque Baixo', group: 'Estoque' },
   { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar', group: 'Estoque' },
-  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar Produto', group: 'Estoque' },
+  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar', group: 'Estoque' },
+  { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Estoque' },
 
-  { value: 'markup', icon: Percent, label: 'Markup', group: 'Comercial' },
-  { value: 'promotions', icon: Tag, label: 'Ofertas', group: 'Comercial' },
-  { value: 'coupons', icon: Ticket, label: 'Cupons', group: 'Comercial' },
-  { value: 'payment-terms', icon: Calendar, label: 'Prazos', group: 'Comercial' },
+  // 💰 Financeiro
+  { value: 'markup', icon: Percent, label: 'Markup', group: 'Financeiro' },
+  { value: 'promotions', icon: Tag, label: 'Ofertas', group: 'Financeiro' },
+  { value: 'coupons', icon: Ticket, label: 'Cupons', group: 'Financeiro' },
+  { value: 'payment-terms', icon: Calendar, label: 'Prazos', group: 'Financeiro' },
+  { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
 
+  // 👥 Equipe
   { value: 'goals', icon: Target, label: 'Metas', group: 'Equipe' },
   { value: 'sellers', icon: UserCog, label: 'Vendedores', group: 'Equipe' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões', group: 'Equipe' },
   { value: 'report', icon: FileBarChart, label: 'Relatório', group: 'Equipe' },
 
-  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas de Recompra', group: 'Comercial' },
-  { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Comercial' },
-
-  { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Financeiro' },
-  { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
+  // ❓ Ajuda
+  { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Suporte' },
+  { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Suporte' },
 ];
 
-const GROUPS = ['Principal', 'Clientes', 'Estoque', 'Comercial', 'Equipe', 'Financeiro'];
+const GROUP_ICONS: Record<string, string> = {
+  'Vendas': '🛒',
+  'Clientes': '👥',
+  'Estoque': '📦',
+  'Financeiro': '💰',
+  'Equipe': '🏢',
+  'Suporte': '❓',
+};
+
+const GROUPS = ['Vendas', 'Clientes', 'Estoque', 'Financeiro', 'Equipe', 'Suporte'];
 
 interface SalesHubSidebarProps {
   activeTab: string;
@@ -71,7 +85,7 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
 
   // Collapsible state: Principal always open, active group open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = { Principal: true };
+    const initial: Record<string, boolean> = { Vendas: true };
     GROUPS.forEach(g => { initial[g] = g === 'Principal' || g === activeGroup; });
     return initial;
   });
@@ -127,7 +141,10 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold cursor-pointer hover:text-muted-foreground flex items-center justify-between pr-2">
-                    {group}
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xs">{GROUP_ICONS[group] || ''}</span>
+                      {group}
+                    </span>
                     <ChevronDown className={`w-3 h-3 transition-transform ${isOpen || hasActiveItem ? 'rotate-180' : ''}`} />
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
