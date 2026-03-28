@@ -72,7 +72,6 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
       if (payablesRes.data) setOverduePayables(payablesRes.data);
       if (salesRes.data) setOverdueSales(salesRes.data as any);
     };
-    };
 
     fetchAlerts();
 
