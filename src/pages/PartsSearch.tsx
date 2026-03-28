@@ -162,6 +162,8 @@ const PartsSearch = () => {
     setVehicleData(null);
     setPlaca('');
     setPlacaPartsSearch('');
+    setSearchInput('');
+    setSearch('');
   };
 
   const renderPartList = () => (
