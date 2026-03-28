@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronUp, Search, Send, Printer, FileText } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
-import { printSale, downloadPdf } from '@/lib/salePrint';
+import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SalesHistoryProps {
