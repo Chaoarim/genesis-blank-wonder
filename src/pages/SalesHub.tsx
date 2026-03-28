@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesData } from '@/hooks/useSalesData';
@@ -81,6 +81,14 @@ const SalesHub = () => {
   const sellerAuthId = sellerPerms.isAdmin ? null : (user?.id || null);
   const salesData = useSalesData(sellerPerms.adminUserId ?? null, sellerAuthId);
   const { parts } = usePartsDatabase();
+
+  // Load payables for BillingCalendar
+  const [payables, setPayables] = useState<any[]>([]);
+  useEffect(() => {
+    if (!sellerPerms.adminUserId) return;
+    supabase.from('accounts_payable').select('id, supplier_name, amount, due_date, status, paid_at, description')
+      .then(({ data }) => { if (data) setPayables(data); });
+  }, [sellerPerms.adminUserId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -227,6 +235,10 @@ const SalesHub = () => {
         return <ABCCurveReport sales={salesData.allSales} getSaleItems={salesData.getSaleItems} />;
       case 'audit-logs':
         return sellerPerms.isAdmin ? <AuditLogsViewer /> : null;
+      case 'price-history':
+        return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
+      case 'billing-calendar':
+        return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
       case 'help':
         return <HelpGuide />;
       default:
