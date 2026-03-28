@@ -14,7 +14,7 @@ import { logAuditAction } from '@/lib/auditLog';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
-import { printPriceLabels } from '@/lib/priceLabels';
+import { printPriceLabels, downloadPriceLabels } from '@/lib/priceLabels';
 
 interface InventoryItem {
   id: string;
