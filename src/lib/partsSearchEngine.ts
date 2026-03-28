@@ -327,33 +327,24 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     return [];
   }
 
+  // Use pre-normalized index for speed
+  const index = buildNormalizedIndex(partsSource);
   const scored: { part: Part; score: number }[] = [];
 
-  for (const part of partsSource) {
-    const code = normalizeForSearch(part.fabricante || '');
-    const produto = normalizeForSearch(part.produto || '');
-    const chave = normalizeForSearch(part.chaveDeBusca || '');
-    const aplicacao = normalizeForSearch(part.aplicacao || '');
-    const marcaModeloAno = normalizeForSearch(`${part.marca || ''} ${part.modelo || ''} ${part.ano || ''}`);
-    const fornecedor = normalizeForSearch(part.fornecedor || '');
-    const contexto = normalizeForSearch(part.contextoIA || '');
-    const similares = normalizeForSearch(part.codigosSimilares || '');
-    const vehicleText = `${marcaModeloAno} ${aplicacao} ${chave}`.trim();
-    const fullText = `${produto} ${vehicleText} ${fornecedor} ${contexto} ${similares}`.trim();
-
-    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesText(fullText, term, true))) {
+  for (const np of index) {
+    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesNormalized(np.fullText, term, true))) {
       continue;
     }
 
-    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesText(vehicleText, term, true) || termMatchesText(produto, term, true))) {
+    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesNormalized(np.vehicleText, term, true) || termMatchesNormalized(np.produto, term, true))) {
       continue;
     }
 
-    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesText(fornecedor, term) || termMatchesText(produto, term) || codeMatches(code, term))) {
+    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesNormalized(np.fornecedor, term) || termMatchesNormalized(np.produto, term) || codeMatchesNormalized(np.code, np.codeNoSpaces, term))) {
       continue;
     }
 
-    if (hasConflictingProductPrefix(produto, productTerms)) {
+    if (hasConflictingProductPrefix(np.produto, productTerms)) {
       continue;
     }
 
@@ -363,32 +354,32 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     for (const term of productTerms) {
       let matched = false;
 
-      if (codeMatches(code, term)) {
-        score += code === term ? 14 : 9;
+      if (codeMatchesNormalized(np.code, np.codeNoSpaces, term)) {
+        score += np.code === normalizeForSearch(term) ? 14 : 9;
         matched = true;
       }
 
-      if (termMatchesText(produto, term)) {
+      if (termMatchesNormalized(np.produto, term)) {
         score += 7;
         matched = true;
       }
 
-      if (termMatchesText(chave, term, true)) {
+      if (termMatchesNormalized(np.chave, term, true)) {
         score += 4;
         matched = true;
       }
 
-      if (termMatchesText(aplicacao, term, true)) {
+      if (termMatchesNormalized(np.aplicacao, term, true)) {
         score += 3;
         matched = true;
       }
 
-      if (termMatchesText(contexto, term, true)) {
+      if (termMatchesNormalized(np.contexto, term, true)) {
         score += 2;
         matched = true;
       }
 
-      if (termMatchesText(similares, term)) {
+      if (termMatchesNormalized(np.similares, term)) {
         score += 1;
         matched = true;
       }
@@ -402,7 +393,7 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     }
 
     if (score <= 0) continue;
-    scored.push({ part, score });
+    scored.push({ part: np.part, score });
   }
 
   return scored.sort((a, b) => b.score - a.score).map(entry => entry.part);
