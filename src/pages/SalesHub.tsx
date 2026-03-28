@@ -37,6 +37,7 @@ const PaymentTermsManager = lazy(() => import('@/components/sales/PaymentTermsMa
 const WarrantyReturnsManager = lazy(() => import('@/components/sales/WarrantyReturnsManager').then(m => ({ default: m.WarrantyReturnsManager })));
 const CreditApprovalsManager = lazy(() => import('@/components/sales/CreditApprovalsManager').then(m => ({ default: m.CreditApprovalsManager })));
 const AccountsPayableManager = lazy(() => import('@/components/sales/AccountsPayableManager').then(m => ({ default: m.AccountsPayableManager })));
+const AccountsReceivableManager = lazy(() => import('@/components/sales/AccountsReceivableManager').then(m => ({ default: m.AccountsReceivableManager })));
 const RepurchaseAlerts = lazy(() => import('@/components/sales/RepurchaseAlerts').then(m => ({ default: m.RepurchaseAlerts })));
 const SupplierContactsManager = lazy(() => import('@/components/sales/SupplierContactsManager').then(m => ({ default: m.SupplierContactsManager })));
 const HelpGuide = lazy(() => import('@/components/sales/HelpGuide').then(m => ({ default: m.HelpGuide })));
@@ -191,6 +192,8 @@ const SalesHub = () => {
         return sellerPerms.isAdmin && user ? <CreditApprovalsManager userId={user.id} reviewerName="Admin" /> : null;
       case 'accounts-payable':
         return user ? <AccountsPayableManager userId={sellerPerms.adminUserId || user.id} /> : null;
+      case 'accounts-receivable':
+        return <AccountsReceivableManager sales={salesData.allSales} customers={salesData.allCustomers} onRefresh={salesData.refreshAll} />;
       case 'repurchase-alerts':
         return <RepurchaseAlerts sales={salesData.sales} customers={salesData.customers} />;
       case 'supplier-contacts':
