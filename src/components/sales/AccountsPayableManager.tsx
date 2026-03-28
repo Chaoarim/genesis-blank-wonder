@@ -467,49 +467,86 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
               <p className="text-xs mt-1">Cadastre boletos e títulos de fornecedores</p>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map(bill => (
-                    <TableRow key={bill.id} className={bill.status === 'pending' && isPast(new Date(bill.due_date)) && !isToday(new Date(bill.due_date)) ? 'bg-destructive/5' : ''}>
-                      <TableCell className="font-medium max-w-[150px] truncate">{bill.supplier_name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{bill.document_number || '-'}</TableCell>
-                      <TableCell className="max-w-[180px] truncate text-sm">{bill.description || '-'}</TableCell>
-                      <TableCell className="text-right font-semibold">{fmt(Number(bill.amount))}</TableCell>
-                      <TableCell className="text-sm">{format(new Date(bill.due_date + 'T12:00:00'), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{getStatusBadge(bill)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {bill.status === 'pending' && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => handlePay(bill)} title="Marcar como pago">
-                              <CheckCircle2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(bill)} title="Editar">
-                            <Edit className="w-4 h-4" />
+            <div>
+              {/* Mobile: Cards */}
+              <div className="space-y-2 md:hidden">
+                {filtered.map(bill => (
+                  <div key={bill.id} className={`border rounded-lg p-3 space-y-2 ${bill.status === 'pending' && isPast(new Date(bill.due_date)) && !isToday(new Date(bill.due_date)) ? 'border-destructive/30 bg-destructive/5' : ''}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-sm truncate">{bill.supplier_name}</span>
+                      {getStatusBadge(bill)}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="text-muted-foreground">{bill.description || bill.document_number || '-'}</span>
+                      <span className="font-semibold">{fmt(Number(bill.amount))}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-muted-foreground">Venc: {format(new Date(bill.due_date + 'T12:00:00'), 'dd/MM/yyyy')}</span>
+                      <div className="flex items-center gap-1">
+                        {bill.status === 'pending' && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => handlePay(bill)}>
+                            <CheckCircle2 className="w-4 h-4" />
                           </Button>
-                          <ConfirmDeleteDialog
-                            description="Tem certeza que deseja excluir esta conta a pagar?"
-                            onConfirm={() => handleDelete(bill.id)}
-                            iconSize="md"
-                          />
-                        </div>
-                      </TableCell>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(bill)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <ConfirmDeleteDialog
+                          description="Tem certeza que deseja excluir esta conta a pagar?"
+                          onConfirm={() => handleDelete(bill.id)}
+                          iconSize="md"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: Table */}
+              <div className="hidden md:block rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fornecedor</TableHead>
+                      <TableHead>Documento</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map(bill => (
+                      <TableRow key={bill.id} className={bill.status === 'pending' && isPast(new Date(bill.due_date)) && !isToday(new Date(bill.due_date)) ? 'bg-destructive/5' : ''}>
+                        <TableCell className="font-medium max-w-[150px] truncate">{bill.supplier_name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{bill.document_number || '-'}</TableCell>
+                        <TableCell className="max-w-[180px] truncate text-sm">{bill.description || '-'}</TableCell>
+                        <TableCell className="text-right font-semibold">{fmt(Number(bill.amount))}</TableCell>
+                        <TableCell className="text-sm">{format(new Date(bill.due_date + 'T12:00:00'), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{getStatusBadge(bill)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {bill.status === 'pending' && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600" onClick={() => handlePay(bill)} title="Marcar como pago">
+                                <CheckCircle2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(bill)} title="Editar">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <ConfirmDeleteDialog
+                              description="Tem certeza que deseja excluir esta conta a pagar?"
+                              onConfirm={() => handleDelete(bill.id)}
+                              iconSize="md"
+                            />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>

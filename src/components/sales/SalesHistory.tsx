@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, ChevronDown, ChevronUp, Search, Send, Printer, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Send, Printer, FileText } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { printSale, downloadPdf } from '@/lib/salePrint';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
@@ -120,9 +121,15 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
                         <Button variant="outline" size="sm" onClick={() => resendWhatsApp(sale)} className="gap-1">
                           <Send className="w-3 h-3" /> WhatsApp
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onDeleteSale(sale.id)}>
-                          <Trash2 className="w-3 h-3 mr-1" /> Excluir
-                        </Button>
+                        <ConfirmDeleteDialog
+                          description="Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita."
+                          onConfirm={() => onDeleteSale(sale.id)}
+                          trigger={
+                            <Button variant="ghost" size="sm" className="text-destructive gap-1">
+                              Excluir
+                            </Button>
+                          }
+                        />
                       </div>
                     </>
                   ) : (

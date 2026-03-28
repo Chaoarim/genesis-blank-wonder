@@ -217,52 +217,85 @@ export function PaymentTermsManager({ userId }: { userId: string | null }) {
           <p className="text-xs mt-1">Crie regras para automatizar os prazos de faturamento</p>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Regra</TableHead>
-                <TableHead>Faixa de Valor</TableHead>
-                <TableHead>Parcelas</TableHead>
-                <TableHead>Prazos (dias)</TableHead>
-                <TableHead className="w-20">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rules.map(rule => (
-                <TableRow key={rule.id}>
-                  <TableCell className="font-medium text-sm">{rule.name}</TableCell>
-                  <TableCell className="text-sm">
-                    {fmt(rule.min_amount)}
-                    {rule.max_amount ? ` — ${fmt(rule.max_amount)}` : ' +'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{rule.installments}x</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {parseDays(rule.day_intervals).map((d, i) => (
-                        <Badge key={i} variant="secondary" className="text-[10px]">{d}d</Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(rule)}>
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <ConfirmDeleteDialog
-                        description={`Excluir a regra "${rule.name}"?`}
-                        onConfirm={() => handleDelete(rule.id)}
-                        iconSize="sm"
-                      />
-                    </div>
-                  </TableCell>
+        <>
+          {/* Mobile: Cards */}
+          <div className="space-y-2 md:hidden">
+            {rules.map(rule => (
+              <Card key={rule.id} className="p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-sm">{rule.name}</span>
+                  <div className="flex gap-1 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(rule)}>
+                      <Edit2 className="w-3 h-3" />
+                    </Button>
+                    <ConfirmDeleteDialog
+                      description={`Excluir a regra "${rule.name}"?`}
+                      onConfirm={() => handleDelete(rule.id)}
+                      iconSize="sm"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{fmt(rule.min_amount)}{rule.max_amount ? ` — ${fmt(rule.max_amount)}` : ' +'}</span>
+                  <Badge variant="outline" className="text-[10px]">{rule.installments}x</Badge>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {parseDays(rule.day_intervals).map((d, i) => (
+                    <Badge key={i} variant="secondary" className="text-[10px]">{d}d</Badge>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop: Table */}
+          <Card className="overflow-hidden hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Regra</TableHead>
+                  <TableHead>Faixa de Valor</TableHead>
+                  <TableHead>Parcelas</TableHead>
+                  <TableHead>Prazos (dias)</TableHead>
+                  <TableHead className="w-20">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {rules.map(rule => (
+                  <TableRow key={rule.id}>
+                    <TableCell className="font-medium text-sm">{rule.name}</TableCell>
+                    <TableCell className="text-sm">
+                      {fmt(rule.min_amount)}
+                      {rule.max_amount ? ` — ${fmt(rule.max_amount)}` : ' +'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{rule.installments}x</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {parseDays(rule.day_intervals).map((d, i) => (
+                          <Badge key={i} variant="secondary" className="text-[10px]">{d}d</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(rule)}>
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <ConfirmDeleteDialog
+                          description={`Excluir a regra "${rule.name}"?`}
+                          onConfirm={() => handleDelete(rule.id)}
+                          iconSize="sm"
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </>
       )}
     </div>
   );

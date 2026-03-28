@@ -140,35 +140,62 @@ export function CommissionsManager({ userId }: Props) {
           {commissions.length === 0 ? (
             <p className="text-muted-foreground text-sm text-center py-4">Nenhuma regra configurada</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Referência</TableHead>
-                  <TableHead>%</TableHead>
-                  <TableHead>Fixo R$</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile: Cards */}
+              <div className="space-y-2 md:hidden">
                 {commissions.map(c => (
-                  <TableRow key={c.id}>
-                    <TableCell>
-                      <Badge variant="outline">{TYPE_LABELS[c.type] || c.type}</Badge>
-                    </TableCell>
-                    <TableCell>{c.reference || '—'}</TableCell>
-                    <TableCell>{Number(c.commission_percent) > 0 ? `${c.commission_percent}%` : '—'}</TableCell>
-                    <TableCell>{Number(c.commission_fixed) > 0 ? `R$ ${Number(c.commission_fixed).toFixed(2)}` : '—'}</TableCell>
-                    <TableCell>
-                      <ConfirmDeleteDialog
-                        description="Tem certeza que deseja excluir esta regra de comissão?"
-                        onConfirm={() => handleDelete(c.id)}
-                      />
-                    </TableCell>
-                  </TableRow>
+                  <div key={c.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline">{TYPE_LABELS[c.type] || c.type}</Badge>
+                        {c.reference && <span className="text-xs text-muted-foreground truncate">{c.reference}</span>}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm">
+                        {Number(c.commission_percent) > 0 && <span className="font-semibold">{c.commission_percent}%</span>}
+                        {Number(c.commission_fixed) > 0 && <span className="font-semibold">R$ {Number(c.commission_fixed).toFixed(2)}</span>}
+                      </div>
+                    </div>
+                    <ConfirmDeleteDialog
+                      description="Tem certeza que deseja excluir esta regra de comissão?"
+                      onConfirm={() => handleDelete(c.id)}
+                    />
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop: Table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Referência</TableHead>
+                      <TableHead>%</TableHead>
+                      <TableHead>Fixo R$</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {commissions.map(c => (
+                      <TableRow key={c.id}>
+                        <TableCell>
+                          <Badge variant="outline">{TYPE_LABELS[c.type] || c.type}</Badge>
+                        </TableCell>
+                        <TableCell>{c.reference || '—'}</TableCell>
+                        <TableCell>{Number(c.commission_percent) > 0 ? `${c.commission_percent}%` : '—'}</TableCell>
+                        <TableCell>{Number(c.commission_fixed) > 0 ? `R$ ${Number(c.commission_fixed).toFixed(2)}` : '—'}</TableCell>
+                        <TableCell>
+                          <ConfirmDeleteDialog
+                            description="Tem certeza que deseja excluir esta regra de comissão?"
+                            onConfirm={() => handleDelete(c.id)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
