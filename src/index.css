@@ -6,65 +6,53 @@
 
 @layer base {
   :root {
-    /* Dark industrial automotive theme */
-    --background: 220 15% 8%;
-    --foreground: 40 15% 95%;
-
-    --card: 220 15% 12%;
-    --card-foreground: 40 15% 95%;
-
-    --popover: 220 15% 10%;
-    --popover-foreground: 40 15% 95%;
-
-    /* Amber/Orange accent - automotive */
+    /* Light automotive theme */
+    --background: 0 0% 98%;
+    --foreground: 220 15% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 15%;
     --primary: 38 92% 50%;
-    --primary-foreground: 220 15% 8%;
-
-    --secondary: 220 12% 18%;
-    --secondary-foreground: 40 15% 90%;
-
-    --muted: 220 12% 16%;
-    --muted-foreground: 220 10% 55%;
-
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 12% 92%;
+    --secondary-foreground: 220 15% 25%;
+    --muted: 220 12% 93%;
+    --muted-foreground: 220 10% 45%;
     --accent: 38 92% 50%;
-    --accent-foreground: 220 15% 8%;
-
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 40 15% 95%;
-
-    --border: 220 12% 20%;
-    --input: 220 12% 15%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 12% 88%;
+    --input: 220 12% 90%;
     --ring: 38 92% 50%;
-
     --radius: 0.75rem;
-
-    /* Custom tokens */
     --amber-glow: 38 92% 50%;
-    --amber-subtle: 38 40% 25%;
-    --slate-dark: 220 15% 6%;
-    --slate-medium: 220 12% 14%;
+    --amber-subtle: 38 40% 85%;
+    --slate-dark: 220 15% 95%;
+    --slate-medium: 220 12% 90%;
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
-
-    /* Gradients */
-    --gradient-dark: linear-gradient(180deg, hsl(220 15% 10%) 0%, hsl(220 15% 6%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(220 15% 14%) 0%, hsl(220 15% 10%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(220 12% 95%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 12% 97%) 100%);
     --gradient-amber: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(28 85% 45%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(38 92% 50% / 0.15) 0%, hsl(220 15% 8%) 50%);
-
-    /* Shadows */
-    --shadow-glow: 0 0 30px hsl(38 92% 50% / 0.2);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.3);
-    --shadow-inset: inset 0 1px 0 hsl(40 15% 95% / 0.05);
-
-    --sidebar-background: 220 15% 10%;
-    --sidebar-foreground: 40 15% 95%;
+    --gradient-hero: linear-gradient(135deg, hsl(38 92% 50% / 0.1) 0%, hsl(0 0% 98%) 50%);
+    --shadow-glow: 0 0 30px hsl(38 92% 50% / 0.1);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.06);
+    --shadow-inset: inset 0 1px 0 hsl(0 0% 100% / 0.8);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 15%;
     --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 220 15% 8%;
-    --sidebar-accent: 220 12% 18%;
-    --sidebar-accent-foreground: 40 15% 90%;
-    --sidebar-border: 220 12% 20%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 12% 94%;
+    --sidebar-accent-foreground: 220 15% 25%;
+    --sidebar-border: 220 12% 88%;
     --sidebar-ring: 38 92% 50%;
+    --chart-1: 38 92% 50%;
+    --chart-2: 200 70% 50%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 72% 51%;
   }
 
   .dark {
@@ -87,6 +75,19 @@
     --border: 220 12% 20%;
     --input: 220 12% 15%;
     --ring: 38 92% 50%;
+    --amber-glow: 38 92% 50%;
+    --amber-subtle: 38 40% 25%;
+    --slate-dark: 220 15% 6%;
+    --slate-medium: 220 12% 14%;
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --gradient-dark: linear-gradient(180deg, hsl(220 15% 10%) 0%, hsl(220 15% 6%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(220 15% 14%) 0%, hsl(220 15% 10%) 100%);
+    --gradient-amber: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(28 85% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(38 92% 50% / 0.15) 0%, hsl(220 15% 8%) 50%);
+    --shadow-glow: 0 0 30px hsl(38 92% 50% / 0.2);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.3);
+    --shadow-inset: inset 0 1px 0 hsl(40 15% 95% / 0.05);
     --sidebar-background: 220 15% 10%;
     --sidebar-foreground: 40 15% 95%;
     --sidebar-primary: 38 92% 50%;
@@ -95,6 +96,11 @@
     --sidebar-accent-foreground: 40 15% 90%;
     --sidebar-border: 220 12% 20%;
     --sidebar-ring: 38 92% 50%;
+    --chart-1: 38 92% 50%;
+    --chart-2: 200 70% 50%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 0 72% 51%;
   }
 }
 
