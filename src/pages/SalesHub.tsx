@@ -12,6 +12,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { NotificationsDropdown } from '@/components/sales/NotificationsDropdown';
 import type { User } from '@supabase/supabase-js';
 
 // Lazy-loaded tab components
@@ -236,6 +237,12 @@ const SalesHub = () => {
 
               {/* Quick links */}
               <div className="flex items-center gap-1">
+                <NotificationsDropdown
+                  adminUserId={sellerPerms.adminUserId}
+                  sales={salesData.allSales}
+                  customers={salesData.allCustomers}
+                  onNavigate={setActiveTab}
+                />
                 <CommandPalette onNavigate={setActiveTab} visibleTabs={visibleTabs} />
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs hidden md:flex" onClick={() => navigate('/buscar-pecas')}>
                   <Search className="w-3.5 h-3.5" />
