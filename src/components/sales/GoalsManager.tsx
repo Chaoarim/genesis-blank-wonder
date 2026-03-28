@@ -244,14 +244,10 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-primary">{fmt(Number(g.goal_amount))}</span>
                       {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => onDeleteGoal(g.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <ConfirmDeleteDialog
+                          description="Tem certeza que deseja excluir esta meta?"
+                          onConfirm={() => onDeleteGoal(g.id)}
+                        />
                       )}
                     </div>
                   </div>

@@ -337,7 +337,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                               {suppliers.map(s => (
                                 <div key={s} className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-muted">
                                   <span className="text-sm">{s}</span>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteSupplier(s)}><Trash2 className="w-3 h-3" /></Button>
+                                  <ConfirmDeleteDialog description={`Excluir o fornecedor "${s}"?`} onConfirm={() => handleDeleteSupplier(s)} iconSize="sm" />
                                 </div>
                               ))}
                             </div>
@@ -499,9 +499,11 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(bill)} title="Editar">
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(bill.id)} title="Excluir">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <ConfirmDeleteDialog
+                            description="Tem certeza que deseja excluir esta conta a pagar?"
+                            onConfirm={() => handleDelete(bill.id)}
+                            iconSize="md"
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

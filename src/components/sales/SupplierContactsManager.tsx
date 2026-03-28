@@ -92,7 +92,6 @@ export function SupplierContactsManager({ userId }: { userId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja remover este fornecedor?')) return;
     const { error } = await supabase.from('supplier_contacts').delete().eq('id', id);
     if (error) toast.error('Erro ao excluir contato');
     else {
@@ -214,9 +213,11 @@ export function SupplierContactsManager({ userId }: { userId: string }) {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => openEdit(contact)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(contact.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <ConfirmDeleteDialog
+                      description={`Excluir o contato de "${contact.distributor_name}"?`}
+                      onConfirm={() => handleDelete(contact.id)}
+                      iconSize="md"
+                    />
                   </div>
                 </div>
 

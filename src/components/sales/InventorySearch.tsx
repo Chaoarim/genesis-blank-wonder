@@ -98,7 +98,6 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
   }, [editValue, editField]);
 
   const deleteItem = useCallback(async (id: string, codigo: string) => {
-    if (!confirm(`Excluir item ${codigo} do estoque?`)) return;
     const { error } = await supabase.from('inventory_items').delete().eq('id', id);
     if (error) { toast.error('Erro ao excluir'); return; }
     setItems(prev => prev.filter(i => i.id !== id));
@@ -296,9 +295,11 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
                         }}>
                           <ExternalLink className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteItem(item.id, item.codigo)}>
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        <ConfirmDeleteDialog
+                          description={`Tem certeza que deseja excluir o item ${item.codigo} do estoque?`}
+                          onConfirm={() => deleteItem(item.id, item.codigo)}
+                          iconSize="sm"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

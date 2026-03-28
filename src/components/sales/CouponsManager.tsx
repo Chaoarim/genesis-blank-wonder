@@ -286,9 +286,10 @@ export function CouponsManager() {
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {hoursLeft}h
                 </p>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive mt-1" onClick={() => deleteCoupon(c.id)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
+                <ConfirmDeleteDialog
+                  description={`Excluir o cupom ${c.code}?`}
+                  onConfirm={() => deleteCoupon(c.id)}
+                />
               </div>
             </div>
           );
@@ -307,9 +308,11 @@ export function CouponsManager() {
                   {c.discount_type === 'percent' ? `${c.discount_value}%` : fmt(c.discount_value)} • Expirou em {new Date(c.expires_at).toLocaleString('pt-BR')}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCoupon(c.id)}>
-                <Trash2 className="w-3 h-3" />
-              </Button>
+              <ConfirmDeleteDialog
+                description={`Excluir o cupom expirado ${c.code}?`}
+                onConfirm={() => deleteCoupon(c.id)}
+                iconSize="sm"
+              />
             </div>
           ))}
         </Card>

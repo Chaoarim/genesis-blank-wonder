@@ -160,9 +160,10 @@ export function CommissionsManager({ userId }: Props) {
                     <TableCell>{Number(c.commission_percent) > 0 ? `${c.commission_percent}%` : '—'}</TableCell>
                     <TableCell>{Number(c.commission_fixed) > 0 ? `R$ ${Number(c.commission_fixed).toFixed(2)}` : '—'}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(c.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <ConfirmDeleteDialog
+                        description="Tem certeza que deseja excluir esta regra de comissão?"
+                        onConfirm={() => handleDelete(c.id)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

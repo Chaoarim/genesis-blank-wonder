@@ -116,7 +116,6 @@ export function PaymentTermsManager({ userId }: { userId: string | null }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir esta regra de prazo?')) return;
     await supabase.from('payment_term_rules').delete().eq('id', id);
     setRules(prev => prev.filter(r => r.id !== id));
     toast.success('Regra excluída!');
@@ -252,9 +251,11 @@ export function PaymentTermsManager({ userId }: { userId: string | null }) {
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(rule)}>
                         <Edit2 className="w-3 h-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(rule.id)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      <ConfirmDeleteDialog
+                        description={`Excluir a regra "${rule.name}"?`}
+                        onConfirm={() => handleDelete(rule.id)}
+                        iconSize="sm"
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
