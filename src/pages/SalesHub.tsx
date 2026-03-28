@@ -12,6 +12,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { NotificationsDropdown } from '@/components/sales/NotificationsDropdown';
 import type { User } from '@supabase/supabase-js';
 
 // Lazy-loaded tab components
