@@ -193,7 +193,7 @@ const SalesHub = () => {
       case 'accounts-payable':
         return user ? <AccountsPayableManager userId={sellerPerms.adminUserId || user.id} /> : null;
       case 'accounts-receivable':
-        return <AccountsReceivableManager sales={salesData.allSales} customers={salesData.allCustomers} onRefresh={salesData.refreshAll} />;
+        return <AccountsReceivableManager sales={salesData.allSales} customers={salesData.allCustomers} onRefresh={salesData.fetchAll} />;
       case 'repurchase-alerts':
         return <RepurchaseAlerts sales={salesData.sales} customers={salesData.customers} />;
       case 'supplier-contacts':
