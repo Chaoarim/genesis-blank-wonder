@@ -126,6 +126,35 @@ export function WarrantyReturnsManager({ userId, customers, sales, getSaleItems 
 
     const { error } = await supabase.from('warranty_returns').update(update).eq('id', id);
     if (error) { toast.error('Erro ao atualizar'); return; }
+
+    // Auto-restock on approval or completion
+    if (status === 'approved' || status === 'completed') {
+      const record = records.find(r => r.id === id);
+      if (record) {
+        const items = (record.items || []) as any[];
+        for (const item of items) {
+          if (item.codigo) {
+            // Find inventory item by codigo and user_id
+            const { data: invItems } = await supabase
+              .from('inventory_items')
+              .select('id, qtd_estoque')
+              .eq('user_id', userId)
+              .eq('codigo', item.codigo)
+              .limit(1);
+
+            if (invItems && invItems.length > 0) {
+              const inv = invItems[0];
+              await supabase
+                .from('inventory_items')
+                .update({ qtd_estoque: inv.qtd_estoque + (item.quantidade || 1), updated_at: new Date().toISOString() })
+                .eq('id', inv.id);
+            }
+          }
+        }
+        toast.success('Estoque reposto automaticamente!');
+      }
+    }
+
     toast.success('Status atualizado!');
     fetchRecords();
     setDetailRecord(null);
