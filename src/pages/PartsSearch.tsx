@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -35,9 +35,19 @@ const PartsSearch = () => {
   const { parts, isLoading: partsLoading } = usePartsDatabase();
   const [mode, setMode] = useState<SearchMode>('unified');
 
-  // Unified search
+  // Unified search with debounce
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Debounce: update `search` 200ms after user stops typing
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => {
+      setSearch(searchInput);
+    }, 200);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchInput]);
 
   // Placa
   const [placa, setPlaca] = useState('');
