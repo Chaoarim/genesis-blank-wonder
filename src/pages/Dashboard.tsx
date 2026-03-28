@@ -215,6 +215,9 @@ const Dashboard = () => {
         {/* Renewal Warning */}
         <RenewalWarning />
 
+        {/* Daily Summary */}
+        {user && <DashboardSummary userId={user.id} />}
+
         {/* Busca de Peças - abre catálogos por fornecedor */}
         <Card
           className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
