@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, AlertTriangle, CheckCircle, Clock, Search, MessageCircle, Filter } from 'lucide-react';
+import { DollarSign, AlertTriangle, CheckCircle, Clock, Search, MessageCircle, Filter, Download } from 'lucide-react';
+import { exportToExcel } from '@/lib/exportExcel';
 import { format, differenceInDays, parseISO, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Sale, Customer } from '@/hooks/useSalesData';
@@ -145,6 +146,20 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
             <SelectItem value="paid">Recebidos</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+          exportToExcel(filtered.map(r => ({
+            Cliente: r.customer_name || 'Consumidor',
+            Vendedor: r.seller_name || '-',
+            Pagamento: r.payment_method.replace(/_/g, ' '),
+            Vencimento: format(r.deadline, 'dd/MM/yyyy'),
+            Valor: r.total,
+            Status: r.status === 'paid' ? 'Recebido' : r.status === 'overdue' ? 'Vencido' : 'Pendente',
+            'Dias Atraso': r.daysOverdue > 0 ? r.daysOverdue : 0,
+          })), 'contas-receber', 'Recebíveis');
+        }}>
+          <Download className="w-3.5 h-3.5" />
+          Exportar
+        </Button>
       </div>
 
       {/* Table */}

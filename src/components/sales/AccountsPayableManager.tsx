@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { PlusCircle, Search, Filter, CheckCircle2, Clock, AlertTriangle, Edit, Receipt, Barcode, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { PlusCircle, Search, Filter, CheckCircle2, Clock, AlertTriangle, Edit, Receipt, Barcode, DollarSign, TrendingUp, Calendar, Download } from 'lucide-react';
+import { exportToExcel } from '@/lib/exportExcel';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { format, isPast, isToday, addDays, differenceInDays } from 'date-fns';
 import { ListSkeleton, StatsSkeleton } from './ListSkeleton';
@@ -303,14 +304,15 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
               <CardTitle className="flex items-center gap-2"><Receipt className="w-5 h-5" />Contas a Pagar</CardTitle>
               <CardDescription>Gerencie boletos e títulos de fornecedores</CardDescription>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setForm(INITIAL_FORM); setEditingId(null); } }}>
-              <DialogTrigger asChild>
-                <Button size="sm"><PlusCircle className="w-4 h-4 mr-1" />Nova Conta</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingId ? 'Editar Conta' : 'Nova Conta a Pagar'}</DialogTitle>
-                </DialogHeader>
+            <div className="flex gap-2">
+              <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setForm(INITIAL_FORM); setEditingId(null); } }}>
+                <DialogTrigger asChild>
+                  <Button size="sm"><PlusCircle className="w-4 h-4 mr-1" />Nova Conta</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingId ? 'Editar Conta' : 'Nova Conta a Pagar'}</DialogTitle>
+                  </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <Label>Fornecedor *</Label>
@@ -435,6 +437,22 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                 </div>
               </DialogContent>
             </Dialog>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+                exportToExcel(filtered.map(b => ({
+                  Fornecedor: b.supplier_name,
+                  Documento: b.document_number,
+                  Descrição: b.description,
+                  Categoria: CATEGORIES.find(c => c.value === b.category)?.label || b.category,
+                  Valor: Number(b.amount),
+                  Vencimento: format(new Date(b.due_date), 'dd/MM/yyyy'),
+                  Status: b.status === 'paid' ? 'Pago' : 'Pendente',
+                  'Valor Pago': Number(b.paid_amount || 0),
+                })), 'contas-pagar', 'Contas a Pagar');
+              }}>
+                <Download className="w-3.5 h-3.5" />
+                Exportar
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
