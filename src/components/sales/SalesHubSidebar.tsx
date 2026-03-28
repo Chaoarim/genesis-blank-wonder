@@ -3,7 +3,7 @@ import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
-  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield
+  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -25,6 +25,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vendas' },
   { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vendas' },
   { value: 'history', icon: History, label: 'Histórico', group: 'Vendas' },
+  { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vendas' },
 
   // 👥 Clientes
   { value: 'customers', icon: Users, label: 'Clientes', group: 'Clientes' },
