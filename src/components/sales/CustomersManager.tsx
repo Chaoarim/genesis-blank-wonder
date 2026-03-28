@@ -161,6 +161,9 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
           </Select>
         )}
         <div className="flex gap-2">
+          {userId && (
+            <CustomerImporter userId={userId} onImported={() => onRefresh?.()} />
+          )}
           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
             exportToExcel(filtered.map(c => ({
               Código: c.code || '',
