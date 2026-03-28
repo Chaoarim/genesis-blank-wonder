@@ -7,7 +7,7 @@ import { BarChart3, DollarSign, Users, TrendingUp, Printer, FileDown } from 'luc
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadHtmlAsPdf, printHtml } from '@/lib/htmlToPdf';
-import type { Sale } from '@/hooks/useSalesData';
+import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SellerSummary {
   sellerAuthId: string | null;
@@ -35,8 +35,10 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 
 export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [saleItemsMap, setSaleItemsMap] = useState<Record<string, SaleItem[]>>({});
   const [period, setPeriod] = useState('month');
   const [sellerFilter, setSellerFilter] = useState('all');
+  const [loadingItems, setLoadingItems] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -63,6 +65,34 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
     return true;
   });
 
+  // Load sale_items for product/supplier commission calculation
+  const hasProductOrSupplierRules = commissions.some(c => c.type === 'product' || c.type === 'supplier');
+
+  useEffect(() => {
+    if (!hasProductOrSupplierRules || periodFiltered.length === 0) return;
+    const saleIds = periodFiltered.map(s => s.id);
+    const missingIds = saleIds.filter(id => !saleItemsMap[id]);
+    if (missingIds.length === 0) return;
+
+    setLoadingItems(true);
+    const fetchItems = async () => {
+      const { data } = await supabase
+        .from('sale_items')
+        .select('*')
+        .in('sale_id', missingIds);
+      if (data) {
+        const grouped: Record<string, SaleItem[]> = { ...saleItemsMap };
+        for (const item of data as SaleItem[]) {
+          if (!grouped[item.sale_id]) grouped[item.sale_id] = [];
+          grouped[item.sale_id].push(item);
+        }
+        setSaleItemsMap(grouped);
+      }
+      setLoadingItems(false);
+    };
+    fetchItems();
+  }, [hasProductOrSupplierRules, periodFiltered.length, period]);
+
   // Apply seller filter (admin only)
   const filteredSales = !sellerName && sellerFilter !== 'all'
     ? periodFiltered.filter(s => (s.seller_auth_id || '__admin__') === sellerFilter)
@@ -80,13 +110,38 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const calcCommission = useCallback((sale: Sale): number => {
     if (commissions.length === 0) return 0;
     let total = 0;
+
     // Order-level commissions
     const orderRules = commissions.filter(c => c.type === 'order');
     for (const rule of orderRules) {
       total += Number(sale.total) * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
     }
+
+    // Product and supplier-level commissions (per item)
+    const items = saleItemsMap[sale.id] || [];
+    const productRules = commissions.filter(c => c.type === 'product');
+    const supplierRules = commissions.filter(c => c.type === 'supplier');
+
+    for (const item of items) {
+      const itemTotal = Number(item.quantidade) * Number(item.preco_unitario);
+
+      // Product rules: match by codigo
+      for (const rule of productRules) {
+        if (rule.reference && item.codigo.toLowerCase() === rule.reference.toLowerCase()) {
+          total += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+        }
+      }
+
+      // Supplier rules: match by fornecedor
+      for (const rule of supplierRules) {
+        if (rule.reference && item.fornecedor && item.fornecedor.toLowerCase().includes(rule.reference.toLowerCase())) {
+          total += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+        }
+      }
+    }
+
     return total;
-  }, [commissions]);
+  }, [commissions, saleItemsMap]);
 
   // Group by seller
   const sellerMap = new Map<string, SellerSummary>();
@@ -115,7 +170,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
 
   const reportTitle = !sellerName && activeSellerLabel
     ? `Relatório — ${activeSellerLabel}`
-    : sellerName ? `Relatório — ${sellerName}` : 'Relatório de Vendas por Vendedor';
+    : sellerName ? `Relatório — ${sellerName}` : 'Relatório de Comissões por Vendedor';
 
   const buildReportHtml = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Esta Semana' : period === 'month' ? 'Este Mês' : 'Tudo';
@@ -131,7 +186,23 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       </tr>
     `).join('');
 
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Vendas</title>
+    // Commission rules summary
+    const rulesHtml = commissions.length > 0 ? `
+      <div style="margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:6px">
+        <h3 style="font-size:13px;font-weight:600;margin-bottom:8px;color:#333">Regras de Comissão Aplicadas</h3>
+        <ul style="font-size:12px;color:#555;margin:0;padding-left:16px">
+          ${commissions.map(c => {
+            const typeLabel = c.type === 'order' ? 'Por Pedido' : c.type === 'product' ? `Por Produto (${c.reference})` : `Por Fornecedor (${c.reference})`;
+            const values = [];
+            if (Number(c.commission_percent) > 0) values.push(`${c.commission_percent}%`);
+            if (Number(c.commission_fixed) > 0) values.push(`R$ ${Number(c.commission_fixed).toFixed(2)} fixo`);
+            return `<li>${typeLabel}: ${values.join(' + ')}</li>`;
+          }).join('')}
+        </ul>
+      </div>
+    ` : '';
+
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Comissões</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#222;padding:32px;max-width:900px;margin:auto}
       h1{font-size:20px;margin-bottom:4px}
       .meta{color:#666;font-size:13px;margin-bottom:16px}
@@ -143,6 +214,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
       @media print{body{padding:16px}}</style></head><body>
       <h1>${reportTitle}</h1>
       <div class="meta"><p><strong>Período:</strong> ${periodLabel}</p><p><strong>Total de vendas:</strong> ${filteredSales.length}</p></div>
+      ${rulesHtml}
       <table><thead><tr>
         <th>#</th>
         ${showSellerCol ? '<th>Vendedor</th>' : ''}
@@ -162,7 +234,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const handleDownloadPdf = () => {
     const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Tudo';
     const sellerSuffix = activeSellerLabel ? `_${activeSellerLabel.replace(/\s+/g, '_')}` : '';
-    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Vendas${sellerSuffix}_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
+    downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Comissoes${sellerSuffix}_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (
@@ -205,6 +277,32 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
           </Button>
         </div>
       </div>
+
+      {/* Active commission rules info */}
+      {commissions.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+          <CardContent className="py-3 px-4">
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">Regras de Comissão Ativas ({commissions.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {commissions.map(c => {
+                const typeLabel = c.type === 'order' ? 'Pedido' : c.type === 'product' ? `Produto: ${c.reference}` : `Fornec: ${c.reference}`;
+                const values = [];
+                if (Number(c.commission_percent) > 0) values.push(`${c.commission_percent}%`);
+                if (Number(c.commission_fixed) > 0) values.push(`R$${Number(c.commission_fixed).toFixed(2)}`);
+                return (
+                  <Badge key={c.id} variant="outline" className="text-xs bg-background">
+                    {typeLabel} → {values.join(' + ')}
+                  </Badge>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loadingItems && hasProductOrSupplierRules && (
+        <p className="text-xs text-muted-foreground text-center">Calculando comissões por produto/fornecedor...</p>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -278,7 +376,7 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
         </Card>
       )}
 
-      {/* Detailed sales list with customer and date */}
+      {/* Detailed sales list */}
       <Card>
         <CardHeader>
           <CardTitle>{sellerName ? 'Minhas Vendas Detalhadas' : activeSellerLabel ? `Vendas — ${activeSellerLabel}` : 'Todas as Vendas Detalhadas'}</CardTitle>
