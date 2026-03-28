@@ -420,20 +420,21 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
 
   for (const item of items) {
     const codigo = normalizeForSearch(item.codigo || '');
+    const codigoNoSpaces = codigo.replace(/\s/g, '');
     const produto = normalizeForSearch(item.produto || '');
     const fornecedor = normalizeForSearch(item.fornecedor || '');
     const aplicacao = normalizeForSearch(item.aplicacao || '');
     const fullText = `${codigo} ${produto} ${fornecedor} ${aplicacao}`.trim();
 
-    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesText(fullText, term, true))) {
+    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesNormalized(fullText, term, true))) {
       continue;
     }
 
-    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesText(aplicacao, term, true) || termMatchesText(produto, term, true))) {
+    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesNormalized(aplicacao, term, true) || termMatchesNormalized(produto, term, true))) {
       continue;
     }
 
-    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesText(fornecedor, term) || termMatchesText(produto, term) || codeMatches(codigo, term))) {
+    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesNormalized(fornecedor, term) || termMatchesNormalized(produto, term) || codeMatchesNormalized(codigo, codigoNoSpaces, term))) {
       continue;
     }
 
@@ -447,22 +448,22 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
     for (const term of productTerms) {
       let matched = false;
 
-      if (codeMatches(codigo, term)) {
-        score += codigo === term ? 14 : 9;
+      if (codeMatchesNormalized(codigo, codigoNoSpaces, term)) {
+        score += codigo === normalizeForSearch(term) ? 14 : 9;
         matched = true;
       }
 
-      if (termMatchesText(produto, term)) {
+      if (termMatchesNormalized(produto, term)) {
         score += 7;
         matched = true;
       }
 
-      if (termMatchesText(fornecedor, term)) {
+      if (termMatchesNormalized(fornecedor, term)) {
         score += 3;
         matched = true;
       }
 
-      if (termMatchesText(aplicacao, term, true)) {
+      if (termMatchesNormalized(aplicacao, term, true)) {
         score += 4;
         matched = true;
       }
