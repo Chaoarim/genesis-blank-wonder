@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Send, Users, Crown } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid } from 'recharts';
+import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
 import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
+import { supabase } from '@/integrations/supabase/client';
 
 function useIncludeSaturdays() {
   const [includeSaturdays, setIncludeSaturdays] = useState(() => {
@@ -43,13 +44,119 @@ interface SalesDashboardProps {
   };
   onNewSale: () => void;
   recentSales: Sale[];
+  allSales: Sale[];
   sellerName?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: SalesDashboardProps) {
+const CHART_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(38 70% 60%)',
+  'hsl(200 50% 60%)',
+  'hsl(142 50% 55%)',
+];
+
+export function SalesDashboard({ stats, onNewSale, recentSales, allSales, sellerName }: SalesDashboardProps) {
   const includeSaturdays = useIncludeSaturdays();
+
+  // Monthly evolution (last 6 months)
+  const monthlyData = useMemo(() => {
+    const now = new Date();
+    const months: { key: string; label: string; total: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      const total = allSales
+        .filter(s => s.status === 'completed' && new Date(s.created_at).getMonth() === m && new Date(s.created_at).getFullYear() === y)
+        .reduce((sum, s) => sum + Number(s.total), 0);
+      months.push({
+        key: `${y}-${String(m + 1).padStart(2, '0')}`,
+        label: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+        total,
+      });
+    }
+    return months;
+  }, [allSales]);
+
+  // Top products (current month)
+  const [topProducts, setTopProducts] = useState<{ produto: string; total: number; qtd: number }[]>([]);
+  useEffect(() => {
+    const loadTopProducts = async () => {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const monthSaleIds = allSales
+        .filter(s => s.status === 'completed' && new Date(s.created_at) >= new Date(monthStart))
+        .map(s => s.id);
+      
+      if (monthSaleIds.length === 0) { setTopProducts([]); return; }
+
+      const { data: items } = await supabase
+        .from('sale_items')
+        .select('produto, quantidade, preco_unitario')
+        .in('sale_id', monthSaleIds.slice(0, 100));
+
+      if (!items) { setTopProducts([]); return; }
+
+      const prodMap = new Map<string, { total: number; qtd: number }>();
+      items.forEach(i => {
+        const key = i.produto;
+        const prev = prodMap.get(key) || { total: 0, qtd: 0 };
+        prev.total += Number(i.preco_unitario) * Number(i.quantidade);
+        prev.qtd += Number(i.quantidade);
+        prodMap.set(key, prev);
+      });
+
+      const sorted = Array.from(prodMap.entries())
+        .map(([produto, v]) => ({ produto, ...v }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 8);
+
+      setTopProducts(sorted);
+    };
+    loadTopProducts();
+  }, [allSales]);
+
+  // Top sellers (current month) - only for admin
+  const sellerRanking = useMemo(() => {
+    if (sellerName) return []; // sellers don't see this
+    const now = new Date();
+    const monthSales = allSales.filter(
+      s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear()
+    );
+    const sellerMap = new Map<string, { name: string; total: number; count: number }>();
+    monthSales.forEach(s => {
+      const name = s.seller_name || 'Dono';
+      const prev = sellerMap.get(name) || { name, total: 0, count: 0 };
+      prev.total += Number(s.total);
+      prev.count += 1;
+      sellerMap.set(name, prev);
+    });
+    return Array.from(sellerMap.values()).sort((a, b) => b.total - a.total).slice(0, 5);
+  }, [allSales, sellerName]);
+
+  // Top customers (current month)
+  const topCustomers = useMemo(() => {
+    const now = new Date();
+    const monthSales = allSales.filter(
+      s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear()
+    );
+    const custMap = new Map<string, number>();
+    monthSales.forEach(s => {
+      const name = s.customer_name || 'Cliente balcão';
+      custMap.set(name, (custMap.get(name) || 0) + Number(s.total));
+    });
+    return Array.from(custMap.entries())
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [allSales]);
+
   return (
     <div className="space-y-6">
       {sellerName && (
@@ -58,7 +165,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
           <p className="text-lg font-bold text-primary">{sellerName}</p>
         </div>
       )}
-      {/* Quick action */}
+
       <Button onClick={onNewSale} size="lg" className="w-full bg-gradient-to-r from-primary to-amber-600 text-primary-foreground font-bold text-base gap-2 h-14 shadow-lg">
         <PlusCircle className="w-5 h-5" />
         Registrar Nova Venda
@@ -97,7 +204,6 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
       {!sellerName && stats.storeGoal && (() => {
         const now = new Date();
         const goalAmount = Number(stats.storeGoal!.goal_amount);
-        
         const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
         const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
         const todayIsBD = isBusinessDay(now, includeSaturdays);
@@ -114,8 +220,6 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
               <Target className="w-5 h-5 text-primary" />
               <span className="text-sm font-semibold">Detalhes da Meta da Loja</span>
             </div>
-
-            {/* Daily goal */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
@@ -128,13 +232,9 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
                 <span className="text-xs text-muted-foreground">
                   Vendido hoje: <span className="font-semibold text-foreground">{fmt(stats.todayTotal)}</span> ({dailyProgress.toFixed(0)}%)
                 </span>
-                <span className="text-xs font-semibold text-amber-600">
-                  Falta: {fmt(dailyRemaining)}
-                </span>
+                <span className="text-xs font-semibold text-amber-600">Falta: {fmt(dailyRemaining)}</span>
               </div>
             </div>
-
-            {/* Monthly goal */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Meta Mensal</span>
@@ -145,9 +245,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
                 <span className="text-xs text-muted-foreground">
                   Vendido no mês: <span className="font-semibold text-foreground">{fmt(storeMonthTotal)}</span> ({monthlyProgress.toFixed(0)}%)
                 </span>
-                <span className="text-xs font-semibold text-amber-600">
-                  Falta: {fmt(monthlyRemaining)}
-                </span>
+                <span className="text-xs font-semibold text-amber-600">Falta: {fmt(monthlyRemaining)}</span>
               </div>
               <p className="text-[11px] text-muted-foreground text-right">
                 {remainingDays} dias úteis restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia útil
@@ -161,7 +259,6 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
       {sellerName && stats.individualGoal && (() => {
         const now = new Date();
         const goalAmount = Number(stats.individualGoal!.goal_amount);
-        
         const businessDaysInMonth = getBusinessDaysInMonth(now.getFullYear(), now.getMonth(), includeSaturdays);
         const remainingDays = getRemainingBusinessDays(now, includeSaturdays);
         const todayIsBusinessDay = isBusinessDay(now, includeSaturdays);
@@ -177,8 +274,6 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
               <Target className="w-5 h-5 text-amber-500" />
               <span className="text-sm font-semibold">Detalhes da Meta Individual</span>
             </div>
-
-            {/* Daily goal */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
@@ -191,13 +286,9 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
                 <span className="text-xs text-muted-foreground">
                   Vendido hoje: <span className="font-semibold text-foreground">{fmt(stats.todayTotal)}</span> ({dailyProgress.toFixed(0)}%)
                 </span>
-                <span className="text-xs font-semibold text-amber-600">
-                  Falta: {fmt(dailyRemaining)}
-                </span>
+                <span className="text-xs font-semibold text-amber-600">Falta: {fmt(dailyRemaining)}</span>
               </div>
             </div>
-
-            {/* Monthly goal */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Meta Mensal</span>
@@ -208,9 +299,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
                 <span className="text-xs text-muted-foreground">
                   Vendido no mês: <span className="font-semibold text-foreground">{fmt(stats.monthTotal)}</span> ({monthlyProgress.toFixed(0)}%)
                 </span>
-                <span className="text-xs font-semibold text-amber-600">
-                  Falta: {fmt(monthlyRemaining)}
-                </span>
+                <span className="text-xs font-semibold text-amber-600">Falta: {fmt(monthlyRemaining)}</span>
               </div>
               <p className="text-[11px] text-muted-foreground text-right">
                 {remainingDays} dias úteis restantes · Média necessária: {fmt(remainingDays > 0 ? monthlyRemaining / remainingDays : 0)}/dia útil
@@ -241,31 +330,18 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
 
       {/* Monthly evolution chart */}
       <Card className="p-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Evolução Mensal de Vendas</h3>
-        <div className="h-48">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-primary" />
+          Evolução Mensal de Vendas
+        </h3>
+        <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={(() => {
-              const months: Record<string, number> = {};
-              const now = new Date();
-              for (let i = 5; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                months[key] = 0;
-              }
-              recentSales.length; // trigger
-              // Use all sales passed as props (recent is just the top 5 for the list, but stats has monthTotal etc.)
-              // For proper monthly data, we need to iterate the full sales that are available
-              return Object.entries(months).map(([key, _]) => {
-                const [y, m] = key.split('-').map(Number);
-                // We don't have all sales in this component, use dailyTotals to estimate
-                return { month: `${String(m).padStart(2, '0')}/${y}`, total: 0 };
-              });
-            })()}>
+            <LineChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${v}`} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
-              <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => fmt(v)} labelFormatter={(l) => `Mês: ${l}`} />
+              <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))', r: 5 }} activeDot={{ r: 7 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -286,26 +362,96 @@ export function SalesDashboard({ stats, onNewSale, recentSales, sellerName }: Sa
         </div>
       </Card>
 
-      {/* Top customers by revenue */}
-      <Card className="p-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-          <Crown className="w-4 h-4 text-primary" />
-          Top Clientes por Faturamento
-        </h3>
-        {(() => {
-          const customerTotals = new Map<string, number>();
-          recentSales.forEach(() => {}); // just for reactivity
-          // Calculate from all available sales through the sales list
-          // We'll compute from the full recentSales array
-          const allSalesForRanking = recentSales; // This is only top 5, we need more context
-          // Since we only get 5 recent sales here, show what we can
-          return (
-            <p className="text-xs text-muted-foreground text-center py-4">
-              Acesse o módulo Carteira para ver o ranking completo de clientes
-            </p>
-          );
-        })()}
-      </Card>
+      {/* Top products ranking */}
+      {topProducts.length > 0 && (
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <Package className="w-4 h-4 text-primary" />
+            Top Produtos do Mês
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topProducts.slice(0, 5)} layout="vertical">
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
+                  <YAxis type="category" dataKey="produto" tick={{ fontSize: 10 }} width={120} tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + '…' : v} />
+                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+                    {topProducts.slice(0, 5).map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2">
+              {topProducts.slice(0, 5).map((p, i) => (
+                <div key={p.produto} className="flex items-center gap-2 text-sm">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate font-medium text-xs">{p.produto}</p>
+                    <p className="text-xs text-muted-foreground">{p.qtd} un. vendidas</p>
+                  </div>
+                  <span className="text-xs font-bold text-primary shrink-0">{fmt(p.total)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Seller ranking - admin only */}
+      {!sellerName && sellerRanking.length > 0 && (
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <Medal className="w-4 h-4 text-primary" />
+            Ranking de Vendedores do Mês
+          </h3>
+          <div className="space-y-2">
+            {sellerRanking.map((s, i) => (
+              <div key={s.name} className="flex items-center gap-3 p-2 rounded-lg border border-border">
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                  i === 0 ? 'bg-amber-500 text-white' : i === 1 ? 'bg-gray-400 text-white' : i === 2 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {i + 1}º
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{s.name}</p>
+                  <p className="text-xs text-muted-foreground">{s.count} vendas</p>
+                </div>
+                <span className="text-sm font-bold text-primary">{fmt(s.total)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Top customers */}
+      {topCustomers.length > 0 && (
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <Crown className="w-4 h-4 text-primary" />
+            Top Clientes do Mês
+          </h3>
+          <div className="space-y-2">
+            {topCustomers.map((c, i) => (
+              <div key={c.name} className="flex items-center justify-between p-2 rounded-lg border border-border">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    i === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-medium truncate">{c.name}</span>
+                </div>
+                <span className="text-sm font-bold text-primary shrink-0">{fmt(c.total)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Recent sales */}
       <Card className="p-4">

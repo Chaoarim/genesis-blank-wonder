@@ -14,7 +14,7 @@ import { logAuditAction } from '@/lib/auditLog';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
-import { printPriceLabels } from '@/lib/priceLabels';
+import { printPriceLabels, downloadPriceLabels } from '@/lib/priceLabels';
 
 interface InventoryItem {
   id: string;
@@ -210,6 +210,20 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
           >
             <Tags className="w-4 h-4" />
             Imprimir Etiquetas
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              const toPrint = search.trim() ? filtered.slice(0, 30) : filtered.slice(0, 30);
+              if (toPrint.length === 0) { toast.error('Nenhum item para gerar PDF'); return; }
+              downloadPriceLabels(toPrint, markup);
+              toast.success(`Gerando PDF com ${toPrint.length} etiquetas...`);
+            }}
+          >
+            <Download className="w-4 h-4" />
+            PDF Etiquetas
           </Button>
           <Button
             variant="outline"

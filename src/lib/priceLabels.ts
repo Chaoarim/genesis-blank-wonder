@@ -1,4 +1,4 @@
-import { printHtml } from '@/lib/htmlToPdf';
+import { downloadHtmlAsPdf, printHtml } from '@/lib/htmlToPdf';
 
 interface LabelItem {
   codigo: string;
@@ -9,7 +9,7 @@ interface LabelItem {
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-export function printPriceLabels(items: LabelItem[], markup: number, cols = 3) {
+function buildLabelsHtml(items: LabelItem[], markup: number, cols = 3) {
   const sellPrice = (preco: number) => markup > 0 ? preco * (1 + markup / 100) : preco;
 
   const labels = items.map(item => `
@@ -38,7 +38,7 @@ export function printPriceLabels(items: LabelItem[], markup: number, cols = 3) {
     </div>
   `).join('');
 
-  const html = `
+  return `
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
@@ -63,6 +63,14 @@ export function printPriceLabels(items: LabelItem[], markup: number, cols = 3) {
     </body>
     </html>
   `;
+}
 
+export function printPriceLabels(items: LabelItem[], markup: number, cols = 3) {
+  const html = buildLabelsHtml(items, markup, cols);
   printHtml(html);
+}
+
+export function downloadPriceLabels(items: LabelItem[], markup: number, cols = 3) {
+  const html = buildLabelsHtml(items, markup, cols);
+  downloadHtmlAsPdf(html, `etiquetas-preco-${new Date().toISOString().slice(0, 10)}`);
 }
