@@ -261,6 +261,7 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
