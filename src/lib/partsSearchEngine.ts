@@ -197,22 +197,21 @@ function findCanonicalLaterality(term: string): string | null {
   return null;
 }
 
-function termMatchesText(text: string, term: string, strictWord = false): boolean {
-  const normalizedText = normalizeForSearch(text);
-  const textWords = normalizedText.split(' ').filter(Boolean);
+/** Match term against ALREADY-NORMALIZED text (skip re-normalizing) */
+function termMatchesNormalized(normalizedText: string, term: string, strictWord = false): boolean {
+  if (!normalizedText) return false;
 
   for (const candidate of getEquivalentTerms(term)) {
     if (wordBoundaryMatch(normalizedText, candidate)) return true;
 
     if (!strictWord && candidate.length >= 3) {
-      if (textWords.some(word => word.startsWith(candidate))) return true;
+      if (normalizedText.includes(candidate)) return true;
     }
 
     if (!strictWord && candidate.includes(' ') && normalizedText.includes(candidate)) {
       return true;
     }
 
-    // For alphanumeric codes (e.g. "vkba4529a"), try matching without spaces
     if (candidate.length >= 4 && /\d/.test(candidate)) {
       const textNoSpaces = normalizedText.replace(/\s/g, '');
       if (textNoSpaces.includes(candidate.replace(/\s/g, ''))) return true;
@@ -220,6 +219,16 @@ function termMatchesText(text: string, term: string, strictWord = false): boolea
   }
 
   return false;
+}
+
+function codeMatchesNormalized(normalizedCode: string, codeNoSpaces: string, term: string): boolean {
+  const normalizedTerm = normalizeForSearch(term);
+  if (!normalizedCode || !normalizedTerm) return false;
+  if (normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm)) {
+    return true;
+  }
+  const termNoSpaces = normalizedTerm.replace(/\s/g, '');
+  return codeNoSpaces === termNoSpaces || codeNoSpaces.startsWith(termNoSpaces) || codeNoSpaces.includes(termNoSpaces);
 }
 
 function codeMatches(code: string, term: string): boolean {
