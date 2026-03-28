@@ -85,7 +85,7 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
 
   // Collapsible state: Principal always open, active group open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = { Principal: true };
+    const initial: Record<string, boolean> = { Vendas: true };
     GROUPS.forEach(g => { initial[g] = g === 'Principal' || g === activeGroup; });
     return initial;
   });
@@ -141,7 +141,10 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold cursor-pointer hover:text-muted-foreground flex items-center justify-between pr-2">
-                    {group}
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-xs">{GROUP_ICONS[group] || ''}</span>
+                      {group}
+                    </span>
                     <ChevronDown className={`w-3 h-3 transition-transform ${isOpen || hasActiveItem ? 'rotate-180' : ''}`} />
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
