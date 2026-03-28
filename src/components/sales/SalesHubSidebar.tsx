@@ -45,6 +45,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'coupons', icon: Ticket, label: 'Cupons', group: 'Financeiro' },
   { value: 'payment-terms', icon: Calendar, label: 'Prazos', group: 'Financeiro' },
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
+  { value: 'accounts-receivable', icon: DollarSign, label: 'Contas a Receber', group: 'Financeiro' },
   { value: 'abc-curve', icon: TrendingUp, label: 'Curva ABC', group: 'Financeiro' },
 
   // 👥 Equipe
