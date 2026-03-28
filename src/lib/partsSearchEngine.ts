@@ -1,5 +1,58 @@
 import { Part } from '@/hooks/usePartsDatabase';
 
+// ========== Pre-normalized part index for fast search ==========
+export interface NormalizedPart {
+  part: Part;
+  code: string;
+  codeNoSpaces: string;
+  produto: string;
+  chave: string;
+  aplicacao: string;
+  marcaModeloAno: string;
+  fornecedor: string;
+  contexto: string;
+  similares: string;
+  vehicleText: string;
+  fullText: string;
+}
+
+const indexCache = new WeakMap<Part[], NormalizedPart[]>();
+
+export function buildNormalizedIndex(parts: Part[]): NormalizedPart[] {
+  const cached = indexCache.get(parts);
+  if (cached) return cached;
+
+  const index = parts.map(part => {
+    const code = normalizeForSearch(part.fabricante || '');
+    const produto = normalizeForSearch(part.produto || '');
+    const chave = normalizeForSearch(part.chaveDeBusca || '');
+    const aplicacao = normalizeForSearch(part.aplicacao || '');
+    const marcaModeloAno = normalizeForSearch(`${part.marca || ''} ${part.modelo || ''} ${part.ano || ''}`);
+    const fornecedor = normalizeForSearch(part.fornecedor || '');
+    const contexto = normalizeForSearch(part.contextoIA || '');
+    const similares = normalizeForSearch(part.codigosSimilares || '');
+    const vehicleText = `${marcaModeloAno} ${aplicacao} ${chave}`.trim();
+    const fullText = `${produto} ${vehicleText} ${fornecedor} ${contexto} ${similares}`.trim();
+    return {
+      part,
+      code,
+      codeNoSpaces: code.replace(/\s/g, ''),
+      produto,
+      chave,
+      aplicacao,
+      marcaModeloAno,
+      fornecedor,
+      contexto,
+      similares,
+      vehicleText,
+      fullText,
+    };
+  });
+
+  indexCache.set(parts, index);
+  return index;
+}
+
 const STOP_TERMS = new Set([
   'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
   'de', 'da', 'do', 'das', 'dos', 'd',
