@@ -46,6 +46,8 @@ const OnboardingWizard = lazy(() => import('@/components/sales/OnboardingWizard'
 const ABCCurveReport = lazy(() => import('@/components/sales/ABCCurveReport').then(m => ({ default: m.ABCCurveReport })));
 const AuditLogsViewer = lazy(() => import('@/components/sales/AuditLogsViewer').then(m => ({ default: m.AuditLogsViewer })));
 const MonthlyReport = lazy(() => import('@/components/sales/MonthlyReport').then(m => ({ default: m.MonthlyReport })));
+const PriceHistoryViewer = lazy(() => import('@/components/sales/PriceHistoryViewer').then(m => ({ default: m.PriceHistoryViewer })));
+const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').then(m => ({ default: m.BillingCalendar })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
