@@ -80,6 +80,7 @@ export function CommandPalette({ onNavigate, visibleTabs }: CommandPaletteProps)
 
   return (
     <>
+      {/* Desktop: outline button with shortcut hint */}
       <Button
         variant="outline"
         size="sm"
@@ -91,6 +92,16 @@ export function CommandPalette({ onNavigate, visibleTabs }: CommandPaletteProps)
         <kbd className="pointer-events-none ml-1 inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
           ⌘K
         </kbd>
+      </Button>
+
+      {/* Mobile: icon-only button, always visible */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden h-9 w-9"
+        onClick={() => setOpen(true)}
+      >
+        <Search className="w-5 h-5" />
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
