@@ -45,6 +45,7 @@ const HelpGuide = lazy(() => import('@/components/sales/HelpGuide').then(m => ({
 const OnboardingWizard = lazy(() => import('@/components/sales/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 const ABCCurveReport = lazy(() => import('@/components/sales/ABCCurveReport').then(m => ({ default: m.ABCCurveReport })));
 const AuditLogsViewer = lazy(() => import('@/components/sales/AuditLogsViewer').then(m => ({ default: m.AuditLogsViewer })));
+const MonthlyReport = lazy(() => import('@/components/sales/MonthlyReport').then(m => ({ default: m.MonthlyReport })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -145,10 +146,11 @@ const SalesHub = () => {
         return <LowStockReport adminUserId={sellerPerms.adminUserId} />;
       case 'history':
         return <SalesHistory sales={salesData.sales} onDeleteSale={salesData.deleteSale} getSaleItems={salesData.getSaleItems} onDuplicateSale={(sale, items) => {
-          // Pre-fill new sale with items from duplicated sale
           setActiveTab('new-sale');
           toast.success(`Venda duplicada! Preencha os dados e confirme.`);
         }} />;
+      case 'monthly-report':
+        return <MonthlyReport allSales={salesData.allSales} getSaleItems={salesData.getSaleItems} />;
       case 'customers':
         return (
           <CustomersManager

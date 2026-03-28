@@ -379,6 +379,8 @@ export default function CatalogB2B() {
   const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [priceRange, setPriceRange] = useState<'all' | 'low' | 'mid' | 'high'>('all');
+  const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'name' | 'popular'>('default');
 
   const brands = useMemo(() => {
     const map = new Map<string, number>();
@@ -393,8 +395,20 @@ export default function CatalogB2B() {
     let result = items;
     if (search.trim()) result = smartFilterInventory(result, search);
     if (selectedBrand) result = result.filter(i => (i.fornecedor || '').trim().toUpperCase() === selectedBrand);
+    
+    // Price range filter
+    if (priceRange === 'low') result = result.filter(i => i.preco_revenda <= 50);
+    else if (priceRange === 'mid') result = result.filter(i => i.preco_revenda > 50 && i.preco_revenda <= 200);
+    else if (priceRange === 'high') result = result.filter(i => i.preco_revenda > 200);
+
+    // Sorting
+    if (sortBy === 'price-asc') result = [...result].sort((a, b) => a.preco_revenda - b.preco_revenda);
+    else if (sortBy === 'price-desc') result = [...result].sort((a, b) => b.preco_revenda - a.preco_revenda);
+    else if (sortBy === 'name') result = [...result].sort((a, b) => a.produto.localeCompare(b.produto));
+    else if (sortBy === 'popular') result = [...result].sort((a, b) => b.vendidos_display - a.vendidos_display);
+
     return result;
-  }, [items, search, selectedBrand]);
+  }, [items, search, selectedBrand, priceRange, sortBy]);
 
   if (loading) {
     return (
@@ -590,30 +604,65 @@ export default function CatalogB2B() {
           />
         </div>
 
-        {/* Brand filter */}
-        {brands.length > 1 && (
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 scrollbar-none">
-            <button
-              onClick={() => setSelectedBrand(null)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                !selectedBrand ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
-              }`}
-            >
-              Todas
-            </button>
-            {brands.map(([brand, count]) => (
+        {/* Advanced filters */}
+        <div className="space-y-2 mb-4">
+          {/* Brand filter */}
+          {brands.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               <button
-                key={brand}
-                onClick={() => setSelectedBrand(selectedBrand === brand ? null : brand)}
+                onClick={() => setSelectedBrand(null)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                  selectedBrand === brand ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+                  !selectedBrand ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
                 }`}
               >
-                {brand} ({count})
+                Todas
               </button>
-            ))}
+              {brands.map(([brand, count]) => (
+                <button
+                  key={brand}
+                  onClick={() => setSelectedBrand(selectedBrand === brand ? null : brand)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    selectedBrand === brand ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+                  }`}
+                >
+                  {brand} ({count})
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Price range + sort */}
+          <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-1 items-center">
+              <span className="text-[10px] text-muted-foreground mr-1">Preço:</span>
+              {([['all', 'Todos'], ['low', 'Até R$50'], ['mid', 'R$50-200'], ['high', 'Acima R$200']] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setPriceRange(val)}
+                  className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                    priceRange === val ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1 items-center ml-auto">
+              <span className="text-[10px] text-muted-foreground mr-1">Ordenar:</span>
+              {([['default', 'Padrão'], ['price-asc', 'Menor preço'], ['price-desc', 'Maior preço'], ['name', 'A-Z'], ['popular', 'Mais vendidos']] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setSortBy(val)}
+                  className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                    sortBy === val ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:border-primary/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
+        </div>
 
 
         {/* Items Grid */}
