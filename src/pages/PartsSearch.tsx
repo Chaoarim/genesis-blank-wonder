@@ -65,9 +65,9 @@ const PartsSearch = () => {
     });
   }, [navigate]);
 
-  // Detect plate pattern in unified search
-  const detectedType = useMemo(() => detectSearchType(search), [search]);
-  const showPlacaSuggestion = mode === 'unified' && detectedType === 'placa' && search.length >= 7;
+  // Detect plate pattern — use instant input, not debounced
+  const detectedType = useMemo(() => detectSearchType(searchInput), [searchInput]);
+  const showPlacaSuggestion = mode === 'unified' && detectedType === 'placa' && searchInput.length >= 7;
 
   // Catalog stats
   const catalogStats = useMemo(() => {
@@ -123,7 +123,7 @@ const PartsSearch = () => {
   const hasMore = visibleCount < filtered.length;
 
   const handleSearchChange = useCallback((val: string) => {
-    setSearch(val);
+    setSearchInput(val);
     setVisibleCount(PAGE_SIZE);
   }, []);
 
@@ -276,13 +276,13 @@ const PartsSearch = () => {
                 <Input
                   autoFocus
                   placeholder="Código, peça, veículo, marca, fornecedor..."
-                  value={search}
+                  value={searchInput}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-12 pr-10 h-14 border-2 text-lg rounded-xl"
                 />
-                {search && (
+                {searchInput && (
                   <button
-                    onClick={() => handleSearchChange('')}
+                    onClick={() => { handleSearchChange(''); setSearch(''); }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-5 h-5" />
