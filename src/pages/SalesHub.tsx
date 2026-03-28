@@ -10,7 +10,8 @@ import { CommandPalette } from '@/components/sales/CommandPalette';
 import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2 } from 'lucide-react';
+import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2, Keyboard } from 'lucide-react';
+import { ThemeToggle } from '@/components/sales/ThemeToggle';
 import { toast } from 'sonner';
 import { NotificationsDropdown } from '@/components/sales/NotificationsDropdown';
 import type { User } from '@supabase/supabase-js';
@@ -85,6 +86,17 @@ const SalesHub = () => {
 
   const goToNewSale = useCallback(() => setActiveTab('new-sale'), []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'n') { e.preventDefault(); setActiveTab('new-sale'); }
+      if (e.ctrlKey && e.key === 'h') { e.preventDefault(); setActiveTab('history'); }
+      if (e.ctrlKey && e.key === 'd') { e.preventDefault(); setActiveTab('dashboard'); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   // Filter visible tabs based on permissions
   const visibleTabs = ALL_TAB_VALUES.filter(tab => sellerPerms.hasPermission(tab));
 
@@ -131,7 +143,11 @@ const SalesHub = () => {
       case 'low-stock':
         return <LowStockReport adminUserId={sellerPerms.adminUserId} />;
       case 'history':
-        return <SalesHistory sales={salesData.sales} onDeleteSale={salesData.deleteSale} getSaleItems={salesData.getSaleItems} />;
+        return <SalesHistory sales={salesData.sales} onDeleteSale={salesData.deleteSale} getSaleItems={salesData.getSaleItems} onDuplicateSale={(sale, items) => {
+          // Pre-fill new sale with items from duplicated sale
+          setActiveTab('new-sale');
+          toast.success(`Venda duplicada! Preencha os dados e confirme.`);
+        }} />;
       case 'customers':
         return (
           <CustomersManager
@@ -240,6 +256,7 @@ const SalesHub = () => {
 
               {/* Quick links */}
               <div className="flex items-center gap-1">
+                <ThemeToggle />
                 <NotificationsDropdown
                   adminUserId={sellerPerms.adminUserId}
                   sales={salesData.allSales}
