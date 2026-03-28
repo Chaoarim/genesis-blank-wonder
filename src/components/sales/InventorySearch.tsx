@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame, Tags } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { smartFilterInventory } from '@/lib/partsSearchEngine';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
+import { printPriceLabels } from '@/lib/priceLabels';
 
 interface InventoryItem {
   id: string;
