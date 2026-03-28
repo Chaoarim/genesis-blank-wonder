@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logAuditAction } from '@/lib/auditLog';
 
 export interface Customer {
   id: string;
@@ -169,6 +170,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
 
     await supabase.from('sale_items').insert(items);
     setSales(prev => [sale as Sale, ...prev]);
+    logAuditAction({ action: 'create', entity_type: 'sale', entity_id: sale.id, details: { total, customer: data.customer_name } });
     toast.success('Venda registrada!');
     return sale;
   }, [userId]);
@@ -177,6 +179,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
     const { error } = await supabase.from('sales').delete().eq('id', id);
     if (error) { toast.error('Erro ao excluir venda'); return; }
     setSales(prev => prev.filter(s => s.id !== id));
+    logAuditAction({ action: 'delete', entity_type: 'sale', entity_id: id });
     toast.success('Venda excluída');
   }, []);
 
