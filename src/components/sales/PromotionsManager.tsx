@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Percent, Trash2, Plus, Clock, Search, Tag, Users, User } from 'lucide-react';
+import { Percent, Plus, Clock, Search, Tag, Users, User } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 
@@ -345,9 +346,10 @@ export function PromotionsManager() {
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {hoursLeft}h {minsLeft}min
                 </p>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive mt-1" onClick={() => deletePromotion(p.id)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
+                <ConfirmDeleteDialog
+                  description="Tem certeza que deseja excluir esta promoção?"
+                  onConfirm={() => deletePromotion(p.id)}
+                />
               </div>
             </div>
           );
@@ -367,9 +369,11 @@ export function PromotionsManager() {
                   {p.customer_name ? ` • ${p.customer_name}` : ' • Todos'}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deletePromotion(p.id)}>
-                <Trash2 className="w-3 h-3" />
-              </Button>
+              <ConfirmDeleteDialog
+                description="Excluir esta promoção expirada?"
+                onConfirm={() => deletePromotion(p.id)}
+                iconSize="sm"
+              />
             </div>
           ))}
         </Card>

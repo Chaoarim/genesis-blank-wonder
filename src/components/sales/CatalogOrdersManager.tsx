@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package, Trash2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Phone, MessageSquare, CheckCircle, Clock, XCircle, Package } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 
@@ -66,7 +67,6 @@ export function CatalogOrdersManager() {
   }, []);
 
   const deleteOrder = useCallback(async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este pedido?')) return;
     const { error } = await supabase.from('catalog_orders').delete().eq('id', id);
     if (error) { toast.error('Erro ao excluir pedido'); return; }
     setOrders(prev => prev.filter(o => o.id !== id));
@@ -181,9 +181,15 @@ export function CatalogOrdersManager() {
                           </Button>
                         </>
                       )}
-                      <Button variant="ghost" size="sm" className="gap-1 text-destructive" onClick={() => deleteOrder(order.id)}>
-                        <Trash2 className="w-3 h-3" /> Excluir
-                      </Button>
+                      <ConfirmDeleteDialog
+                        description="Tem certeza que deseja excluir este pedido permanentemente?"
+                        onConfirm={() => deleteOrder(order.id)}
+                        trigger={
+                          <Button variant="ghost" size="sm" className="gap-1 text-destructive">
+                            Excluir
+                          </Button>
+                        }
+                      />
                     </div>
                   </div>
                 )}

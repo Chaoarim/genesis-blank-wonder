@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Target, Trophy, Trash2, Users, CalendarDays } from 'lucide-react';
+import { Target, Trophy, Users, CalendarDays } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import type { SalesGoal, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
@@ -243,14 +244,10 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-primary">{fmt(Number(g.goal_amount))}</span>
                       {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => onDeleteGoal(g.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <ConfirmDeleteDialog
+                          description="Tem certeza que deseja excluir esta meta?"
+                          onConfirm={() => onDeleteGoal(g.id)}
+                        />
                       )}
                     </div>
                   </div>

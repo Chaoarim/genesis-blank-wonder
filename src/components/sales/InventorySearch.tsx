@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink, Pencil, Check, X, Trash2, ImagePlus, Loader2, Flame } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllInventory } from '@/lib/fetchAllInventory';
@@ -97,7 +98,6 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
   }, [editValue, editField]);
 
   const deleteItem = useCallback(async (id: string, codigo: string) => {
-    if (!confirm(`Excluir item ${codigo} do estoque?`)) return;
     const { error } = await supabase.from('inventory_items').delete().eq('id', id);
     if (error) { toast.error('Erro ao excluir'); return; }
     setItems(prev => prev.filter(i => i.id !== id));
@@ -295,9 +295,11 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
                         }}>
                           <ExternalLink className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => deleteItem(item.id, item.codigo)}>
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        <ConfirmDeleteDialog
+                          description={`Tem certeza que deseja excluir o item ${item.codigo} do estoque?`}
+                          onConfirm={() => deleteItem(item.id, item.codigo)}
+                          iconSize="sm"
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

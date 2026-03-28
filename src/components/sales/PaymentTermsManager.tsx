@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Calendar, DollarSign, Edit2, Save, X } from 'lucide-react';
+import { Plus, Calendar, DollarSign, Edit2, Save, X } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 
@@ -115,7 +116,6 @@ export function PaymentTermsManager({ userId }: { userId: string | null }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Excluir esta regra de prazo?')) return;
     await supabase.from('payment_term_rules').delete().eq('id', id);
     setRules(prev => prev.filter(r => r.id !== id));
     toast.success('Regra excluída!');
@@ -251,9 +251,11 @@ export function PaymentTermsManager({ userId }: { userId: string | null }) {
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(rule)}>
                         <Edit2 className="w-3 h-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(rule.id)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      <ConfirmDeleteDialog
+                        description={`Excluir a regra "${rule.name}"?`}
+                        onConfirm={() => handleDelete(rule.id)}
+                        iconSize="sm"
+                      />
                     </div>
                   </TableCell>
                 </TableRow>

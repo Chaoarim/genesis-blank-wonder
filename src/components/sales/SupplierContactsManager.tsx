@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Plus, Phone, MessageSquare, Mail, Building2, User, FileText, Trash2, Edit2 } from 'lucide-react';
+import { Search, Plus, Phone, MessageSquare, Mail, Building2, User, FileText, Edit2 } from 'lucide-react';
+import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
 
@@ -91,7 +92,6 @@ export function SupplierContactsManager({ userId }: { userId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja remover este fornecedor?')) return;
     const { error } = await supabase.from('supplier_contacts').delete().eq('id', id);
     if (error) toast.error('Erro ao excluir contato');
     else {
@@ -213,9 +213,11 @@ export function SupplierContactsManager({ userId }: { userId: string }) {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => openEdit(contact)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(contact.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <ConfirmDeleteDialog
+                      description={`Excluir o contato de "${contact.distributor_name}"?`}
+                      onConfirm={() => handleDelete(contact.id)}
+                      iconSize="md"
+                    />
                   </div>
                 </div>
 
