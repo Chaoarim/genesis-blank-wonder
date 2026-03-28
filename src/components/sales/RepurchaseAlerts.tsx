@@ -112,55 +112,82 @@ export function RepurchaseAlerts({ sales, customers }: RepurchaseAlertsProps) {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Última Compra</TableHead>
-                  <TableHead>Inatividade</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {alerts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Nenhum cliente encontrado com este filtro de inatividade.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  alerts.map((alert, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium">{alert.customer.name}</TableCell>
-                      <TableCell>{alert.customer.phone || alert.customer.whatsapp || 'Sem contato'}</TableCell>
-                      <TableCell>
-                        {alert.lastPurchaseDate.toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={alert.daysSinceLastPurchase > 60 ? "destructive" : "secondary"}>
-                          {alert.daysSinceLastPurchase} dias
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-primary hover:bg-primary/10 border-primary/20"
-                          onClick={() => handleWhatsApp(alert.customer, alert.daysSinceLastPurchase)}
-                          disabled={!alert.customer.phone && !alert.customer.whatsapp}
-                        >
-                          <MessageCircle className="h-4 w-4 mr-1" />
-                          Cobrar Recompra
-                        </Button>
-                      </TableCell>
+          {alerts.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground px-4">
+              Nenhum cliente encontrado com este filtro de inatividade.
+            </p>
+          ) : (
+            <>
+              {/* Mobile: Cards */}
+              <div className="space-y-2 p-4 md:hidden">
+                {alerts.map((alert, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-sm truncate">{alert.customer.name}</span>
+                      <Badge variant={alert.daysSinceLastPurchase > 60 ? "destructive" : "secondary"}>
+                        {alert.daysSinceLastPurchase} dias
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span>{alert.customer.phone || alert.customer.whatsapp || 'Sem contato'}</span>
+                      <span>{alert.lastPurchaseDate.toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-primary hover:bg-primary/10 border-primary/20 gap-1"
+                      onClick={() => handleWhatsApp(alert.customer, alert.daysSinceLastPurchase)}
+                      disabled={!alert.customer.phone && !alert.customer.whatsapp}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Cobrar Recompra
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Última Compra</TableHead>
+                      <TableHead>Inatividade</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {alerts.map((alert, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{alert.customer.name}</TableCell>
+                        <TableCell>{alert.customer.phone || alert.customer.whatsapp || 'Sem contato'}</TableCell>
+                        <TableCell>{alert.lastPurchaseDate.toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell>
+                          <Badge variant={alert.daysSinceLastPurchase > 60 ? "destructive" : "secondary"}>
+                            {alert.daysSinceLastPurchase} dias
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-primary hover:bg-primary/10 border-primary/20"
+                            onClick={() => handleWhatsApp(alert.customer, alert.daysSinceLastPurchase)}
+                            disabled={!alert.customer.phone && !alert.customer.whatsapp}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            Cobrar Recompra
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

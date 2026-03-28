@@ -109,33 +109,55 @@ export function LowStockReport({ adminUserId: _adminUserId }: { adminUserId?: st
           <p className="text-sm">Nenhum item com estoque baixo 🎉</p>
         </div>
       ) : (
-        <div className="overflow-auto max-h-[400px] rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Aplicação</TableHead>
-                <TableHead className="text-center">Estoque</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map(item => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-mono text-xs font-bold">{item.codigo}</TableCell>
-                  <TableCell className="text-sm">{item.produto}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{item.aplicacao}</TableCell>
-                  <TableCell className="text-center">
-                    <span className={`font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : 'text-amber-500'}`}>
-                      {item.qtd_estoque}
-                    </span>
-                  </TableCell>
+        <div className="overflow-auto max-h-[400px]">
+          {/* Mobile: Cards */}
+          <div className="space-y-2 md:hidden">
+            {items.map(item => (
+              <div key={item.id} className="border rounded-lg p-3 space-y-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold">{item.codigo}</span>
+                  <span className={`font-bold text-sm ${item.qtd_estoque <= 0 ? 'text-destructive' : 'text-amber-500'}`}>
+                    {item.qtd_estoque} un.
+                  </span>
+                </div>
+                <p className="text-sm truncate">{item.produto}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {item.fornecedor && <span>{item.fornecedor}</span>}
+                  {item.aplicacao && <span>• {item.aplicacao}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: Table */}
+          <div className="hidden md:block rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Aplicação</TableHead>
+                  <TableHead className="text-center">Estoque</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {items.map(item => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono text-xs font-bold">{item.codigo}</TableCell>
+                    <TableCell className="text-sm">{item.produto}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{item.fornecedor}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{item.aplicacao}</TableCell>
+                    <TableCell className="text-center">
+                      <span className={`font-bold ${item.qtd_estoque <= 0 ? 'text-destructive' : 'text-amber-500'}`}>
+                        {item.qtd_estoque}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </Card>
