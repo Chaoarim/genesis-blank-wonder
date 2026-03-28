@@ -428,27 +428,52 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
         </Card>
       )}
 
-      {/* Top customers */}
+      {/* Top customers with pie chart */}
       {topCustomers.length > 0 && (
         <Card className="p-4">
           <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
             <Crown className="w-4 h-4 text-primary" />
             Top Clientes do Mês
           </h3>
-          <div className="space-y-2">
-            {topCustomers.map((c, i) => (
-              <div key={c.name} className="flex items-center justify-between p-2 rounded-lg border border-border">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                    i === 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {i + 1}
-                  </span>
-                  <span className="text-sm font-medium truncate">{c.name}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={topCustomers}
+                    dataKey="total"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    innerRadius={40}
+                    paddingAngle={2}
+                    label={({ name, percent }) => `${name.length > 12 ? name.slice(0, 12) + '…' : name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {topCustomers.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => fmt(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2">
+              {topCustomers.map((c, i) => (
+                <div key={c.name} className="flex items-center justify-between p-2 rounded-lg border border-border">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 text-white"
+                      style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="text-sm font-medium truncate">{c.name}</span>
+                  </div>
+                  <span className="text-sm font-bold text-primary shrink-0">{fmt(c.total)}</span>
                 </div>
-                <span className="text-sm font-bold text-primary shrink-0">{fmt(c.total)}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </Card>
       )}

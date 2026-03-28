@@ -3,7 +3,7 @@ import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
-  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp
+  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -56,6 +56,7 @@ const MENU_ITEMS: TabDef[] = [
 
   // ❓ Ajuda
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Suporte' },
+  { value: 'audit-logs', icon: Shield, label: 'Logs', group: 'Suporte' },
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Suporte' },
 ];
 
