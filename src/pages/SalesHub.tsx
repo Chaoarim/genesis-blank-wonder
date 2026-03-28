@@ -277,7 +277,7 @@ const SalesHub = () => {
 
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} visibleTabs={visibleTabs} />
         <Suspense fallback={null}>
-          <OnboardingWizard />
+          <OnboardingWizard onNavigate={setActiveTab} />
         </Suspense>
       </div>
     </SidebarProvider>
