@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchAllInventory } from '@/lib/fetchAllInventory';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
+import { logAuditAction } from '@/lib/auditLog';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
@@ -96,6 +97,9 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
 
     setItems(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
     setEditingId(null);
+    if (editField === 'preco') {
+      logAuditAction({ action: 'update_price', entity_type: 'inventory', entity_id: id, details: updateData });
+    }
     toast.success('Atualizado!');
   }, [editValue, editField]);
 
@@ -103,6 +107,7 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
     const { error } = await supabase.from('inventory_items').delete().eq('id', id);
     if (error) { toast.error('Erro ao excluir'); return; }
     setItems(prev => prev.filter(i => i.id !== id));
+    logAuditAction({ action: 'delete', entity_type: 'inventory', entity_id: id, details: { codigo } });
     toast.success(`${codigo} excluído`);
   }, []);
 
