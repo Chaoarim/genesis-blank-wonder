@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Bell, Package, ShoppingCart, UserCheck, AlertTriangle } from 'lucide-react';
+import { Bell, Package, ShoppingCart, UserCheck, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Notification {
   id: string;
-  type: 'low-stock' | 'new-order' | 'repurchase';
+  type: 'low-stock' | 'new-order' | 'repurchase' | 'overdue';
   title: string;
   description: string;
   icon: typeof Package;
@@ -28,6 +28,8 @@ const REPURCHASE_DAYS = 30;
 export function NotificationsDropdown({ adminUserId, sales, customers, onNavigate }: NotificationsDropdownProps) {
   const [lowStockItems, setLowStockItems] = useState<Array<{ codigo: string; produto: string; qtd_estoque: number }>>([]);
   const [pendingOrders, setPendingOrders] = useState<Array<{ id: string; customer_name: string; total: number; created_at: string }>>([]);
+  const [overduePayables, setOverduePayables] = useState<Array<{ id: string; supplier_name: string; amount: number; due_date: string }>>([]);
+  const [overdueSales, setOverdueSales] = useState<Array<{ id: string; customer_name: string | null; total: number; payment_deadline: string }>>([]);
   const [open, setOpen] = useState(false);
 
   // Fetch low stock and pending orders
@@ -35,7 +37,8 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
     if (!adminUserId) return;
 
     const fetchAlerts = async () => {
-      const [stockRes, ordersRes] = await Promise.all([
+      const today = new Date().toISOString().split('T')[0];
+      const [stockRes, ordersRes, payablesRes, salesRes] = await Promise.all([
         supabase
           .from('inventory_items')
           .select('codigo, produto, qtd_estoque')
@@ -48,10 +51,27 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(10),
+        supabase
+          .from('accounts_payable')
+          .select('id, supplier_name, amount, due_date')
+          .eq('status', 'pending')
+          .lte('due_date', today)
+          .limit(10),
+        supabase
+          .from('sales')
+          .select('id, customer_name, total, payment_deadline')
+          .eq('status', 'completed')
+          .is('paid_at', null)
+          .not('payment_deadline', 'is', null)
+          .lte('payment_deadline', today)
+          .limit(10),
       ]);
 
       if (stockRes.data) setLowStockItems(stockRes.data);
       if (ordersRes.data) setPendingOrders(ordersRes.data);
+      if (payablesRes.data) setOverduePayables(payablesRes.data);
+      if (salesRes.data) setOverdueSales(salesRes.data as any);
+    };
     };
 
     fetchAlerts();
@@ -96,6 +116,29 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
   const notifications: Notification[] = useMemo(() => {
     const items: Notification[] = [];
 
+    // Overdue payments (highest priority)
+    for (const p of overduePayables) {
+      items.push({
+        id: `payable-${p.id}`,
+        type: 'overdue',
+        title: 'Conta a pagar vencida',
+        description: `${p.supplier_name} — R$ ${Number(p.amount).toFixed(2)} (venc. ${new Date(p.due_date + 'T12:00:00').toLocaleDateString('pt-BR')})`,
+        icon: Clock,
+        color: 'text-red-500',
+      });
+    }
+
+    for (const s of overdueSales) {
+      items.push({
+        id: `sale-overdue-${s.id}`,
+        type: 'overdue',
+        title: 'Recebimento atrasado',
+        description: `${s.customer_name || 'Cliente'} — R$ ${Number(s.total).toFixed(2)} (venc. ${new Date(s.payment_deadline + 'T12:00:00').toLocaleDateString('pt-BR')})`,
+        icon: Clock,
+        color: 'text-red-500',
+      });
+    }
+
     for (const order of pendingOrders) {
       items.push({
         id: `order-${order.id}`,
@@ -131,7 +174,7 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
     }
 
     return items;
-  }, [pendingOrders, lowStockItems, repurchaseAlerts]);
+  }, [pendingOrders, lowStockItems, repurchaseAlerts, overduePayables, overdueSales]);
 
   const totalCount = notifications.length;
 
@@ -140,6 +183,10 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
     if (n.type === 'low-stock') onNavigate('low-stock');
     else if (n.type === 'new-order') onNavigate('orders');
     else if (n.type === 'repurchase') onNavigate('repurchase-alerts');
+    else if (n.type === 'overdue') {
+      if (n.id.startsWith('payable-')) onNavigate('accounts-payable');
+      else onNavigate('accounts-receivable');
+    }
   };
 
   return (
