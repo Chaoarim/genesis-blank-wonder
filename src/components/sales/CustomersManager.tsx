@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, Eye } from 'lucide-react';
+import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, Eye, Download } from 'lucide-react';
+import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCpfCnpj, formatWhatsapp } from '@/features/pre-registration/format';
@@ -156,10 +157,29 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
             </SelectContent>
           </Select>
         )}
-        <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="gap-1"><Plus className="w-4 h-4" /> Novo Cliente</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+            exportToExcel(filtered.map(c => ({
+              Código: c.code || '',
+              Nome: c.name,
+              Empresa: c.empresa || '',
+              'CPF/CNPJ': c.cpf_cnpj || '',
+              Telefone: c.phone || '',
+              WhatsApp: c.whatsapp || '',
+              Email: c.email || '',
+              Endereço: c.endereco || '',
+              'Limite Crédito': c.limite_credito || 0,
+              Comprador: c.comprador || '',
+              Observações: c.notes || '',
+            })), 'clientes', 'Clientes');
+          }}>
+            <Download className="w-3.5 h-3.5" />
+            Exportar
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gap-1"><Plus className="w-4 h-4" /> Novo Cliente</Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editId ? 'Editar' : 'Novo'} Cliente</DialogTitle>

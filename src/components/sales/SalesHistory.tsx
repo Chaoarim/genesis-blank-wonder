@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Loader2, Calendar } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Loader2, Calendar, Download } from 'lucide-react';
+import { exportToExcel } from '@/lib/exportExcel';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
@@ -114,6 +115,22 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems }: SalesHistory
             ))}
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+          exportToExcel(filtered.map(s => ({
+            Data: new Date(s.created_at).toLocaleDateString('pt-BR'),
+            Cliente: s.customer_name || 'Balcão',
+            Vendedor: s.seller_name || '-',
+            Canal: s.channel,
+            Pagamento: PAYMENT_LABELS[s.payment_method] || s.payment_method,
+            Entrega: DELIVERY_LABELS[s.delivery_type] || s.delivery_type,
+            Desconto: Number(s.discount),
+            Total: Number(s.total),
+            Status: s.status,
+          })), 'historico-vendas', 'Vendas');
+        }}>
+          <Download className="w-3.5 h-3.5" />
+          Exportar
+        </Button>
       </div>
 
       {/* Summary */}
