@@ -37,6 +37,7 @@ export interface Sale {
   delivery_type: string;
   payment_method: string;
   payment_deadline: string | null;
+  paid_at: string | null;
   created_at: string;
   updated_at: string;
 }
