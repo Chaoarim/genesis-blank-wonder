@@ -8,6 +8,7 @@ import { RenewalWarning } from "@/components/RenewalWarning";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { DashboardSummary } from "@/components/DashboardSummary";
+import { CommandPalette } from "@/components/sales/CommandPalette";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -204,11 +205,23 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground">Painel Principal</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair
-          </Button>
-        </div>
+          <div className="flex items-center gap-2">
+            <CommandPalette
+              onNavigate={(tab) => {
+                if (tab === 'low-stock') navigate('/vendas?tab=low-stock');
+                else navigate(`/vendas?tab=${tab}`);
+              }}
+              visibleTabs={[
+                'dashboard', 'new-sale', 'orders', 'history', 'customers',
+                'inventory', 'low-stock', 'import-inventory', 'manual-product',
+                'markup', 'goals', 'commissions', 'warranty', 'accounts-payable',
+              ]}
+            />
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </div>
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-4xl flex-1 space-y-6">
