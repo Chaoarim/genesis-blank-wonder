@@ -725,6 +725,50 @@ export type Database = {
         }
         Relationships: []
       }
+      price_history: {
+        Row: {
+          codigo: string
+          created_at: string
+          id: string
+          inventory_item_id: string
+          preco_anterior: number
+          preco_novo: number
+          produto: string
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          preco_anterior?: number
+          preco_novo?: number
+          produto: string
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          preco_anterior?: number
+          preco_novo?: number
+          produto?: string
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_list_items: {
         Row: {
           codigo: string
