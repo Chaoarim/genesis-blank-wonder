@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, Eye, Download } from 'lucide-react';
+import { Search, Plus, Trash2, Phone, Mail, Edit2, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, Eye, Download, Upload } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCpfCnpj, formatWhatsapp } from '@/features/pre-registration/format';
 import { CustomerDetailDialog } from './CustomerDetailDialog';
+import { CustomerImporter } from './CustomerImporter';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
@@ -23,6 +24,8 @@ interface CustomersManagerProps {
   onDelete: (id: string) => Promise<void>;
   isAdmin?: boolean;
   sellers?: SellerUser[];
+  userId?: string | null;
+  onRefresh?: () => void;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -33,7 +36,7 @@ const emptyForm = {
   limite_credito: '', empresa: '', comprador: '',
 };
 
-export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, isAdmin, sellers }: CustomersManagerProps) {
+export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, isAdmin, sellers, userId, onRefresh }: CustomersManagerProps) {
   const [search, setSearch] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -158,6 +161,9 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
           </Select>
         )}
         <div className="flex gap-2">
+          {userId && (
+            <CustomerImporter userId={userId} onImported={() => onRefresh?.()} />
+          )}
           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
             exportToExcel(filtered.map(c => ({
               Código: c.code || '',

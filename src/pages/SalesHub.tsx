@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSalesData } from '@/hooks/useSalesData';
@@ -46,6 +46,8 @@ const OnboardingWizard = lazy(() => import('@/components/sales/OnboardingWizard'
 const ABCCurveReport = lazy(() => import('@/components/sales/ABCCurveReport').then(m => ({ default: m.ABCCurveReport })));
 const AuditLogsViewer = lazy(() => import('@/components/sales/AuditLogsViewer').then(m => ({ default: m.AuditLogsViewer })));
 const MonthlyReport = lazy(() => import('@/components/sales/MonthlyReport').then(m => ({ default: m.MonthlyReport })));
+const PriceHistoryViewer = lazy(() => import('@/components/sales/PriceHistoryViewer').then(m => ({ default: m.PriceHistoryViewer })));
+const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').then(m => ({ default: m.BillingCalendar })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -79,6 +81,14 @@ const SalesHub = () => {
   const sellerAuthId = sellerPerms.isAdmin ? null : (user?.id || null);
   const salesData = useSalesData(sellerPerms.adminUserId ?? null, sellerAuthId);
   const { parts } = usePartsDatabase();
+
+  // Load payables for BillingCalendar
+  const [payables, setPayables] = useState<any[]>([]);
+  useEffect(() => {
+    if (!sellerPerms.adminUserId) return;
+    supabase.from('accounts_payable').select('id, supplier_name, amount, due_date, status, paid_at, description')
+      .then(({ data }) => { if (data) setPayables(data); });
+  }, [sellerPerms.adminUserId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -161,6 +171,8 @@ const SalesHub = () => {
             onDelete={salesData.deleteCustomer}
             isAdmin={sellerPerms.isAdmin}
             sellers={sellerPerms.sellers}
+            userId={sellerPerms.adminUserId}
+            onRefresh={salesData.fetchAll}
           />
         );
       case 'carteira':
@@ -225,6 +237,10 @@ const SalesHub = () => {
         return <ABCCurveReport sales={salesData.allSales} getSaleItems={salesData.getSaleItems} />;
       case 'audit-logs':
         return sellerPerms.isAdmin ? <AuditLogsViewer /> : null;
+      case 'price-history':
+        return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
+      case 'billing-calendar':
+        return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
       case 'help':
         return <HelpGuide />;
       default:
