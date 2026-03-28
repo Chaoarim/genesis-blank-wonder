@@ -3,7 +3,8 @@ import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
-  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText
+  FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
+  Clock
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -48,6 +49,8 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
   { value: 'accounts-receivable', icon: DollarSign, label: 'Contas a Receber', group: 'Financeiro' },
   { value: 'abc-curve', icon: TrendingUp, label: 'Curva ABC', group: 'Financeiro' },
+  { value: 'billing-calendar', icon: Calendar, label: 'Agenda Cobranças', group: 'Financeiro' },
+  { value: 'price-history', icon: Clock, label: 'Histórico Preços', group: 'Estoque' },
 
   // 👥 Equipe
   { value: 'goals', icon: Target, label: 'Metas', group: 'Equipe' },
