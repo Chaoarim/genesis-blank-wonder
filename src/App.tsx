@@ -17,12 +17,14 @@ import PixPayment from "./pages/PixPayment";
 import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
 import NotFound from "./pages/NotFound";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <OfflineIndicator />
       <Toaster />
       <Sonner />
       <BrowserRouter>
