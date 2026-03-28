@@ -171,6 +171,8 @@ const SalesHub = () => {
             onDelete={salesData.deleteCustomer}
             isAdmin={sellerPerms.isAdmin}
             sellers={sellerPerms.sellers}
+            userId={sellerPerms.adminUserId}
+            onRefresh={salesData.fetchAll}
           />
         );
       case 'carteira':
