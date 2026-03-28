@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Save, Percent } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ListSkeleton } from './ListSkeleton';
 
 export function MarkupManager() {
   const [markup, setMarkup] = useState(0);

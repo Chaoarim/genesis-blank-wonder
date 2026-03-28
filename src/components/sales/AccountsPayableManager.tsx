@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { PlusCircle, Search, Filter, CheckCircle2, Clock, AlertTriangle, Trash2, Edit, Receipt, Barcode, DollarSign, TrendingUp, Calendar } from 'lucide-react';
 import { format, isPast, isToday, addDays, differenceInDays } from 'date-fns';
+import { ListSkeleton, StatsSkeleton } from './ListSkeleton';
 import { ptBR } from 'date-fns/locale';
 
 interface AccountPayable {

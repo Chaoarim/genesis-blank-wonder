@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CreditCard, CheckCircle, XCircle, Clock, AlertTriangle, Eye } from 'lucide-react';
+import { ListSkeleton } from './ListSkeleton';
 
 interface CreditApproval {
   id: string;

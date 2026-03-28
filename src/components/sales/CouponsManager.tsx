@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Ticket, Trash2, Plus, Clock, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface Coupon {
   id: string;

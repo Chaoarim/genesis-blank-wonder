@@ -10,6 +10,7 @@ import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ListSkeleton';
 
 interface InventoryItem {
   id: string;
