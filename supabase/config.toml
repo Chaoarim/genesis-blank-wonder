@@ -2,3 +2,6 @@ project_id = "orqysvmrmyqebjntloac"
 
 [functions.catalog-login]
 verify_jwt = false
+
+[functions.weekly-backup]
+verify_jwt = false
