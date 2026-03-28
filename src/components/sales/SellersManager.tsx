@@ -325,16 +325,29 @@ export function SellersManager({ sellers, onRemoveSeller, onToggleActive, onSetP
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            "Nova Venda" está sempre habilitada. Selecione as áreas adicionais:
+            "Nova Venda", "Dashboard", "Histórico" e "Como Usar" estão sempre habilitadas.
+            <br />Módulos com <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-600 border-red-500/30 mx-1">sensível</Badge> contêm dados financeiros.
           </p>
-          <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="flex gap-2 mt-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedPerms(ALL_PERMISSIONS.filter(p => !p.sensitive).map(p => p.key))}>
+              Apenas básicos
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSelectedPerms(ALL_PERMISSIONS.map(p => p.key))}>
+              Todos
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSelectedPerms([])}>
+              Nenhum
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3 max-h-[400px] overflow-y-auto">
             {ALL_PERMISSIONS.map(p => (
-              <label key={p.key} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-muted">
+              <label key={p.key} className={`flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-muted ${p.sensitive ? 'border border-red-500/20 bg-red-500/5' : ''}`}>
                 <Checkbox
                   checked={selectedPerms.includes(p.key)}
                   onCheckedChange={() => togglePerm(p.key)}
                 />
-                <span className="text-sm">{p.label}</span>
+                <span className="text-sm flex-1">{p.label}</span>
+                {p.sensitive && <Badge variant="outline" className="text-[9px] bg-red-500/10 text-red-600 border-red-500/30">sensível</Badge>}
               </label>
             ))}
           </div>
