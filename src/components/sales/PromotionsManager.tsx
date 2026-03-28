@@ -134,7 +134,7 @@ export function PromotionsManager() {
   const activePromos = promotions.filter(p => new Date(p.expires_at) > new Date());
   const expiredPromos = promotions.filter(p => new Date(p.expires_at) <= new Date());
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando...</p>;
+  if (loading) return <ListSkeleton count={3} variant="card" />;
 
   return (
     <div className="space-y-6">

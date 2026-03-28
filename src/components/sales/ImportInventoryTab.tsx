@@ -69,7 +69,7 @@ export function ImportInventoryTab({ adminUserId: _adminUserId }: { adminUserId?
     toast.success('Link copiado!');
   };
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando...</p>;
+  if (loading) return <ListSkeleton count={3} variant="card" />;
 
   return (
     <div className="space-y-4">

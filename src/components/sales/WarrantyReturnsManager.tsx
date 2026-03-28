@@ -233,7 +233,7 @@ export function WarrantyReturnsManager({ userId, customers, sales, getSaleItems 
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7}><ListSkeleton count={3} variant="table-row" /></TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum registro encontrado</TableCell></TableRow>
             ) : filtered.map(r => {

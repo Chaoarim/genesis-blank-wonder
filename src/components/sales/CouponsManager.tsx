@@ -106,7 +106,7 @@ export function CouponsManager() {
   const activeCoupons = coupons.filter(c => c.is_active && new Date(c.expires_at) > new Date());
   const expiredCoupons = coupons.filter(c => !c.is_active || new Date(c.expires_at) <= new Date());
 
-  if (loading) return <p className="text-center text-muted-foreground py-8">Carregando...</p>;
+  if (loading) return <ListSkeleton count={3} variant="card" />;
 
   return (
     <div className="space-y-6">
