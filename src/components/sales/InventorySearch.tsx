@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame } from 'lucide-react';
+import { Search, Package, ExternalLink, Pencil, Check, X, ImagePlus, Loader2, Flame, Tags } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,7 @@ import { smartFilterInventory } from '@/lib/partsSearchEngine';
 import { prioritizeCodeMatches } from '@/lib/partCodeSearch';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ListSkeleton';
+import { printPriceLabels } from '@/lib/priceLabels';
 
 interface InventoryItem {
   id: string;
@@ -185,10 +186,26 @@ export function InventorySearch({ adminUserId: _adminUserId }: { adminUserId?: s
       }} />
 
       <Card className="p-4 space-y-3">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Search className="w-5 h-5 text-primary" />
-          Consultar Estoque ({items.length} itens)
-        </h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Search className="w-5 h-5 text-primary" />
+            Consultar Estoque ({items.length} itens)
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              const toPrint = search.trim() ? filtered.slice(0, 30) : filtered.slice(0, 30);
+              if (toPrint.length === 0) { toast.error('Nenhum item para imprimir'); return; }
+              printPriceLabels(toPrint, markup);
+              toast.success(`Gerando ${toPrint.length} etiquetas...`);
+            }}
+          >
+            <Tags className="w-4 h-4" />
+            Imprimir Etiquetas
+          </Button>
+        </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
