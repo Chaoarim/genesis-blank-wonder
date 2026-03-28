@@ -453,6 +453,7 @@ export function AccountsPayableManager({ userId }: { userId: string }) {
                 Exportar
               </Button>
             </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
