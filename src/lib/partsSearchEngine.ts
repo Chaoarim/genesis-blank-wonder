@@ -1,5 +1,58 @@
 import { Part } from '@/hooks/usePartsDatabase';
 
+// ========== Pre-normalized part index for fast search ==========
+export interface NormalizedPart {
+  part: Part;
+  code: string;
+  codeNoSpaces: string;
+  produto: string;
+  chave: string;
+  aplicacao: string;
+  marcaModeloAno: string;
+  fornecedor: string;
+  contexto: string;
+  similares: string;
+  vehicleText: string;
+  fullText: string;
+}
+
+const indexCache = new WeakMap<Part[], NormalizedPart[]>();
+
+export function buildNormalizedIndex(parts: Part[]): NormalizedPart[] {
+  const cached = indexCache.get(parts);
+  if (cached) return cached;
+
+  const index = parts.map(part => {
+    const code = normalizeForSearch(part.fabricante || '');
+    const produto = normalizeForSearch(part.produto || '');
+    const chave = normalizeForSearch(part.chaveDeBusca || '');
+    const aplicacao = normalizeForSearch(part.aplicacao || '');
+    const marcaModeloAno = normalizeForSearch(`${part.marca || ''} ${part.modelo || ''} ${part.ano || ''}`);
+    const fornecedor = normalizeForSearch(part.fornecedor || '');
+    const contexto = normalizeForSearch(part.contextoIA || '');
+    const similares = normalizeForSearch(part.codigosSimilares || '');
+    const vehicleText = `${marcaModeloAno} ${aplicacao} ${chave}`.trim();
+    const fullText = `${produto} ${vehicleText} ${fornecedor} ${contexto} ${similares}`.trim();
+    return {
+      part,
+      code,
+      codeNoSpaces: code.replace(/\s/g, ''),
+      produto,
+      chave,
+      aplicacao,
+      marcaModeloAno,
+      fornecedor,
+      contexto,
+      similares,
+      vehicleText,
+      fullText,
+    };
+  });
+
+  indexCache.set(parts, index);
+  return index;
+}
+
 const STOP_TERMS = new Set([
   'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas',
   'de', 'da', 'do', 'das', 'dos', 'd',
@@ -144,22 +197,21 @@ function findCanonicalLaterality(term: string): string | null {
   return null;
 }
 
-function termMatchesText(text: string, term: string, strictWord = false): boolean {
-  const normalizedText = normalizeForSearch(text);
-  const textWords = normalizedText.split(' ').filter(Boolean);
+/** Match term against ALREADY-NORMALIZED text (skip re-normalizing) */
+function termMatchesNormalized(normalizedText: string, term: string, strictWord = false): boolean {
+  if (!normalizedText) return false;
 
   for (const candidate of getEquivalentTerms(term)) {
     if (wordBoundaryMatch(normalizedText, candidate)) return true;
 
     if (!strictWord && candidate.length >= 3) {
-      if (textWords.some(word => word.startsWith(candidate))) return true;
+      if (normalizedText.includes(candidate)) return true;
     }
 
     if (!strictWord && candidate.includes(' ') && normalizedText.includes(candidate)) {
       return true;
     }
 
-    // For alphanumeric codes (e.g. "vkba4529a"), try matching without spaces
     if (candidate.length >= 4 && /\d/.test(candidate)) {
       const textNoSpaces = normalizedText.replace(/\s/g, '');
       if (textNoSpaces.includes(candidate.replace(/\s/g, ''))) return true;
@@ -167,6 +219,16 @@ function termMatchesText(text: string, term: string, strictWord = false): boolea
   }
 
   return false;
+}
+
+function codeMatchesNormalized(normalizedCode: string, codeNoSpaces: string, term: string): boolean {
+  const normalizedTerm = normalizeForSearch(term);
+  if (!normalizedCode || !normalizedTerm) return false;
+  if (normalizedCode === normalizedTerm || normalizedCode.startsWith(normalizedTerm) || normalizedCode.includes(normalizedTerm)) {
+    return true;
+  }
+  const termNoSpaces = normalizedTerm.replace(/\s/g, '');
+  return codeNoSpaces === termNoSpaces || codeNoSpaces.startsWith(termNoSpaces) || codeNoSpaces.includes(termNoSpaces);
 }
 
 function codeMatches(code: string, term: string): boolean {
@@ -265,33 +327,24 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     return [];
   }
 
+  // Use pre-normalized index for speed
+  const index = buildNormalizedIndex(partsSource);
   const scored: { part: Part; score: number }[] = [];
 
-  for (const part of partsSource) {
-    const code = normalizeForSearch(part.fabricante || '');
-    const produto = normalizeForSearch(part.produto || '');
-    const chave = normalizeForSearch(part.chaveDeBusca || '');
-    const aplicacao = normalizeForSearch(part.aplicacao || '');
-    const marcaModeloAno = normalizeForSearch(`${part.marca || ''} ${part.modelo || ''} ${part.ano || ''}`);
-    const fornecedor = normalizeForSearch(part.fornecedor || '');
-    const contexto = normalizeForSearch(part.contextoIA || '');
-    const similares = normalizeForSearch(part.codigosSimilares || '');
-    const vehicleText = `${marcaModeloAno} ${aplicacao} ${chave}`.trim();
-    const fullText = `${produto} ${vehicleText} ${fornecedor} ${contexto} ${similares}`.trim();
-
-    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesText(fullText, term, true))) {
+  for (const np of index) {
+    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesNormalized(np.fullText, term, true))) {
       continue;
     }
 
-    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesText(vehicleText, term, true) || termMatchesText(produto, term, true))) {
+    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesNormalized(np.vehicleText, term, true) || termMatchesNormalized(np.produto, term, true))) {
       continue;
     }
 
-    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesText(fornecedor, term) || termMatchesText(produto, term) || codeMatches(code, term))) {
+    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesNormalized(np.fornecedor, term) || termMatchesNormalized(np.produto, term) || codeMatchesNormalized(np.code, np.codeNoSpaces, term))) {
       continue;
     }
 
-    if (hasConflictingProductPrefix(produto, productTerms)) {
+    if (hasConflictingProductPrefix(np.produto, productTerms)) {
       continue;
     }
 
@@ -301,32 +354,32 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     for (const term of productTerms) {
       let matched = false;
 
-      if (codeMatches(code, term)) {
-        score += code === term ? 14 : 9;
+      if (codeMatchesNormalized(np.code, np.codeNoSpaces, term)) {
+        score += np.code === normalizeForSearch(term) ? 14 : 9;
         matched = true;
       }
 
-      if (termMatchesText(produto, term)) {
+      if (termMatchesNormalized(np.produto, term)) {
         score += 7;
         matched = true;
       }
 
-      if (termMatchesText(chave, term, true)) {
+      if (termMatchesNormalized(np.chave, term, true)) {
         score += 4;
         matched = true;
       }
 
-      if (termMatchesText(aplicacao, term, true)) {
+      if (termMatchesNormalized(np.aplicacao, term, true)) {
         score += 3;
         matched = true;
       }
 
-      if (termMatchesText(contexto, term, true)) {
+      if (termMatchesNormalized(np.contexto, term, true)) {
         score += 2;
         matched = true;
       }
 
-      if (termMatchesText(similares, term)) {
+      if (termMatchesNormalized(np.similares, term)) {
         score += 1;
         matched = true;
       }
@@ -340,7 +393,7 @@ export function smartFilterParts(partsSource: Part[], query: string): Part[] {
     }
 
     if (score <= 0) continue;
-    scored.push({ part, score });
+    scored.push({ part: np.part, score });
   }
 
   return scored.sort((a, b) => b.score - a.score).map(entry => entry.part);
@@ -367,20 +420,21 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
 
   for (const item of items) {
     const codigo = normalizeForSearch(item.codigo || '');
+    const codigoNoSpaces = codigo.replace(/\s/g, '');
     const produto = normalizeForSearch(item.produto || '');
     const fornecedor = normalizeForSearch(item.fornecedor || '');
     const aplicacao = normalizeForSearch(item.aplicacao || '');
     const fullText = `${codigo} ${produto} ${fornecedor} ${aplicacao}`.trim();
 
-    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesText(fullText, term, true))) {
+    if (lateralityTerms.length > 0 && !lateralityTerms.every(term => termMatchesNormalized(fullText, term, true))) {
       continue;
     }
 
-    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesText(aplicacao, term, true) || termMatchesText(produto, term, true))) {
+    if (vehicleTerms.length > 0 && !vehicleTerms.every(term => termMatchesNormalized(aplicacao, term, true) || termMatchesNormalized(produto, term, true))) {
       continue;
     }
 
-    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesText(fornecedor, term) || termMatchesText(produto, term) || codeMatches(codigo, term))) {
+    if (brandTerms.length > 0 && !brandTerms.every(term => termMatchesNormalized(fornecedor, term) || termMatchesNormalized(produto, term) || codeMatchesNormalized(codigo, codigoNoSpaces, term))) {
       continue;
     }
 
@@ -394,22 +448,22 @@ export function smartFilterInventory<T extends SearchableItem>(items: T[], query
     for (const term of productTerms) {
       let matched = false;
 
-      if (codeMatches(codigo, term)) {
-        score += codigo === term ? 14 : 9;
+      if (codeMatchesNormalized(codigo, codigoNoSpaces, term)) {
+        score += codigo === normalizeForSearch(term) ? 14 : 9;
         matched = true;
       }
 
-      if (termMatchesText(produto, term)) {
+      if (termMatchesNormalized(produto, term)) {
         score += 7;
         matched = true;
       }
 
-      if (termMatchesText(fornecedor, term)) {
+      if (termMatchesNormalized(fornecedor, term)) {
         score += 3;
         matched = true;
       }
 
-      if (termMatchesText(aplicacao, term, true)) {
+      if (termMatchesNormalized(aplicacao, term, true)) {
         score += 4;
         matched = true;
       }

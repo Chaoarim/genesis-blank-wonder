@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -35,9 +35,19 @@ const PartsSearch = () => {
   const { parts, isLoading: partsLoading } = usePartsDatabase();
   const [mode, setMode] = useState<SearchMode>('unified');
 
-  // Unified search
+  // Unified search with debounce
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Debounce: update `search` 200ms after user stops typing
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => {
+      setSearch(searchInput);
+    }, 200);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchInput]);
 
   // Placa
   const [placa, setPlaca] = useState('');
@@ -55,9 +65,9 @@ const PartsSearch = () => {
     });
   }, [navigate]);
 
-  // Detect plate pattern in unified search
-  const detectedType = useMemo(() => detectSearchType(search), [search]);
-  const showPlacaSuggestion = mode === 'unified' && detectedType === 'placa' && search.length >= 7;
+  // Detect plate pattern — use instant input, not debounced
+  const detectedType = useMemo(() => detectSearchType(searchInput), [searchInput]);
+  const showPlacaSuggestion = mode === 'unified' && detectedType === 'placa' && searchInput.length >= 7;
 
   // Catalog stats
   const catalogStats = useMemo(() => {
@@ -113,7 +123,7 @@ const PartsSearch = () => {
   const hasMore = visibleCount < filtered.length;
 
   const handleSearchChange = useCallback((val: string) => {
-    setSearch(val);
+    setSearchInput(val);
     setVisibleCount(PAGE_SIZE);
   }, []);
 
@@ -152,6 +162,8 @@ const PartsSearch = () => {
     setVehicleData(null);
     setPlaca('');
     setPlacaPartsSearch('');
+    setSearchInput('');
+    setSearch('');
   };
 
   const renderPartList = () => (
@@ -266,13 +278,13 @@ const PartsSearch = () => {
                 <Input
                   autoFocus
                   placeholder="Código, peça, veículo, marca, fornecedor..."
-                  value={search}
+                  value={searchInput}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-12 pr-10 h-14 border-2 text-lg rounded-xl"
                 />
-                {search && (
+                {searchInput && (
                   <button
-                    onClick={() => handleSearchChange('')}
+                    onClick={() => { handleSearchChange(''); setSearch(''); }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     <X className="w-5 h-5" />
@@ -291,7 +303,7 @@ const PartsSearch = () => {
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => handlePlacaSearch(search)}
+                      onClick={() => handlePlacaSearch(searchInput)}
                       disabled={searchingPlaca}
                       className="shrink-0 gap-1"
                     >
@@ -303,7 +315,7 @@ const PartsSearch = () => {
               )}
 
               {/* Quick access buttons */}
-              {search.length < 2 && (
+              {searchInput.length < 2 && (
                 <div className="grid grid-cols-2 gap-3">
                   <Card
                     className="p-4 cursor-pointer hover:border-primary transition-colors flex items-center gap-3"
@@ -333,7 +345,7 @@ const PartsSearch = () => {
               )}
 
               {/* Auto-detected type indicator */}
-              {search.length >= 2 && !showPlacaSuggestion && (
+              {searchInput.length >= 2 && !showPlacaSuggestion && (
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">
