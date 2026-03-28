@@ -40,6 +40,7 @@ const RepurchaseAlerts = lazy(() => import('@/components/sales/RepurchaseAlerts'
 const SupplierContactsManager = lazy(() => import('@/components/sales/SupplierContactsManager').then(m => ({ default: m.SupplierContactsManager })));
 const HelpGuide = lazy(() => import('@/components/sales/HelpGuide').then(m => ({ default: m.HelpGuide })));
 const OnboardingWizard = lazy(() => import('@/components/sales/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
+const ABCCurveReport = lazy(() => import('@/components/sales/ABCCurveReport').then(m => ({ default: m.ABCCurveReport })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -197,6 +198,8 @@ const SalesHub = () => {
         if (sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />;
         if (!sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />;
         return null;
+      case 'abc-curve':
+        return <ABCCurveReport sales={salesData.allSales} getSaleItems={salesData.getSaleItems} />;
       case 'help':
         return <HelpGuide />;
       default:
