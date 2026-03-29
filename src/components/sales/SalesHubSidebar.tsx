@@ -43,6 +43,7 @@ const MENU_ITEMS: TabDef[] = [
   // 📦 Estoque
   { value: 'inventory', icon: Package, label: 'Consulta', group: 'Estoque' },
   { value: 'low-stock', icon: AlertTriangle, label: 'Estoque Baixo', group: 'Estoque' },
+  { value: 'replenishment', icon: TrendingUp, label: 'Reposição', group: 'Estoque' },
   { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar', group: 'Estoque' },
   { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar', group: 'Estoque' },
   { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Estoque' },
