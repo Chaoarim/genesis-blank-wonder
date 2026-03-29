@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame, Tag, Ticket } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Search, ShoppingCart, Plus, Minus, Trash2, Send, LogIn, UserPlus, Package, X, Settings, Eye, EyeOff, Flame, Tag, Ticket, Share2, ClipboardList, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PartThumbnail } from '@/components/PartThumbnail';
 import { smartFilterInventory } from '@/lib/partsSearchEngine';
@@ -39,6 +40,14 @@ interface CatalogCustomer {
   phone: string;
 }
 
+interface OrderRecord {
+  id: string;
+  created_at: string;
+  status: string;
+  total: number;
+  items: any[];
+}
+
 export default function CatalogB2B() {
   const { sellerId } = useParams<{ sellerId: string }>();
   const [items, setItems] = useState<CatalogItem[]>([]);
@@ -50,7 +59,7 @@ export default function CatalogB2B() {
 
   // Auth state
   const [customer, setCustomer] = useState<CatalogCustomer | null>(null);
-  const [showLogin, setShowLogin] = useState(true);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authName, setAuthName] = useState('');
   const [authPhone, setAuthPhone] = useState('');
@@ -58,7 +67,7 @@ export default function CatalogB2B() {
   const [authLoading, setAuthLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [promotions, setPromotions] = useState<Map<string, PromotionInfo>>(new Map());
-  
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -67,6 +76,11 @@ export default function CatalogB2B() {
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
 
+  // Order tracking state
+  const [showOrders, setShowOrders] = useState(false);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
   // Check saved session
   useEffect(() => {
     const saved = localStorage.getItem(`catalog_customer_${sellerId}`);
@@ -74,7 +88,6 @@ export default function CatalogB2B() {
       try {
         const parsed = JSON.parse(saved);
         setCustomer(parsed);
-        setShowLogin(false);
       } catch { /* ignore */ }
     }
   }, [sellerId]);
@@ -82,7 +95,6 @@ export default function CatalogB2B() {
   const loadItems = useCallback(async () => {
     if (!sellerId) return;
 
-    // Get seller profile with company name
     const { data: profile } = await supabase
       .from('profiles')
       .select('full_name, company_name')
@@ -92,7 +104,6 @@ export default function CatalogB2B() {
       setSellerName(profile.company_name || profile.full_name || 'Catálogo');
     }
 
-    // Get markup
     const { data: markupData } = await supabase
       .from('markup_settings')
       .select('markup_revenda')
@@ -100,7 +111,6 @@ export default function CatalogB2B() {
       .maybeSingle();
     const mk = Number(markupData?.markup_revenda) || 0;
 
-    // Get inventory
     const { data } = await supabase
       .from('inventory_items')
       .select('*')
@@ -122,7 +132,6 @@ export default function CatalogB2B() {
       })));
     }
 
-    // Load active promotions - will filter by customer after login
     const { data: promoData } = await supabase
       .from('inventory_promotions')
       .select('inventory_item_id, discount_percent, expires_at, customer_id')
@@ -130,15 +139,12 @@ export default function CatalogB2B() {
       .gte('expires_at', new Date().toISOString());
 
     if (promoData) {
-      // Get current customer from state or localStorage
       const savedCustomer = localStorage.getItem(`catalog_customer_${sellerId}`);
       const currentCustomerId = savedCustomer ? JSON.parse(savedCustomer)?.id : null;
 
       const map = new Map<string, PromotionInfo>();
       promoData.forEach((p: any) => {
-        // Show promo if: no customer_id (global) OR matches current customer
         if (!p.customer_id || p.customer_id === currentCustomerId) {
-          // Keep the best discount if multiple apply
           const existing = map.get(p.inventory_item_id);
           if (!existing || p.discount_percent > existing.discount_percent) {
             map.set(p.inventory_item_id, { discount_percent: p.discount_percent, expires_at: p.expires_at });
@@ -151,10 +157,30 @@ export default function CatalogB2B() {
     setLoading(false);
   }, [sellerId]);
 
-  // Load catalog items
   useEffect(() => {
     loadItems();
   }, [loadItems]);
+
+  // Load customer orders
+  const loadOrders = useCallback(async () => {
+    if (!customer || !sellerId) return;
+    setOrdersLoading(true);
+    const { data } = await supabase
+      .from('catalog_orders')
+      .select('id, created_at, status, total, items')
+      .eq('seller_id', sellerId)
+      .eq('customer_id', customer.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (data) {
+      setOrders(data.map((o: any) => ({
+        ...o,
+        items: Array.isArray(o.items) ? o.items : [],
+      })));
+    }
+    setOrdersLoading(false);
+  }, [customer, sellerId]);
 
   const handleLogin = async () => {
     if (!authPhone.trim() || !authPassword.trim()) {
@@ -175,7 +201,7 @@ export default function CatalogB2B() {
 
     const cust: CatalogCustomer = data.customer;
     setCustomer(cust);
-    setShowLogin(false);
+    setShowLoginDialog(false);
     localStorage.setItem(`catalog_customer_${sellerId}`, JSON.stringify(cust));
     toast.success(`Bem-vindo, ${cust.name}!`);
     setAuthLoading(false);
@@ -207,7 +233,7 @@ export default function CatalogB2B() {
 
     const cust: CatalogCustomer = data.customer;
     setCustomer(cust);
-    setShowLogin(false);
+    setShowLoginDialog(false);
     localStorage.setItem(`catalog_customer_${sellerId}`, JSON.stringify(cust));
     toast.success('Cadastro realizado!');
     setAuthLoading(false);
@@ -215,12 +241,16 @@ export default function CatalogB2B() {
 
   const handleLogout = () => {
     setCustomer(null);
-    setShowLogin(true);
     setCart([]);
     localStorage.removeItem(`catalog_customer_${sellerId}`);
   };
 
   const addToCart = useCallback((item: CatalogItem) => {
+    if (!customer) {
+      setShowLoginDialog(true);
+      toast.info('Faça login para adicionar produtos ao carrinho');
+      return;
+    }
     setCart(prev => {
       const existing = prev.find(c => c.item.id === item.id);
       if (existing) {
@@ -229,7 +259,7 @@ export default function CatalogB2B() {
       return [...prev, { item, quantidade: 1 }];
     });
     toast.success(`${item.produto} adicionado ao carrinho`);
-  }, []);
+  }, [customer]);
 
   const updateCartQty = useCallback((itemId: string, delta: number) => {
     setCart(prev => prev.map(c => {
@@ -248,7 +278,6 @@ export default function CatalogB2B() {
     [cart]
   );
 
-  // Calculate supplier-specific subtotal for coupon
   const supplierSubtotal = useMemo(() => {
     if (!appliedCoupon?.supplier_filter) return cartSubtotal;
     return cart
@@ -256,11 +285,9 @@ export default function CatalogB2B() {
       .reduce((sum, c) => sum + c.quantidade * c.item.preco_revenda, 0);
   }, [cart, cartSubtotal, appliedCoupon]);
 
-  // Coupon validation message
   const couponWarning = useMemo(() => {
     if (!appliedCoupon) return '';
     if (appliedCoupon.supplier_filter) {
-      // Supplier-specific coupon: check supplier items total against min_order_amount
       if (supplierSubtotal === 0) {
         return `Este cupom é válido apenas para produtos do fornecedor ${appliedCoupon.supplier_filter}. Adicione itens desse fornecedor ao carrinho.`;
       }
@@ -269,7 +296,6 @@ export default function CatalogB2B() {
         return `Cupom válido apenas para ${appliedCoupon.supplier_filter}. Faltam ${fmt(falta)} em produtos desse fornecedor para atingir o mínimo de ${fmt(appliedCoupon.min_order_amount)}.`;
       }
     } else {
-      // General coupon: check total cart against min_order_amount
       if (appliedCoupon.min_order_amount > 0 && cartSubtotal < appliedCoupon.min_order_amount) {
         const falta = appliedCoupon.min_order_amount - cartSubtotal;
         return `Cupom não pode ser validado. Faltam ${fmt(falta)} para atingir o pedido mínimo de ${fmt(appliedCoupon.min_order_amount)}.`;
@@ -278,7 +304,6 @@ export default function CatalogB2B() {
     return '';
   }, [appliedCoupon, cartSubtotal, supplierSubtotal]);
 
-  // Calculate coupon discount
   const couponDiscount = useMemo(() => {
     if (!appliedCoupon || couponWarning) return 0;
     const base = appliedCoupon.supplier_filter ? supplierSubtotal : cartSubtotal;
@@ -357,7 +382,6 @@ export default function CatalogB2B() {
       return;
     }
 
-    // Increment coupon used_count
     if (appliedCoupon && couponDiscount > 0) {
       await supabase
         .from('discount_coupons')
@@ -371,8 +395,6 @@ export default function CatalogB2B() {
     setShowCart(false);
     setAppliedCoupon(null);
     setCouponCode('');
-    
-    // Recarregar estoque atualizado
     await loadItems();
   }, [cart, customer, cartTotal, sellerId, submitting, loadItems, appliedCoupon, couponDiscount]);
 
@@ -395,13 +417,11 @@ export default function CatalogB2B() {
     let result = items;
     if (search.trim()) result = smartFilterInventory(result, search);
     if (selectedBrand) result = result.filter(i => (i.fornecedor || '').trim().toUpperCase() === selectedBrand);
-    
-    // Price range filter
+
     if (priceRange === 'low') result = result.filter(i => i.preco_revenda <= 50);
     else if (priceRange === 'mid') result = result.filter(i => i.preco_revenda > 50 && i.preco_revenda <= 200);
     else if (priceRange === 'high') result = result.filter(i => i.preco_revenda > 200);
 
-    // Sorting
     if (sortBy === 'price-asc') result = [...result].sort((a, b) => a.preco_revenda - b.preco_revenda);
     else if (sortBy === 'price-desc') result = [...result].sort((a, b) => b.preco_revenda - a.preco_revenda);
     else if (sortBy === 'name') result = [...result].sort((a, b) => a.produto.localeCompare(b.produto));
@@ -410,6 +430,29 @@ export default function CatalogB2B() {
     return result;
   }, [items, search, selectedBrand, priceRange, sortBy]);
 
+  // WhatsApp share helpers
+  const catalogUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  const shareCatalog = () => {
+    const text = `🔧 Confira o catálogo de peças de *${sellerName}*!\n\n${catalogUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const shareProduct = (item: CatalogItem) => {
+    const text = `🔧 *${item.produto}*\nCódigo: ${item.codigo}${item.fornecedor ? `\nMarca: ${item.fornecedor}` : ''}${item.aplicacao ? `\nAplicação: ${item.aplicacao}` : ''}\nPreço: ${fmt(item.preco_revenda)}\n\nVeja no catálogo: ${catalogUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  // Order status helpers
+  const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+    pending: { label: 'Pendente', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', icon: Clock },
+    confirmed: { label: 'Confirmado', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', icon: CheckCircle },
+    delivered: { label: 'Entregue', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', icon: CheckCircle },
+    cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', icon: XCircle },
+  };
+
+  const getStatus = (s: string) => statusConfig[s] || statusConfig.pending;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -417,49 +460,6 @@ export default function CatalogB2B() {
           <Package className="w-6 h-6 text-primary" />
           <span>Carregando catálogo...</span>
         </div>
-      </div>
-    );
-  }
-
-  // Login/Register screen
-  if (showLogin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-sm p-6 space-y-4">
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
-              <Settings className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold">{sellerName || 'Catálogo'}</h1>
-            <p className="text-sm text-muted-foreground">
-              {authMode === 'login' ? 'Entre para ver preços e fazer pedidos' : 'Cadastre-se para começar'}
-            </p>
-          </div>
-
-          {authMode === 'register' && (
-            <Input placeholder="Seu nome" value={authName} onChange={e => setAuthName(e.target.value)} />
-          )}
-          <Input placeholder="WhatsApp (com DDD)" value={authPhone} onChange={e => setAuthPhone(e.target.value)} />
-          <div className="relative">
-            <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="pr-10" />
-            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(p => !p)}>
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-
-          <Button
-            className="w-full gap-2"
-            onClick={authMode === 'login' ? handleLogin : handleRegister}
-            disabled={authLoading}
-          >
-            {authMode === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-            {authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar' : 'Cadastrar'}
-          </Button>
-
-          <Button variant="ghost" size="sm" className="w-full" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
-            {authMode === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
-          </Button>
-        </Card>
       </div>
     );
   }
@@ -475,19 +475,40 @@ export default function CatalogB2B() {
             </div>
             <div>
               <h1 className="text-sm font-bold leading-tight">{sellerName || 'Catálogo'}</h1>
-              <p className="text-[10px] text-muted-foreground">Olá, {customer?.name}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {customer ? `Olá, ${customer.name}` : 'Navegue pelo catálogo'}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="relative gap-1" onClick={() => setShowCart(!showCart)}>
-              <ShoppingCart className="w-4 h-4" />
-              {cart.length > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-                  {cart.reduce((s, c) => s + c.quantidade, 0)}
-                </Badge>
-              )}
+          <div className="flex items-center gap-1.5">
+            {/* Share button */}
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={shareCatalog} title="Compartilhar">
+              <Share2 className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="text-xs" onClick={handleLogout}>Sair</Button>
+
+            {customer ? (
+              <>
+                {/* Orders button */}
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setShowOrders(true); loadOrders(); }} title="Meus Pedidos">
+                  <ClipboardList className="w-4 h-4" />
+                </Button>
+                {/* Cart */}
+                <Button variant="outline" size="sm" className="relative gap-1" onClick={() => setShowCart(!showCart)}>
+                  <ShoppingCart className="w-4 h-4" />
+                  {cart.length > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                      {cart.reduce((s, c) => s + c.quantidade, 0)}
+                    </Badge>
+                  )}
+                </Button>
+                <Button variant="ghost" size="sm" className="text-xs" onClick={handleLogout}>Sair</Button>
+              </>
+            ) : (
+              <Button variant="default" size="sm" className="gap-1" onClick={() => setShowLoginDialog(true)}>
+                <LogIn className="w-4 h-4" />
+                Entrar
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -560,7 +581,6 @@ export default function CatalogB2B() {
               )}
             </div>
 
-            {/* Coupon warning */}
             {appliedCoupon && couponWarning && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2">
                 <Ticket className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
@@ -606,7 +626,6 @@ export default function CatalogB2B() {
 
         {/* Advanced filters */}
         <div className="space-y-2 mb-4">
-          {/* Brand filter */}
           {brands.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               <button
@@ -631,7 +650,6 @@ export default function CatalogB2B() {
             </div>
           )}
 
-          {/* Price range + sort */}
           <div className="flex gap-2 flex-wrap">
             <div className="flex gap-1 items-center">
               <span className="text-[10px] text-muted-foreground mr-1">Preço:</span>
@@ -664,6 +682,18 @@ export default function CatalogB2B() {
           </div>
         </div>
 
+        {/* Not logged in banner */}
+        {!customer && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              <LogIn className="w-4 h-4 inline mr-1.5" />
+              Faça login para ver preços, adicionar ao carrinho e fazer pedidos.
+            </p>
+            <Button size="sm" onClick={() => setShowLoginDialog(true)} className="shrink-0 gap-1">
+              <LogIn className="w-3.5 h-3.5" /> Entrar
+            </Button>
+          </div>
+        )}
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -694,19 +724,23 @@ export default function CatalogB2B() {
                 {item.aplicacao && (
                   <p className="text-xs text-muted-foreground mt-0.5">🚗 {item.aplicacao}</p>
                 )}
-                <div className="flex items-center flex-wrap gap-1.5 mt-1">
-                  {hasPromo ? (
-                    <>
-                      <span className="text-xs line-through text-muted-foreground">{fmt(item.preco_revenda)}</span>
-                      <span className="text-lg font-bold text-destructive">{fmt(finalPrice)}</span>
-                    </>
-                  ) : (
-                    <span className="text-lg font-bold text-primary">{fmt(item.preco_revenda)}</span>
-                  )}
-                  <Badge variant={item.qtd_estoque > 0 ? 'default' : 'destructive'} className="text-[10px]">
-                    {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Esgotado'}
-                  </Badge>
-                </div>
+                {customer ? (
+                  <div className="flex items-center flex-wrap gap-1.5 mt-1">
+                    {hasPromo ? (
+                      <>
+                        <span className="text-xs line-through text-muted-foreground">{fmt(item.preco_revenda)}</span>
+                        <span className="text-lg font-bold text-destructive">{fmt(finalPrice)}</span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-primary">{fmt(item.preco_revenda)}</span>
+                    )}
+                    <Badge variant={item.qtd_estoque > 0 ? 'default' : 'destructive'} className="text-[10px]">
+                      {item.qtd_estoque > 0 ? `${item.qtd_estoque} un` : 'Esgotado'}
+                    </Badge>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1 italic">Faça login para ver o preço</p>
+                )}
                 {item.vendidos_display > 0 && (
                   <div className="flex items-center gap-1 mt-1 text-[11px] text-orange-600 dark:text-orange-400 font-medium">
                     <Flame className="w-3 h-3" />
@@ -719,14 +753,25 @@ export default function CatalogB2B() {
                   </div>
                 )}
               </div>
-              <Button
-                size="icon"
-                className="h-10 w-10 shrink-0 bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => addToCart(item)}
-                disabled={item.qtd_estoque <= 0}
-              >
-                <Plus className="w-5 h-5" />
-              </Button>
+              <div className="flex flex-col gap-1">
+                <Button
+                  size="icon"
+                  className="h-9 w-9 shrink-0 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => addToCart(item)}
+                  disabled={item.qtd_estoque <= 0}
+                >
+                  <Plus className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => shareProduct(item)}
+                  title="Compartilhar via WhatsApp"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </Card>
             );
           })}
@@ -745,6 +790,89 @@ export default function CatalogB2B() {
           </p>
         )}
       </main>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {authMode === 'login' ? 'Entrar no Catálogo' : 'Criar Conta'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground text-center">
+              {authMode === 'login' ? 'Entre para ver preços e fazer pedidos' : 'Cadastre-se para começar'}
+            </p>
+            {authMode === 'register' && (
+              <Input placeholder="Seu nome" value={authName} onChange={e => setAuthName(e.target.value)} />
+            )}
+            <Input placeholder="WhatsApp (com DDD)" value={authPhone} onChange={e => setAuthPhone(e.target.value)} />
+            <div className="relative">
+              <Input type={showPassword ? 'text' : 'password'} placeholder="Senha" value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="pr-10" />
+              <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(p => !p)}>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            <Button className="w-full gap-2" onClick={authMode === 'login' ? handleLogin : handleRegister} disabled={authLoading}>
+              {authMode === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+              {authLoading ? 'Aguarde...' : authMode === 'login' ? 'Entrar' : 'Cadastrar'}
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
+              {authMode === 'login' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Orders Dialog */}
+      <Dialog open={showOrders} onOpenChange={setShowOrders}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" />
+              Meus Pedidos
+            </DialogTitle>
+          </DialogHeader>
+          {ordersLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : orders.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">Nenhum pedido encontrado</p>
+          ) : (
+            <div className="space-y-3">
+              {orders.map(order => {
+                const st = getStatus(order.status);
+                const StatusIcon = st.icon;
+                return (
+                  <Card key={order.id} className="p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(order.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <Badge className={`text-[10px] gap-1 ${st.color}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {st.label}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      {order.items.map((it: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-xs">
+                          <span className="truncate flex-1">{it.quantidade}x {it.produto}</span>
+                          <span className="font-medium ml-2">{fmt(it.quantidade * it.preco)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-end border-t pt-1">
+                      <span className="font-bold text-sm">Total: {fmt(order.total)}</span>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
