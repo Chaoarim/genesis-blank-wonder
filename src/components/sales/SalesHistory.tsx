@@ -46,9 +46,11 @@ const PERIOD_OPTIONS = [
 export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSale }: SalesHistoryProps) {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState('all');
+  const [nfFilter, setNfFilter] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [itemsCache, setItemsCache] = useState<Record<string, SaleItem[]>>({});
+  const [nfOverrides, setNfOverrides] = useState<Record<string, { nf_numero: string | null; nf_serie: string | null; nf_chave: string | null; nf_status: string }>>({});
 
   const filtered = useMemo(() => {
     const now = new Date();
