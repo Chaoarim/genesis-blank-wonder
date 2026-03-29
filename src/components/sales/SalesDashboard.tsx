@@ -414,6 +414,89 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
         </Card>
       )}
 
+      {/* Seller exclusive: Commission summary + Ranking */}
+      {sellerName && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Commission card */}
+          <Card className="p-4 border-green-500/20 bg-green-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className="w-5 h-5 text-green-500" />
+              <span className="text-sm font-semibold">Comissão Acumulada no Mês</span>
+            </div>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{fmt(sellerCommission)}</p>
+            {commissionRules.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {commissionRules.slice(0, 3).map((r, i) => {
+                  const typeLabel = r.type === 'order' ? 'Pedido' : r.type === 'product' ? `Prod: ${r.reference}` : `Fornec: ${r.reference}`;
+                  const vals = [];
+                  if (Number(r.commission_percent) > 0) vals.push(`${r.commission_percent}%`);
+                  if (Number(r.commission_fixed) > 0) vals.push(`R$${Number(r.commission_fixed).toFixed(2)}`);
+                  return <Badge key={i} variant="outline" className="text-[10px]">{typeLabel}: {vals.join('+')}</Badge>;
+                })}
+                {commissionRules.length > 3 && <Badge variant="secondary" className="text-[10px]">+{commissionRules.length - 3}</Badge>}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">Nenhuma regra de comissão configurada</p>
+            )}
+          </Card>
+
+          {/* Ranking position card */}
+          <Card className="p-4 border-amber-500/20 bg-amber-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <span className="text-sm font-semibold">Sua Posição no Ranking</span>
+            </div>
+            {sellerRankingPosition ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
+                    sellerRankingPosition === 1 ? 'bg-amber-500 text-white' : sellerRankingPosition === 2 ? 'bg-gray-400 text-white' : sellerRankingPosition === 3 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {sellerRankingPosition}º
+                  </span>
+                  <div>
+                    <p className="text-xl font-bold">{fmt(stats.monthTotal)}</p>
+                    <p className="text-xs text-muted-foreground">{stats.monthSales} vendas este mês</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">de {sellerRanking.length} vendedor{sellerRanking.length > 1 ? 'es' : ''}</p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Sem vendas no mês para rankear</p>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Seller: Full ranking list */}
+      {sellerName && sellerRanking.length > 1 && (
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <Medal className="w-4 h-4 text-primary" />
+            Ranking da Equipe — Este Mês
+          </h3>
+          <div className="space-y-2">
+            {sellerRanking.map((s, i) => (
+              <div key={s.name} className={`flex items-center gap-3 p-2 rounded-lg border ${s.name === sellerName ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                  i === 0 ? 'bg-amber-500 text-white' : i === 1 ? 'bg-gray-400 text-white' : i === 2 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {i + 1}º
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate flex items-center gap-1">
+                    {s.name}
+                    {s.name === sellerName && <Badge variant="default" className="text-[9px] h-4">Você</Badge>}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{s.count} vendas</p>
+                </div>
+                <span className="text-sm font-bold text-primary">{fmt(s.total)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Monthly evolution chart */}
       <Card className="p-4">
         <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
