@@ -28,6 +28,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vendas' },
   { value: 'history', icon: History, label: 'Histórico', group: 'Vendas' },
   { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vendas' },
+  { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vendas' },
 
   // 👥 Clientes
   { value: 'customers', icon: Users, label: 'Clientes', group: 'Clientes' },
