@@ -26,10 +26,10 @@ async function fetchAllRows(table: string) {
   let hasMore = true;
 
   while (hasMore) {
-    const { data, error } = await supabase
-      .from(table)
+    const { data, error } = await (supabase
+      .from(table as any)
       .select('*')
-      .range(from, from + PAGE_SIZE - 1);
+      .range(from, from + PAGE_SIZE - 1) as any);
 
     if (error) throw new Error(`Erro ao buscar ${table}: ${error.message}`);
     allRows = allRows.concat(data || []);
