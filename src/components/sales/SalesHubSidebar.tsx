@@ -38,6 +38,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'credit', icon: CreditCard, label: 'Crédito', group: 'Clientes' },
   { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas Recompra', group: 'Clientes' },
   { value: 'customer-profitability', icon: TrendingUp, label: 'Rentabilidade', group: 'Clientes' },
+  { value: 'customer-interactions', icon: BookUser, label: 'Interações', group: 'Clientes' },
 
   // 📦 Estoque
   { value: 'inventory', icon: Package, label: 'Consulta', group: 'Estoque' },
