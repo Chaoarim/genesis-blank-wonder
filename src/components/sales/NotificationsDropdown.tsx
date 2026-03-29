@@ -27,7 +27,7 @@ interface NotificationsDropdownProps {
 
 const REPURCHASE_DAYS = 30;
 
-export function NotificationsDropdown({ adminUserId, sales, customers, onNavigate }: NotificationsDropdownProps) {
+export function NotificationsDropdown({ adminUserId, currentAuthId, sales, customers, onNavigate }: NotificationsDropdownProps) {
   const [lowStockItems, setLowStockItems] = useState<Array<{ codigo: string; produto: string; qtd_estoque: number }>>([]);
   const [pendingOrders, setPendingOrders] = useState<Array<{ id: string; customer_name: string; total: number; created_at: string }>>([]);
   const [overduePayables, setOverduePayables] = useState<Array<{ id: string; supplier_name: string; amount: number; due_date: string }>>([]);
