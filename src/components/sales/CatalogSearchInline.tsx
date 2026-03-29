@@ -70,7 +70,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
           contextoIA: r.contexto_ia || '',
           codigosSimilares: r.codigos_similares || '',
           imageUrl: r.image_url || '',
-          aplicacao: chaveBusca || aplicacaoFallback || r.catalogo || '',
+          aplicacao: extractAppFromChave(chaveBusca, r.fabricante || '', r.codigo_peca || '', r.descricao || '') || aplicacaoFallback || r.catalogo || '',
           catalogo: r.catalogo || 'Sem catálogo',
           _dbId: r.id,
         };
