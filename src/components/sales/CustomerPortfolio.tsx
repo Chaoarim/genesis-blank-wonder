@@ -1,13 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Phone, Mail, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle } from 'lucide-react';
+import { Search, Phone, Mail, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, PackageCheck, Package, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
+
+interface ExpeditionStatus {
+  customer_id: string;
+  status: string;
+  sale_id: string;
+}
 
 interface CustomerPortfolioProps {
   customers: Customer[];
@@ -22,6 +28,32 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate }: CustomerPortfolioProps) {
   const [search, setSearch] = useState('');
   const [sellerFilter, setSellerFilter] = useState<string>('all');
+  const [expeditions, setExpeditions] = useState<ExpeditionStatus[]>([]);
+
+  useEffect(() => {
+    const fetchExpeditions = async () => {
+      const { data } = await supabase
+        .from('expedition_orders')
+        .select('status, sale_id')
+        .in('status', ['pending', 'in_progress', 'ready']);
+      if (!data) return;
+      // Map sale_id to customer_id via sales
+      const saleIds = [...new Set(data.map(e => e.sale_id))];
+      if (saleIds.length === 0) return;
+      const { data: salesData } = await supabase
+        .from('sales')
+        .select('id, customer_id')
+        .in('id', saleIds);
+      if (!salesData) return;
+      const saleCustomerMap = Object.fromEntries(salesData.map(s => [s.id, s.customer_id]));
+      setExpeditions(data.map(e => ({
+        customer_id: saleCustomerMap[e.sale_id] || '',
+        status: e.status,
+        sale_id: e.sale_id,
+      })).filter(e => e.customer_id));
+    };
+    fetchExpeditions();
+  }, [customers]);
 
   const filtered = customers.filter(c => {
     const q = search.toLowerCase();
@@ -38,6 +70,22 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
     const custSales = sales.filter(s => s.customer_id === customerId && s.status === 'completed');
     const total = custSales.reduce((s, v) => s + Number(v.total), 0);
     return { count: custSales.length, total };
+  };
+
+  const getCustomerExpeditions = (customerId: string) => {
+    const custExp = expeditions.filter(e => e.customer_id === customerId);
+    return {
+      pending: custExp.filter(e => e.status === 'pending').length,
+      inProgress: custExp.filter(e => e.status === 'in_progress').length,
+      ready: custExp.filter(e => e.status === 'ready').length,
+    };
+  };
+
+  const notifyCustomerWhatsApp = (customer: Customer, readyCount: number) => {
+    const phone = (customer.whatsapp || customer.phone || '').replace(/\D/g, '');
+    if (!phone) { toast.error('Cliente sem WhatsApp/telefone cadastrado'); return; }
+    const msg = `Olá ${customer.name}! 📦 Seu${readyCount > 1 ? 's' : ''} pedido${readyCount > 1 ? 's' : ''} está${readyCount > 1 ? 'ão' : ''} pronto${readyCount > 1 ? 's' : ''} para retirada/envio. Obrigado pela preferência!`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   const getSellerName = (sellerAuthId: string | null) => {
