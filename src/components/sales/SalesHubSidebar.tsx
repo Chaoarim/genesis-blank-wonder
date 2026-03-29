@@ -59,6 +59,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'billing-calendar', icon: Calendar, label: 'Agenda Cobranças', group: 'Financeiro' },
   { value: 'cash-flow', icon: TrendingUp, label: 'Fluxo de Caixa', group: 'Financeiro' },
   { value: 'price-history', icon: Clock, label: 'Histórico Preços', group: 'Estoque' },
+  { value: 'distributor-prices', icon: FileSpreadsheet, label: 'Tabela Distribuidor', group: 'Estoque' },
   { value: 'customer-price-tiers', icon: Tag, label: 'Preços por Cliente', group: 'Financeiro' },
 
   // 👥 Equipe

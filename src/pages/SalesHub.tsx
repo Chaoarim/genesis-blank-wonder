@@ -62,6 +62,7 @@ const ReplenishmentSuggestions = lazy(() => import('@/components/sales/Replenish
 const ProductKitsManager = lazy(() => import('@/components/sales/ProductKitsManager').then(m => ({ default: m.ProductKitsManager })));
 const CashFlowProjection = lazy(() => import('@/components/sales/CashFlowProjection').then(m => ({ default: m.CashFlowProjection })));
 const WhatsAppNotifications = lazy(() => import('@/components/sales/WhatsAppNotifications').then(m => ({ default: m.WhatsAppNotifications })));
+const DistributorPriceImporter = lazy(() => import('@/components/sales/DistributorPriceImporter').then(m => ({ default: m.DistributorPriceImporter })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
