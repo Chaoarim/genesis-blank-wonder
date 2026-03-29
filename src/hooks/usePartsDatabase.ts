@@ -2,6 +2,44 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getRelevantPartsForAIFromList } from '@/features/catalogs/getRelevantPartsForAIFromList';
 
+/**
+ * Extracts the vehicle application text from chave_de_busca by removing
+ * the prefix parts (fornecedor, codigo, produto) that are displayed separately.
+ * Also deduplicates trailing vehicle brand/model appended redundantly.
+ */
+export function extractApplicationFromChave(
+  chave: string,
+  fornecedor: string,
+  codigo: string,
+  produto: string
+): string {
+  if (!chave) return '';
+  let result = chave;
+  if (fornecedor) {
+    const fornIdx = result.indexOf(fornecedor);
+    if (fornIdx === 0) result = result.slice(fornecedor.length).trim();
+  }
+  if (codigo) {
+    const codeIdx = result.indexOf(codigo);
+    if (codeIdx >= 0 && codeIdx < 5) result = result.slice(codeIdx + codigo.length).trim();
+  }
+  if (produto) {
+    const prodIdx = result.indexOf(produto);
+    if (prodIdx >= 0 && prodIdx < 5) result = result.slice(prodIdx + produto.length).trim();
+  }
+  // Deduplicate trailing "MARCA MODELO" when "MARCA: MODELO ..." already exists
+  const colonMatch = result.match(/^([A-Z\u00C0-\u024F]+):\s*([A-Z\u00C0-\u024F0-9]+)\s/);
+  if (colonMatch) {
+    const brand = colonMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const model = colonMatch[2].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const trailingPattern = new RegExp(`\\s${brand}\\s+${model}\\s*$`, 'i');
+    if (trailingPattern.test(result)) {
+      result = result.replace(trailingPattern, '').trim();
+    }
+  }
+  return result;
+}
+
 const STOP_WORDS = new Set([
   'a','o','as','os','um','uma','uns','umas',
   'de','da','do','das','dos','d',
@@ -71,11 +109,19 @@ export function usePartsDatabase() {
               for (const row of data) {
                 const chaveBusca = (row.chave_de_busca || '').trim();
                 const aplicacaoFallback = `${row.marca_veiculo || ''} ${row.modelo_veiculo || ''} ${row.anos_aplicacao || ''}`.trim();
+                // Extract clean application text from chave_de_busca by removing
+                // fornecedor, codigo, and produto which are displayed separately
+                const cleanAplicacao = extractApplicationFromChave(
+                  chaveBusca,
+                  row.fabricante || '',
+                  row.codigo_peca || '',
+                  row.descricao || ''
+                ) || aplicacaoFallback || (row as any).catalogo || '';
                 allParts.push({
                   fornecedor: row.fabricante || '',
                   fabricante: row.codigo_peca || '',
                   produto: row.descricao || '',
-                  aplicacao: chaveBusca || aplicacaoFallback || (row as any).catalogo || '',
+                  aplicacao: cleanAplicacao,
                   marca: row.marca_veiculo || (row as any).catalogo || '',
                   modelo: row.modelo_veiculo || '',
                   ano: row.anos_aplicacao || '',
@@ -285,7 +331,12 @@ export function usePartsDatabase() {
         return codeHits
           .slice(0, 120)
           .map((p) => {
-            const app = (p.chaveDeBusca || p.aplicacao || '').trim();
+            const app = extractApplicationFromChave(
+              (p.chaveDeBusca || p.aplicacao || '').trim(),
+              p.fornecedor,
+              p.fabricante,
+              p.produto
+            );
             const ctx = (p.contextoIA || '').trim();
             return `${p.fornecedor}|${p.fabricante}|${p.produto}|${app}|${ctx}`;
           })
