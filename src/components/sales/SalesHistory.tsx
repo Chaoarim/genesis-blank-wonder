@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Load
 import { exportToExcel } from '@/lib/exportExcel';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
+import { NfEditDialog, NfStatusBadge } from './NfEditDialog';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SalesHistoryProps {
@@ -45,9 +46,11 @@ const PERIOD_OPTIONS = [
 export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSale }: SalesHistoryProps) {
   const [search, setSearch] = useState('');
   const [period, setPeriod] = useState('all');
+  const [nfFilter, setNfFilter] = useState('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [itemsCache, setItemsCache] = useState<Record<string, SaleItem[]>>({});
+  const [nfOverrides, setNfOverrides] = useState<Record<string, { nf_numero: string | null; nf_serie: string | null; nf_chave: string | null; nf_status: string }>>({});
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -69,12 +72,21 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
       result = result.filter(s =>
         (s.customer_name || '').toLowerCase().includes(q) ||
         s.id.includes(q) ||
-        (s.seller_name || '').toLowerCase().includes(q)
+        (s.seller_name || '').toLowerCase().includes(q) ||
+        (s.nf_numero || '').includes(q)
       );
     }
 
+    // NF filter
+    if (nfFilter !== 'all') {
+      result = result.filter(s => {
+        const status = nfOverrides[s.id]?.nf_status || s.nf_status || 'sem_nf';
+        return status === nfFilter;
+      });
+    }
+
     return result;
-  }, [sales, search, period]);
+  }, [sales, search, period, nfFilter, nfOverrides]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
@@ -116,6 +128,18 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
             ))}
           </SelectContent>
         </Select>
+        <Select value={nfFilter} onValueChange={v => { setNfFilter(v); setVisibleCount(PAGE_SIZE); }}>
+          <SelectTrigger className="w-full sm:w-[150px]">
+            <FileText className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas NF</SelectItem>
+            <SelectItem value="sem_nf">Sem NF</SelectItem>
+            <SelectItem value="pendente">NF Pendente</SelectItem>
+            <SelectItem value="emitida">NF Emitida</SelectItem>
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
           exportToExcel(filtered.map(s => ({
             Data: new Date(s.created_at).toLocaleDateString('pt-BR'),
@@ -127,6 +151,8 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
             Desconto: Number(s.discount),
             Total: Number(s.total),
             Status: s.status,
+            NF_Status: nfOverrides[s.id]?.nf_status || s.nf_status || 'sem_nf',
+            NF_Numero: nfOverrides[s.id]?.nf_numero || s.nf_numero || '',
           })), 'historico-vendas', 'Vendas');
         }}>
           <Download className="w-3.5 h-3.5" />
@@ -144,7 +170,9 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
         <p className="text-center text-muted-foreground py-10">Nenhuma venda encontrada</p>
       ) : (
         <div className="space-y-2">
-          {visible.map(sale => (
+          {visible.map(sale => {
+            const nfData = nfOverrides[sale.id] || { nf_numero: sale.nf_numero, nf_serie: sale.nf_serie, nf_chave: sale.nf_chave, nf_status: sale.nf_status || 'sem_nf' };
+            return (
             <Card key={sale.id} className="overflow-hidden">
               <button onClick={() => toggleExpand(sale.id)} className="w-full p-4 flex items-center justify-between text-left hover:bg-muted/30 transition-colors">
                 <div className="flex-1 min-w-0">
@@ -154,6 +182,7 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
                     {sale.seller_name && (
                       <Badge variant="secondary" className="text-[10px]">🧑‍💼 {sale.seller_name}</Badge>
                     )}
+                    <NfStatusBadge status={nfData.nf_status} />
                   </div>
                   <div className="flex gap-2 mt-0.5 flex-wrap">
                     <p className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleString('pt-BR')}</p>
@@ -188,6 +217,14 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
                       )}
                       {sale.notes && <p className="text-xs text-muted-foreground italic">{sale.notes}</p>}
                       <div className="flex flex-wrap gap-2 pt-2">
+                        <NfEditDialog
+                          saleId={sale.id}
+                          nfNumero={nfData.nf_numero}
+                          nfSerie={nfData.nf_serie}
+                          nfChave={nfData.nf_chave}
+                          nfStatus={nfData.nf_status}
+                          onUpdated={(id, data) => setNfOverrides(prev => ({ ...prev, [id]: data }))}
+                        />
                         <Button variant="outline" size="sm" onClick={() => printSale(sale, itemsCache[sale.id])} className="gap-1">
                           <Printer className="w-3 h-3" /> Imprimir
                         </Button>
@@ -222,7 +259,8 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
                 </div>
               )}
             </Card>
-          ))}
+            );
+          })}
 
           {/* Load more */}
           {hasMore && (
