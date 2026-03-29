@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { DashboardSummary } from "@/components/DashboardSummary";
 import { CommandPalette } from "@/components/sales/CommandPalette";
+import { CatalogQRCode } from "@/components/dashboard/CatalogQRCode";
+import { DashboardCustomizer, useDashboardCards } from "@/components/dashboard/DashboardCustomizer";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -191,6 +193,9 @@ const Dashboard = () => {
     { label: 'Renovação', icon: RefreshCw, tab: '__renewal__', color: 'from-orange-500 to-orange-700' },
   ];
 
+  const { cards, toggleCard, moveCard } = useDashboardCards();
+  const visibleCards = cards.filter(c => c.visible);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col">
       {/* Header */}
@@ -217,6 +222,7 @@ const Dashboard = () => {
                 'markup', 'goals', 'commissions', 'warranty', 'accounts-payable',
               ]}
             />
+            <DashboardCustomizer cards={cards} onToggle={toggleCard} onMove={moveCard} />
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Sair
@@ -232,101 +238,106 @@ const Dashboard = () => {
         {/* Daily Summary */}
         {user && <DashboardSummary userId={user.id} />}
 
-        {/* Busca de Peças - abre catálogos por fornecedor */}
-        <Card
-          className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
-          onClick={() => navigate('/buscar-pecas')}
-        >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
-            <Search className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-bold text-lg">Buscar Peças</h2>
-            <p className="text-sm text-muted-foreground">Catálogos por fornecedor</p>
-          </div>
-          <span className="flex items-center gap-1.5 text-xs text-green-500 font-medium shrink-0">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Online
-          </span>
-        </Card>
+        {/* Busca de Peças */}
+        {visibleCards.some(c => c.id === 'search') && (
+          <Card
+            className="p-5 flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow border-primary/30"
+            onClick={() => navigate('/buscar-pecas')}
+          >
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shrink-0">
+              <Search className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-bold text-lg">Buscar Peças</h2>
+              <p className="text-sm text-muted-foreground">Catálogos por fornecedor</p>
+            </div>
+            <span className="flex items-center gap-1.5 text-xs text-green-500 font-medium shrink-0">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              Online
+            </span>
+          </Card>
+        )}
 
-        
-
-        {/* Central de Vendas - Grid de Atalhos */}
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Central de Vendas</h2>
-          <div className="grid grid-cols-4 sm:grid-cols-4 gap-3">
-            {shortcuts.map(({ label, icon: Icon, tab, color }) => (
-              <Card
-                key={tab}
-                className="p-4 flex flex-col items-center gap-2 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.03] active:scale-95"
-                onClick={() => {
-                  if (tab === '__renewal__') navigate('/renovacao-pix');
-                  else if (tab === '__low-stock__') navigate('/vendas?tab=low-stock');
-                  else navigate(`/vendas?tab=${tab}`);
-                }}
-              >
-                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
-                  <Icon className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xs font-medium text-center leading-tight">{label}</span>
-              </Card>
-            ))}
+        {/* Central de Vendas */}
+        {visibleCards.some(c => c.id === 'shortcuts') && (
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Central de Vendas</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-4 gap-3">
+              {shortcuts.map(({ label, icon: Icon, tab, color }) => (
+                <Card
+                  key={tab}
+                  className="p-4 flex flex-col items-center gap-2 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.03] active:scale-95"
+                  onClick={() => {
+                    if (tab === '__renewal__') navigate('/renovacao-pix');
+                    else if (tab === '__low-stock__') navigate('/vendas?tab=low-stock');
+                    else navigate(`/vendas?tab=${tab}`);
+                  }}
+                >
+                  <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center`}>
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-center leading-tight">{label}</span>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Catálogo B2B */}
-        <Card className="p-5 space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
-              <Link2 className="w-6 h-6 text-white" />
+        {visibleCards.some(c => c.id === 'catalog') && (
+          <Card className="p-5 space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
+                <Link2 className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-bold text-lg">Catálogo B2B Online</h2>
+                <p className="text-sm text-muted-foreground">Compartilhe seu catálogo com clientes</p>
+              </div>
+              {user && <CatalogQRCode url={`${window.location.origin}/catalogo/${user.id}`} />}
             </div>
-            <div>
-              <h2 className="font-bold text-lg">Catálogo B2B Online</h2>
-              <p className="text-sm text-muted-foreground">Compartilhe seu catálogo com clientes</p>
-            </div>
-          </div>
 
-          {user && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-xs font-mono text-muted-foreground break-all select-all">
-                {`${window.location.origin}/catalogo/${user.id}`}
+            {user && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-xs font-mono text-muted-foreground break-all select-all">
+                  {`${window.location.origin}/catalogo/${user.id}`}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/catalogo/${user.id}`);
+                      toast.success('Link copiado!');
+                    }}
+                  >
+                    <Copy className="w-4 h-4" /> Copiar Link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-2"
+                    onClick={() => {
+                      const url = `${window.location.origin}/catalogo/${user.id}`;
+                      const msg = encodeURIComponent(`Confira nosso catálogo de peças: ${url}`);
+                      window.open(`https://wa.me/?text=${msg}`, '_blank');
+                    }}
+                  >
+                    <Share2 className="w-4 h-4" /> WhatsApp
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => window.open(`${window.location.origin}/catalogo/${user.id}`, '_blank')}
+                  >
+                    <ExternalLink className="w-4 h-4" /> Abrir
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/catalogo/${user.id}`);
-                    toast.success('Link copiado!');
-                  }}
-                >
-                  <Copy className="w-4 h-4" /> Copiar Link
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={() => {
-                    const url = `${window.location.origin}/catalogo/${user.id}`;
-                    const msg = encodeURIComponent(`Confira nosso catálogo de peças: ${url}`);
-                    window.open(`https://wa.me/?text=${msg}`, '_blank');
-                  }}
-                >
-                  <Share2 className="w-4 h-4" /> WhatsApp
-                </Button>
-                <Button
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => window.open(`${window.location.origin}/catalogo/${user.id}`, '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4" /> Abrir
-                </Button>
-              </div>
-            </div>
-          )}
-        </Card>
+            )}
+          </Card>
+        )}
       </main>
     </div>
   );

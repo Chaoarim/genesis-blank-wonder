@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCpfCnpj, formatWhatsapp } from '@/features/pre-registration/format';
 import { CustomerDetailDialog } from './CustomerDetailDialog';
+import { CustomerAvatarUpload } from './CustomerAvatarUpload';
 import { CustomerImporter } from './CustomerImporter';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
@@ -280,6 +281,14 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
             return (
               <Card key={c.id} className="p-4">
                 <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <CustomerAvatarUpload
+                      customerId={c.id}
+                      currentUrl={(c as any).avatar_url}
+                      customerName={c.name}
+                      size="sm"
+                      onUploaded={(url) => onUpdate(c.id, { avatar_url: url } as any)}
+                    />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       {c.code && (
@@ -326,6 +335,7 @@ export function CustomersManager({ customers, sales, onAdd, onUpdate, onDelete, 
                         </span>
                       )}
                     </div>
+                  </div>
                   </div>
                   <div className="flex items-center gap-1">
                     {isAdmin && sellers && sellers.length > 0 && (
