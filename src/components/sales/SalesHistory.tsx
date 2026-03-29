@@ -128,6 +128,18 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
             ))}
           </SelectContent>
         </Select>
+        <Select value={nfFilter} onValueChange={v => { setNfFilter(v); setVisibleCount(PAGE_SIZE); }}>
+          <SelectTrigger className="w-full sm:w-[150px]">
+            <FileText className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas NF</SelectItem>
+            <SelectItem value="sem_nf">Sem NF</SelectItem>
+            <SelectItem value="pendente">NF Pendente</SelectItem>
+            <SelectItem value="emitida">NF Emitida</SelectItem>
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
           exportToExcel(filtered.map(s => ({
             Data: new Date(s.created_at).toLocaleDateString('pt-BR'),
@@ -139,6 +151,8 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
             Desconto: Number(s.discount),
             Total: Number(s.total),
             Status: s.status,
+            NF_Status: nfOverrides[s.id]?.nf_status || s.nf_status || 'sem_nf',
+            NF_Numero: nfOverrides[s.id]?.nf_numero || s.nf_numero || '',
           })), 'historico-vendas', 'Vendas');
         }}>
           <Download className="w-3.5 h-3.5" />
