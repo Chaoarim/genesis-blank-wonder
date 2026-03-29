@@ -295,12 +295,13 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
             <div className="flex flex-wrap gap-2">
               {commissions.map(c => {
                 const typeLabel = c.type === 'order' ? 'Pedido' : c.type === 'product' ? `Produto: ${c.reference}` : `Fornec: ${c.reference}`;
+                const sellerLabel = c.seller_name ? `[${c.seller_name}]` : '[Global]';
                 const values = [];
                 if (Number(c.commission_percent) > 0) values.push(`${c.commission_percent}%`);
                 if (Number(c.commission_fixed) > 0) values.push(`R$${Number(c.commission_fixed).toFixed(2)}`);
                 return (
                   <Badge key={c.id} variant="outline" className="text-xs bg-background">
-                    {typeLabel} → {values.join(' + ')}
+                    {sellerLabel} {typeLabel} → {values.join(' + ')}
                   </Badge>
                 );
               })}
