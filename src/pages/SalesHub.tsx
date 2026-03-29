@@ -51,6 +51,7 @@ const PriceHistoryViewer = lazy(() => import('@/components/sales/PriceHistoryVie
 const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').then(m => ({ default: m.BillingCalendar })));
 const CustomerProfitabilityReport = lazy(() => import('@/components/sales/CustomerProfitabilityReport').then(m => ({ default: m.CustomerProfitabilityReport })));
 const CommissionPaymentsManager = lazy(() => import('@/components/sales/CommissionPaymentsManager').then(m => ({ default: m.CommissionPaymentsManager })));
+const BackupExcelDownload = lazy(() => import('@/components/sales/BackupExcelDownload').then(m => ({ default: m.BackupExcelDownload })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -249,6 +250,8 @@ const SalesHub = () => {
         return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
       case 'billing-calendar':
         return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
+      case 'backup-excel':
+        return <BackupExcelDownload adminUserId={sellerPerms.adminUserId} />;
       case 'help':
         return <HelpGuide />;
       default:
