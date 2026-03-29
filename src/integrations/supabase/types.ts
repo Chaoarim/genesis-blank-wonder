@@ -1236,6 +1236,7 @@ export type Database = {
           id: string
           items: Json
           notes: string | null
+          pipeline_stage: string
           status: string
           total: number
           updated_at: string
@@ -1252,6 +1253,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          pipeline_stage?: string
           status?: string
           total?: number
           updated_at?: string
@@ -1268,6 +1270,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          pipeline_stage?: string
           status?: string
           total?: number
           updated_at?: string

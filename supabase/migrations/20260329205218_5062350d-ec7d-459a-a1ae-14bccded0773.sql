@@ -1,0 +1,1 @@
+ALTER TABLE public.saved_quotes ADD COLUMN IF NOT EXISTS pipeline_stage text NOT NULL DEFAULT 'novo';
