@@ -1,8 +1,11 @@
-import { Trash2, Send, ShoppingCart, X } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, Send, ShoppingCart, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { QuoteItem } from '@/hooks/useQuoteCart';
 
 interface QuotePanelProps {
@@ -15,6 +18,38 @@ interface QuotePanelProps {
 }
 
 export function QuotePanel({ items, total, onUpdateItem, onRemoveItem, onClearCart, onSendWhatsApp }: QuotePanelProps) {
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveQuote = async () => {
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error('Faça login para salvar'); return; }
+
+      const quoteItems = items.map(i => ({
+        codigo: i.codigo,
+        produto: i.produto,
+        fornecedor: i.fornecedor,
+        quantidade: i.quantidade,
+        preco_unitario: i.precoUnitario,
+      }));
+
+      const { error } = await supabase.from('saved_quotes').insert({
+        user_id: session.user.id,
+        items: quoteItems,
+        total,
+        discount: 0,
+        status: 'pending',
+      });
+
+      if (error) { toast.error('Erro ao salvar orçamento'); return; }
+      toast.success('Orçamento salvo! Acesse em Central de Vendas → Orçamentos.');
+      onClearCart();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -99,6 +134,10 @@ export function QuotePanel({ items, total, onUpdateItem, onRemoveItem, onClearCa
                 <Button variant="outline" size="sm" onClick={onClearCart} className="flex-1">
                   <X className="w-4 h-4 mr-1" />
                   Limpar
+                </Button>
+                <Button size="sm" variant="secondary" onClick={handleSaveQuote} disabled={saving} className="flex-1">
+                  <Save className="w-4 h-4 mr-1" />
+                  {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
                 <Button size="sm" onClick={() => onSendWhatsApp()} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
                   <Send className="w-4 h-4 mr-1" />
