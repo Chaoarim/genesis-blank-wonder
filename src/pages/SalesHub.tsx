@@ -52,6 +52,7 @@ const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').
 const CustomerProfitabilityReport = lazy(() => import('@/components/sales/CustomerProfitabilityReport').then(m => ({ default: m.CustomerProfitabilityReport })));
 const CommissionPaymentsManager = lazy(() => import('@/components/sales/CommissionPaymentsManager').then(m => ({ default: m.CommissionPaymentsManager })));
 const BackupExcelDownload = lazy(() => import('@/components/sales/BackupExcelDownload').then(m => ({ default: m.BackupExcelDownload })));
+const KPIPanel = lazy(() => import('@/components/sales/KPIPanel').then(m => ({ default: m.KPIPanel })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -138,6 +139,8 @@ const SalesHub = () => {
     switch (activeTab) {
       case 'dashboard':
         return <SalesDashboard stats={salesData.stats} onNewSale={goToNewSale} recentSales={salesData.sales.slice(0, 5)} allSales={salesData.allSales} sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name || null} adminUserId={sellerPerms.adminUserId} sellerAuthId={sellerPerms.isAdmin ? null : (user?.id || null)} />;
+      case 'kpis':
+        return <KPIPanel allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
       case 'new-sale':
         return (
           <NewSaleForm
