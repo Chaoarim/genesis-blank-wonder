@@ -186,6 +186,7 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
                         </Badge>
                       )}
                     </div>
+                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
                       {c.cpf_cnpj && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> {c.cpf_cnpj}</span>}
                       {c.whatsapp && (
                         <a href={`https://wa.me/${c.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1 hover:text-green-500">
