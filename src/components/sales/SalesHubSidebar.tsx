@@ -4,7 +4,7 @@ import {
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock
+  Clock, Wallet
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -57,6 +57,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'goals', icon: Target, label: 'Metas', group: 'Equipe' },
   { value: 'sellers', icon: UserCog, label: 'Vendedores', group: 'Equipe' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões', group: 'Equipe' },
+  { value: 'commission-payments', icon: Wallet, label: 'Pgto Comissões', group: 'Equipe' },
   { value: 'report', icon: FileBarChart, label: 'Relatório', group: 'Equipe' },
 
   // ❓ Ajuda

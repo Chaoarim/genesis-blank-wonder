@@ -196,6 +196,51 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_payments: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string
+          period_end: string
+          period_start: string
+          seller_auth_id: string
+          seller_name: string
+          total_commission: number
+          total_sales: number
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          period_end: string
+          period_start: string
+          seller_auth_id: string
+          seller_name: string
+          total_commission?: number
+          total_sales?: number
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          period_end?: string
+          period_start?: string
+          seller_auth_id?: string
+          seller_name?: string
+          total_commission?: number
+          total_sales?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_approvals: {
         Row: {
           created_at: string
