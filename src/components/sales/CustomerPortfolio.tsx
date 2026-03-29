@@ -138,9 +138,11 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
         <p className="text-center text-muted-foreground py-10">Nenhum cliente encontrado</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map(c => {
+           {filtered.map(c => {
             const stats = getCustomerStats(c.id);
             const assignedSeller = getSellerName(c.seller_auth_id);
+            const exp = getCustomerExpeditions(c.id);
+            const hasExpedition = exp.pending + exp.inProgress + exp.ready > 0;
             return (
               <Card key={c.id} className="p-4">
                 <div className="flex items-start justify-between">
