@@ -247,6 +247,37 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
     downloadHtmlAsPdf(buildReportHtml(), `Relatorio_Comissoes${sellerSuffix}_${periodLabel}_${new Date().toISOString().slice(0, 10)}`);
   };
 
+  const handleExportExcel = () => {
+    const periodLabel = period === 'today' ? 'Hoje' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Tudo';
+    const sellerSuffix = activeSellerLabel ? `_${activeSellerLabel.replace(/\s+/g, '_')}` : '';
+    const showSellerCol = !sellerName && sellerFilter === 'all';
+
+    const rows = filteredSales.map((sale, idx) => {
+      const row: Record<string, string | number | null> = {
+        '#': idx + 1,
+      };
+      if (showSellerCol) row['Vendedor'] = sale.seller_name || 'Administrador';
+      row['Cliente'] = sale.customer_name || 'Cliente balcão';
+      row['Data'] = new Date(sale.created_at).toLocaleDateString('pt-BR');
+      row['Hora'] = new Date(sale.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      row['Valor (R$)'] = Number(Number(sale.total).toFixed(2));
+      row['Comissão (R$)'] = Number(calcCommission(sale).toFixed(2));
+      return row;
+    });
+
+    // Add summary row
+    rows.push({
+      '#': null,
+      'Cliente': 'TOTAL',
+      'Data': '',
+      'Hora': '',
+      'Valor (R$)': Number(grandTotal.toFixed(2)),
+      'Comissão (R$)': Number(grandCommission.toFixed(2)),
+    });
+
+    exportToExcel(rows, `Relatorio_Comissoes${sellerSuffix}_${periodLabel}_${new Date().toISOString().slice(0, 10)}`, 'Comissões');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
