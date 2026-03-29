@@ -125,23 +125,106 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
     loadTopProducts();
   }, [allSales]);
 
-  // Top sellers (current month) - only for admin
+  // Top sellers (current month) - for admin view AND seller ranking
   const sellerRanking = useMemo(() => {
-    if (sellerName) return []; // sellers don't see this
     const now = new Date();
     const monthSales = allSales.filter(
       s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear()
     );
-    const sellerMap = new Map<string, { name: string; total: number; count: number }>();
+    const sellerMap = new Map<string, { name: string; authId: string | null; total: number; count: number }>();
     monthSales.forEach(s => {
       const name = s.seller_name || 'Dono';
-      const prev = sellerMap.get(name) || { name, total: 0, count: 0 };
+      const authId = s.seller_auth_id || null;
+      const prev = sellerMap.get(name) || { name, authId, total: 0, count: 0 };
       prev.total += Number(s.total);
       prev.count += 1;
       sellerMap.set(name, prev);
     });
-    return Array.from(sellerMap.values()).sort((a, b) => b.total - a.total).slice(0, 5);
-  }, [allSales, sellerName]);
+    return Array.from(sellerMap.values()).sort((a, b) => b.total - a.total).slice(0, 10);
+  }, [allSales]);
+
+  // Seller's own ranking position
+  const sellerRankingPosition = useMemo(() => {
+    if (!sellerName) return null;
+    const idx = sellerRanking.findIndex(s => s.name === sellerName);
+    return idx >= 0 ? idx + 1 : null;
+  }, [sellerRanking, sellerName]);
+
+  // Commission calculation for seller
+  const [sellerCommission, setSellerCommission] = useState(0);
+  const [commissionRules, setCommissionRules] = useState<Array<{ type: string; reference: string | null; commission_percent: number; commission_fixed: number }>>([]);
+
+  useEffect(() => {
+    if (!sellerName || !adminUserId) return;
+
+    const calcCommissions = async () => {
+      // Fetch commission rules (seller-specific + global)
+      const { data: rules } = await supabase
+        .from('sales_commissions')
+        .select('type, reference, commission_percent, commission_fixed, seller_auth_id')
+        .eq('user_id', adminUserId);
+
+      if (!rules || rules.length === 0) return;
+      setCommissionRules(rules as any);
+
+      const now = new Date();
+      const monthSales = allSales.filter(
+        s => s.status === 'completed' &&
+          new Date(s.created_at).getMonth() === now.getMonth() &&
+          new Date(s.created_at).getFullYear() === now.getFullYear()
+      );
+
+      // Helper: get applicable rules for this seller
+      const getApplicableRules = (type: string) => {
+        const sellerRules = rules.filter(c => c.type === type && c.seller_auth_id === sellerAuthId && sellerAuthId);
+        const globalRules = rules.filter(c => c.type === type && !c.seller_auth_id);
+        return sellerRules.length > 0 ? sellerRules : globalRules;
+      };
+
+      let totalComm = 0;
+      const orderRules = getApplicableRules('order');
+      const hasItemRules = rules.some(r => r.type === 'product' || r.type === 'supplier');
+
+      // Order-level commissions
+      for (const sale of monthSales) {
+        for (const rule of orderRules) {
+          totalComm += Number(sale.total) * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+        }
+      }
+
+      // Product/supplier-level commissions
+      if (hasItemRules && monthSales.length > 0) {
+        const saleIds = monthSales.map(s => s.id).slice(0, 100);
+        const { data: items } = await supabase
+          .from('sale_items')
+          .select('sale_id, codigo, fornecedor, quantidade, preco_unitario')
+          .in('sale_id', saleIds);
+
+        if (items) {
+          const productRules = getApplicableRules('product');
+          const supplierRules = getApplicableRules('supplier');
+
+          for (const item of items) {
+            const itemTotal = Number(item.quantidade) * Number(item.preco_unitario);
+            for (const rule of productRules) {
+              if (rule.reference && item.codigo.toLowerCase() === rule.reference.toLowerCase()) {
+                totalComm += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+              }
+            }
+            for (const rule of supplierRules) {
+              if (rule.reference && item.fornecedor && item.fornecedor.toLowerCase().includes(rule.reference.toLowerCase())) {
+                totalComm += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+              }
+            }
+          }
+        }
+      }
+
+      setSellerCommission(totalComm);
+    };
+
+    calcCommissions();
+  }, [sellerName, adminUserId, sellerAuthId, allSales]);
 
   // Top customers (current month)
   const topCustomers = useMemo(() => {
