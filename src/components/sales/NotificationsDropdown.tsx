@@ -19,6 +19,7 @@ interface Notification {
 
 interface NotificationsDropdownProps {
   adminUserId: string | null;
+  currentAuthId: string | null;
   sales: Array<{ customer_name: string | null; customer_id: string | null; created_at: string; status: string }>;
   customers: Array<{ id: string; name: string }>;
   onNavigate: (tab: string) => void;
