@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, AlertTriangle, CheckCircle, Clock, Search, MessageCircle, Filter, Download, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { DollarSign, AlertTriangle, CheckCircle, Clock, Search, MessageCircle, Filter, Download, Calendar, Send, Users } from 'lucide-react';
 import { exportToExcel } from '@/lib/exportExcel';
 import { format, differenceInDays, parseISO, isAfter, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -21,13 +24,44 @@ interface Props {
 
 type StatusFilter = 'all' | 'pending' | 'overdue' | 'paid';
 
+interface Receivable extends Sale {
+  deadline: Date;
+  isPaid: boolean;
+  isOverdue: boolean;
+  daysOverdue: number;
+  customerPhone: string | null;
+  status: 'paid' | 'overdue' | 'pending';
+}
+
+function buildCollectionMessage(customerName: string, total: number, deadline: Date, isOverdue: boolean, daysOverdue: number, saleId: string): string {
+  const valor = `R$ ${total.toFixed(2).replace('.', ',')}`;
+  const vencimento = format(deadline, 'dd/MM/yyyy');
+
+  if (isOverdue) {
+    return `Olá ${customerName}! 🙂
+
+Verificamos que o pagamento referente à venda *#${saleId.slice(0, 8)}* no valor de *${valor}* venceu em *${vencimento}* (${daysOverdue} dia${daysOverdue > 1 ? 's' : ''} atrás).
+
+Gostaríamos de verificar se houve algum problema. Caso já tenha efetuado o pagamento, por favor desconsidere esta mensagem.
+
+Ficamos à disposição para qualquer dúvida! 🤝`;
+  }
+
+  return `Olá ${customerName}! 🙂
+
+Passando para lembrar sobre o pagamento referente à venda *#${saleId.slice(0, 8)}* no valor de *${valor}* com vencimento em *${vencimento}*.
+
+Qualquer dúvida, estamos à disposição! 🤝`;
+}
+
 export function AccountsReceivableManager({ sales, customers, onRefresh }: Props) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [periodFilter, setPeriodFilter] = useState('all');
+  const [messageDialog, setMessageDialog] = useState<{ receivable: Receivable; message: string } | null>(null);
+  const [batchDialogOpen, setBatchDialogOpen] = useState(false);
 
-  // Receivables = sales with payment_deadline (credit sales)
-  const receivables = useMemo(() => {
+  const receivables = useMemo<Receivable[]>(() => {
     return sales
       .filter(s => s.payment_deadline && s.status === 'completed')
       .map(s => {
@@ -35,7 +69,7 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
         const now = new Date();
         const isPaid = !!s.paid_at;
         const isOverdue = !isPaid && isAfter(now, deadline);
-        const daysOverdue = !isPaid ? differenceInDays(now, deadline) : 0;
+        const daysOverdue = !isPaid ? Math.max(differenceInDays(now, deadline), 0) : 0;
         const customer = customers.find(c => c.id === s.customer_id);
 
         return {
@@ -49,7 +83,6 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
         };
       })
       .sort((a, b) => {
-        // Overdue first, then pending, then paid
         const order = { overdue: 0, pending: 1, paid: 2 };
         return order[a.status] - order[b.status] || a.deadline.getTime() - b.deadline.getTime();
       });
@@ -84,6 +117,10 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
     return { pending, overdue, paid, total: pending + overdue + paid };
   }, [receivables]);
 
+  const overdueWithPhone = useMemo(() =>
+    receivables.filter(r => r.status === 'overdue' && r.customerPhone),
+  [receivables]);
+
   const markAsPaid = async (saleId: string) => {
     const { error } = await supabase.from('sales').update({ paid_at: new Date().toISOString() }).eq('id', saleId);
     if (error) { toast.error('Erro ao registrar pagamento'); return; }
@@ -91,22 +128,71 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
     onRefresh?.();
   };
 
-  const sendWhatsApp = (phone: string, customerName: string, total: number, deadline: Date) => {
-    const msg = encodeURIComponent(
-      `Olá ${customerName}! 🙂\n\nGostaríamos de lembrar sobre o pagamento no valor de R$ ${total.toFixed(2).replace('.', ',')} com vencimento em ${format(deadline, 'dd/MM/yyyy')}.\n\nQualquer dúvida, estamos à disposição!`
+  const openMessagePreview = (r: Receivable) => {
+    const msg = buildCollectionMessage(
+      r.customer_name || 'Cliente',
+      r.total,
+      r.deadline,
+      r.isOverdue,
+      r.daysOverdue,
+      r.id
     );
-    const cleanPhone = phone.replace(/\D/g, '');
-    window.open(`https://wa.me/55${cleanPhone}?text=${msg}`, '_blank');
+    setMessageDialog({ receivable: r, message: msg });
+  };
+
+  const sendWhatsAppMessage = (phone: string | null, message: string) => {
+    const encoded = encodeURIComponent(message);
+    if (phone) {
+      const cleanPhone = phone.replace(/\D/g, '');
+      window.open(`https://wa.me/55${cleanPhone}?text=${encoded}`, '_blank');
+    } else {
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+  };
+
+  const handleBatchSend = () => {
+    if (overdueWithPhone.length === 0) {
+      toast.info('Nenhum cliente vencido com telefone cadastrado');
+      return;
+    }
+
+    let sent = 0;
+    for (const r of overdueWithPhone) {
+      const msg = buildCollectionMessage(r.customer_name || 'Cliente', r.total, r.deadline, true, r.daysOverdue, r.id);
+      const cleanPhone = r.customerPhone!.replace(/\D/g, '');
+      const encoded = encodeURIComponent(msg);
+      // Open first one immediately, rest after small delay
+      setTimeout(() => {
+        window.open(`https://wa.me/55${cleanPhone}?text=${encoded}`, '_blank');
+      }, sent * 1500);
+      sent++;
+    }
+
+    toast.success(`${sent} cobrança${sent > 1 ? 's' : ''} aberta${sent > 1 ? 's' : ''} no WhatsApp`);
+    setBatchDialogOpen(false);
   };
 
   const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold flex items-center gap-2">
-        <DollarSign className="w-5 h-5 text-primary" />
-        Contas a Receber
-      </h2>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <DollarSign className="w-5 h-5 text-primary" />
+          Contas a Receber
+        </h2>
+        {overdueWithPhone.length > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs border-green-600/30 text-green-700 dark:text-green-400 hover:bg-green-500/10"
+            onClick={() => setBatchDialogOpen(true)}
+          >
+            <Users className="w-3.5 h-3.5" />
+            Cobrar {overdueWithPhone.length} vencido{overdueWithPhone.length > 1 ? 's' : ''} via WhatsApp
+          </Button>
+        )}
+      </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -216,6 +302,7 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
                       <div>
                         <span className="text-sm">{r.customer_name || 'Consumidor'}</span>
                         {r.seller_name && <p className="text-[10px] text-muted-foreground">Vendedor: {r.seller_name}</p>}
+                        {r.customerPhone && <p className="text-[10px] text-muted-foreground">📱 {r.customerPhone}</p>}
                       </div>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-xs capitalize">{r.payment_method.replace(/_/g, ' ')}</TableCell>
@@ -241,9 +328,16 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
                             Recebido
                           </Button>
                         )}
-                        {r.customerPhone && !r.isPaid && (
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600" onClick={() => sendWhatsApp(r.customerPhone!, r.customer_name || 'Cliente', r.total, r.deadline)} title="Cobrar via WhatsApp">
-                            <MessageCircle className="w-4 h-4" />
+                        {!r.isPaid && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs gap-1 text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                            onClick={() => openMessagePreview(r)}
+                            title="Cobrar via WhatsApp"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Cobrar</span>
                           </Button>
                         )}
                       </div>
@@ -255,6 +349,124 @@ export function AccountsReceivableManager({ sales, customers, onRefresh }: Props
           </CardContent>
         </Card>
       )}
+
+      {/* Message Preview Dialog */}
+      {messageDialog && (
+        <Dialog open onOpenChange={() => setMessageDialog(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-green-600" />
+                Mensagem de Cobrança
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Cliente:</span>
+                <span className="font-medium">{messageDialog.receivable.customer_name || 'Cliente'}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Valor:</span>
+                <span className="font-bold text-destructive">{fmt(messageDialog.receivable.total)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Vencimento:</span>
+                <span>{format(messageDialog.receivable.deadline, 'dd/MM/yyyy')}</span>
+              </div>
+              {messageDialog.receivable.daysOverdue > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Atraso:</span>
+                  <Badge variant="destructive" className="text-xs">{messageDialog.receivable.daysOverdue} dias</Badge>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-xs">Prévia da mensagem (editável)</Label>
+                <Textarea
+                  value={messageDialog.message}
+                  onChange={e => setMessageDialog(prev => prev ? { ...prev, message: e.target.value } : null)}
+                  rows={8}
+                  className="mt-1 text-sm"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => {
+                    sendWhatsAppMessage(messageDialog.receivable.customerPhone, messageDialog.message);
+                    setMessageDialog(null);
+                  }}
+                >
+                  <Send className="w-4 h-4" />
+                  {messageDialog.receivable.customerPhone ? 'Enviar via WhatsApp' : 'Abrir WhatsApp'}
+                </Button>
+                <Button variant="outline" onClick={() => setMessageDialog(null)}>
+                  Cancelar
+                </Button>
+              </div>
+
+              {!messageDialog.receivable.customerPhone && (
+                <p className="text-[11px] text-amber-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Cliente sem telefone cadastrado. O WhatsApp abrirá sem destinatário.
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Batch Send Dialog */}
+      <Dialog open={batchDialogOpen} onOpenChange={setBatchDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-green-600" />
+              Cobrança em Lote via WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Serão abertas {overdueWithPhone.length} conversas no WhatsApp com mensagens de cobrança personalizadas para cada cliente vencido.
+            </p>
+
+            <div className="max-h-48 overflow-y-auto space-y-2">
+              {overdueWithPhone.map(r => (
+                <div key={r.id} className="flex items-center justify-between text-sm p-2 rounded-lg bg-muted/50">
+                  <div>
+                    <p className="font-medium">{r.customer_name || 'Cliente'}</p>
+                    <p className="text-[10px] text-muted-foreground">{r.daysOverdue}d atraso • 📱 {r.customerPhone}</p>
+                  </div>
+                  <span className="font-bold text-destructive text-sm">{fmt(r.total)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between text-sm font-medium border-t pt-3">
+              <span>Total a cobrar:</span>
+              <span className="text-destructive">{fmt(overdueWithPhone.reduce((s, r) => s + r.total, 0))}</span>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleBatchSend}
+              >
+                <Send className="w-4 h-4" />
+                Cobrar todos ({overdueWithPhone.length})
+              </Button>
+              <Button variant="outline" onClick={() => setBatchDialogOpen(false)}>
+                Cancelar
+              </Button>
+            </div>
+
+            <p className="text-[10px] text-muted-foreground">
+              💡 As conversas serão abertas com intervalo de 1,5s entre cada para evitar bloqueios.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
