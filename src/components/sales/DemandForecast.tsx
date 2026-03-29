@@ -304,7 +304,6 @@ export function DemandForecast({ allSales, adminUserId }: DemandForecastProps) {
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
                   dot={{ r: 4 }}
-                  strokeDasharray={(idx: number) => idx === forecastChartData.length - 1 ? '5 5' : '0'}
                 />
               </LineChart>
             </ResponsiveContainer>
