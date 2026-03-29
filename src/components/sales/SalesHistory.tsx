@@ -182,6 +182,7 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
                     {sale.seller_name && (
                       <Badge variant="secondary" className="text-[10px]">🧑‍💼 {sale.seller_name}</Badge>
                     )}
+                    <NfStatusBadge status={nfData.nf_status} />
                   </div>
                   <div className="flex gap-2 mt-0.5 flex-wrap">
                     <p className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleString('pt-BR')}</p>
