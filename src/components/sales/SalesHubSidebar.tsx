@@ -72,6 +72,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Suporte' },
   { value: 'audit-logs', icon: Shield, label: 'Logs', group: 'Suporte' },
   { value: 'backup-excel', icon: FileSpreadsheet, label: 'Backup Excel', group: 'Suporte' },
+  { value: 'whatsapp-notif', icon: BellRing, label: 'WhatsApp', group: 'Suporte' },
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Suporte' },
 ];
 
