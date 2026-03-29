@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package, Award, Trophy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
 import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
