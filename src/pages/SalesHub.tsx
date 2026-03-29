@@ -173,6 +173,8 @@ const SalesHub = () => {
         return <InventorySearch adminUserId={sellerPerms.adminUserId} />;
       case 'low-stock':
         return <LowStockReport adminUserId={sellerPerms.adminUserId} />;
+      case 'replenishment':
+        return <ReplenishmentSuggestions adminUserId={sellerPerms.adminUserId} />;
       case 'history':
         return <SalesHistory sales={salesData.sales} onDeleteSale={salesData.deleteSale} getSaleItems={salesData.getSaleItems} onDuplicateSale={(sale, items) => {
           setActiveTab('new-sale');
