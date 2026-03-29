@@ -169,8 +169,23 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
                       ) : (
                         <Badge variant="destructive" className="text-[10px]">Sem vendedor</Badge>
                       )}
+                      {exp.pending > 0 && (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
+                          <Package className="w-3 h-3" /> {exp.pending} pendente{exp.pending > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                      {exp.inProgress > 0 && (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-blue-500/50 text-blue-600">
+                          <Loader2 className="w-3 h-3" /> {exp.inProgress} separando
+                        </Badge>
+                      )}
+                      {exp.ready > 0 && (
+                        <Badge className="text-[10px] gap-1 bg-green-500/10 text-green-600 border border-green-500/50 hover:bg-green-500/20 cursor-pointer"
+                          onClick={() => notifyCustomerWhatsApp(c, exp.ready)}>
+                          <PackageCheck className="w-3 h-3" /> {exp.ready} pronto{exp.ready > 1 ? 's' : ''} 📲
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
                       {c.cpf_cnpj && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> {c.cpf_cnpj}</span>}
                       {c.whatsapp && (
                         <a href={`https://wa.me/${c.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1 hover:text-green-500">
