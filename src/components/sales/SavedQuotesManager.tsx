@@ -9,10 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ShoppingCart, Trash2, Eye, CheckCircle, Clock, X, Send, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { ShoppingCart, Trash2, Eye, CheckCircle, Clock, X, Send, FileText, ChevronDown, ChevronUp, LayoutGrid, List } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Customer, Sale } from '@/hooks/useSalesData';
+import { QuotesKanban } from './QuotesKanban';
 
 interface QuoteItem {
   codigo: string;
