@@ -55,6 +55,7 @@ const BackupExcelDownload = lazy(() => import('@/components/sales/BackupExcelDow
 const KPIPanel = lazy(() => import('@/components/sales/KPIPanel').then(m => ({ default: m.KPIPanel })));
 const SalesByChannelReport = lazy(() => import('@/components/sales/SalesByChannelReport').then(m => ({ default: m.SalesByChannelReport })));
 const DemandForecast = lazy(() => import('@/components/sales/DemandForecast').then(m => ({ default: m.DemandForecast })));
+const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTiers').then(m => ({ default: m.CustomerPriceTiers })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -259,6 +260,8 @@ const SalesHub = () => {
         return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
       case 'billing-calendar':
         return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
+      case 'customer-price-tiers':
+        return <CustomerPriceTiers adminUserId={sellerPerms.adminUserId} customers={salesData.allCustomers} onUpdateCustomer={salesData.updateCustomer} />;
       case 'backup-excel':
         return <BackupExcelDownload adminUserId={sellerPerms.adminUserId} />;
       case 'help':

@@ -55,6 +55,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'abc-curve', icon: TrendingUp, label: 'Curva ABC', group: 'Financeiro' },
   { value: 'billing-calendar', icon: Calendar, label: 'Agenda Cobranças', group: 'Financeiro' },
   { value: 'price-history', icon: Clock, label: 'Histórico Preços', group: 'Estoque' },
+  { value: 'customer-price-tiers', icon: Tag, label: 'Preços por Cliente', group: 'Financeiro' },
 
   // 👥 Equipe
   { value: 'goals', icon: Target, label: 'Metas', group: 'Equipe' },

@@ -301,6 +301,42 @@ export type Database = {
           },
         ]
       }
+      customer_price_tiers: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          id: string
+          markup_percent: number
+          name: string
+          notes: string | null
+          tier_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          markup_percent?: number
+          name: string
+          notes?: string | null
+          tier_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          markup_percent?: number
+          name?: string
+          notes?: string | null
+          tier_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           avatar_url: string | null
@@ -308,6 +344,7 @@ export type Database = {
           comprador: string | null
           cpf_cnpj: string | null
           created_at: string
+          customer_type: string | null
           email: string | null
           empresa: string | null
           endereco: string | null
@@ -328,6 +365,7 @@ export type Database = {
           comprador?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          customer_type?: string | null
           email?: string | null
           empresa?: string | null
           endereco?: string | null
@@ -348,6 +386,7 @@ export type Database = {
           comprador?: string | null
           cpf_cnpj?: string | null
           created_at?: string
+          customer_type?: string | null
           email?: string | null
           empresa?: string | null
           endereco?: string | null
