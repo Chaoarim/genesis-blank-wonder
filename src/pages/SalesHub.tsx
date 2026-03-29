@@ -56,6 +56,7 @@ const KPIPanel = lazy(() => import('@/components/sales/KPIPanel').then(m => ({ d
 const SalesByChannelReport = lazy(() => import('@/components/sales/SalesByChannelReport').then(m => ({ default: m.SalesByChannelReport })));
 const DemandForecast = lazy(() => import('@/components/sales/DemandForecast').then(m => ({ default: m.DemandForecast })));
 const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTiers').then(m => ({ default: m.CustomerPriceTiers })));
+const SavedQuotesManager = lazy(() => import('@/components/sales/SavedQuotesManager').then(m => ({ default: m.SavedQuotesManager })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">

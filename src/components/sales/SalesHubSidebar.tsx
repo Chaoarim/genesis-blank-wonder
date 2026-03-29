@@ -27,6 +27,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vendas' },
   { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vendas' },
   { value: 'history', icon: History, label: 'Histórico', group: 'Vendas' },
+  { value: 'saved-quotes', icon: ShoppingBag, label: 'Orçamentos', group: 'Vendas' },
   { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vendas' },
   { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vendas' },
   { value: 'demand-forecast', icon: TrendingUp, label: 'Previsão Demanda', group: 'Vendas' },
