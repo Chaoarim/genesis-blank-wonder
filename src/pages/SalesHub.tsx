@@ -59,6 +59,7 @@ const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTi
 const SavedQuotesManager = lazy(() => import('@/components/sales/SavedQuotesManager').then(m => ({ default: m.SavedQuotesManager })));
 const CustomerInteractions = lazy(() => import('@/components/sales/CustomerInteractions').then(m => ({ default: m.CustomerInteractions })));
 const ReplenishmentSuggestions = lazy(() => import('@/components/sales/ReplenishmentSuggestions').then(m => ({ default: m.ReplenishmentSuggestions })));
+const ProductKitsManager = lazy(() => import('@/components/sales/ProductKitsManager').then(m => ({ default: m.ProductKitsManager })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
