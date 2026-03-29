@@ -177,9 +177,27 @@ export function SavedQuotesManager({ adminUserId, customers, onCreateSale }: Pro
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-primary" /> Orçamentos Pendentes
+            <ShoppingCart className="w-5 h-5 text-primary" /> CRM de Orçamentos
           </h2>
-          <p className="text-sm text-muted-foreground">Orçamentos salvos aguardando confirmação do cliente</p>
+          <p className="text-sm text-muted-foreground">Pipeline visual de negociações</p>
+        </div>
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+          <Button
+            size="sm"
+            variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+            className="h-7 px-2.5 gap-1.5 text-xs"
+            onClick={() => setViewMode('kanban')}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" /> Kanban
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            className="h-7 px-2.5 gap-1.5 text-xs"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="w-3.5 h-3.5" /> Lista
+          </Button>
         </div>
       </div>
 
