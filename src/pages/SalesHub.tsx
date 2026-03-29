@@ -59,6 +59,7 @@ const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTi
 const SavedQuotesManager = lazy(() => import('@/components/sales/SavedQuotesManager').then(m => ({ default: m.SavedQuotesManager })));
 const CustomerInteractions = lazy(() => import('@/components/sales/CustomerInteractions').then(m => ({ default: m.CustomerInteractions })));
 const ReplenishmentSuggestions = lazy(() => import('@/components/sales/ReplenishmentSuggestions').then(m => ({ default: m.ReplenishmentSuggestions })));
+const ProductKitsManager = lazy(() => import('@/components/sales/ProductKitsManager').then(m => ({ default: m.ProductKitsManager })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -253,6 +254,8 @@ const SalesHub = () => {
         return <RepurchaseAlerts sales={salesData.sales} customers={salesData.customers} />;
       case 'supplier-contacts':
         return user ? <SupplierContactsManager userId={sellerPerms.adminUserId || user.id} /> : null;
+      case 'product-kits':
+        return <ProductKitsManager adminUserId={sellerPerms.adminUserId} />;
       case 'report':
         if (sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />;
         if (!sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />;

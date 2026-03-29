@@ -936,6 +936,83 @@ export type Database = {
         }
         Relationships: []
       }
+      product_kit_items: {
+        Row: {
+          codigo: string
+          created_at: string
+          fornecedor: string | null
+          id: string
+          kit_id: string
+          preco_unitario: number
+          produto: string
+          quantidade: number
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          kit_id: string
+          preco_unitario?: number
+          produto: string
+          quantidade?: number
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          kit_id?: string
+          preco_unitario?: number
+          produto?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_kit_items_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "product_kits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_kits: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_percent: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          user_id: string
+          vehicle: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+          vehicle?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+          vehicle?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_name: string | null
