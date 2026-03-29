@@ -47,7 +47,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar', group: 'Estoque' },
   { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar', group: 'Estoque' },
   { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Estoque' },
-
+  { value: 'product-kits', icon: Package, label: 'Kits de Peças', group: 'Estoque' },
   // 💰 Financeiro
   { value: 'markup', icon: Percent, label: 'Markup', group: 'Financeiro' },
   { value: 'promotions', icon: Tag, label: 'Ofertas', group: 'Financeiro' },
