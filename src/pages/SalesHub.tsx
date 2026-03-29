@@ -63,6 +63,7 @@ const ProductKitsManager = lazy(() => import('@/components/sales/ProductKitsMana
 const CashFlowProjection = lazy(() => import('@/components/sales/CashFlowProjection').then(m => ({ default: m.CashFlowProjection })));
 const WhatsAppNotifications = lazy(() => import('@/components/sales/WhatsAppNotifications').then(m => ({ default: m.WhatsAppNotifications })));
 const DistributorPriceImporter = lazy(() => import('@/components/sales/DistributorPriceImporter').then(m => ({ default: m.DistributorPriceImporter })));
+const ExpeditionManager = lazy(() => import('@/components/sales/ExpeditionManager').then(m => ({ default: m.ExpeditionManager })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -173,6 +174,8 @@ const SalesHub = () => {
         );
       case 'orders':
         return <CatalogOrdersManager />;
+      case 'expedition':
+        return <ExpeditionManager adminUserId={sellerPerms.adminUserId} />;
       case 'inventory':
         return <InventorySearch adminUserId={sellerPerms.adminUserId} />;
       case 'low-stock':

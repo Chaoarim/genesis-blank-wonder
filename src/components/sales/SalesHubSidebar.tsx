@@ -4,7 +4,7 @@ import {
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock, Wallet
+  Clock, Wallet, PackageCheck
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -31,6 +31,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vendas' },
   { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vendas' },
   { value: 'demand-forecast', icon: TrendingUp, label: 'Previsão Demanda', group: 'Vendas' },
+  { value: 'expedition', icon: PackageCheck, label: 'Expedição', group: 'Vendas' },
 
   // 👥 Clientes
   { value: 'customers', icon: Users, label: 'Clientes', group: 'Clientes' },

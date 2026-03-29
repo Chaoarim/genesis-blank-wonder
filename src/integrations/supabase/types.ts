@@ -498,6 +498,107 @@ export type Database = {
         }
         Relationships: []
       }
+      expedition_items: {
+        Row: {
+          checked: boolean
+          checked_at: string | null
+          codigo: string
+          expedition_id: string
+          id: string
+          notes: string | null
+          produto: string
+          quantidade_conferida: number
+          quantidade_esperada: number
+          sale_item_id: string | null
+        }
+        Insert: {
+          checked?: boolean
+          checked_at?: string | null
+          codigo: string
+          expedition_id: string
+          id?: string
+          notes?: string | null
+          produto: string
+          quantidade_conferida?: number
+          quantidade_esperada?: number
+          sale_item_id?: string | null
+        }
+        Update: {
+          checked?: boolean
+          checked_at?: string | null
+          codigo?: string
+          expedition_id?: string
+          id?: string
+          notes?: string | null
+          produto?: string
+          quantidade_conferida?: number
+          quantidade_esperada?: number
+          sale_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expedition_items_expedition_id_fkey"
+            columns: ["expedition_id"]
+            isOneToOne: false
+            referencedRelation: "expedition_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expedition_items_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expedition_orders: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          sale_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sale_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          sale_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expedition_orders_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           aplicacao: string | null
