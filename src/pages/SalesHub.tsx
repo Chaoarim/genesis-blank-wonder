@@ -262,6 +262,8 @@ const SalesHub = () => {
         return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
       case 'customer-profitability':
         return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
+      case 'customer-interactions':
+        return <CustomerInteractions adminUserId={sellerPerms.adminUserId} customers={salesData.allCustomers} sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name} sellerAuthId={sellerPerms.isAdmin ? null : (user?.id || null)} />;
       case 'billing-calendar':
         return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
       case 'customer-price-tiers':
