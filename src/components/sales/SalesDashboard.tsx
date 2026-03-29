@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package, Award, Trophy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
 import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
@@ -46,6 +47,8 @@ interface SalesDashboardProps {
   recentSales: Sale[];
   allSales: Sale[];
   sellerName?: string | null;
+  adminUserId?: string | null;
+  sellerAuthId?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -61,7 +64,7 @@ const CHART_COLORS = [
   'hsl(142 50% 55%)',
 ];
 
-export function SalesDashboard({ stats, onNewSale, recentSales, allSales, sellerName }: SalesDashboardProps) {
+export function SalesDashboard({ stats, onNewSale, recentSales, allSales, sellerName, adminUserId, sellerAuthId }: SalesDashboardProps) {
   const includeSaturdays = useIncludeSaturdays();
 
   // Monthly evolution (last 6 months)
@@ -122,23 +125,106 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
     loadTopProducts();
   }, [allSales]);
 
-  // Top sellers (current month) - only for admin
+  // Top sellers (current month) - for admin view AND seller ranking
   const sellerRanking = useMemo(() => {
-    if (sellerName) return []; // sellers don't see this
     const now = new Date();
     const monthSales = allSales.filter(
       s => s.status === 'completed' && new Date(s.created_at).getMonth() === now.getMonth() && new Date(s.created_at).getFullYear() === now.getFullYear()
     );
-    const sellerMap = new Map<string, { name: string; total: number; count: number }>();
+    const sellerMap = new Map<string, { name: string; authId: string | null; total: number; count: number }>();
     monthSales.forEach(s => {
       const name = s.seller_name || 'Dono';
-      const prev = sellerMap.get(name) || { name, total: 0, count: 0 };
+      const authId = s.seller_auth_id || null;
+      const prev = sellerMap.get(name) || { name, authId, total: 0, count: 0 };
       prev.total += Number(s.total);
       prev.count += 1;
       sellerMap.set(name, prev);
     });
-    return Array.from(sellerMap.values()).sort((a, b) => b.total - a.total).slice(0, 5);
-  }, [allSales, sellerName]);
+    return Array.from(sellerMap.values()).sort((a, b) => b.total - a.total).slice(0, 10);
+  }, [allSales]);
+
+  // Seller's own ranking position
+  const sellerRankingPosition = useMemo(() => {
+    if (!sellerName) return null;
+    const idx = sellerRanking.findIndex(s => s.name === sellerName);
+    return idx >= 0 ? idx + 1 : null;
+  }, [sellerRanking, sellerName]);
+
+  // Commission calculation for seller
+  const [sellerCommission, setSellerCommission] = useState(0);
+  const [commissionRules, setCommissionRules] = useState<Array<{ type: string; reference: string | null; commission_percent: number; commission_fixed: number }>>([]);
+
+  useEffect(() => {
+    if (!sellerName || !adminUserId) return;
+
+    const calcCommissions = async () => {
+      // Fetch commission rules (seller-specific + global)
+      const { data: rules } = await supabase
+        .from('sales_commissions')
+        .select('type, reference, commission_percent, commission_fixed, seller_auth_id')
+        .eq('user_id', adminUserId);
+
+      if (!rules || rules.length === 0) return;
+      setCommissionRules(rules as any);
+
+      const now = new Date();
+      const monthSales = allSales.filter(
+        s => s.status === 'completed' &&
+          new Date(s.created_at).getMonth() === now.getMonth() &&
+          new Date(s.created_at).getFullYear() === now.getFullYear()
+      );
+
+      // Helper: get applicable rules for this seller
+      const getApplicableRules = (type: string) => {
+        const sellerRules = rules.filter(c => c.type === type && c.seller_auth_id === sellerAuthId && sellerAuthId);
+        const globalRules = rules.filter(c => c.type === type && !c.seller_auth_id);
+        return sellerRules.length > 0 ? sellerRules : globalRules;
+      };
+
+      let totalComm = 0;
+      const orderRules = getApplicableRules('order');
+      const hasItemRules = rules.some(r => r.type === 'product' || r.type === 'supplier');
+
+      // Order-level commissions
+      for (const sale of monthSales) {
+        for (const rule of orderRules) {
+          totalComm += Number(sale.total) * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+        }
+      }
+
+      // Product/supplier-level commissions
+      if (hasItemRules && monthSales.length > 0) {
+        const saleIds = monthSales.map(s => s.id).slice(0, 100);
+        const { data: items } = await supabase
+          .from('sale_items')
+          .select('sale_id, codigo, fornecedor, quantidade, preco_unitario')
+          .in('sale_id', saleIds);
+
+        if (items) {
+          const productRules = getApplicableRules('product');
+          const supplierRules = getApplicableRules('supplier');
+
+          for (const item of items) {
+            const itemTotal = Number(item.quantidade) * Number(item.preco_unitario);
+            for (const rule of productRules) {
+              if (rule.reference && item.codigo.toLowerCase() === rule.reference.toLowerCase()) {
+                totalComm += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+              }
+            }
+            for (const rule of supplierRules) {
+              if (rule.reference && item.fornecedor && item.fornecedor.toLowerCase().includes(rule.reference.toLowerCase())) {
+                totalComm += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
+              }
+            }
+          }
+        }
+      }
+
+      setSellerCommission(totalComm);
+    };
+
+    calcCommissions();
+  }, [sellerName, adminUserId, sellerAuthId, allSales]);
 
   // Top customers (current month)
   const topCustomers = useMemo(() => {
@@ -328,6 +414,89 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
         </Card>
       )}
 
+      {/* Seller exclusive: Commission summary + Ranking */}
+      {sellerName && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Commission card */}
+          <Card className="p-4 border-green-500/20 bg-green-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <DollarSign className="w-5 h-5 text-green-500" />
+              <span className="text-sm font-semibold">Comissão Acumulada no Mês</span>
+            </div>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{fmt(sellerCommission)}</p>
+            {commissionRules.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {commissionRules.slice(0, 3).map((r, i) => {
+                  const typeLabel = r.type === 'order' ? 'Pedido' : r.type === 'product' ? `Prod: ${r.reference}` : `Fornec: ${r.reference}`;
+                  const vals = [];
+                  if (Number(r.commission_percent) > 0) vals.push(`${r.commission_percent}%`);
+                  if (Number(r.commission_fixed) > 0) vals.push(`R$${Number(r.commission_fixed).toFixed(2)}`);
+                  return <Badge key={i} variant="outline" className="text-[10px]">{typeLabel}: {vals.join('+')}</Badge>;
+                })}
+                {commissionRules.length > 3 && <Badge variant="secondary" className="text-[10px]">+{commissionRules.length - 3}</Badge>}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">Nenhuma regra de comissão configurada</p>
+            )}
+          </Card>
+
+          {/* Ranking position card */}
+          <Card className="p-4 border-amber-500/20 bg-amber-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <span className="text-sm font-semibold">Sua Posição no Ranking</span>
+            </div>
+            {sellerRankingPosition ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <span className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
+                    sellerRankingPosition === 1 ? 'bg-amber-500 text-white' : sellerRankingPosition === 2 ? 'bg-gray-400 text-white' : sellerRankingPosition === 3 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {sellerRankingPosition}º
+                  </span>
+                  <div>
+                    <p className="text-xl font-bold">{fmt(stats.monthTotal)}</p>
+                    <p className="text-xs text-muted-foreground">{stats.monthSales} vendas este mês</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">de {sellerRanking.length} vendedor{sellerRanking.length > 1 ? 'es' : ''}</p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Sem vendas no mês para rankear</p>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Seller: Full ranking list */}
+      {sellerName && sellerRanking.length > 1 && (
+        <Card className="p-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <Medal className="w-4 h-4 text-primary" />
+            Ranking da Equipe — Este Mês
+          </h3>
+          <div className="space-y-2">
+            {sellerRanking.map((s, i) => (
+              <div key={s.name} className={`flex items-center gap-3 p-2 rounded-lg border ${s.name === sellerName ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                  i === 0 ? 'bg-amber-500 text-white' : i === 1 ? 'bg-gray-400 text-white' : i === 2 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {i + 1}º
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate flex items-center gap-1">
+                    {s.name}
+                    {s.name === sellerName && <Badge variant="default" className="text-[9px] h-4">Você</Badge>}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{s.count} vendas</p>
+                </div>
+                <span className="text-sm font-bold text-primary">{fmt(s.total)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Monthly evolution chart */}
       <Card className="p-4">
         <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
@@ -410,7 +579,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
             Ranking de Vendedores do Mês
           </h3>
           <div className="space-y-2">
-            {sellerRanking.map((s, i) => (
+            {sellerRanking.slice(0, 5).map((s, i) => (
               <div key={s.name} className="flex items-center gap-3 p-2 rounded-lg border border-border">
                 <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                   i === 0 ? 'bg-amber-500 text-white' : i === 1 ? 'bg-gray-400 text-white' : i === 2 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
