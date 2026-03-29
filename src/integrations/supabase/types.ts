@@ -258,6 +258,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          avatar_url: string | null
           code: string | null
           comprador: string | null
           cpf_cnpj: string | null
@@ -277,6 +278,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          avatar_url?: string | null
           code?: string | null
           comprador?: string | null
           cpf_cnpj?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          avatar_url?: string | null
           code?: string | null
           comprador?: string | null
           cpf_cnpj?: string | null
