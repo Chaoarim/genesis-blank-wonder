@@ -1,13 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Phone, Mail, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle } from 'lucide-react';
+import { Search, Phone, Mail, ShoppingBag, Copy, UserCog, Building2, MapPin, CreditCard, MessageCircle, PackageCheck, Package, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { Customer, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
+
+interface ExpeditionStatus {
+  customer_id: string;
+  status: string;
+  sale_id: string;
+}
 
 interface CustomerPortfolioProps {
   customers: Customer[];
@@ -22,6 +28,32 @@ const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', curren
 export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate }: CustomerPortfolioProps) {
   const [search, setSearch] = useState('');
   const [sellerFilter, setSellerFilter] = useState<string>('all');
+  const [expeditions, setExpeditions] = useState<ExpeditionStatus[]>([]);
+
+  useEffect(() => {
+    const fetchExpeditions = async () => {
+      const { data } = await supabase
+        .from('expedition_orders')
+        .select('status, sale_id')
+        .in('status', ['pending', 'in_progress', 'ready']);
+      if (!data) return;
+      // Map sale_id to customer_id via sales
+      const saleIds = [...new Set(data.map(e => e.sale_id))];
+      if (saleIds.length === 0) return;
+      const { data: salesData } = await supabase
+        .from('sales')
+        .select('id, customer_id')
+        .in('id', saleIds);
+      if (!salesData) return;
+      const saleCustomerMap = Object.fromEntries(salesData.map(s => [s.id, s.customer_id]));
+      setExpeditions(data.map(e => ({
+        customer_id: saleCustomerMap[e.sale_id] || '',
+        status: e.status,
+        sale_id: e.sale_id,
+      })).filter(e => e.customer_id));
+    };
+    fetchExpeditions();
+  }, [customers]);
 
   const filtered = customers.filter(c => {
     const q = search.toLowerCase();
@@ -38,6 +70,22 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
     const custSales = sales.filter(s => s.customer_id === customerId && s.status === 'completed');
     const total = custSales.reduce((s, v) => s + Number(v.total), 0);
     return { count: custSales.length, total };
+  };
+
+  const getCustomerExpeditions = (customerId: string) => {
+    const custExp = expeditions.filter(e => e.customer_id === customerId);
+    return {
+      pending: custExp.filter(e => e.status === 'pending').length,
+      inProgress: custExp.filter(e => e.status === 'in_progress').length,
+      ready: custExp.filter(e => e.status === 'ready').length,
+    };
+  };
+
+  const notifyCustomerWhatsApp = (customer: Customer, readyCount: number) => {
+    const phone = (customer.whatsapp || customer.phone || '').replace(/\D/g, '');
+    if (!phone) { toast.error('Cliente sem WhatsApp/telefone cadastrado'); return; }
+    const msg = `Olá ${customer.name}! 📦 Seu${readyCount > 1 ? 's' : ''} pedido${readyCount > 1 ? 's' : ''} está${readyCount > 1 ? 'ão' : ''} pronto${readyCount > 1 ? 's' : ''} para retirada/envio. Obrigado pela preferência!`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   const getSellerName = (sellerAuthId: string | null) => {
@@ -90,9 +138,11 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
         <p className="text-center text-muted-foreground py-10">Nenhum cliente encontrado</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map(c => {
+           {filtered.map(c => {
             const stats = getCustomerStats(c.id);
             const assignedSeller = getSellerName(c.seller_auth_id);
+            const exp = getCustomerExpeditions(c.id);
+            const hasExpedition = exp.pending + exp.inProgress + exp.ready > 0;
             return (
               <Card key={c.id} className="p-4">
                 <div className="flex items-start justify-between">
@@ -118,6 +168,22 @@ export function CustomerPortfolio({ customers, sales, isAdmin, sellers, onUpdate
                         </Badge>
                       ) : (
                         <Badge variant="destructive" className="text-[10px]">Sem vendedor</Badge>
+                      )}
+                      {exp.pending > 0 && (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-amber-500/50 text-amber-600">
+                          <Package className="w-3 h-3" /> {exp.pending} pendente{exp.pending > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                      {exp.inProgress > 0 && (
+                        <Badge variant="outline" className="text-[10px] gap-1 border-blue-500/50 text-blue-600">
+                          <Loader2 className="w-3 h-3" /> {exp.inProgress} separando
+                        </Badge>
+                      )}
+                      {exp.ready > 0 && (
+                        <Badge className="text-[10px] gap-1 bg-green-500/10 text-green-600 border border-green-500/50 hover:bg-green-500/20 cursor-pointer"
+                          onClick={() => notifyCustomerWhatsApp(c, exp.ready)}>
+                          <PackageCheck className="w-3 h-3" /> {exp.ready} pronto{exp.ready > 1 ? 's' : ''} 📲
+                        </Badge>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">

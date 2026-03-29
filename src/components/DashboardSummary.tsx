@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { DollarSign, ShoppingBag, Target, AlertTriangle, TrendingUp } from 'lucide-react';
+import { DollarSign, ShoppingBag, Target, AlertTriangle, TrendingUp, PackageCheck, Package, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface SummaryData {
@@ -13,6 +13,9 @@ interface SummaryData {
   goalAmount: number | null;
   goalProgress: number;
   lowStockCount: number;
+  expeditionPending: number;
+  expeditionInProgress: number;
+  expeditionReady: number;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -27,7 +30,7 @@ export function DashboardSummary({ userId }: { userId: string }) {
       const todayStr = today.toISOString().split('T')[0];
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
 
-      const [salesRes, goalRes, stockRes] = await Promise.all([
+      const [salesRes, goalRes, stockRes, expeditionRes] = await Promise.all([
         supabase
           .from('sales')
           .select('total, created_at')
@@ -45,14 +48,22 @@ export function DashboardSummary({ userId }: { userId: string }) {
           .select('id', { count: 'exact', head: true })
           .lte('qtd_estoque', 3)
           .gt('qtd_estoque', -1),
+        supabase
+          .from('expedition_orders')
+          .select('status')
+          .in('status', ['pending', 'in_progress', 'ready']),
       ]);
-
       const sales = salesRes.data || [];
       const todaySales = sales.filter(s => s.created_at.startsWith(todayStr));
       const todayTotal = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
       const monthTotal = sales.reduce((sum, s) => sum + Number(s.total), 0);
       const goalAmount = goalRes.data?.goal_amount ? Number(goalRes.data.goal_amount) : null;
       const goalProgress = goalAmount ? Math.min((monthTotal / goalAmount) * 100, 100) : 0;
+
+      const expeditions = expeditionRes.data || [];
+      const expeditionPending = expeditions.filter(e => e.status === 'pending').length;
+      const expeditionInProgress = expeditions.filter(e => e.status === 'in_progress').length;
+      const expeditionReady = expeditions.filter(e => e.status === 'ready').length;
 
       setData({
         todayTotal,
@@ -62,6 +73,9 @@ export function DashboardSummary({ userId }: { userId: string }) {
         goalAmount,
         goalProgress,
         lowStockCount: stockRes.count ?? 0,
+        expeditionPending,
+        expeditionInProgress,
+        expeditionReady,
       });
       setLoading(false);
     };
@@ -137,6 +151,32 @@ export function DashboardSummary({ userId }: { userId: string }) {
             {data.lowStockCount > 0 ? 'produto(s) com ≤ 3 un.' : 'Tudo OK'}
           </p>
         </Card>
+
+        {(data.expeditionPending + data.expeditionInProgress + data.expeditionReady) > 0 && (
+          <Card className="p-4 col-span-2 border-primary/20 bg-primary/5">
+            <div className="flex items-center gap-2 mb-2">
+              <PackageCheck className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground font-medium">Expedição</span>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-sm font-semibold">{data.expeditionPending}</span>
+                <span className="text-xs text-muted-foreground">Pendente{data.expeditionPending !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-sm font-semibold">{data.expeditionInProgress}</span>
+                <span className="text-xs text-muted-foreground">Separando</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <PackageCheck className="w-3.5 h-3.5 text-green-500" />
+                <span className="text-sm font-semibold">{data.expeditionReady}</span>
+                <span className="text-xs text-muted-foreground">Pronto{data.expeditionReady !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
