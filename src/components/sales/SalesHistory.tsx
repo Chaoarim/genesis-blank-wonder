@@ -72,12 +72,21 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
       result = result.filter(s =>
         (s.customer_name || '').toLowerCase().includes(q) ||
         s.id.includes(q) ||
-        (s.seller_name || '').toLowerCase().includes(q)
+        (s.seller_name || '').toLowerCase().includes(q) ||
+        (s.nf_numero || '').includes(q)
       );
     }
 
+    // NF filter
+    if (nfFilter !== 'all') {
+      result = result.filter(s => {
+        const status = nfOverrides[s.id]?.nf_status || s.nf_status || 'sem_nf';
+        return status === nfFilter;
+      });
+    }
+
     return result;
-  }, [sales, search, period]);
+  }, [sales, search, period, nfFilter, nfOverrides]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
