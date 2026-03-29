@@ -145,6 +145,8 @@ const SalesHub = () => {
         return <KPIPanel allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
       case 'sales-by-channel':
         return <SalesByChannelReport allSales={salesData.allSales} />;
+      case 'demand-forecast':
+        return <DemandForecast allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
       case 'new-sale':
         return (
           <NewSaleForm
