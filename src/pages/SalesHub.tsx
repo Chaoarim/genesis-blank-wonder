@@ -50,6 +50,7 @@ const MonthlyReport = lazy(() => import('@/components/sales/MonthlyReport').then
 const PriceHistoryViewer = lazy(() => import('@/components/sales/PriceHistoryViewer').then(m => ({ default: m.PriceHistoryViewer })));
 const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').then(m => ({ default: m.BillingCalendar })));
 const CustomerProfitabilityReport = lazy(() => import('@/components/sales/CustomerProfitabilityReport').then(m => ({ default: m.CustomerProfitabilityReport })));
+const CommissionPaymentsManager = lazy(() => import('@/components/sales/CommissionPaymentsManager').then(m => ({ default: m.CommissionPaymentsManager })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -216,6 +217,9 @@ const SalesHub = () => {
       case 'commissions':
         if (sellerPerms.isAdmin && user) return <CommissionsManager userId={user.id} />;
         if (!sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />;
+        return null;
+      case 'commission-payments':
+        if (sellerPerms.isAdmin && user) return <CommissionPaymentsManager userId={user.id} sales={salesData.allSales} />;
         return null;
       case 'payment-terms':
         return sellerPerms.isAdmin && user ? <PaymentTermsManager userId={user.id} /> : null;
