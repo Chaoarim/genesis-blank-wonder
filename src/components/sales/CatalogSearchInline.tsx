@@ -5,7 +5,7 @@ import { Search, Plus, X, Car, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { Card } from '@/components/ui/card';
-import type { Part } from '@/hooks/usePartsDatabase';
+import { type Part, extractApplicationFromChave } from '@/hooks/usePartsDatabase';
 
 
 interface CatalogSearchInlineProps {
@@ -70,7 +70,7 @@ export function CatalogSearchInline({ onAddItem }: CatalogSearchInlineProps) {
           contextoIA: r.contexto_ia || '',
           codigosSimilares: r.codigos_similares || '',
           imageUrl: r.image_url || '',
-          aplicacao: extractAppFromChave(chaveBusca, r.fabricante || '', r.codigo_peca || '', r.descricao || '') || aplicacaoFallback || r.catalogo || '',
+          aplicacao: extractApplicationFromChave(chaveBusca, r.fabricante || '', r.codigo_peca || '', r.descricao || '') || aplicacaoFallback || r.catalogo || '',
           catalogo: r.catalogo || 'Sem catálogo',
           _dbId: r.id,
         };

@@ -7,7 +7,7 @@ import { getRelevantPartsForAIFromList } from '@/features/catalogs/getRelevantPa
  * the prefix parts (fornecedor, codigo, produto) that are displayed separately.
  * Also deduplicates trailing vehicle brand/model appended redundantly.
  */
-function extractApplicationFromChave(
+export function extractApplicationFromChave(
   chave: string,
   fornecedor: string,
   codigo: string,
