@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { DashboardSummary } from "@/components/DashboardSummary";
 import { CommandPalette } from "@/components/sales/CommandPalette";
+import { CatalogQRCode } from "@/components/dashboard/CatalogQRCode";
+import { DashboardCustomizer, useDashboardCards } from "@/components/dashboard/DashboardCustomizer";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -191,6 +193,9 @@ const Dashboard = () => {
     { label: 'Renovação', icon: RefreshCw, tab: '__renewal__', color: 'from-orange-500 to-orange-700' },
   ];
 
+  const { cards, toggleCard, moveCard } = useDashboardCards();
+  const visibleCards = cards.filter(c => c.visible);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex flex-col">
       {/* Header */}
@@ -217,6 +222,7 @@ const Dashboard = () => {
                 'markup', 'goals', 'commissions', 'warranty', 'accounts-payable',
               ]}
             />
+            <DashboardCustomizer cards={cards} onToggle={toggleCard} onMove={moveCard} />
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />
               Sair
