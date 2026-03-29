@@ -39,6 +39,10 @@ export interface Sale {
   payment_method: string;
   payment_deadline: string | null;
   paid_at: string | null;
+  nf_numero: string | null;
+  nf_serie: string | null;
+  nf_chave: string | null;
+  nf_status: string;
   created_at: string;
   updated_at: string;
 }
