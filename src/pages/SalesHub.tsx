@@ -11,6 +11,7 @@ import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2, Keyboard } from 'lucide-react';
+import { CatalogQRCode } from '@/components/dashboard/CatalogQRCode';
 import { ThemeToggle } from '@/components/sales/ThemeToggle';
 import { toast } from 'sonner';
 import { NotificationsDropdown } from '@/components/sales/NotificationsDropdown';
@@ -296,6 +297,7 @@ const SalesHub = () => {
                 }}>
                   <ExternalLink className="w-4 h-4" />
                 </Button>
+                <CatalogQRCode url={`${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`} />
                 <Button variant="ghost" size="icon" className="h-8 w-8" title="Copiar Link do Catálogo" onClick={() => {
                   const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
                   navigator.clipboard.writeText(catalogUrl);
