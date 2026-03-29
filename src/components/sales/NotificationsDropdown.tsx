@@ -212,6 +212,9 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
       });
     }
 
+    // Realtime alerts (at the top)
+    items.push(...realtimeAlerts.filter(a => !items.some(i => i.id === a.id)));
+
     if (lowStockItems.length > 0) {
       items.push({
         id: 'low-stock-summary',
@@ -235,7 +238,7 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
     }
 
     return items;
-  }, [pendingOrders, lowStockItems, repurchaseAlerts, overduePayables, overdueSales]);
+  }, [pendingOrders, lowStockItems, repurchaseAlerts, overduePayables, overdueSales, realtimeAlerts]);
 
   const totalCount = notifications.length;
 
