@@ -58,6 +58,7 @@ const DemandForecast = lazy(() => import('@/components/sales/DemandForecast').th
 const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTiers').then(m => ({ default: m.CustomerPriceTiers })));
 const SavedQuotesManager = lazy(() => import('@/components/sales/SavedQuotesManager').then(m => ({ default: m.SavedQuotesManager })));
 const CustomerInteractions = lazy(() => import('@/components/sales/CustomerInteractions').then(m => ({ default: m.CustomerInteractions })));
+const ReplenishmentSuggestions = lazy(() => import('@/components/sales/ReplenishmentSuggestions').then(m => ({ default: m.ReplenishmentSuggestions })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
