@@ -297,6 +297,7 @@ const SalesHub = () => {
                 }}>
                   <ExternalLink className="w-4 h-4" />
                 </Button>
+                <CatalogQRCode url={`${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`} />
                 <Button variant="ghost" size="icon" className="h-8 w-8" title="Copiar Link do Catálogo" onClick={() => {
                   const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
                   navigator.clipboard.writeText(catalogUrl);
