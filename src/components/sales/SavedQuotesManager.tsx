@@ -250,7 +250,19 @@ export function SavedQuotesManager({ adminUserId, customers, onCreateSale }: Pro
         </Select>
       </div>
 
-      {/* Quotes list */}
+      {/* Kanban View */}
+      {viewMode === 'kanban' && (
+        <QuotesKanban
+          quotes={filtered}
+          onRefresh={fetchQuotes}
+          onConvertToSale={handleConvertToSale}
+          onSendWhatsApp={handleSendWhatsApp}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {/* List view */}
+      {viewMode === 'list' && (
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
