@@ -579,7 +579,7 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
             Ranking de Vendedores do Mês
           </h3>
           <div className="space-y-2">
-            {sellerRanking.map((s, i) => (
+            {sellerRanking.slice(0, 5).map((s, i) => (
               <div key={s.name} className="flex items-center gap-3 p-2 rounded-lg border border-border">
                 <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                   i === 0 ? 'bg-amber-500 text-white' : i === 1 ? 'bg-gray-400 text-white' : i === 2 ? 'bg-amber-700 text-white' : 'bg-muted text-muted-foreground'
