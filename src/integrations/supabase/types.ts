@@ -1096,6 +1096,10 @@ export type Database = {
           delivery_type: string
           discount: number
           id: string
+          nf_chave: string | null
+          nf_numero: string | null
+          nf_serie: string | null
+          nf_status: string
           notes: string | null
           paid_at: string | null
           payment_deadline: string | null
@@ -1115,6 +1119,10 @@ export type Database = {
           delivery_type?: string
           discount?: number
           id?: string
+          nf_chave?: string | null
+          nf_numero?: string | null
+          nf_serie?: string | null
+          nf_status?: string
           notes?: string | null
           paid_at?: string | null
           payment_deadline?: string | null
@@ -1134,6 +1142,10 @@ export type Database = {
           delivery_type?: string
           discount?: number
           id?: string
+          nf_chave?: string | null
+          nf_numero?: string | null
+          nf_serie?: string | null
+          nf_status?: string
           notes?: string | null
           paid_at?: string | null
           payment_deadline?: string | null
