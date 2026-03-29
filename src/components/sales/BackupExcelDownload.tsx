@@ -92,7 +92,7 @@ export function BackupExcelDownload({ adminUserId }: BackupExcelDownloadProps) {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {TABLES_CONFIG.map(t => (
             <div key={t.table} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
               {t.label}
             </div>
           ))}
