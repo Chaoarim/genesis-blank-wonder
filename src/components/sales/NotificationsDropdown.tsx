@@ -1,14 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Bell, Package, ShoppingCart, UserCheck, AlertTriangle, Clock } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Bell, Package, ShoppingCart, UserCheck, AlertTriangle, Clock, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Notification {
   id: string;
-  type: 'low-stock' | 'new-order' | 'repurchase' | 'overdue';
+  type: 'low-stock' | 'new-order' | 'repurchase' | 'overdue' | 'new-sale';
   title: string;
   description: string;
   icon: typeof Package;
@@ -30,55 +31,116 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
   const [pendingOrders, setPendingOrders] = useState<Array<{ id: string; customer_name: string; total: number; created_at: string }>>([]);
   const [overduePayables, setOverduePayables] = useState<Array<{ id: string; supplier_name: string; amount: number; due_date: string }>>([]);
   const [overdueSales, setOverdueSales] = useState<Array<{ id: string; customer_name: string | null; total: number; payment_deadline: string }>>([]);
+  const [realtimeAlerts, setRealtimeAlerts] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Fetch low stock and pending orders
+  const fetchAlerts = useCallback(async () => {
+    if (!adminUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const [stockRes, ordersRes, payablesRes, salesRes] = await Promise.all([
+      supabase
+        .from('inventory_items')
+        .select('codigo, produto, qtd_estoque')
+        .lte('qtd_estoque', 3)
+        .gt('qtd_estoque', -1)
+        .limit(20),
+      supabase
+        .from('catalog_orders')
+        .select('id, customer_name, total, created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabase
+        .from('accounts_payable')
+        .select('id, supplier_name, amount, due_date')
+        .eq('status', 'pending')
+        .lte('due_date', today)
+        .limit(10),
+      supabase
+        .from('sales')
+        .select('id, customer_name, total, payment_deadline')
+        .eq('status', 'completed')
+        .is('paid_at', null)
+        .not('payment_deadline', 'is', null)
+        .lte('payment_deadline', today)
+        .limit(10),
+    ]);
+
+    if (stockRes.data) setLowStockItems(stockRes.data);
+    if (ordersRes.data) setPendingOrders(ordersRes.data);
+    if (payablesRes.data) setOverduePayables(payablesRes.data);
+    if (salesRes.data) setOverdueSales(salesRes.data as any);
+  }, [adminUserId]);
+
+  // Initial fetch + polling
+  useEffect(() => {
+    if (!adminUserId) return;
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 120_000);
+    return () => clearInterval(interval);
+  }, [adminUserId, fetchAlerts]);
+
+  // Supabase Realtime: new catalog orders
   useEffect(() => {
     if (!adminUserId) return;
 
-    const fetchAlerts = async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const [stockRes, ordersRes, payablesRes, salesRes] = await Promise.all([
-        supabase
-          .from('inventory_items')
-          .select('codigo, produto, qtd_estoque')
-          .lte('qtd_estoque', 3)
-          .gt('qtd_estoque', -1)
-          .limit(20),
-        supabase
-          .from('catalog_orders')
-          .select('id, customer_name, total, created_at')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('accounts_payable')
-          .select('id, supplier_name, amount, due_date')
-          .eq('status', 'pending')
-          .lte('due_date', today)
-          .limit(10),
-        supabase
-          .from('sales')
-          .select('id, customer_name, total, payment_deadline')
-          .eq('status', 'completed')
-          .is('paid_at', null)
-          .not('payment_deadline', 'is', null)
-          .lte('payment_deadline', today)
-          .limit(10),
-      ]);
+    const ordersChannel = supabase
+      .channel('realtime-catalog-orders')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'catalog_orders' },
+        (payload) => {
+          const order = payload.new as any;
+          if (order.seller_id !== adminUserId) return;
+          const alert: Notification = {
+            id: `rt-order-${order.id}`,
+            type: 'new-order',
+            title: '🛒 Novo pedido do catálogo!',
+            description: `${order.customer_name} — R$ ${Number(order.total).toFixed(2)}`,
+            icon: ShoppingCart,
+            color: 'text-blue-500',
+            timestamp: order.created_at,
+          };
+          setRealtimeAlerts(prev => [alert, ...prev.slice(0, 19)]);
+          fetchAlerts(); // refresh pending orders count
+          toast.info(`🛒 Novo pedido: ${order.customer_name} — R$ ${Number(order.total).toFixed(2)}`, {
+            duration: 6000,
+          });
+        }
+      )
+      .subscribe();
 
-      if (stockRes.data) setLowStockItems(stockRes.data);
-      if (ordersRes.data) setPendingOrders(ordersRes.data);
-      if (payablesRes.data) setOverduePayables(payablesRes.data);
-      if (salesRes.data) setOverdueSales(salesRes.data as any);
+    const salesChannel = supabase
+      .channel('realtime-sales')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'sales' },
+        (payload) => {
+          const sale = payload.new as any;
+          if (sale.user_id !== adminUserId) return;
+          const alert: Notification = {
+            id: `rt-sale-${sale.id}`,
+            type: 'new-sale',
+            title: '💰 Nova venda registrada!',
+            description: `${sale.customer_name || 'Cliente balcão'} — R$ ${Number(sale.total).toFixed(2)}${sale.seller_name ? ` (${sale.seller_name})` : ''}`,
+            icon: Zap,
+            color: 'text-green-500',
+            timestamp: sale.created_at,
+          };
+          setRealtimeAlerts(prev => [alert, ...prev.slice(0, 19)]);
+          toast.success(`💰 Nova venda: ${sale.customer_name || 'Cliente balcão'} — R$ ${Number(sale.total).toFixed(2)}`, {
+            duration: 6000,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(salesChannel);
     };
-
-    fetchAlerts();
-
-    // Refresh every 2 minutes
-    const interval = setInterval(fetchAlerts, 120_000);
-    return () => clearInterval(interval);
-  }, [adminUserId]);
+  }, [adminUserId, fetchAlerts]);
 
   // Calculate repurchase alerts from sales data
   const repurchaseAlerts = useMemo(() => {
