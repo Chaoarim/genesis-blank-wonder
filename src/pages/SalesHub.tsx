@@ -139,6 +139,8 @@ const SalesHub = () => {
     switch (activeTab) {
       case 'dashboard':
         return <SalesDashboard stats={salesData.stats} onNewSale={goToNewSale} recentSales={salesData.sales.slice(0, 5)} allSales={salesData.allSales} sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name || null} adminUserId={sellerPerms.adminUserId} sellerAuthId={sellerPerms.isAdmin ? null : (user?.id || null)} />;
+      case 'kpis':
+        return <KPIPanel allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
       case 'new-sale':
         return (
           <NewSaleForm
