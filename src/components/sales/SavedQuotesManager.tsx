@@ -70,7 +70,7 @@ export function SavedQuotesManager({ adminUserId, customers, onCreateSale }: Pro
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
-
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
   const fetchQuotes = useCallback(async () => {
     if (!adminUserId) return;
     const { data } = await supabase
