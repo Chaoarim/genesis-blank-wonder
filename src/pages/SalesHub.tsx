@@ -62,6 +62,7 @@ const ReplenishmentSuggestions = lazy(() => import('@/components/sales/Replenish
 const ProductKitsManager = lazy(() => import('@/components/sales/ProductKitsManager').then(m => ({ default: m.ProductKitsManager })));
 const CashFlowProjection = lazy(() => import('@/components/sales/CashFlowProjection').then(m => ({ default: m.CashFlowProjection })));
 const WhatsAppNotifications = lazy(() => import('@/components/sales/WhatsAppNotifications').then(m => ({ default: m.WhatsAppNotifications })));
+const DistributorPriceImporter = lazy(() => import('@/components/sales/DistributorPriceImporter').then(m => ({ default: m.DistributorPriceImporter })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -270,6 +271,8 @@ const SalesHub = () => {
         return sellerPerms.isAdmin ? <AuditLogsViewer /> : null;
       case 'price-history':
         return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
+      case 'distributor-prices':
+        return <DistributorPriceImporter adminUserId={sellerPerms.adminUserId} />;
       case 'customer-profitability':
         return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
       case 'customer-interactions':
