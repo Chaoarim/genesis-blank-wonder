@@ -71,11 +71,19 @@ export function usePartsDatabase() {
               for (const row of data) {
                 const chaveBusca = (row.chave_de_busca || '').trim();
                 const aplicacaoFallback = `${row.marca_veiculo || ''} ${row.modelo_veiculo || ''} ${row.anos_aplicacao || ''}`.trim();
+                // Extract clean application text from chave_de_busca by removing
+                // fornecedor, codigo, and produto which are displayed separately
+                const cleanAplicacao = extractApplicationFromChave(
+                  chaveBusca,
+                  row.fabricante || '',
+                  row.codigo_peca || '',
+                  row.descricao || ''
+                ) || aplicacaoFallback || (row as any).catalogo || '';
                 allParts.push({
                   fornecedor: row.fabricante || '',
                   fabricante: row.codigo_peca || '',
                   produto: row.descricao || '',
-                  aplicacao: chaveBusca || aplicacaoFallback || (row as any).catalogo || '',
+                  aplicacao: cleanAplicacao,
                   marca: row.marca_veiculo || (row as any).catalogo || '',
                   modelo: row.modelo_veiculo || '',
                   ano: row.anos_aplicacao || '',
