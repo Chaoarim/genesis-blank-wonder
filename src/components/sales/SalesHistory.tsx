@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp, Search, Send, Printer, FileText, FileDown, Load
 import { exportToExcel } from '@/lib/exportExcel';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { printSale, downloadPdf, downloadQuotePdf } from '@/lib/salePrint';
+import { NfEditDialog, NfStatusBadge } from './NfEditDialog';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SalesHistoryProps {
