@@ -2,6 +2,44 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getRelevantPartsForAIFromList } from '@/features/catalogs/getRelevantPartsForAIFromList';
 
+/**
+ * Extracts the vehicle application text from chave_de_busca by removing
+ * the prefix parts (fornecedor, codigo, produto) that are displayed separately.
+ * Also deduplicates trailing vehicle brand/model appended redundantly.
+ */
+function extractApplicationFromChave(
+  chave: string,
+  fornecedor: string,
+  codigo: string,
+  produto: string
+): string {
+  if (!chave) return '';
+  let result = chave;
+  if (fornecedor) {
+    const fornIdx = result.indexOf(fornecedor);
+    if (fornIdx === 0) result = result.slice(fornecedor.length).trim();
+  }
+  if (codigo) {
+    const codeIdx = result.indexOf(codigo);
+    if (codeIdx >= 0 && codeIdx < 5) result = result.slice(codeIdx + codigo.length).trim();
+  }
+  if (produto) {
+    const prodIdx = result.indexOf(produto);
+    if (prodIdx >= 0 && prodIdx < 5) result = result.slice(prodIdx + produto.length).trim();
+  }
+  // Deduplicate trailing "MARCA MODELO" when "MARCA: MODELO ..." already exists
+  const colonMatch = result.match(/^([A-Z\u00C0-\u024F]+):\s*([A-Z\u00C0-\u024F0-9]+)\s/);
+  if (colonMatch) {
+    const brand = colonMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const model = colonMatch[2].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const trailingPattern = new RegExp(`\\s${brand}\\s+${model}\\s*$`, 'i');
+    if (trailingPattern.test(result)) {
+      result = result.replace(trailingPattern, '').trim();
+    }
+  }
+  return result;
+}
+
 const STOP_WORDS = new Set([
   'a','o','as','os','um','uma','uns','umas',
   'de','da','do','das','dos','d',
