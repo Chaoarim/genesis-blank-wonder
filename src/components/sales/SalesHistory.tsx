@@ -250,7 +250,8 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
                 </div>
               )}
             </Card>
-          ))}
+            );
+          })}
 
           {/* Load more */}
           {hasMore && (
