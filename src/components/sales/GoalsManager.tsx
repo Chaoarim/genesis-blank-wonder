@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Target, Trophy, Users, CalendarDays } from 'lucide-react';
+import { Target, Trophy, Users, CalendarDays, BarChart3 } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import type { SalesGoal, Sale } from '@/hooks/useSalesData';
 import type { SellerUser } from '@/hooks/useSellerPermissions';
 
