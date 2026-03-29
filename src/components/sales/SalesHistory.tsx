@@ -217,6 +217,14 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
                       )}
                       {sale.notes && <p className="text-xs text-muted-foreground italic">{sale.notes}</p>}
                       <div className="flex flex-wrap gap-2 pt-2">
+                        <NfEditDialog
+                          saleId={sale.id}
+                          nfNumero={nfData.nf_numero}
+                          nfSerie={nfData.nf_serie}
+                          nfChave={nfData.nf_chave}
+                          nfStatus={nfData.nf_status}
+                          onUpdated={(id, data) => setNfOverrides(prev => ({ ...prev, [id]: data }))}
+                        />
                         <Button variant="outline" size="sm" onClick={() => printSale(sale, itemsCache[sale.id])} className="gap-1">
                           <Printer className="w-3 h-3" /> Imprimir
                         </Button>
