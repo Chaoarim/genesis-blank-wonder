@@ -279,9 +279,10 @@ const SalesHub = () => {
               {/* Quick links */}
               <div className="flex items-center gap-1">
                 <ThemeToggle />
-                {sellerPerms.isAdmin && (
+                {user && (
                   <NotificationsDropdown
                     adminUserId={sellerPerms.adminUserId}
+                    currentAuthId={user?.id || null}
                     sales={salesData.allSales}
                     customers={salesData.allCustomers}
                     onNavigate={setActiveTab}

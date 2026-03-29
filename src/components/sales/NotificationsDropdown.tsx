@@ -19,6 +19,7 @@ interface Notification {
 
 interface NotificationsDropdownProps {
   adminUserId: string | null;
+  currentAuthId: string | null;
   sales: Array<{ customer_name: string | null; customer_id: string | null; created_at: string; status: string }>;
   customers: Array<{ id: string; name: string }>;
   onNavigate: (tab: string) => void;
@@ -26,7 +27,7 @@ interface NotificationsDropdownProps {
 
 const REPURCHASE_DAYS = 30;
 
-export function NotificationsDropdown({ adminUserId, sales, customers, onNavigate }: NotificationsDropdownProps) {
+export function NotificationsDropdown({ adminUserId, currentAuthId, sales, customers, onNavigate }: NotificationsDropdownProps) {
   const [lowStockItems, setLowStockItems] = useState<Array<{ codigo: string; produto: string; qtd_estoque: number }>>([]);
   const [pendingOrders, setPendingOrders] = useState<Array<{ id: string; customer_name: string; total: number; created_at: string }>>([]);
   const [overduePayables, setOverduePayables] = useState<Array<{ id: string; supplier_name: string; amount: number; due_date: string }>>([]);
@@ -81,30 +82,47 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
     return () => clearInterval(interval);
   }, [adminUserId, fetchAlerts]);
 
-  // Supabase Realtime: new catalog orders
+  // Supabase Realtime subscriptions
   useEffect(() => {
-    if (!adminUserId) return;
+    if (!adminUserId && !currentAuthId) return;
 
     const ordersChannel = supabase
       .channel('realtime-catalog-orders')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'catalog_orders' },
-        (payload) => {
+        async (payload) => {
           const order = payload.new as any;
-          if (order.seller_id !== adminUserId) return;
+          
+          // Check if admin should see this
+          const isAdmin = order.seller_id === adminUserId && currentAuthId === adminUserId;
+          
+          // Check if current user is the seller assigned to this customer
+          let isAssignedSeller = false;
+          if (currentAuthId && currentAuthId !== adminUserId && order.customer_id) {
+            const { data: customer } = await supabase
+              .from('customers')
+              .select('seller_auth_id')
+              .eq('id', order.customer_id)
+              .maybeSingle();
+            isAssignedSeller = customer?.seller_auth_id === currentAuthId;
+          }
+
+          if (!isAdmin && !isAssignedSeller) return;
+
+          const label = isAssignedSeller && !isAdmin ? '🛒 Pedido do seu cliente!' : '🛒 Novo pedido do catálogo!';
           const alert: Notification = {
             id: `rt-order-${order.id}`,
             type: 'new-order',
-            title: '🛒 Novo pedido do catálogo!',
+            title: label,
             description: `${order.customer_name} — R$ ${Number(order.total).toFixed(2)}`,
             icon: ShoppingCart,
             color: 'text-blue-500',
             timestamp: order.created_at,
           };
           setRealtimeAlerts(prev => [alert, ...prev.slice(0, 19)]);
-          fetchAlerts(); // refresh pending orders count
-          toast.info(`🛒 Novo pedido: ${order.customer_name} — R$ ${Number(order.total).toFixed(2)}`, {
+          fetchAlerts();
+          toast.info(`${label} ${order.customer_name} — R$ ${Number(order.total).toFixed(2)}`, {
             duration: 6000,
           });
         }
@@ -118,18 +136,26 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
         { event: 'INSERT', schema: 'public', table: 'sales' },
         (payload) => {
           const sale = payload.new as any;
-          if (sale.user_id !== adminUserId) return;
+          
+          // Admin sees all sales for their account
+          const isAdmin = sale.user_id === adminUserId && currentAuthId === adminUserId;
+          // Seller sees their own sales
+          const isOwnSale = sale.seller_auth_id === currentAuthId && currentAuthId !== adminUserId;
+
+          if (!isAdmin && !isOwnSale) return;
+
+          const label = isOwnSale && !isAdmin ? '💰 Sua venda foi registrada!' : '💰 Nova venda registrada!';
           const alert: Notification = {
             id: `rt-sale-${sale.id}`,
             type: 'new-sale',
-            title: '💰 Nova venda registrada!',
+            title: label,
             description: `${sale.customer_name || 'Cliente balcão'} — R$ ${Number(sale.total).toFixed(2)}${sale.seller_name ? ` (${sale.seller_name})` : ''}`,
             icon: Zap,
             color: 'text-green-500',
             timestamp: sale.created_at,
           };
           setRealtimeAlerts(prev => [alert, ...prev.slice(0, 19)]);
-          toast.success(`💰 Nova venda: ${sale.customer_name || 'Cliente balcão'} — R$ ${Number(sale.total).toFixed(2)}`, {
+          toast.success(`${label} ${sale.customer_name || 'Cliente balcão'} — R$ ${Number(sale.total).toFixed(2)}`, {
             duration: 6000,
           });
         }
@@ -140,7 +166,7 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(salesChannel);
     };
-  }, [adminUserId, fetchAlerts]);
+  }, [adminUserId, currentAuthId, fetchAlerts]);
 
   // Calculate repurchase alerts from sales data
   const repurchaseAlerts = useMemo(() => {
