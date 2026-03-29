@@ -254,6 +254,8 @@ const SalesHub = () => {
         return <RepurchaseAlerts sales={salesData.sales} customers={salesData.customers} />;
       case 'supplier-contacts':
         return user ? <SupplierContactsManager userId={sellerPerms.adminUserId || user.id} /> : null;
+      case 'product-kits':
+        return <ProductKitsManager adminUserId={sellerPerms.adminUserId} />;
       case 'report':
         if (sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.allSales} userId={user.id} />;
         if (!sellerPerms.isAdmin && user) return <SellerCommissionsReport sales={salesData.sales} userId={sellerPerms.adminUserId ?? user.id} sellerName={sellerPerms.sellerRecord?.name} />;
