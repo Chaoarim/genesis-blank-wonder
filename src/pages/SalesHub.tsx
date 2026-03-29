@@ -49,6 +49,7 @@ const AuditLogsViewer = lazy(() => import('@/components/sales/AuditLogsViewer').
 const MonthlyReport = lazy(() => import('@/components/sales/MonthlyReport').then(m => ({ default: m.MonthlyReport })));
 const PriceHistoryViewer = lazy(() => import('@/components/sales/PriceHistoryViewer').then(m => ({ default: m.PriceHistoryViewer })));
 const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').then(m => ({ default: m.BillingCalendar })));
+const CustomerProfitabilityReport = lazy(() => import('@/components/sales/CustomerProfitabilityReport').then(m => ({ default: m.CustomerProfitabilityReport })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -240,6 +241,8 @@ const SalesHub = () => {
         return sellerPerms.isAdmin ? <AuditLogsViewer /> : null;
       case 'price-history':
         return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
+      case 'customer-profitability':
+        return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
       case 'billing-calendar':
         return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
       case 'help':
