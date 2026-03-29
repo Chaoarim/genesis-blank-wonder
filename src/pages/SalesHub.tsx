@@ -149,6 +149,8 @@ const SalesHub = () => {
         return <SalesByChannelReport allSales={salesData.allSales} />;
       case 'demand-forecast':
         return <DemandForecast allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
+      case 'saved-quotes':
+        return <SavedQuotesManager adminUserId={sellerPerms.adminUserId} customers={salesData.allCustomers} onCreateSale={salesData.createSale} />;
       case 'new-sale':
         return (
           <NewSaleForm
