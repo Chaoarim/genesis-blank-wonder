@@ -170,7 +170,9 @@ export function SalesHistory({ sales, onDeleteSale, getSaleItems, onDuplicateSal
         <p className="text-center text-muted-foreground py-10">Nenhuma venda encontrada</p>
       ) : (
         <div className="space-y-2">
-          {visible.map(sale => (
+          {visible.map(sale => {
+            const nfData = nfOverrides[sale.id] || { nf_numero: sale.nf_numero, nf_serie: sale.nf_serie, nf_chave: sale.nf_chave, nf_status: sale.nf_status || 'sem_nf' };
+            return (
             <Card key={sale.id} className="overflow-hidden">
               <button onClick={() => toggleExpand(sale.id)} className="w-full p-4 flex items-center justify-between text-left hover:bg-muted/30 transition-colors">
                 <div className="flex-1 min-w-0">
