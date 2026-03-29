@@ -61,6 +61,7 @@ const CustomerInteractions = lazy(() => import('@/components/sales/CustomerInter
 const ReplenishmentSuggestions = lazy(() => import('@/components/sales/ReplenishmentSuggestions').then(m => ({ default: m.ReplenishmentSuggestions })));
 const ProductKitsManager = lazy(() => import('@/components/sales/ProductKitsManager').then(m => ({ default: m.ProductKitsManager })));
 const CashFlowProjection = lazy(() => import('@/components/sales/CashFlowProjection').then(m => ({ default: m.CashFlowProjection })));
+const WhatsAppNotifications = lazy(() => import('@/components/sales/WhatsAppNotifications').then(m => ({ default: m.WhatsAppNotifications })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -279,6 +280,8 @@ const SalesHub = () => {
         return <CustomerPriceTiers adminUserId={sellerPerms.adminUserId} customers={salesData.allCustomers} onUpdateCustomer={salesData.updateCustomer} />;
       case 'backup-excel':
         return <BackupExcelDownload adminUserId={sellerPerms.adminUserId} />;
+      case 'whatsapp-notif':
+        return <WhatsAppNotifications adminUserId={sellerPerms.adminUserId} allSales={salesData.allSales} sellers={sellerPerms.sellers} goals={salesData.goals} />;
       case 'help':
         return <HelpGuide />;
       default:
