@@ -271,6 +271,8 @@ const SalesHub = () => {
         return sellerPerms.isAdmin ? <AuditLogsViewer /> : null;
       case 'price-history':
         return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
+      case 'distributor-prices':
+        return <DistributorPriceImporter adminUserId={sellerPerms.adminUserId} />;
       case 'customer-profitability':
         return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
       case 'customer-interactions':
