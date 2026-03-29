@@ -263,121 +263,119 @@ export function SavedQuotesManager({ adminUserId, customers, onCreateSale }: Pro
 
       {/* List view */}
       {viewMode === 'list' && (
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <FileText className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-muted-foreground">Nenhum orçamento encontrado</p>
-            <p className="text-xs text-muted-foreground mt-1">Os orçamentos criados na busca de peças aparecerão aqui</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(quote => {
-            const isExpanded = expandedId === quote.id;
-            const statusInfo = STATUS_MAP[quote.status] || STATUS_MAP.pending;
+        filtered.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <FileText className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-muted-foreground">Nenhum orçamento encontrado</p>
+              <p className="text-xs text-muted-foreground mt-1">Os orçamentos criados na busca de peças aparecerão aqui</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(quote => {
+              const isExpanded = expandedId === quote.id;
+              const statusInfo = STATUS_MAP[quote.status] || STATUS_MAP.pending;
 
-            return (
-              <Card key={quote.id} className="border-border/50">
-                <CardContent className="p-4">
-                  {/* Header row */}
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <button onClick={() => setExpandedId(isExpanded ? null : quote.id)} className="shrink-0">
-                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">
-                          {quote.customer_name || 'Cliente não informado'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          #{quote.id.slice(0, 8)} • {format(new Date(quote.created_at), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}
-                          {' • '}{quote.items.length} {quote.items.length === 1 ? 'item' : 'itens'}
-                        </p>
+              return (
+                <Card key={quote.id} className="border-border/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <button onClick={() => setExpandedId(isExpanded ? null : quote.id)} className="shrink-0">
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
+                            {quote.customer_name || 'Cliente não informado'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            #{quote.id.slice(0, 8)} • {format(new Date(quote.created_at), "dd/MM/yy 'às' HH:mm", { locale: ptBR })}
+                            {' • '}{quote.items.length} {quote.items.length === 1 ? 'item' : 'itens'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${statusInfo.color} border-0`}>{statusInfo.label}</Badge>
+                        <span className="font-bold text-sm">
+                          R$ {Number(quote.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${statusInfo.color} border-0`}>{statusInfo.label}</Badge>
-                      <span className="font-bold text-sm">
-                        R$ {Number(quote.total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Expanded details */}
-                  {isExpanded && (
-                    <div className="mt-4 space-y-3">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Código</TableHead>
-                            <TableHead>Produto</TableHead>
-                            <TableHead className="text-right">Qtde</TableHead>
-                            <TableHead className="text-right">Preço Unit.</TableHead>
-                            <TableHead className="text-right">Subtotal</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {quote.items.map((item, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="font-mono text-xs">{item.codigo}</TableCell>
-                              <TableCell className="text-sm">{item.produto}</TableCell>
-                              <TableCell className="text-right">{item.quantidade}</TableCell>
-                              <TableCell className="text-right">R$ {Number(item.preco_unitario).toFixed(2)}</TableCell>
-                              <TableCell className="text-right font-medium">R$ {(item.quantidade * item.preco_unitario).toFixed(2)}</TableCell>
+                    {isExpanded && (
+                      <div className="mt-4 space-y-3">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Código</TableHead>
+                              <TableHead>Produto</TableHead>
+                              <TableHead className="text-right">Qtde</TableHead>
+                              <TableHead className="text-right">Preço Unit.</TableHead>
+                              <TableHead className="text-right">Subtotal</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {quote.items.map((item, idx) => (
+                              <TableRow key={idx}>
+                                <TableCell className="font-mono text-xs">{item.codigo}</TableCell>
+                                <TableCell className="text-sm">{item.produto}</TableCell>
+                                <TableCell className="text-right">{item.quantidade}</TableCell>
+                                <TableCell className="text-right">R$ {Number(item.preco_unitario).toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-medium">R$ {(item.quantidade * item.preco_unitario).toFixed(2)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
 
-                      {quote.discount > 0 && (
-                        <p className="text-sm text-muted-foreground">Desconto: R$ {Number(quote.discount).toFixed(2)}</p>
-                      )}
-                      {quote.notes && (
-                        <p className="text-sm text-muted-foreground">Obs: {quote.notes}</p>
-                      )}
-                      {quote.expires_at && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> Válido até {format(new Date(quote.expires_at), 'dd/MM/yyyy', { locale: ptBR })}
-                        </p>
-                      )}
+                        {quote.discount > 0 && (
+                          <p className="text-sm text-muted-foreground">Desconto: R$ {Number(quote.discount).toFixed(2)}</p>
+                        )}
+                        {quote.notes && (
+                          <p className="text-sm text-muted-foreground">Obs: {quote.notes}</p>
+                        )}
+                        {quote.expires_at && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Válido até {format(new Date(quote.expires_at), 'dd/MM/yyyy', { locale: ptBR })}
+                          </p>
+                        )}
 
-                      {/* Actions */}
-                      <div className="flex gap-2 flex-wrap pt-2 border-t border-border">
-                        {quote.status === 'pending' && (
-                          <>
+                        <div className="flex gap-2 flex-wrap pt-2 border-t border-border">
+                          {quote.status === 'pending' && (
+                            <>
+                              <Button size="sm" onClick={() => handleConvertToSale(quote)} className="gap-1.5">
+                                <CheckCircle className="w-3.5 h-3.5" /> Converter em Venda
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(quote.id, 'approved')} className="gap-1.5">
+                                <CheckCircle className="w-3.5 h-3.5" /> Aprovar
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(quote.id, 'rejected')} className="gap-1.5 text-destructive">
+                                <X className="w-3.5 h-3.5" /> Recusar
+                              </Button>
+                            </>
+                          )}
+                          {quote.status === 'approved' && (
                             <Button size="sm" onClick={() => handleConvertToSale(quote)} className="gap-1.5">
                               <CheckCircle className="w-3.5 h-3.5" /> Converter em Venda
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(quote.id, 'approved')} className="gap-1.5">
-                              <CheckCircle className="w-3.5 h-3.5" /> Aprovar
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(quote.id, 'rejected')} className="gap-1.5 text-destructive">
-                              <X className="w-3.5 h-3.5" /> Recusar
-                            </Button>
-                          </>
-                        )}
-                        {quote.status === 'approved' && (
-                          <Button size="sm" onClick={() => handleConvertToSale(quote)} className="gap-1.5">
-                            <CheckCircle className="w-3.5 h-3.5" /> Converter em Venda
+                          )}
+                          <Button size="sm" variant="outline" onClick={() => handleSendWhatsApp(quote)} className="gap-1.5">
+                            <Send className="w-3.5 h-3.5" /> WhatsApp
                           </Button>
-                        )}
-                        <Button size="sm" variant="outline" onClick={() => handleSendWhatsApp(quote)} className="gap-1.5">
-                          <Send className="w-3.5 h-3.5" /> WhatsApp
-                        </Button>
-                        {quote.status !== 'converted' && (
-                          <Button size="sm" variant="ghost" className="gap-1.5 text-destructive" onClick={() => handleDelete(quote.id)}>
-                            <Trash2 className="w-3.5 h-3.5" /> Excluir
-                          </Button>
-                        )}
+                          {quote.status !== 'converted' && (
+                            <Button size="sm" variant="ghost" className="gap-1.5 text-destructive" onClick={() => handleDelete(quote.id)}>
+                              <Trash2 className="w-3.5 h-3.5" /> Excluir
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )
       )}
     </div>
   );
