@@ -23,6 +23,8 @@ interface Commission {
   reference: string | null;
   commission_percent: number;
   commission_fixed: number;
+  seller_auth_id: string | null;
+  seller_name: string | null;
 }
 
 interface Props {
