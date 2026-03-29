@@ -54,6 +54,7 @@ const CommissionPaymentsManager = lazy(() => import('@/components/sales/Commissi
 const BackupExcelDownload = lazy(() => import('@/components/sales/BackupExcelDownload').then(m => ({ default: m.BackupExcelDownload })));
 const KPIPanel = lazy(() => import('@/components/sales/KPIPanel').then(m => ({ default: m.KPIPanel })));
 const SalesByChannelReport = lazy(() => import('@/components/sales/SalesByChannelReport').then(m => ({ default: m.SalesByChannelReport })));
+const DemandForecast = lazy(() => import('@/components/sales/DemandForecast').then(m => ({ default: m.DemandForecast })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -144,6 +145,8 @@ const SalesHub = () => {
         return <KPIPanel allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
       case 'sales-by-channel':
         return <SalesByChannelReport allSales={salesData.allSales} />;
+      case 'demand-forecast':
+        return <DemandForecast allSales={salesData.allSales} adminUserId={sellerPerms.adminUserId} />;
       case 'new-sale':
         return (
           <NewSaleForm
