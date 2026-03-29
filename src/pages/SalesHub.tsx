@@ -52,6 +52,7 @@ const BillingCalendar = lazy(() => import('@/components/sales/BillingCalendar').
 const CustomerProfitabilityReport = lazy(() => import('@/components/sales/CustomerProfitabilityReport').then(m => ({ default: m.CustomerProfitabilityReport })));
 const CommissionPaymentsManager = lazy(() => import('@/components/sales/CommissionPaymentsManager').then(m => ({ default: m.CommissionPaymentsManager })));
 const BackupExcelDownload = lazy(() => import('@/components/sales/BackupExcelDownload').then(m => ({ default: m.BackupExcelDownload })));
+const KPIPanel = lazy(() => import('@/components/sales/KPIPanel').then(m => ({ default: m.KPIPanel })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">

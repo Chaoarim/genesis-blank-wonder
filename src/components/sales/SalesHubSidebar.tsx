@@ -23,6 +23,7 @@ interface TabDef {
 const MENU_ITEMS: TabDef[] = [
   // 🛒 Vendas
   { value: 'dashboard', icon: BarChart3, label: 'Dashboard', group: 'Vendas' },
+  { value: 'kpis', icon: TrendingUp, label: 'KPIs', group: 'Vendas' },
   { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vendas' },
   { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vendas' },
   { value: 'history', icon: History, label: 'Histórico', group: 'Vendas' },
