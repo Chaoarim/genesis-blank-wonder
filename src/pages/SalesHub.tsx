@@ -11,6 +11,7 @@ import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { BarChart3, LogOut, Zap, Search, ExternalLink, Copy, Share2, Loader2, Keyboard } from 'lucide-react';
+import { CatalogQRCode } from '@/components/dashboard/CatalogQRCode';
 import { ThemeToggle } from '@/components/sales/ThemeToggle';
 import { toast } from 'sonner';
 import { NotificationsDropdown } from '@/components/sales/NotificationsDropdown';
