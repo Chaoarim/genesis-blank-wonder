@@ -34,6 +34,7 @@ interface SavedQuote {
   discount: number;
   notes: string | null;
   status: string;
+  pipeline_stage: string;
   expires_at: string | null;
   converted_sale_id: string | null;
   created_at: string;
