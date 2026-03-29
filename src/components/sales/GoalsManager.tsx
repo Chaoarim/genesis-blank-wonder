@@ -224,6 +224,52 @@ export function GoalsManager({ goals, stats, onSetGoal, onDeleteGoal, isAdmin, s
         </Card>
       )}
 
+      {/* Historical comparison chart */}
+      {visibleGoals.length > 1 && sales && (() => {
+        const chartData = visibleGoals
+          .sort((a, b) => a.year === b.year ? a.month - b.month : a.year - b.year)
+          .slice(-6)
+          .map(g => {
+            const sellerSales = sales.filter(s => {
+              if (s.status !== 'completed') return false;
+              const d = new Date(s.created_at);
+              if (d.getMonth() + 1 !== g.month || d.getFullYear() !== g.year) return false;
+              if (g.seller_auth_id) return s.seller_auth_id === g.seller_auth_id;
+              return true;
+            });
+            const realized = sellerSales.reduce((sum, s) => sum + Number(s.total), 0);
+            return {
+              label: `${MONTHS[g.month - 1].slice(0, 3)}/${String(g.year).slice(2)}`,
+              meta: Number(g.goal_amount),
+              realizado: realized,
+            };
+          });
+
+        const chartConfig = {
+          meta: { label: 'Meta', color: 'hsl(var(--primary))' },
+          realizado: { label: 'Realizado', color: 'hsl(142 76% 36%)' },
+        };
+
+        return (
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">Comparativo de Metas</h3>
+            </div>
+            <ChartContainer config={chartConfig} className="h-[220px] w-full">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} width={40} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="meta" fill="var(--color-meta)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="realizado" fill="var(--color-realizado)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </Card>
+        );
+      })()}
+
       {/* Goal history */}
       {visibleGoals.length > 0 && (
         <Card className="p-4">
