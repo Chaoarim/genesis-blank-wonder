@@ -246,6 +246,7 @@ export function NotificationsDropdown({ adminUserId, sales, customers, onNavigat
     setOpen(false);
     if (n.type === 'low-stock') onNavigate('low-stock');
     else if (n.type === 'new-order') onNavigate('orders');
+    else if (n.type === 'new-sale') onNavigate('history');
     else if (n.type === 'repurchase') onNavigate('repurchase-alerts');
     else if (n.type === 'overdue') {
       if (n.id.startsWith('payable-')) onNavigate('accounts-payable');
