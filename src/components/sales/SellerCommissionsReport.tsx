@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, DollarSign, Users, TrendingUp, Printer, FileDown } from 'lucide-react';
+import { BarChart3, DollarSign, Users, TrendingUp, Printer, FileDown, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadHtmlAsPdf, printHtml } from '@/lib/htmlToPdf';
+import { exportToExcel } from '@/lib/exportExcel';
 import type { Sale, SaleItem } from '@/hooks/useSalesData';
 
 interface SellerSummary {
