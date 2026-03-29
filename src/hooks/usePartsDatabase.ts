@@ -331,7 +331,12 @@ export function usePartsDatabase() {
         return codeHits
           .slice(0, 120)
           .map((p) => {
-            const app = (p.chaveDeBusca || p.aplicacao || '').trim();
+            const app = extractApplicationFromChave(
+              (p.chaveDeBusca || p.aplicacao || '').trim(),
+              p.fornecedor,
+              p.fabricante,
+              p.produto
+            );
             const ctx = (p.contextoIA || '').trim();
             return `${p.fornecedor}|${p.fabricante}|${p.produto}|${app}|${ctx}`;
           })
