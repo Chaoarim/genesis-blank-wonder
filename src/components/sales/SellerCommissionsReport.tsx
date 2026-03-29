@@ -316,6 +316,9 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
           <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={filteredSales.length === 0}>
             <FileDown className="w-4 h-4 mr-1" /> PDF
           </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={filteredSales.length === 0}>
+            <FileSpreadsheet className="w-4 h-4 mr-1" /> Excel
+          </Button>
         </div>
       </div>
 
