@@ -301,6 +301,56 @@ export type Database = {
           },
         ]
       }
+      customer_interactions: {
+        Row: {
+          channel: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          id: string
+          scheduled_at: string | null
+          seller_auth_id: string | null
+          seller_name: string | null
+          subject: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          id?: string
+          scheduled_at?: string | null
+          seller_auth_id?: string | null
+          seller_name?: string | null
+          subject?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          id?: string
+          scheduled_at?: string | null
+          seller_auth_id?: string | null
+          seller_name?: string | null
+          subject?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_interactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_price_tiers: {
         Row: {
           created_at: string

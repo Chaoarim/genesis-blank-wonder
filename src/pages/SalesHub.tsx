@@ -57,6 +57,7 @@ const SalesByChannelReport = lazy(() => import('@/components/sales/SalesByChanne
 const DemandForecast = lazy(() => import('@/components/sales/DemandForecast').then(m => ({ default: m.DemandForecast })));
 const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTiers').then(m => ({ default: m.CustomerPriceTiers })));
 const SavedQuotesManager = lazy(() => import('@/components/sales/SavedQuotesManager').then(m => ({ default: m.SavedQuotesManager })));
+const CustomerInteractions = lazy(() => import('@/components/sales/CustomerInteractions').then(m => ({ default: m.CustomerInteractions })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -261,6 +262,8 @@ const SalesHub = () => {
         return <PriceHistoryViewer adminUserId={sellerPerms.adminUserId} />;
       case 'customer-profitability':
         return <CustomerProfitabilityReport sales={salesData.allSales} customers={salesData.allCustomers} adminUserId={sellerPerms.adminUserId} />;
+      case 'customer-interactions':
+        return <CustomerInteractions adminUserId={sellerPerms.adminUserId} customers={salesData.allCustomers} sellerName={sellerPerms.isAdmin ? null : sellerPerms.sellerRecord?.name} sellerAuthId={sellerPerms.isAdmin ? null : (user?.id || null)} />;
       case 'billing-calendar':
         return <BillingCalendar sales={salesData.allSales} customers={salesData.allCustomers} payables={payables} />;
       case 'customer-price-tiers':
