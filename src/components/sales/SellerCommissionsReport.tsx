@@ -23,6 +23,8 @@ interface Commission {
   reference: string | null;
   commission_percent: number;
   commission_fixed: number;
+  seller_auth_id: string | null;
+  seller_name: string | null;
 }
 
 interface Props {
@@ -110,29 +112,36 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
   const calcCommission = useCallback((sale: Sale): number => {
     if (commissions.length === 0) return 0;
     let total = 0;
+    const sellerAuthId = sale.seller_auth_id || null;
+
+    // Helper: get applicable rules - seller-specific first, then global fallback
+    const getApplicableRules = (type: string) => {
+      const sellerRules = commissions.filter(c => c.type === type && c.seller_auth_id === sellerAuthId && sellerAuthId);
+      const globalRules = commissions.filter(c => c.type === type && !c.seller_auth_id);
+      // Use seller-specific if any exist for this type, otherwise use global
+      return sellerRules.length > 0 ? sellerRules : globalRules;
+    };
 
     // Order-level commissions
-    const orderRules = commissions.filter(c => c.type === 'order');
+    const orderRules = getApplicableRules('order');
     for (const rule of orderRules) {
       total += Number(sale.total) * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
     }
 
     // Product and supplier-level commissions (per item)
     const items = saleItemsMap[sale.id] || [];
-    const productRules = commissions.filter(c => c.type === 'product');
-    const supplierRules = commissions.filter(c => c.type === 'supplier');
+    const productRules = getApplicableRules('product');
+    const supplierRules = getApplicableRules('supplier');
 
     for (const item of items) {
       const itemTotal = Number(item.quantidade) * Number(item.preco_unitario);
 
-      // Product rules: match by codigo
       for (const rule of productRules) {
         if (rule.reference && item.codigo.toLowerCase() === rule.reference.toLowerCase()) {
           total += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
         }
       }
 
-      // Supplier rules: match by fornecedor
       for (const rule of supplierRules) {
         if (rule.reference && item.fornecedor && item.fornecedor.toLowerCase().includes(rule.reference.toLowerCase())) {
           total += itemTotal * (Number(rule.commission_percent) / 100) + Number(rule.commission_fixed);
@@ -286,12 +295,13 @@ export function SellerCommissionsReport({ sales, userId, sellerName }: Props) {
             <div className="flex flex-wrap gap-2">
               {commissions.map(c => {
                 const typeLabel = c.type === 'order' ? 'Pedido' : c.type === 'product' ? `Produto: ${c.reference}` : `Fornec: ${c.reference}`;
+                const sellerLabel = c.seller_name ? `[${c.seller_name}]` : '[Global]';
                 const values = [];
                 if (Number(c.commission_percent) > 0) values.push(`${c.commission_percent}%`);
                 if (Number(c.commission_fixed) > 0) values.push(`R$${Number(c.commission_fixed).toFixed(2)}`);
                 return (
                   <Badge key={c.id} variant="outline" className="text-xs bg-background">
-                    {typeLabel} → {values.join(' + ')}
+                    {sellerLabel} {typeLabel} → {values.join(' + ')}
                   </Badge>
                 );
               })}

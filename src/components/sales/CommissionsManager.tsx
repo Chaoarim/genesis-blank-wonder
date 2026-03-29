@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, DollarSign } from 'lucide-react';
+import { PlusCircle, DollarSign, Users } from 'lucide-react';
 import { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +16,14 @@ interface Commission {
   reference: string | null;
   commission_percent: number;
   commission_fixed: number;
+  seller_auth_id: string | null;
+  seller_name: string | null;
+}
+
+interface Seller {
+  id: string;
+  name: string;
+  seller_auth_id: string | null;
 }
 
 interface Props {
@@ -30,24 +38,36 @@ const TYPE_LABELS: Record<string, string> = {
 
 export function CommissionsManager({ userId }: Props) {
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState('order');
   const [reference, setReference] = useState('');
   const [percent, setPercent] = useState('');
   const [fixed, setFixed] = useState('');
+  const [selectedSeller, setSelectedSeller] = useState('global');
+  const [filterSeller, setFilterSeller] = useState('all');
 
-  const fetch = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('sales_commissions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('type');
-    setCommissions((data || []) as Commission[]);
+    const [{ data: commData }, { data: sellerData }] = await Promise.all([
+      supabase
+        .from('sales_commissions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('type'),
+      supabase
+        .from('seller_users')
+        .select('id, name, seller_auth_id')
+        .eq('admin_user_id', userId)
+        .eq('is_active', true)
+        .order('name'),
+    ]);
+    setCommissions((commData || []) as Commission[]);
+    setSellers((sellerData || []) as Seller[]);
     setLoading(false);
   }, [userId]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleAdd = async () => {
     const pct = parseFloat(percent) || 0;
@@ -58,12 +78,16 @@ export function CommissionsManager({ userId }: Props) {
       return;
     }
 
+    const seller = sellers.find(s => s.seller_auth_id === selectedSeller);
+
     const { error } = await supabase.from('sales_commissions').insert({
       user_id: userId,
       type,
       reference: type === 'order' ? null : reference.trim(),
       commission_percent: pct,
       commission_fixed: fix,
+      seller_auth_id: selectedSeller === 'global' ? null : selectedSeller,
+      seller_name: selectedSeller === 'global' ? null : (seller?.name || null),
     });
 
     if (error) { toast.error('Erro ao salvar'); return; }
@@ -71,7 +95,7 @@ export function CommissionsManager({ userId }: Props) {
     setReference('');
     setPercent('');
     setFixed('');
-    fetch();
+    fetchData();
   };
 
   const handleDelete = async (id: string) => {
@@ -79,6 +103,12 @@ export function CommissionsManager({ userId }: Props) {
     setCommissions(prev => prev.filter(c => c.id !== id));
     toast.success('Comissão removida');
   };
+
+  const filtered = filterSeller === 'all'
+    ? commissions
+    : filterSeller === 'global'
+      ? commissions.filter(c => !c.seller_auth_id)
+      : commissions.filter(c => c.seller_auth_id === filterSeller);
 
   return (
     <div className="space-y-6">
@@ -90,7 +120,26 @@ export function CommissionsManager({ userId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {/* Seller selector */}
+            <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+              <SelectTrigger>
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="global">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" /> Global (todos)
+                  </span>
+                </SelectItem>
+                {sellers.map(s => (
+                  <SelectItem key={s.seller_auth_id || s.id} value={s.seller_auth_id || s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={type} onValueChange={setType}>
               <SelectTrigger>
                 <SelectValue />
@@ -134,20 +183,39 @@ export function CommissionsManager({ userId }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Regras de Comissão ({commissions.length})</CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle>Regras de Comissão ({filtered.length})</CardTitle>
+            <Select value={filterSeller} onValueChange={setFilterSeller}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Regras</SelectItem>
+                <SelectItem value="global">Globais</SelectItem>
+                {sellers.map(s => (
+                  <SelectItem key={s.seller_auth_id || s.id} value={s.seller_auth_id || s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
-          {commissions.length === 0 ? (
+          {filtered.length === 0 ? (
             <p className="text-muted-foreground text-sm text-center py-4">Nenhuma regra configurada</p>
           ) : (
             <>
               {/* Mobile: Cards */}
               <div className="space-y-2 md:hidden">
-                {commissions.map(c => (
+                {filtered.map(c => (
                   <div key={c.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline">{TYPE_LABELS[c.type] || c.type}</Badge>
+                        <Badge variant={c.seller_auth_id ? 'default' : 'secondary'} className="text-[10px]">
+                          {c.seller_name || 'Global'}
+                        </Badge>
                         {c.reference && <span className="text-xs text-muted-foreground truncate">{c.reference}</span>}
                       </div>
                       <div className="flex items-center gap-3 text-sm">
@@ -168,6 +236,7 @@ export function CommissionsManager({ userId }: Props) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Vendedor</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Referência</TableHead>
                       <TableHead>%</TableHead>
@@ -176,8 +245,13 @@ export function CommissionsManager({ userId }: Props) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {commissions.map(c => (
+                    {filtered.map(c => (
                       <TableRow key={c.id}>
+                        <TableCell>
+                          <Badge variant={c.seller_auth_id ? 'default' : 'secondary'} className="text-xs">
+                            {c.seller_name || 'Global'}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{TYPE_LABELS[c.type] || c.type}</Badge>
                         </TableCell>
