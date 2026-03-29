@@ -46,6 +46,8 @@ interface SalesDashboardProps {
   recentSales: Sale[];
   allSales: Sale[];
   sellerName?: string | null;
+  adminUserId?: string | null;
+  sellerAuthId?: string | null;
 }
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
