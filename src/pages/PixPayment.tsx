@@ -77,18 +77,24 @@ const PixPayment = () => {
           </h1>
           
           <div className="space-y-6">
-            {/* Flash Offer Banner */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg p-4">
-              <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Oferta Relâmpago</p>
+            {/* Plan Banner */}
+            <div className="bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg p-4">
+              <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">🎯 Plano Anual Profissional</p>
               <div className="flex items-center justify-center gap-2">
-                <span className="text-lg line-through opacity-70">R$ 49,00</span>
-                <span className="text-3xl font-bold">R$ 20,00</span>
+                <span className="text-lg line-through opacity-70">R$ 480,00</span>
+                <span className="text-3xl font-bold">R$ 297,00</span>
+                <span className="text-sm opacity-80">/ano</span>
               </div>
-              <div className="flex items-center justify-center gap-2 mt-2 bg-white/20 rounded-full py-1 px-3">
-                <Users className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  Restam apenas <strong>{spotsLeft}</strong> vagas dos 100 primeiros!
-                </span>
+              <p className="text-xs text-center opacity-80 mt-1">equivale a R$ 24,75/mês — menos de R$ 1 por dia</p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="bg-primary-foreground/15 rounded-lg p-2 text-center">
+                  <p className="text-[10px] font-semibold">PIX à vista</p>
+                  <p className="text-sm font-bold">R$ 297,00</p>
+                </div>
+                <div className="bg-primary-foreground/15 rounded-lg p-2 text-center">
+                  <p className="text-[10px] font-semibold">Cartão 12x</p>
+                  <p className="text-sm font-bold">12x R$ 29,66</p>
+                </div>
               </div>
             </div>
             
