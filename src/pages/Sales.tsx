@@ -810,7 +810,6 @@ const Sales = () => {
                     <p className="text-[10px] text-muted-foreground">no cartão de crédito</p>
                   </div>
                 </div>
-                </div>
               </div>
 
             <h3 className="text-xl font-bold mb-1">
