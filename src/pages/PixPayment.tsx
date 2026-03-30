@@ -11,12 +11,10 @@ const PixPayment = () => {
   const location = useLocation();
   const [spotsLeft, setSpotsLeft] = useState(23);
 
-  // Check if user came from pre-registration
+  // Redirect to Kiwify checkout
   useEffect(() => {
-    if (!location.state?.fromPreRegistration) {
-      navigate("/pre-cadastro", { replace: true });
-    }
-  }, [location.state, navigate]);
+    window.location.href = "https://pay.kiwify.com.br/ypjX6Fv";
+  }, []);
 
   useEffect(() => {
     // Simulate scarcity counter - random between 12 and 28

@@ -111,8 +111,9 @@ const PreRegistration = () => {
         throw error;
       }
 
-      toast.success("Pré-cadastro realizado com sucesso!");
-      navigate("/pagamento-pix", { state: { fromPreRegistration: true } });
+      toast.success("Pré-cadastro realizado com sucesso! Redirecionando para o pagamento...");
+      // Redirect to Kiwify checkout
+      window.location.href = "https://pay.kiwify.com.br/ypjX6Fv";
     } catch (error) {
       console.error("Erro ao fazer pré-cadastro:", error);
       toast.error("Erro ao realizar pré-cadastro. Tente novamente.");
