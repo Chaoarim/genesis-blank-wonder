@@ -393,77 +393,29 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
               Adicionar Itens
             </h3>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant={itemSource === 'estoque' ? 'default' : 'outline'}
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setItemSource('estoque')}
-              >
-                <Package className="w-4 h-4" /> Meu Estoque
-              </Button>
-              <Button
-                variant={itemSource === 'catalogo' ? 'default' : 'outline'}
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setItemSource('catalogo')}
-              >
-                <BookOpen className="w-4 h-4" /> Consulta por Veículos
-              </Button>
-            </div>
-
-            {itemSource === 'estoque' ? (
-              <>
-                <h4 className="font-semibold text-sm">🔍 Consultar Estoque</h4>
-                <InventorySearchInline
-                  adminUserId={adminUserId}
-                  onAddItem={(item, precoRevenda) => {
-                    setItems(prev => {
-                      const existing = prev.find(i => i.codigo === item.codigo);
-                      if (existing) {
-                        toast.error(`${item.codigo} já está no pedido.`);
-                        return prev;
-                      }
-                      toast.success(`${item.codigo} adicionado ao pedido`);
-                      return [...prev, {
-                        id: crypto.randomUUID(),
-                        codigo: item.codigo,
-                        produto: item.produto,
-                        fornecedor: item.fornecedor,
-                        aplicacao: item.aplicacao,
-                        quantidade: 1,
-                        preco_unitario: Math.round(precoRevenda * 100) / 100,
-                      }];
-                    });
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                <h4 className="font-semibold text-sm">📚 Consultar Catálogo de Fornecedores</h4>
-                <CatalogSearchInline
-                  onAddItem={(catalogItem) => {
-                    setItems(prev => {
-                      const existing = prev.find(i => i.codigo === catalogItem.codigo);
-                      if (existing) {
-                        toast.error(`${catalogItem.codigo} já está no pedido.`);
-                        return prev;
-                      }
-                      toast.success(`${catalogItem.codigo} adicionado ao pedido`);
-                      return [...prev, {
-                        id: crypto.randomUUID(),
-                        codigo: catalogItem.codigo,
-                        produto: catalogItem.produto,
-                        fornecedor: catalogItem.fornecedor,
-                        aplicacao: catalogItem.aplicacao,
-                        quantidade: catalogItem.quantidade,
-                        preco_unitario: catalogItem.preco_unitario,
-                      }];
-                    });
-                  }}
-                />
-              </>
-            )}
+            <h4 className="font-semibold text-sm">🔍 Consultar Estoque</h4>
+            <InventorySearchInline
+              adminUserId={adminUserId}
+              onAddItem={(item, precoRevenda) => {
+                setItems(prev => {
+                  const existing = prev.find(i => i.codigo === item.codigo);
+                  if (existing) {
+                    toast.error(`${item.codigo} já está no pedido.`);
+                    return prev;
+                  }
+                  toast.success(`${item.codigo} adicionado ao pedido`);
+                  return [...prev, {
+                    id: crypto.randomUUID(),
+                    codigo: item.codigo,
+                    produto: item.produto,
+                    fornecedor: item.fornecedor,
+                    aplicacao: item.aplicacao,
+                    quantidade: 1,
+                    preco_unitario: Math.round(precoRevenda * 100) / 100,
+                  }];
+                });
+              }}
+            />
           </Card>
 
           {items.length > 0 && (
