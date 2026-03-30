@@ -810,8 +810,8 @@ const Sales = () => {
                     <p className="text-[10px] text-muted-foreground">no cartão de crédito</p>
                   </div>
                 </div>
+                </div>
               </div>
-            </div>
 
             <h3 className="text-xl font-bold mb-1">
               Plano Anual Profissional
@@ -911,11 +911,6 @@ const Sales = () => {
               <Button size="lg" className="text-lg px-8 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
                 Plano Anual — R$ 297,00
                 <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-            <Link to="/pre-cadastro">
-              <Button size="lg" variant="outline" className="text-lg px-8 py-7 gap-2">
-                Mensal — R$ 20,00/mês
               </Button>
             </Link>
           </div>
