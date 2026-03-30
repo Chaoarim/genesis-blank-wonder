@@ -15,6 +15,7 @@ const Sales = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [spotsLeft, setSpotsLeft] = useState(23);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
 
   useEffect(() => {
     const randomSpots = Math.floor(Math.random() * 17) + 12;
@@ -765,18 +766,52 @@ const Sales = () => {
             </p>
           </div>
 
+          {/* Plan toggle */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <button
+              onClick={() => setSelectedPlan('monthly')}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${selectedPlan === 'monthly' ? 'bg-primary text-primary-foreground shadow-lg' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+            >
+              Mensal
+            </button>
+            <button
+              onClick={() => setSelectedPlan('annual')}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all relative ${selectedPlan === 'annual' ? 'bg-primary text-primary-foreground shadow-lg' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+            >
+              Anual
+              <span className="absolute -top-2.5 -right-2.5 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                -38%
+              </span>
+            </button>
+          </div>
+
           <Card className="max-w-lg mx-auto p-8 glass-card border-primary/50 relative overflow-hidden">
             <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-              ACESSO COMPLETO
+              {selectedPlan === 'annual' ? '🔥 MELHOR OFERTA' : 'ACESSO COMPLETO'}
             </div>
 
             <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-4 mb-6 text-primary-foreground">
-               <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">⚡ Preço Especial de Lançamento</p>
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <span className="text-lg line-through opacity-70">R$ 49,00</span>
-                <span className="text-4xl font-bold">R$ 20,00</span>
-                <span className="text-sm opacity-80">/mês</span>
-              </div>
+              <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">
+                {selectedPlan === 'annual' ? '🎯 Economize R$ 183 por ano' : '⚡ Preço Especial de Lançamento'}
+              </p>
+
+              {selectedPlan === 'monthly' ? (
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <span className="text-lg line-through opacity-70">R$ 49,00</span>
+                  <span className="text-4xl font-bold">R$ 20,00</span>
+                  <span className="text-sm opacity-80">/mês</span>
+                </div>
+              ) : (
+                <div className="text-center mb-2">
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-lg line-through opacity-70">R$ 480,00</span>
+                    <span className="text-4xl font-bold">R$ 297,00</span>
+                    <span className="text-sm opacity-80">/ano</span>
+                  </div>
+                  <p className="text-xs opacity-80 mt-1">equivale a R$ 24,75/mês — <strong>menos de R$ 1 por dia</strong></p>
+                </div>
+              )}
+
               <div className="flex items-center justify-center gap-2 bg-primary-foreground/15 rounded-full py-1.5 px-4">
                 <Users className="w-4 h-4" />
                 <span className="text-sm font-medium">
@@ -785,7 +820,29 @@ const Sales = () => {
               </div>
             </div>
 
-            <h3 className="text-xl font-bold mb-1">Plano Profissional</h3>
+            {selectedPlan === 'annual' && (
+              <div className="bg-muted/50 border border-border rounded-lg p-4 mb-5 space-y-2">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  💳 Formas de Pagamento
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-background rounded-lg p-3 border border-primary/20 text-center">
+                    <p className="text-xs font-bold text-primary mb-0.5">PIX à vista</p>
+                    <p className="text-lg font-bold">R$ 297,00</p>
+                    <p className="text-[10px] text-muted-foreground">pagamento único</p>
+                  </div>
+                  <div className="bg-background rounded-lg p-3 border border-border text-center">
+                    <p className="text-xs font-bold text-primary mb-0.5">Cartão 12x</p>
+                    <p className="text-lg font-bold">12x R$ 29,66</p>
+                    <p className="text-[10px] text-muted-foreground">no cartão de crédito</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <h3 className="text-xl font-bold mb-1">
+              {selectedPlan === 'annual' ? 'Plano Anual Profissional' : 'Plano Mensal'}
+            </h3>
             <p className="text-sm text-muted-foreground mb-5">Todos os recursos inclusos</p>
 
             <ul className="space-y-2 mb-8">
@@ -816,13 +873,15 @@ const Sales = () => {
 
             <Link to="/pre-cadastro" className="block">
               <Button className="w-full text-lg py-6 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-                Fazer Pré-Cadastro
+                {selectedPlan === 'annual' ? 'Garantir Plano Anual — R$ 297,00' : 'Começar Agora — R$ 20,00/mês'}
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
 
             <p className="text-center text-xs text-muted-foreground mt-4">
-              Ativação em até 24h · Sem contrato · Cancele quando quiser
+              {selectedPlan === 'annual'
+                ? 'Pix à vista ou 12x no cartão · Ativação em até 24h · Garantia de 7 dias'
+                : 'Ativação em até 24h · Sem contrato · Cancele quando quiser'}
             </p>
           </Card>
         </div>
@@ -874,16 +933,23 @@ const Sales = () => {
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
             Busca por veículo, consulta por placa, catálogo B2B 24h e central de vendas completa.
-            Tudo que sua loja precisa por R$ 20,00/mês.
+            Tudo que sua loja precisa a partir de R$ 20,00/mês ou R$ 297,00/ano.
           </p>
-          <Link to="/pre-cadastro">
-            <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-              Começar Agora — R$ 20,00/mês
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link to="/pre-cadastro">
+              <Button size="lg" className="text-lg px-8 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
+                Plano Anual — R$ 297,00
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/pre-cadastro">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-7 gap-2">
+                Mensal — R$ 20,00/mês
+              </Button>
+            </Link>
+          </div>
           <p className="text-sm text-muted-foreground mt-4">
-            R$ 20,00/mês · Sem contrato · Ativação em até 24h
+            Pix à vista ou 12x no cartão · Sem contrato · Ativação em até 24h
           </p>
         </div>
       </section>
