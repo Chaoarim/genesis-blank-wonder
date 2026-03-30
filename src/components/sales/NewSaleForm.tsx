@@ -77,7 +77,6 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
   const [discount, setDiscount] = useState(0);
   const [items, setItems] = useState<SaleItemDraft[]>([]);
   const [saving, setSaving] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
