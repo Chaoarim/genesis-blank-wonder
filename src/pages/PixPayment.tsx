@@ -3,7 +3,7 @@ import { useEffect } from "react";
 const PixPayment = () => {
   // Redirect to Kiwify checkout
   useEffect(() => {
-    window.location.href = "https://pay.kiwify.com.br/ypjX6Fv";
+    window.location.href = "https://pay.kiwify.com.br/jSs0cc0";
   }, []);
 
   return (
