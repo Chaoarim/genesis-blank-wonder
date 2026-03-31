@@ -9,6 +9,7 @@ import { Zap, ArrowLeft, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { preRegistrationSchema, passwordSchema } from "@/features/pre-registration/schema";
 import { digitsOnly, formatWhatsapp } from "@/features/pre-registration/format";
+import { KIWIFY_CHECKOUT_URL } from "@/lib/kiwify";
 
 const PreRegistration = () => {
   const navigate = useNavigate();
@@ -112,8 +113,7 @@ const PreRegistration = () => {
       }
 
       toast.success("Pré-cadastro realizado com sucesso! Redirecionando para o pagamento...");
-      // Redirect to Kiwify checkout
-      window.location.href = "https://pay.kiwify.com.br/ypjX6Fv";
+      window.location.href = KIWIFY_CHECKOUT_URL;
     } catch (error) {
       console.error("Erro ao fazer pré-cadastro:", error);
       toast.error("Erro ao realizar pré-cadastro. Tente novamente.");
