@@ -113,7 +113,7 @@ const PreRegistration = () => {
       }
 
       toast.success("Pré-cadastro realizado com sucesso! Redirecionando para o pagamento...");
-      window.location.href = KIWIFY_CHECKOUT_URL;
+      navigate("/pagamento-pix", { replace: true });
     } catch (error) {
       console.error("Erro ao fazer pré-cadastro:", error);
       toast.error("Erro ao realizar pré-cadastro. Tente novamente.");

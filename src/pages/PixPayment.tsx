@@ -4,7 +4,7 @@ import { KIWIFY_CHECKOUT_URL } from "@/lib/kiwify";
 const PixPayment = () => {
   // Redirect to Kiwify checkout
   useEffect(() => {
-    window.location.href = KIWIFY_CHECKOUT_URL;
+    window.location.replace(KIWIFY_CHECKOUT_URL);
   }, []);
 
   return (
