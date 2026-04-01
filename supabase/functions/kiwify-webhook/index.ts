@@ -8,12 +8,29 @@ if (!WEBHOOK_TOKEN_RAW) {
   throw new Error("KIWIFY_WEBHOOK_TOKEN must be configured - webhook cannot start without security token");
 }
 
-// Kiwify webhook is server-to-server, so CORS is restricted to Kiwify domain only
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://kiwify.com.br",
-  "Access-Control-Allow-Headers": "content-type, x-kiwify-signature",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-};
+// CORS: permite chamadas do painel Kiwify e da página /webhook-test no app
+const ALLOWED_ORIGINS = [
+  "https://novopecai.lovable.app",
+  "https://id-preview--a7e34ad1-45d3-49a5-b584-70c3dc407fa0.lovable.app",
+  "https://kiwify.com.br",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin");
+  const isAllowedOrigin = !!origin && (
+    ALLOWED_ORIGINS.includes(origin) ||
+    origin.endsWith(".lovable.app") ||
+    origin.endsWith(".lovableproject.com")
+  );
+
+  return {
+    "Access-Control-Allow-Origin": isAllowedOrigin ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-kiwify-signature, x-kiwify-token, x-webhook-token",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  };
+}
 
 // Tokens de segurança (pode ser 1 token ou uma lista separada por vírgula)
 // Ex.: "tokenA" ou "tokenA,tokenB,tokenC"
@@ -110,6 +127,8 @@ const APPROVE_EVENTS = [
 const MAX_PAYLOAD_SIZE = 50 * 1024;
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   console.log("=== WEBHOOK RECEBIDO ===");
   console.log("Method:", req.method);
   console.log("URL:", req.url);
@@ -123,7 +142,7 @@ serve(async (req) => {
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   // GET para health check (útil para testar se o endpoint está ativo)

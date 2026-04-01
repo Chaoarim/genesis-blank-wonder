@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Copy, Play, CheckCircle, XCircle, Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { KIWIFY_WEBHOOK_URL } from "@/lib/kiwify";
 
 const WebhookTest = () => {
   const [token, setToken] = useState("");
@@ -16,14 +17,24 @@ const WebhookTest = () => {
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
-  const webhookUrl = `https://aajflytukkqpewskvgvg.supabase.co/functions/v1/kiwify-webhook`;
+  const webhookUrl = KIWIFY_WEBHOOK_URL;
 
   const copyUrl = () => {
+    if (!webhookUrl) {
+      toast.error("URL do webhook indisponível");
+      return;
+    }
+
     navigator.clipboard.writeText(webhookUrl);
     toast.success("URL copiada!");
   };
 
   const testWebhook = async () => {
+    if (!webhookUrl) {
+      toast.error("URL do webhook indisponível");
+      return;
+    }
+
     if (!token) {
       toast.error("Digite o token configurado no Kiwify");
       return;
@@ -115,7 +126,7 @@ const WebhookTest = () => {
               onChange={(e) => setToken(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Este é o token que você configurou na Kiwify e no Lovable Cloud.
+              Este é o token que você configurou na Kiwify e no Supabase.
             </p>
           </div>
 
@@ -152,7 +163,7 @@ const WebhookTest = () => {
           </div>
 
           {/* Botão de Teste */}
-          <Button onClick={testWebhook} disabled={testing} className="w-full" size="lg">
+          <Button onClick={testWebhook} disabled={testing || !webhookUrl} className="w-full" size="lg">
             {testing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
