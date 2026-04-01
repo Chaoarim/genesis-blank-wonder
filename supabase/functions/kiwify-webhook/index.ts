@@ -379,100 +379,64 @@ serve(async (req) => {
 
     // Atualizar assinatura do usuário (apenas se não for Pix gerado ou evento desconhecido)
     if (acaoAcesso !== "aguardando" && acaoAcesso !== "nenhuma") {
-      const { data: updateData, error: updateError } = await supabase
-        .rpc('update_subscription_by_email', {
-          p_email: email,
-          p_plan: planoAplicado,
-          p_status: status
-        });
+      const nowIso = new Date().toISOString();
+      const startedAt = status === 'active' ? nowIso : null;
 
-      if (updateError) {
-        console.error("Erro ao atualizar assinatura:", updateError);
-        // Não falhar - continuar para registrar o log
+      // Primeiro, verificar se já existe assinatura para este email
+      const { data: existingSub, error: existingError } = await supabase
+        .from('user_subscriptions')
+        .select('id, user_id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error("Erro ao buscar assinatura existente:", existingError);
+      }
+
+      if (existingSub) {
+        // Assinatura existe - atualizar
+        const { error: updateError } = await supabase
+          .from('user_subscriptions')
+          .update({
+            plan: planoAplicado,
+            status,
+            updated_at: nowIso,
+            ...(startedAt ? { started_at: startedAt } : {}),
+          })
+          .eq('id', existingSub.id);
+
+        if (updateError) {
+          console.error("Erro ao atualizar assinatura:", updateError);
+        } else {
+          console.log("Assinatura atualizada com sucesso para:", email);
+        }
       } else {
-        console.log("Assinatura atualizada (por email):", updateData);
+        // Assinatura NÃO existe - criar nova
+        console.log("Nenhuma assinatura encontrada para o email - criando nova...");
 
-        // Se não havia registro para esse email, criar um novo (compra antes do cadastro)
-        if (updateData === false) {
-          console.log("Nenhum registro encontrado para o email - criando assinatura pendente...");
+        // Buscar user_id via tabela profiles (caso já tenha conta)
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', email)
+          .maybeSingle();
 
-          // Buscar user_id via tabela profiles (caso já tenha conta)
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('user_id')
-            .eq('email', email)
-            .maybeSingle();
+        const userId = profileData?.user_id || null;
 
-          if (profileError) {
-            console.error("Erro ao buscar profile por email:", profileError);
-          }
+        const { error: insertError } = await supabase
+          .from('user_subscriptions')
+          .insert({
+            user_id: userId,
+            email,
+            plan: planoAplicado,
+            status,
+            started_at: startedAt,
+          });
 
-          const userId = profileData?.user_id || null;
-          const nowIso = new Date().toISOString();
-          const startedAt = status === 'active' ? nowIso : null;
-
-          if (userId) {
-            // Usuário existe, criar/atualizar assinatura com user_id
-            const { data: existingSub } = await supabase
-              .from('user_subscriptions')
-              .select('id')
-              .eq('user_id', userId)
-              .maybeSingle();
-
-            if (existingSub) {
-              // Atualizar assinatura existente
-              const { error: updError } = await supabase
-                .from('user_subscriptions')
-                .update({
-                  plan: planoAplicado,
-                  status,
-                  updated_at: nowIso,
-                  started_at: startedAt ?? undefined,
-                })
-                .eq('user_id', userId);
-
-              if (updError) {
-                console.error("Erro ao atualizar assinatura por user_id:", updError);
-              } else {
-                console.log("Assinatura atualizada por user_id:", userId);
-              }
-            } else {
-              // Criar nova assinatura
-              const { error: insertError } = await supabase
-                .from('user_subscriptions')
-                .insert({
-                  user_id: userId,
-                  email,
-                  plan: planoAplicado,
-                  status,
-                  started_at: startedAt,
-                });
-
-              if (insertError) {
-                console.error("Erro ao inserir assinatura para usuário:", insertError);
-              } else {
-                console.log("Assinatura criada para usuário existente:", userId);
-              }
-            }
-          } else {
-            // COMPRA ANTES DO CADASTRO: criar assinatura SEM user_id
-            // Quando o usuário criar a conta, o trigger vai vincular automaticamente
-            const { error: insertError } = await supabase
-              .from('user_subscriptions')
-              .insert({
-                user_id: null, // Será preenchido quando criar a conta
-                email,
-                plan: planoAplicado,
-                status,
-                started_at: startedAt,
-              });
-
-            if (insertError) {
-              console.error("Erro ao criar assinatura pré-cadastro:", insertError);
-            } else {
-              console.log("Assinatura pré-cadastro criada para email:", email);
-            }
-          }
+        if (insertError) {
+          console.error("Erro ao criar assinatura:", insertError);
+        } else {
+          console.log("Assinatura criada para email:", email, "user_id:", userId || "pendente");
         }
       }
 
@@ -486,34 +450,7 @@ serve(async (req) => {
     }
 
 
-    // Sanitize raw_payload to remove sensitive data before storage
-    function sanitizePayloadForStorage(payload: Record<string, unknown>): Record<string, unknown> {
-      const safe: Record<string, unknown> = {};
-      
-      // Only store non-sensitive operational data
-      safe.event_type = payload.evento || payload.event || payload.order_status || payload.type;
-      safe.timestamp = payload.timestamp || payload.created_at || new Date().toISOString();
-      safe.product_name = typeof payload.produto === 'string' ? payload.produto : 
-                          (payload.product as Record<string, unknown>)?.name;
-      
-      // Mask email for privacy (keep domain visible)
-      const rawEmail = payload.email || 
-                       (payload.Customer as Record<string, unknown>)?.email ||
-                       (payload.customer as Record<string, unknown>)?.email;
-      if (typeof rawEmail === 'string' && rawEmail.includes('@')) {
-        const [local, domain] = rawEmail.split('@');
-        safe.masked_email = `${local.substring(0, 2)}***@${domain}`;
-      }
-      
-      // Store request metadata without sensitive customer data
-      safe.has_customer_id = !!(payload.customer_id || 
-                               (payload.Customer as Record<string, unknown>)?.id);
-      safe.processed_at = new Date().toISOString();
-      
-      return safe;
-    }
-
-    // Registrar log do webhook (sanitizar dados antes de inserir)
+    // Registrar log do webhook
     const { error: logError } = await supabase
       .from('webhook_logs')
       .insert({
@@ -521,8 +458,6 @@ serve(async (req) => {
         evento_recebido: evento.substring(0, 100),
         plano_aplicado: planoAplicado.substring(0, 50),
         acao_acesso: acaoAcesso.substring(0, 50),
-        raw_payload: sanitizePayloadForStorage(validatedBody),
-        processed: true
       });
 
     if (logError) {
