@@ -94,6 +94,17 @@ const AdminNew = () => {
     webhookEvents: 0
   });
 
+  const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+  const getEffectiveRegistrationStatus = (registrationStatus: string, subscriptionStatus?: string | null) => {
+    if (registrationStatus === 'rejected') return 'rejected';
+    if (subscriptionStatus === 'active') return 'approved';
+    if (subscriptionStatus === 'inactive' && ['pending', 'approved', 'active'].includes(registrationStatus)) {
+      return 'inactive';
+    }
+    return registrationStatus;
+  };
+
   useEffect(() => {
     checkAdminAccess();
   }, []);
@@ -115,6 +126,14 @@ const AdminNew = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "webhook_logs" },
+        () => {
+          fetchData();
+          fetchStats();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_subscriptions" },
         () => {
           fetchData();
           fetchStats();
@@ -193,7 +212,7 @@ const AdminNew = () => {
     
     if (subData) {
       const map: Record<string, UserSubscription> = {};
-      subData.forEach(s => { map[s.email] = s; });
+      subData.forEach(s => { map[normalizeEmail(s.email)] = s; });
       setSubscriptionsMap(map);
     }
     
@@ -220,18 +239,30 @@ const AdminNew = () => {
   const fetchStats = async () => {
     try {
       const [{ data: subscriptions }, { data: preRegs }, { count: webhookCount }] = await Promise.all([
-        supabase.from("user_subscriptions").select("status"),
-        supabase.from("pre_registrations").select("status"),
+        supabase.from("user_subscriptions").select("email, status"),
+        supabase.from("pre_registrations").select("email, status"),
         supabase.from("webhook_logs").select("id", { count: "exact", head: true }),
       ]);
       const subs = subscriptions ?? [];
       const regs = preRegs ?? [];
+      const subscriptionStatusByEmail = subs.reduce<Record<string, string | null>>((acc, subscription) => {
+        acc[normalizeEmail(subscription.email)] = subscription.status;
+        return acc;
+      }, {});
+
+      const effectiveStatuses = regs.map((registration) =>
+        getEffectiveRegistrationStatus(
+          registration.status,
+          subscriptionStatusByEmail[normalizeEmail(registration.email)]
+        )
+      );
+
       setStats({
         totalUsers: subs.length,
         activeUsers: subs.filter((s) => s.status === "active").length,
-        pendingUsers: regs.filter((r) => r.status === "pending").length,
+        pendingUsers: effectiveStatuses.filter((status) => status === "pending").length,
         preRegistrations: regs.length,
-        approvedRegistrations: regs.filter((r) => r.status === "approved").length,
+        approvedRegistrations: effectiveStatuses.filter((status) => status === "approved").length,
         webhookEvents: webhookCount ?? 0,
       });
     } catch (e) {}
@@ -456,7 +487,7 @@ const AdminNew = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const s = { pending: "bg-yellow-500/20 text-yellow-400", approved: "bg-green-500/20 text-green-400", inactive: "bg-orange-500/20 text-orange-400", rejected: "bg-red-500/20 text-red-400" }[status] || "bg-muted text-muted-foreground";
+    const s = { pending: "bg-yellow-500/20 text-yellow-400", approved: "bg-green-500/20 text-green-400", active: "bg-green-500/20 text-green-400", inactive: "bg-orange-500/20 text-orange-400", rejected: "bg-red-500/20 text-red-400" }[status] || "bg-muted text-muted-foreground";
     return <span className={`px-2 py-1 rounded text-xs font-medium ${s}`}>{status}</span>;
   };
 
@@ -528,7 +559,8 @@ const AdminNew = () => {
                         (r.email || '').toLowerCase().includes(userSearchTerm.toLowerCase()) ||
                         (r.company_name || '').toLowerCase().includes(userSearchTerm.toLowerCase())
                       ).map(reg => {
-                        const sub = subscriptionsMap[reg.email];
+                        const sub = subscriptionsMap[normalizeEmail(reg.email)];
+                        const effectiveStatus = getEffectiveRegistrationStatus(reg.status, sub?.status);
                         return (
                         <TableRow key={reg.id} className="hover:bg-muted/30">
                           <TableCell className="text-xs">{format(new Date(reg.created_at), "dd/MM/yyyy")}</TableCell>
@@ -598,11 +630,11 @@ const AdminNew = () => {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell>{getStatusBadge(reg.status)}</TableCell>
+                          <TableCell>{getStatusBadge(effectiveStatus)}</TableCell>
                           <TableCell className="flex gap-2">
-                            {reg.status === 'pending' && <Button size="sm" onClick={() => handleApprove(reg)}><CheckCircle className="w-4 h-4 mr-1" /> Ativar</Button>}
-                            {(reg.status === 'approved' || reg.status === 'active') && <Button size="sm" variant="destructive" onClick={() => handleDeactivate(reg)}>Desativar</Button>}
-                            {(reg.status === 'inactive') && <Button size="sm" variant="outline" onClick={() => handleReactivate(reg)}>Reativar</Button>}
+                            {effectiveStatus === 'pending' && <Button size="sm" onClick={() => handleApprove(reg)}><CheckCircle className="w-4 h-4 mr-1" /> Ativar</Button>}
+                            {(effectiveStatus === 'approved' || effectiveStatus === 'active') && <Button size="sm" variant="destructive" onClick={() => handleDeactivate(reg)}>Desativar</Button>}
+                            {effectiveStatus === 'inactive' && <Button size="sm" variant="outline" onClick={() => handleReactivate(reg)}>Reativar</Button>}
                             <AlertDialog>
                               <AlertDialogTrigger asChild><Button size="sm" variant="ghost"><Trash2 className="w-4 h-4" /></Button></AlertDialogTrigger>
                               <AlertDialogContent>
