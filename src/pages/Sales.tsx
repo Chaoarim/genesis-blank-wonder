@@ -806,7 +806,7 @@ const Sales = () => {
                   </div>
                   <div className="bg-background rounded-lg p-3 border border-border text-center">
                     <p className="text-xs font-bold text-primary mb-0.5">Cartão 12x</p>
-                    <p className="text-lg font-bold">12x R$ 29,66</p>
+                    <p className="text-lg font-bold">12x R$ 30,72</p>
                     <p className="text-[10px] text-muted-foreground">no cartão de crédito</p>
                   </div>
                 </div>
