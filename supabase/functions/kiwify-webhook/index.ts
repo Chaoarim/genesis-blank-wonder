@@ -450,34 +450,7 @@ serve(async (req) => {
     }
 
 
-    // Sanitize raw_payload to remove sensitive data before storage
-    function sanitizePayloadForStorage(payload: Record<string, unknown>): Record<string, unknown> {
-      const safe: Record<string, unknown> = {};
-      
-      // Only store non-sensitive operational data
-      safe.event_type = payload.evento || payload.event || payload.order_status || payload.type;
-      safe.timestamp = payload.timestamp || payload.created_at || new Date().toISOString();
-      safe.product_name = typeof payload.produto === 'string' ? payload.produto : 
-                          (payload.product as Record<string, unknown>)?.name;
-      
-      // Mask email for privacy (keep domain visible)
-      const rawEmail = payload.email || 
-                       (payload.Customer as Record<string, unknown>)?.email ||
-                       (payload.customer as Record<string, unknown>)?.email;
-      if (typeof rawEmail === 'string' && rawEmail.includes('@')) {
-        const [local, domain] = rawEmail.split('@');
-        safe.masked_email = `${local.substring(0, 2)}***@${domain}`;
-      }
-      
-      // Store request metadata without sensitive customer data
-      safe.has_customer_id = !!(payload.customer_id || 
-                               (payload.Customer as Record<string, unknown>)?.id);
-      safe.processed_at = new Date().toISOString();
-      
-      return safe;
-    }
-
-    // Registrar log do webhook (sanitizar dados antes de inserir)
+    // Registrar log do webhook
     const { error: logError } = await supabase
       .from('webhook_logs')
       .insert({
@@ -485,8 +458,6 @@ serve(async (req) => {
         evento_recebido: evento.substring(0, 100),
         plano_aplicado: planoAplicado.substring(0, 50),
         acao_acesso: acaoAcesso.substring(0, 50),
-        raw_payload: sanitizePayloadForStorage(validatedBody),
-        processed: true
       });
 
     if (logError) {
