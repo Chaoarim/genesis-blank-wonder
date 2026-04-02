@@ -667,7 +667,7 @@ export default function CatalogB2B() {
             </div>
             <div className="flex gap-1 items-center ml-auto">
               <span className="text-[10px] text-muted-foreground mr-1">Ordenar:</span>
-              {([['default', 'Padrão'], ['price-asc', 'Menor preço'], ['price-desc', 'Maior preço'], ['name', 'A-Z'], ['popular', 'Mais vendidos']] as const).map(([val, label]) => (
+              {([['default', 'Padrão'], ['price-asc', 'Menor preço'], ['price-desc', 'Maior preço'], ['name', 'A-Z (Alfabética)']] as const).map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setSortBy(val)}
