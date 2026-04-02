@@ -425,7 +425,7 @@ export default function CatalogB2B() {
     if (sortBy === 'price-asc') result = [...result].sort((a, b) => a.preco_revenda - b.preco_revenda);
     else if (sortBy === 'price-desc') result = [...result].sort((a, b) => b.preco_revenda - a.preco_revenda);
     else if (sortBy === 'name') result = [...result].sort((a, b) => a.produto.localeCompare(b.produto));
-    else if (sortBy === 'popular') result = [...result].sort((a, b) => b.vendidos_display - a.vendidos_display);
+    
 
     return result;
   }, [items, search, selectedBrand, priceRange, sortBy]);
