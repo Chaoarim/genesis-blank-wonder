@@ -447,6 +447,78 @@ serve(async (req) => {
           .update({ kiwify_customer_id: kiwifyCustomerId.substring(0, 100) })
           .eq('email', email);
       }
+
+      // === AUTO-CRIAÇÃO DE CONTA: quando pagamento aprovado, criar conta auth automaticamente ===
+      if (status === 'active') {
+        console.log("Pagamento aprovado - verificando se precisa criar conta auth...");
+
+        // Verificar se já existe conta auth (via profiles)
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (existingProfile?.user_id) {
+          console.log("Conta auth já existe para:", email, "- pulando criação");
+        } else {
+          // Buscar dados do pré-cadastro
+          const { data: preReg } = await supabase
+            .from('pre_registrations')
+            .select('id, full_name, company_name, password_hash, status')
+            .eq('email', email)
+            .maybeSingle();
+
+          if (preReg && preReg.password_hash) {
+            console.log("Pré-cadastro encontrado - criando conta auth automaticamente...");
+
+            try {
+              // Criar usuário via Supabase Admin Auth API
+              const supabaseAdminAuth = createClient(supabaseUrl, supabaseServiceKey, {
+                auth: { autoRefreshToken: false, persistSession: false },
+              });
+
+              const { data: newUser, error: createUserError } = await supabaseAdminAuth.auth.admin.createUser({
+                email,
+                password: preReg.password_hash,
+                email_confirm: true,
+                user_metadata: {
+                  full_name: preReg.full_name || '',
+                  company_name: preReg.company_name || '',
+                },
+              });
+
+              if (createUserError) {
+                if (createUserError.message.includes("already been registered")) {
+                  console.log("Usuário já registrado no auth - atualizando pré-cadastro...");
+                } else {
+                  console.error("Erro ao criar conta auth:", createUserError.message);
+                }
+              } else if (newUser?.user) {
+                console.log("Conta auth criada com sucesso! user_id:", newUser.user.id);
+
+                // Vincular user_id na assinatura
+                await supabase
+                  .from('user_subscriptions')
+                  .update({ user_id: newUser.user.id })
+                  .eq('email', email);
+              }
+
+              // Atualizar pré-cadastro para aprovado
+              await supabase
+                .from('pre_registrations')
+                .update({ status: 'approved', approved_at: new Date().toISOString() })
+                .eq('id', preReg.id);
+
+              console.log("Pré-cadastro atualizado para 'approved'");
+            } catch (authErr) {
+              console.error("Erro inesperado ao criar conta auth:", authErr);
+            }
+          } else {
+            console.log("Sem pré-cadastro ou sem senha para:", email, "- conta será criada manualmente pelo admin");
+          }
+        }
+      }
     }
 
 
