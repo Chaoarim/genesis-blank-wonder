@@ -402,7 +402,7 @@ export default function CatalogB2B() {
 
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<'all' | 'low' | 'mid' | 'high'>('all');
-  const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'name' | 'popular'>('default');
+  const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'name'>('default');
 
   const brands = useMemo(() => {
     const map = new Map<string, number>();
