@@ -653,7 +653,7 @@ export default function CatalogB2B() {
           <div className="flex gap-2 flex-wrap">
             <div className="flex gap-1 items-center">
               <span className="text-[10px] text-muted-foreground mr-1">Preço:</span>
-              {([['all', 'Todos'], ['low', 'Até R$50'], ['mid', 'R$50-200'], ['high', 'Acima R$200']] as const).map(([val, label]) => (
+              {([['all', 'Todos'], ['low', 'Até R$50'], ['mid', 'De R$50 a R$200'], ['high', 'Acima de R$200']] as const).map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setPriceRange(val)}
