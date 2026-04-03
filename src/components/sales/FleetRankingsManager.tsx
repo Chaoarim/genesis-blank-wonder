@@ -147,6 +147,34 @@ export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps)
     fetchRankings();
   };
 
+  const handleDownloadTemplate = () => {
+    const bom = '\uFEFF';
+    const csv = bom + 'posicao;modelo;quantidade\n1;VW/GOL;303014\n2;FIAT/UNO;250000\n3;GM/CELTA;180000\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modelo_ranking_frota.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Modelo CSV baixado!');
+  };
+
+  const handleExportData = () => {
+    if (!filteredRankings.length) { toast.error('Nenhum dado para exportar'); return; }
+    const bom = '\uFEFF';
+    const header = 'posicao;modelo;quantidade;tipo;ano\n';
+    const rows = filteredRankings.map(r => `${r.position};${r.model};${r.quantity};${r.vehicle_type};${r.year}`).join('\n');
+    const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ranking_frota_${selectedYear || 'todos'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Dados exportados!');
+  };
+
   const demandSuggestions = useMemo(() => {
     return top10.map(r => {
       const partsCount = partsMatches[r.model] || 0;
