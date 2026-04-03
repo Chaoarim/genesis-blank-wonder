@@ -55,6 +55,7 @@ const BackupExcelDownload = lazy(() => import('@/components/sales/BackupExcelDow
 const KPIPanel = lazy(() => import('@/components/sales/KPIPanel').then(m => ({ default: m.KPIPanel })));
 const SalesByChannelReport = lazy(() => import('@/components/sales/SalesByChannelReport').then(m => ({ default: m.SalesByChannelReport })));
 const DemandForecast = lazy(() => import('@/components/sales/DemandForecast').then(m => ({ default: m.DemandForecast })));
+const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 const CustomerPriceTiers = lazy(() => import('@/components/sales/CustomerPriceTiers').then(m => ({ default: m.CustomerPriceTiers })));
 const SavedQuotesManager = lazy(() => import('@/components/sales/SavedQuotesManager').then(m => ({ default: m.SavedQuotesManager })));
 const CustomerInteractions = lazy(() => import('@/components/sales/CustomerInteractions').then(m => ({ default: m.CustomerInteractions })));
