@@ -753,6 +753,56 @@ const AdminNew = () => {
                     />
                   </Button>
 
+                  <Button
+                    variant="outline"
+                    className="h-14 font-bold text-lg border-primary/30 hover:bg-primary/10"
+                    onClick={async () => {
+                      try {
+                        toast.info('Gerando planilha...');
+                        const { count } = await supabase.from('parts').select('*', { count: 'exact', head: true });
+                        if (!count || count === 0) {
+                          toast.error('Base de dados vazia!');
+                          return;
+                        }
+                        const allRows: any[] = [];
+                        const pageSize = 1000;
+                        const totalPages = Math.ceil(count / pageSize);
+                        for (let page = 0; page < totalPages; page++) {
+                          const { data } = await supabase.from('parts').select('*').range(page * pageSize, (page + 1) * pageSize - 1);
+                          if (data) allRows.push(...data);
+                        }
+                        const headers = ['FABRICANTE','CODIGO_PECA','DESCRICAO','CHAVE_DE_BUSCA','MARCA_VEICULO','MODELO_VEICULO','ANOS_APLICACAO','CONTEXTO_IA','CODIGOS_SIMILARES','CATALOGO'];
+                        const csvLines = [headers.join(',')];
+                        for (const r of allRows) {
+                          const escape = (v: string | null) => {
+                            const s = (v || '').replace(/"/g, '""');
+                            return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
+                          };
+                          csvLines.push([
+                            escape(r.fabricante), escape(r.codigo_peca), escape(r.descricao),
+                            escape(r.chave_de_busca), escape(r.marca_veiculo), escape(r.modelo_veiculo),
+                            escape(r.anos_aplicacao), escape(r.contexto_ia), escape(r.codigos_similares),
+                            escape(r.catalogo),
+                          ].join(','));
+                        }
+                        const blob = new Blob(['\uFEFF' + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `base-de-dados-${new Date().toISOString().slice(0,10)}.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success(`${allRows.length} peças exportadas com sucesso!`);
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Erro ao exportar base de dados');
+                      }
+                    }}
+                  >
+                    <Download className="w-6 h-6 mr-3" />
+                    BAIXAR BASE DE DADOS (.CSV)
+                  </Button>
+
                   {importProgress && (
                     <div className={`p-4 rounded-xl text-sm font-medium border animate-in fade-in slide-in-from-top-2 ${
                       importProgress.includes('✅') 
