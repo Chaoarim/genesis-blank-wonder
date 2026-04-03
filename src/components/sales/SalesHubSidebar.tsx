@@ -31,6 +31,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vendas' },
   { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vendas' },
   { value: 'demand-forecast', icon: TrendingUp, label: 'Previsão Demanda', group: 'Vendas' },
+  { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Vendas' },
   { value: 'expedition', icon: PackageCheck, label: 'Expedição', group: 'Vendas' },
 
   // 👥 Clientes
