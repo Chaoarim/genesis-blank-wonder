@@ -599,6 +599,36 @@ export type Database = {
           },
         ]
       }
+      fleet_rankings: {
+        Row: {
+          created_at: string
+          id: string
+          model: string
+          position: number
+          quantity: number
+          vehicle_type: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model: string
+          position: number
+          quantity?: number
+          vehicle_type?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model?: string
+          position?: number
+          quantity?: number
+          vehicle_type?: string
+          year?: number
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           aplicacao: string | null
