@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
-import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Search } from 'lucide-react';
+import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Search, Download, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FleetRanking {
@@ -147,6 +147,34 @@ export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps)
     fetchRankings();
   };
 
+  const handleDownloadTemplate = () => {
+    const bom = '\uFEFF';
+    const csv = bom + 'posicao;modelo;quantidade\n1;VW/GOL;303014\n2;FIAT/UNO;250000\n3;GM/CELTA;180000\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modelo_ranking_frota.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Modelo CSV baixado!');
+  };
+
+  const handleExportData = () => {
+    if (!filteredRankings.length) { toast.error('Nenhum dado para exportar'); return; }
+    const bom = '\uFEFF';
+    const header = 'posicao;modelo;quantidade;tipo;ano\n';
+    const rows = filteredRankings.map(r => `${r.position};${r.model};${r.quantity};${r.vehicle_type};${r.year}`).join('\n');
+    const blob = new Blob([bom + header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ranking_frota_${selectedYear || 'todos'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Dados exportados!');
+  };
+
   const demandSuggestions = useMemo(() => {
     return top10.map(r => {
       const partsCount = partsMatches[r.model] || 0;
@@ -170,8 +198,14 @@ export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps)
           </h2>
           <p className="text-sm text-muted-foreground">Importe dados FENABRAVE para prever demanda de peças</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
+          <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
+            <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExportData}>
+            <Download className="w-4 h-4 mr-1" /> Exportar Dados
+          </Button>
           <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
             {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
             Importar CSV
