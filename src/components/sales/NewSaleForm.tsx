@@ -156,21 +156,28 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
           payment_deadline: paymentMethod === 'faturado' && paymentDeadline ? paymentDeadline : undefined,
           seller_auth_id: sellerAuthId || undefined,
           seller_name: sellerName || undefined,
+          status: 'pending_credit',
           notes: `[AGUARDANDO CRÉDITO] ${notes}`,
           discount,
           items: items.map(i => ({ codigo: i.codigo, produto: i.produto, fornecedor: i.fornecedor, quantidade: i.quantidade, preco_unitario: i.preco_unitario })),
         });
 
         if (sale) {
-          await supabase.from('sales').update({ status: 'pending_credit' }).eq('id', sale.id);
-          await supabase.from('credit_approvals').insert({
-            user_id: sale.user_id,
-            sale_id: sale.id,
-            customer_id: selectedCustomer.id,
-            customer_name: selectedCustomer.name,
-            sale_total: total,
-            credit_limit: creditLimit,
-          });
+          if (!sellerAuthId) {
+            const { error: creditApprovalError } = await supabase.from('credit_approvals').insert({
+              user_id: sale.user_id,
+              sale_id: sale.id,
+              customer_id: selectedCustomer.id,
+              customer_name: selectedCustomer.name,
+              sale_total: total,
+              credit_limit: creditLimit,
+            });
+
+            if (creditApprovalError) {
+              console.error('Erro ao criar registro de análise de crédito:', creditApprovalError);
+            }
+          }
+
           const msg = creditLimit <= 0
             ? `Cliente sem limite de crédito. Pedido de R$ ${total.toFixed(2)} enviado para Análise de Crédito.`
             : `Pedido de R$ ${total.toFixed(2)} excede o limite de R$ ${creditLimit.toFixed(2)}. Enviado para Análise de Crédito.`;

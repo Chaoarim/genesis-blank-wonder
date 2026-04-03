@@ -137,6 +137,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
     payment_deadline?: string;
     seller_auth_id?: string;
     seller_name?: string;
+    status?: string;
     notes?: string;
     items: { codigo: string; produto: string; fornecedor?: string; quantidade: number; preco_unitario: number }[];
     discount?: number;
@@ -154,7 +155,7 @@ export function useSalesData(userId: string | null, sellerAuthId?: string | null
       payment_deadline: data.payment_deadline || null,
       seller_auth_id: data.seller_auth_id || null,
       seller_name: data.seller_name || null,
-      status: 'completed',
+      status: data.status || 'completed',
       total,
       discount: data.discount || 0,
       notes: data.notes || null,

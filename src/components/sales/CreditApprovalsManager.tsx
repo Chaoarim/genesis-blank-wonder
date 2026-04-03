@@ -45,35 +45,95 @@ export function CreditApprovalsManager({ userId, reviewerName }: Props) {
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('credit_approvals')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setRecords(data as any[]);
+    const [{ data: approvalsData }, { data: pendingSalesData }] = await Promise.all([
+      supabase
+        .from('credit_approvals')
+        .select('*')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('sales')
+        .select('id, user_id, customer_id, customer_name, total, created_at')
+        .eq('status', 'pending_credit')
+        .order('created_at', { ascending: false }),
+    ]);
+
+    const approvals = (approvalsData || []) as CreditApproval[];
+    const pendingSales = pendingSalesData || [];
+    const customerIds = Array.from(new Set(pendingSales.map((sale: any) => sale.customer_id).filter(Boolean)));
+
+    let customerLimits = new Map<string, number>();
+    if (customerIds.length > 0) {
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, limite_credito')
+        .in('id', customerIds);
+
+      customerLimits = new Map((customersData || []).map((customer: any) => [customer.id, Number(customer.limite_credito) || 0]));
+    }
+
+    const existingSaleIds = new Set(approvals.map(record => record.sale_id).filter(Boolean));
+    const recoveredPendingRecords: CreditApproval[] = pendingSales
+      .filter((sale: any) => !existingSaleIds.has(sale.id))
+      .map((sale: any) => ({
+        id: `pending-sale-${sale.id}`,
+        user_id: sale.user_id,
+        sale_id: sale.id,
+        customer_id: sale.customer_id,
+        customer_name: sale.customer_name,
+        sale_total: Number(sale.total),
+        credit_limit: sale.customer_id ? (customerLimits.get(sale.customer_id) ?? 0) : 0,
+        status: 'pending',
+        notes: null,
+        reviewed_by: null,
+        reviewed_at: null,
+        created_at: sale.created_at,
+      }));
+
+    setRecords(
+      [...approvals, ...recoveredPendingRecords].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+    );
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
   const handleReview = async (id: string, status: 'approved' | 'rejected') => {
-    const { error } = await supabase.from('credit_approvals').update({
+    const record = records.find(r => r.id === id);
+    if (!record) {
+      toast.error('Registro não encontrado');
+      return;
+    }
+
+    const reviewPayload = {
       status,
       notes: reviewNotes || null,
       reviewed_by: reviewerName || 'Admin',
       reviewed_at: new Date().toISOString(),
-    }).eq('id', id);
+    };
+
+    const { error } = id.startsWith('pending-sale-')
+      ? await supabase.from('credit_approvals').insert({
+          user_id: record.user_id,
+          sale_id: record.sale_id,
+          customer_id: record.customer_id,
+          customer_name: record.customer_name,
+          sale_total: record.sale_total,
+          credit_limit: record.credit_limit,
+          ...reviewPayload,
+        })
+      : await supabase.from('credit_approvals').update(reviewPayload).eq('id', id);
 
     if (error) { toast.error('Erro ao atualizar'); return; }
 
     if (status === 'approved') {
       // Update the sale status to completed
-      const record = records.find(r => r.id === id);
       if (record?.sale_id) {
         await supabase.from('sales').update({ status: 'completed' }).eq('id', record.sale_id);
       }
       toast.success('Crédito liberado! Venda aprovada.');
     } else {
-      const record = records.find(r => r.id === id);
       if (record?.sale_id) {
         await supabase.from('sales').update({ status: 'cancelled' }).eq('id', record.sale_id);
       }
