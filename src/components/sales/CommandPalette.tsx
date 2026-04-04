@@ -217,30 +217,7 @@ export function CommandPalette({ onNavigate, visibleTabs }: CommandPaletteProps)
   }, [results]);
 
   return (
-    <>
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-2 text-xs text-muted-foreground hidden md:flex"
-        onClick={() => setOpen(true)}
-      >
-        <Search className="w-3.5 h-3.5" />
-        Buscar...
-        <kbd className="pointer-events-none ml-1 inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-          ⌘K
-        </kbd>
-      </Button>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="md:hidden h-9 w-9"
-        onClick={() => setOpen(true)}
-      >
-        <Search className="w-5 h-5" />
-      </Button>
-
-      <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
           placeholder="Buscar cliente, produto, venda ou módulo..."
           value={query}
