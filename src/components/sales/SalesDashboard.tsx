@@ -713,3 +713,15 @@ function StatCard({ icon, label, value, sub, color, children }: {
     </Card>
   );
 }
+
+function QuickAction({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-center group"
+    >
+      <span className="text-muted-foreground group-hover:text-primary transition-colors">{icon}</span>
+      <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors leading-tight">{label}</span>
+    </button>
+  );
+}
