@@ -65,7 +65,7 @@ const CHART_COLORS = [
   'hsl(142 50% 55%)',
 ];
 
-export function SalesDashboard({ stats, onNewSale, recentSales, allSales, sellerName, adminUserId, sellerAuthId }: SalesDashboardProps) {
+export function SalesDashboard({ stats, onNewSale, onNavigate, recentSales, allSales, sellerName, adminUserId, sellerAuthId }: SalesDashboardProps) {
   const includeSaturdays = useIncludeSaturdays();
 
   // Monthly evolution (last 6 months)
