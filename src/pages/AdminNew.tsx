@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPlus, UserMinus, UserCheck, BarChart3, Users, DollarSign, TrendingUp, Activity, Database, Zap, Trash2, Eye, EyeOff, Copy, Key, Upload, Search, Pencil, Save, MessageSquare, Download } from "lucide-react";
+import { Shield, LogOut, RefreshCw, Loader2, CheckCircle, XCircle, Clock, UserPlus, UserMinus, UserCheck, BarChart3, Users, DollarSign, TrendingUp, Activity, Database, Zap, Trash2, Eye, EyeOff, Copy, Key, Upload, Search, Pencil, Save, MessageSquare, Download, Car } from "lucide-react";
 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { PartImageUploader } from "@/components/admin/PartImageUploader";
 import { AdminPartsManager } from "@/components/admin/AdminPartsManager";
+import { FleetRankingsManager } from "@/components/sales/FleetRankingsManager";
 import { Textarea } from "@/components/ui/textarea";
 
 import { format } from "date-fns";
@@ -510,9 +511,10 @@ const AdminNew = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="registrations" className="bg-primary/5">USUÁRIOS (TODOS)</TabsTrigger>
             <TabsTrigger value="database" className="bg-primary/10 font-bold">BASE DE DADOS V4</TabsTrigger>
+            <TabsTrigger value="fleet-rankings"><Car className="w-4 h-4 mr-1" /> RANKING FROTA</TabsTrigger>
             <TabsTrigger value="analytics">VENDAS & MÉTRICAS</TabsTrigger>
           </TabsList>
 
@@ -920,6 +922,12 @@ const AdminNew = () => {
               </Card>
             </div>
           </TabsContent>
+          <TabsContent value="fleet-rankings">
+            <Card className="p-6 border-primary/20 shadow-xl">
+              <FleetRankingsManager adminUserId={null} />
+            </Card>
+          </TabsContent>
+
         </Tabs>
       </div>
     </div>
