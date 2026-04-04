@@ -247,7 +247,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar modelo..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8" />
         </div>
-        {selectedYear && (
+        {selectedYear && !readOnly && (
           <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
             <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
           </Button>
