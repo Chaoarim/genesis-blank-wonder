@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Send, CheckCircle, UserPlus, Plus, Calendar, Package, ArrowLeft, ArrowRight, User, CreditCard, ClipboardCheck, ShoppingCart } from 'lucide-react';
+import { Trash2, Send, CheckCircle, UserPlus, Plus, Calendar, Package, ArrowLeft, ArrowRight, User, CreditCard, ClipboardCheck, ShoppingCart, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { Customer } from '@/hooks/useSalesData';
@@ -671,15 +671,62 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
             <span className="text-2xl font-bold text-primary">{fmt(total)}</span>
           </div>
 
-          <Button
-            onClick={handleSave}
-            disabled={saving || items.length === 0}
-            className="w-full h-12 font-bold text-base gap-2"
-            size="lg"
-          >
-            {channel === 'whatsapp' ? <Send className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
-            {saving ? 'Salvando...' : channel === 'whatsapp' ? 'Finalizar e Enviar WhatsApp' : 'Finalizar Venda'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (items.length === 0) { toast.error('Adicione pelo menos 1 item'); return; }
+                setSaving(true);
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session) { toast.error('Faça login para salvar'); setSaving(false); return; }
+
+                  const quoteItems = items.map(i => ({
+                    codigo: i.codigo,
+                    produto: i.produto,
+                    fornecedor: i.fornecedor,
+                    quantidade: i.quantidade,
+                    preco_unitario: i.preco_unitario,
+                  }));
+
+                  const { error } = await supabase.from('saved_quotes').insert({
+                    user_id: session.user.id,
+                    customer_id: customerId || null,
+                    customer_name: customerDisplayName,
+                    customer_phone: selectedCustomer?.phone || null,
+                    items: quoteItems,
+                    total,
+                    discount,
+                    notes: notes || null,
+                    status: 'pending',
+                    pipeline_stage: 'novo',
+                  });
+
+                  if (error) { toast.error('Erro ao salvar orçamento'); setSaving(false); return; }
+                  toast.success('Orçamento salvo no Pipeline! Acesse em Orçamentos.');
+                  onDone();
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving || items.length === 0}
+              className="flex-1 h-12 font-bold text-base gap-2"
+              size="lg"
+            >
+              <FileText className="w-5 h-5" />
+              {saving ? 'Salvando...' : 'Salvar como Orçamento'}
+            </Button>
+
+            <Button
+              onClick={handleSave}
+              disabled={saving || items.length === 0}
+              className="flex-1 h-12 font-bold text-base gap-2"
+              size="lg"
+            >
+              {channel === 'whatsapp' ? <Send className="w-5 h-5" /> : <CheckCircle className="w-5 h-5" />}
+              {saving ? 'Salvando...' : channel === 'whatsapp' ? 'Finalizar e Enviar WhatsApp' : 'Finalizar Venda'}
+            </Button>
+          </div>
         </Card>
       )}
 
