@@ -267,6 +267,6 @@ export function CommandPalette({ onNavigate, visibleTabs }: CommandPaletteProps)
           </CommandGroup>
         </CommandList>
       </CommandDialog>
-    </>
+    
   );
 }
