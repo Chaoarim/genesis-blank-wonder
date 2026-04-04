@@ -184,7 +184,9 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCoun
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {items.map(item => (
+                      {items.map(item => {
+                        const badge = badgeCounts[item.value] || 0;
+                        return (
                         <SidebarMenuItem key={item.value}>
                           <SidebarMenuButton
                             isActive={activeTab === item.value}
@@ -197,10 +199,16 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCoun
                             }
                           >
                             <item.icon className="h-4 w-4 shrink-0" />
-                            <span>{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
+                            {badge > 0 && (
+                              <Badge className="h-5 min-w-5 px-1 text-[10px] bg-destructive text-destructive-foreground border-0 flex items-center justify-center ml-auto">
+                                {badge > 99 ? '99+' : badge}
+                              </Badge>
+                            )}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                      ))}
+                        );
+                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </CollapsibleContent>
