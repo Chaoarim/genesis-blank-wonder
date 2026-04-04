@@ -289,8 +289,7 @@ const SalesHub = () => {
         return <BackupExcelDownload adminUserId={sellerPerms.adminUserId} />;
       case 'whatsapp-notif':
         return <WhatsAppNotifications adminUserId={sellerPerms.adminUserId} allSales={salesData.allSales} sellers={sellerPerms.sellers} goals={salesData.goals} />;
-      case 'fleet-rankings':
-        return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} />;
+      case 'help':
       case 'help':
         return <HelpGuide />;
       default:
