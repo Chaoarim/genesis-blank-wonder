@@ -168,7 +168,7 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCoun
           return (
             <Collapsible
               key={group}
-              open={isOpen || hasActiveItem}
+              open={isOpen}
               onOpenChange={() => toggleGroup(group)}
             >
               <SidebarGroup>
