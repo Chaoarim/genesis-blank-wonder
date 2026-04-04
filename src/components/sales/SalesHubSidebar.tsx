@@ -135,22 +135,30 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCoun
               <SidebarGroup key={group}>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {items.map(item => (
+                    {items.map(item => {
+                      const badge = badgeCounts[item.value] || 0;
+                      return (
                       <SidebarMenuItem key={item.value}>
                         <SidebarMenuButton
                           isActive={activeTab === item.value}
                           onClick={() => onTabChange(item.value)}
                           tooltip={item.label}
-                          className={
+                          className={`relative ${
                             activeTab === item.value
                               ? 'bg-primary/10 text-primary font-medium'
                               : 'hover:bg-muted/50'
-                          }
+                          }`}
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
+                          {badge > 0 && (
+                            <span className="absolute top-0.5 left-5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-0.5">
+                              {badge > 9 ? '9+' : badge}
+                            </span>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                    ))}
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
