@@ -1,14 +1,14 @@
 import { Composition } from "remotion";
 import { MainVideo } from "./MainVideo";
 
-// 8 scenes: 140+140+130+130+130+130+120+150 = 1070
-// 7 transitions of 20 frames = 140 overlap
-// Total: 1070 - 140 = 930 frames = 31s at 30fps
+// 5 scenes: 140+170+160+150+170 = 790
+// 4 transitions: 25+20+25+25 = 95 overlap
+// Total: 790 - 95 = 695 frames ≈ 23s at 30fps
 export const RemotionRoot = () => (
   <Composition
     id="main"
     component={MainVideo}
-    durationInFrames={930}
+    durationInFrames={695}
     fps={30}
     width={1920}
     height={1080}
