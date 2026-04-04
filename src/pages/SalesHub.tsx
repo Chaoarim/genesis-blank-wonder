@@ -384,7 +384,7 @@ const SalesHub = () => {
           </main>
         </div>
 
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} visibleTabs={visibleTabs} />
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} visibleTabs={visibleTabs} isAdmin={sellerPerms.isAdmin} badgeCounts={badgeCounts} />
         <Suspense fallback={null}>
           <OnboardingWizard onNavigate={setActiveTab} />
         </Suspense>
