@@ -280,6 +280,46 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
         </div>
       </div>
 
+      {/* Highlight Dashboard Cards */}
+      {filteredRankings.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {highlightTop1 && (
+            <Card className="p-4 border-amber-500/30 bg-amber-500/5">
+              <div className="flex items-center gap-2 mb-1">
+                <Trophy className="w-5 h-5 text-amber-500" />
+                <span className="text-xs font-medium text-muted-foreground">Top 1 Mais Emplacado</span>
+              </div>
+              <p className="text-lg font-bold truncate">{highlightTop1.model}</p>
+              <p className="text-xs text-muted-foreground">{highlightTop1.quantity.toLocaleString('pt-BR')} emplacamentos</p>
+            </Card>
+          )}
+
+          {highlightLeastParts && (
+            <Card className="p-4 border-destructive/30 bg-destructive/5">
+              <div className="flex items-center gap-2 mb-1">
+                <Lightbulb className="w-5 h-5 text-destructive" />
+                <span className="text-xs font-medium text-muted-foreground">Oportunidade</span>
+              </div>
+              <p className="text-lg font-bold truncate">{highlightLeastParts.model}</p>
+              <p className="text-xs text-muted-foreground">
+                Apenas {highlightLeastParts.partsCount} peça{highlightLeastParts.partsCount !== 1 ? 's' : ''} no catálogo
+              </p>
+            </Card>
+          )}
+
+          {highlightLatestYear && (
+            <Card className="p-4 border-primary/30 bg-primary/5">
+              <div className="flex items-center gap-2 mb-1">
+                <CalendarDays className="w-5 h-5 text-primary" />
+                <span className="text-xs font-medium text-muted-foreground">Ano Mais Recente</span>
+              </div>
+              <p className="text-lg font-bold">{highlightLatestYear}</p>
+              <p className="text-xs text-muted-foreground">{years.length} ano{years.length !== 1 ? 's' : ''} importado{years.length !== 1 ? 's' : ''}</p>
+            </Card>
+          )}
+        </div>
+      )}
+
       {filteredRankings.length === 0 ? (
         <Card className="p-8 text-center">
           <Car className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
