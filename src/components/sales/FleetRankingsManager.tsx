@@ -219,12 +219,14 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
       </div>
 
       {/* Info card */}
-      <Card className="p-3 bg-muted/50 border-dashed">
-        <p className="text-xs text-muted-foreground">
-          <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
-          Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
-        </p>
-      </Card>
+      {!readOnly && (
+        <Card className="p-3 bg-muted/50 border-dashed">
+          <p className="text-xs text-muted-foreground">
+            <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
+            Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
+          </p>
+        </Card>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
