@@ -65,6 +65,7 @@ const CashFlowProjection = lazy(() => import('@/components/sales/CashFlowProject
 const WhatsAppNotifications = lazy(() => import('@/components/sales/WhatsAppNotifications').then(m => ({ default: m.WhatsAppNotifications })));
 const DistributorPriceImporter = lazy(() => import('@/components/sales/DistributorPriceImporter').then(m => ({ default: m.DistributorPriceImporter })));
 const ExpeditionManager = lazy(() => import('@/components/sales/ExpeditionManager').then(m => ({ default: m.ExpeditionManager })));
+const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -289,6 +290,8 @@ const SalesHub = () => {
         return <BackupExcelDownload adminUserId={sellerPerms.adminUserId} />;
       case 'whatsapp-notif':
         return <WhatsAppNotifications adminUserId={sellerPerms.adminUserId} allSales={salesData.allSales} sellers={sellerPerms.sellers} goals={salesData.goals} />;
+      case 'fleet-rankings':
+        return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} />;
       case 'help':
         return <HelpGuide />;
       default:
