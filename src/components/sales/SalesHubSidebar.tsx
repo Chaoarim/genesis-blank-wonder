@@ -95,6 +95,7 @@ interface SalesHubSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   visibleTabs: string[];
+  badgeCounts?: Record<string, number>;
 }
 
 export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHubSidebarProps) {
