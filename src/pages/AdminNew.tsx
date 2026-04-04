@@ -922,6 +922,12 @@ const AdminNew = () => {
               </Card>
             </div>
           </TabsContent>
+          <TabsContent value="fleet-rankings">
+            <Card className="p-6 border-primary/20 shadow-xl">
+              <FleetRankingsManager adminUserId={null} />
+            </Card>
+          </TabsContent>
+
         </Tabs>
       </div>
     </div>
