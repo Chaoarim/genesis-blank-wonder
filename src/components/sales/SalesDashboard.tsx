@@ -44,6 +44,7 @@ interface SalesDashboardProps {
     storeMonthTotal?: number;
   };
   onNewSale: () => void;
+  onNavigate?: (tab: string) => void;
   recentSales: Sale[];
   allSales: Sale[];
   sellerName?: string | null;
