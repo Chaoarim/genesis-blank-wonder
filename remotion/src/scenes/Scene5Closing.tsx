@@ -1,115 +1,65 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
+import { Subtitle } from "../components/Subtitle";
 
 export const Scene5Closing = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const mainS = spring({ frame, fps, config: { damping: 15, stiffness: 100 } });
-  const scale = interpolate(mainS, [0, 1], [0.9, 1]);
+  const mainS = spring({ frame: frame - 5, fps, config: { damping: 14, stiffness: 80 } });
+  const scale = interpolate(mainS, [0, 1], [0.85, 1]);
   const op = interpolate(mainS, [0, 1], [0, 1]);
 
-  const subOp = interpolate(frame, [30, 55], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const priceS = spring({ frame: frame - 60, fps, config: { damping: 12, stiffness: 100 } });
+  const priceScale = interpolate(priceS, [0, 1], [0.5, 1]);
+  const priceOp = interpolate(priceS, [0, 1], [0, 1]);
 
-  const modules = [
-    "Vendas", "Estoque", "Clientes", "Metas", "Comissões", "Expedição",
-    "Orçamentos CRM", "NF-e", "Catálogo B2B", "Garantias",
-  ];
+  const pulseScale = 1 + Math.sin(frame * 0.08) * 0.015;
 
-  const pulseScale = 1 + Math.sin(frame * 0.1) * 0.02;
-
-  // Badge stagger
-  const badgeStart = 50;
+  // Animated ring
+  const ringR = interpolate(frame, [0, 180], [0, 720], { extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
-      <div style={{ transform: `scale(${scale})`, opacity: op, textAlign: "center" }}>
-        {/* Main headline */}
-        <div
-          style={{
-            fontFamily: "Space Grotesk, sans-serif",
-            fontSize: 56,
-            fontWeight: 700,
-            color: "white",
-            lineHeight: 1.2,
-            marginBottom: 12,
-          }}
-        >
+      {/* Decorative rings */}
+      <div style={{ position: "absolute", width: 600, height: 600, borderRadius: "50%", border: "1px solid hsla(38, 92%, 50%, 0.08)", transform: `rotate(${ringR}deg)` }} />
+      <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", border: "1px solid hsla(38, 92%, 50%, 0.05)", transform: `rotate(${-ringR * 0.6}deg)` }} />
+
+      <div style={{ transform: `scale(${scale})`, opacity: op, textAlign: "center", zIndex: 1 }}>
+        <div style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: 60, fontWeight: 700, color: "white", lineHeight: 1.15, letterSpacing: -2, marginBottom: 8 }}>
           Tudo que você precisa.
         </div>
-        <div
-          style={{
-            fontFamily: "Space Grotesk, sans-serif",
-            fontSize: 56,
-            fontWeight: 700,
-            color: "hsl(38, 92%, 50%)",
-            lineHeight: 1.2,
-            transform: `scale(${pulseScale})`,
-          }}
-        >
+        <div style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: 60, fontWeight: 700, color: "hsl(38, 92%, 50%)", lineHeight: 1.15, letterSpacing: -2, transform: `scale(${pulseScale})` }}>
           Uma só plataforma.
         </div>
 
-        {/* Module badges */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 12,
-            justifyContent: "center",
-            marginTop: 50,
-            maxWidth: 800,
-            opacity: subOp,
-          }}
-        >
-          {modules.map((m, i) => {
-            const s = spring({ frame: frame - badgeStart - i * 4, fps, config: { damping: 20, stiffness: 180 } });
-            const badgeScale = interpolate(s, [0, 1], [0.5, 1]);
-            const badgeOp = interpolate(s, [0, 1], [0, 1]);
+        {/* Price */}
+        <div style={{ marginTop: 50, transform: `scale(${priceScale})`, opacity: priceOp }}>
+          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 18, color: "hsla(0,0%,100%,0.4)", fontWeight: 400, marginBottom: 8 }}>
+            Plano Anual completo por apenas
+          </div>
+          <div style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: 80, fontWeight: 700, color: "hsl(38, 92%, 50%)", lineHeight: 1, letterSpacing: -3 }}>
+            R$ 297
+          </div>
+          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 16, color: "hsla(0,0%,100%,0.3)", marginTop: 10 }}>
+            Acesso completo a todos os módulos
+          </div>
+        </div>
 
+        {/* Trust badges */}
+        <div style={{ display: "flex", gap: 24, justifyContent: "center", marginTop: 40 }}>
+          {["100% Online", "Suporte WhatsApp", "Sem fidelidade"].map((t, i) => {
+            const bS = spring({ frame: frame - 85 - i * 6, fps, config: { damping: 22 } });
             return (
-              <div
-                key={i}
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 16,
-                  color: "white",
-                  padding: "10px 22px",
-                  borderRadius: 30,
-                  background: "hsla(220, 20%, 18%, 0.8)",
-                  border: "1px solid hsla(38, 92%, 50%, 0.3)",
-                  transform: `scale(${badgeScale})`,
-                  opacity: badgeOp,
-                }}
-              >
-                {m}
+              <div key={i} style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "hsla(0,0%,100%,0.5)", display: "flex", alignItems: "center", gap: 6, opacity: interpolate(bS, [0, 1], [0, 1]), transform: `translateY(${interpolate(bS, [0, 1], [15, 0])}px)` }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e" }} />
+                {t}
               </div>
             );
           })}
         </div>
-
-        {/* Price tag */}
-        <div
-          style={{
-            marginTop: 50,
-            opacity: interpolate(frame, [110, 135], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-          }}
-        >
-          <div style={{ fontFamily: "Inter, sans-serif", fontSize: 18, color: "hsla(0,0%,100%,0.5)" }}>
-            Plano Anual completo por apenas
-          </div>
-          <div
-            style={{
-              fontFamily: "Space Grotesk, sans-serif",
-              fontSize: 64,
-              fontWeight: 700,
-              color: "hsl(38, 92%, 50%)",
-              marginTop: 8,
-            }}
-          >
-            R$ 297
-          </div>
-        </div>
       </div>
+
+      <Subtitle text="NovoPeçaI — comece a transformar sua loja de autopeças hoje mesmo." from={40} />
     </AbsoluteFill>
   );
 };
