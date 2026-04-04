@@ -188,6 +188,24 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
     });
   }, [top10, partsMatches, totalEmplacamentos]);
 
+  // Highlight cards data
+  const highlightTop1 = useMemo(() => {
+    if (!filteredRankings.length) return null;
+    return filteredRankings[0];
+  }, [filteredRankings]);
+
+  const highlightLeastParts = useMemo(() => {
+    if (!demandSuggestions.length) return null;
+    const withData = demandSuggestions.filter(d => d.partsCount !== undefined);
+    if (!withData.length) return null;
+    return withData.reduce((min, d) => d.partsCount < min.partsCount ? d : min, withData[0]);
+  }, [demandSuggestions]);
+
+  const highlightLatestYear = useMemo(() => {
+    if (!years.length) return null;
+    return years[0];
+  }, [years]);
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
