@@ -258,6 +258,31 @@ export function SalesDashboard({ stats, onNewSale, onNavigate, recentSales, allS
         Registrar Nova Venda
       </Button>
 
+      {/* Quick action cards - contextual by profile */}
+      {onNavigate && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+          {!sellerName ? (
+            <>
+              <QuickAction icon={<Search className="w-5 h-5" />} label="Estoque" onClick={() => onNavigate('inventory')} />
+              <QuickAction icon={<Users className="w-5 h-5" />} label="Clientes" onClick={() => onNavigate('customers')} />
+              <QuickAction icon={<ClipboardList className="w-5 h-5" />} label="Pedidos" onClick={() => onNavigate('orders')} />
+              <QuickAction icon={<AlertTriangle className="w-5 h-5" />} label="Estoque Baixo" onClick={() => onNavigate('low-stock')} />
+              <QuickAction icon={<BarChart3 className="w-5 h-5" />} label="Indicadores" onClick={() => onNavigate('kpis')} />
+              <QuickAction icon={<Wallet className="w-5 h-5" />} label="Financeiro" onClick={() => onNavigate('accounts-receivable')} />
+            </>
+          ) : (
+            <>
+              <QuickAction icon={<Search className="w-5 h-5" />} label="Estoque" onClick={() => onNavigate('inventory')} />
+              <QuickAction icon={<FileText className="w-5 h-5" />} label="Histórico" onClick={() => onNavigate('history')} />
+              <QuickAction icon={<Users className="w-5 h-5" />} label="Carteira" onClick={() => onNavigate('carteira')} />
+              <QuickAction icon={<Target className="w-5 h-5" />} label="Metas" onClick={() => onNavigate('goals')} />
+              <QuickAction icon={<Trophy className="w-5 h-5" />} label="Ranking" onClick={() => onNavigate('fleet-rankings')} />
+              <QuickAction icon={<FileText className="w-5 h-5" />} label="Relatório" onClick={() => onNavigate('report')} />
+            </>
+          )}
+        </div>
+      )}
+
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={<DollarSign className="w-5 h-5" />} label="Hoje" value={fmt(stats.todayTotal)} sub={`${stats.todaySales} vendas`} color="text-green-500" />
