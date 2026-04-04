@@ -108,8 +108,8 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
 
   // Collapsible state: Principal always open, active group open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = { Vendas: true };
-    GROUPS.forEach(g => { initial[g] = g === 'Principal' || g === activeGroup; });
+    const initial: Record<string, boolean> = { Vender: true };
+    GROUPS.forEach(g => { initial[g] = g === 'Vender' || g === activeGroup; });
     return initial;
   });
 
