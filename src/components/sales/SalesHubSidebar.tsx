@@ -98,7 +98,7 @@ interface SalesHubSidebarProps {
   badgeCounts?: Record<string, number>;
 }
 
-export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHubSidebarProps) {
+export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCounts = {} }: SalesHubSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
 
