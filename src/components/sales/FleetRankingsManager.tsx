@@ -22,11 +22,12 @@ interface FleetRanking {
 
 interface FleetRankingsManagerProps {
   adminUserId: string | null;
+  readOnly?: boolean;
 }
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
 
-export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps) {
+export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRankingsManagerProps) {
   const [rankings, setRankings] = useState<FleetRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
@@ -199,27 +200,33 @@ export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps)
           <p className="text-sm text-muted-foreground">Importe dados FENABRAVE para prever demanda de peças</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
-          <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
-            <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
-          </Button>
+          {!readOnly && (
+            <>
+              <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
+              <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
+                <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
+              </Button>
+              <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                Importar CSV
+              </Button>
+            </>
+          )}
           <Button size="sm" variant="outline" onClick={handleExportData}>
             <Download className="w-4 h-4 mr-1" /> Exportar Dados
-          </Button>
-          <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
-            {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-            Importar CSV
           </Button>
         </div>
       </div>
 
       {/* Info card */}
-      <Card className="p-3 bg-muted/50 border-dashed">
-        <p className="text-xs text-muted-foreground">
-          <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
-          Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
-        </p>
-      </Card>
+      {!readOnly && (
+        <Card className="p-3 bg-muted/50 border-dashed">
+          <p className="text-xs text-muted-foreground">
+            <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
+            Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
+          </p>
+        </Card>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
@@ -240,7 +247,7 @@ export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps)
           <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar modelo..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8" />
         </div>
-        {selectedYear && (
+        {selectedYear && !readOnly && (
           <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
             <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
           </Button>
