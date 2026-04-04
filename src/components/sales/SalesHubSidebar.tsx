@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
@@ -95,9 +96,10 @@ interface SalesHubSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   visibleTabs: string[];
+  badgeCounts?: Record<string, number>;
 }
 
-export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHubSidebarProps) {
+export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCounts = {} }: SalesHubSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
 
@@ -133,22 +135,30 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
               <SidebarGroup key={group}>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {items.map(item => (
+                    {items.map(item => {
+                      const badge = badgeCounts[item.value] || 0;
+                      return (
                       <SidebarMenuItem key={item.value}>
                         <SidebarMenuButton
                           isActive={activeTab === item.value}
                           onClick={() => onTabChange(item.value)}
                           tooltip={item.label}
-                          className={
+                          className={`relative ${
                             activeTab === item.value
                               ? 'bg-primary/10 text-primary font-medium'
                               : 'hover:bg-muted/50'
-                          }
+                          }`}
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
+                          {badge > 0 && (
+                            <span className="absolute top-0.5 left-5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground px-0.5">
+                              {badge > 9 ? '9+' : badge}
+                            </span>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                    ))}
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -174,7 +184,9 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu>
-                      {items.map(item => (
+                      {items.map(item => {
+                        const badge = badgeCounts[item.value] || 0;
+                        return (
                         <SidebarMenuItem key={item.value}>
                           <SidebarMenuButton
                             isActive={activeTab === item.value}
@@ -187,10 +199,16 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
                             }
                           >
                             <item.icon className="h-4 w-4 shrink-0" />
-                            <span>{item.label}</span>
+                            <span className="flex-1">{item.label}</span>
+                            {badge > 0 && (
+                              <Badge className="h-5 min-w-5 px-1 text-[10px] bg-destructive text-destructive-foreground border-0 flex items-center justify-center ml-auto">
+                                {badge > 99 ? '99+' : badge}
+                              </Badge>
+                            )}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
-                      ))}
+                        );
+                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </CollapsibleContent>
