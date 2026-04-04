@@ -200,16 +200,20 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           <p className="text-sm text-muted-foreground">Importe dados FENABRAVE para prever demanda de peças</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
-          <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
-            <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
-          </Button>
+          {!readOnly && (
+            <>
+              <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
+              <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
+                <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
+              </Button>
+              <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                Importar CSV
+              </Button>
+            </>
+          )}
           <Button size="sm" variant="outline" onClick={handleExportData}>
             <Download className="w-4 h-4 mr-1" /> Exportar Dados
-          </Button>
-          <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
-            {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-            Importar CSV
           </Button>
         </div>
       </div>
