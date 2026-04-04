@@ -291,7 +291,7 @@ const SalesHub = () => {
       case 'whatsapp-notif':
         return <WhatsAppNotifications adminUserId={sellerPerms.adminUserId} allSales={salesData.allSales} sellers={sellerPerms.sellers} goals={salesData.goals} />;
       case 'fleet-rankings':
-        return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} />;
+        return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} readOnly />;
       case 'help':
         return <HelpGuide />;
       default:
