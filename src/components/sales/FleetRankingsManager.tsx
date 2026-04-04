@@ -27,7 +27,7 @@ interface FleetRankingsManagerProps {
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
 
-export function FleetRankingsManager({ adminUserId }: FleetRankingsManagerProps) {
+export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRankingsManagerProps) {
   const [rankings, setRankings] = useState<FleetRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
