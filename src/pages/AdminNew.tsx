@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { PartImageUploader } from "@/components/admin/PartImageUploader";
 import { AdminPartsManager } from "@/components/admin/AdminPartsManager";
+import { FleetRankingsManager } from "@/components/sales/FleetRankingsManager";
 import { Textarea } from "@/components/ui/textarea";
 
 import { format } from "date-fns";
