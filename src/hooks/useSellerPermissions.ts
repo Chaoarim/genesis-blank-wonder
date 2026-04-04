@@ -28,6 +28,7 @@ export const ALL_PERMISSIONS = [
   { key: 'history', label: 'Histórico', sensitive: false },
   { key: 'customers', label: 'Clientes', sensitive: false },
   { key: 'carteira', label: 'Carteira de Clientes', sensitive: false },
+  { key: 'fleet-rankings', label: 'Ranking Frota', sensitive: false },
   { key: 'credit', label: 'Aprovações de Crédito', sensitive: true },
   { key: 'repurchase-alerts', label: 'Alertas de Recompra', sensitive: false },
   { key: 'goals', label: 'Metas', sensitive: false },
@@ -115,7 +116,7 @@ export function useSellerPermissions(userId: string | null) {
     if (isAdmin) return true;
 
     // Core tabs always available for sellers (individual operation + visibility)
-    if (['new-sale', 'dashboard', 'history', 'report', 'carteira', 'help'].includes(tab)) return true;
+    if (['new-sale', 'dashboard', 'history', 'report', 'carteira', 'help', 'fleet-rankings'].includes(tab)) return true;
 
     return permissions.includes(tab);
   }, [isAdmin, permissions]);
