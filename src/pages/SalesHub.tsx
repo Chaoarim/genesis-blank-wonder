@@ -308,6 +308,7 @@ const SalesHub = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           visibleTabs={visibleTabs}
+          badgeCounts={badgeCounts}
         />
 
         <div className="flex-1 flex flex-col min-w-0">
