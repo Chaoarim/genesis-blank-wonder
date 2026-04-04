@@ -21,74 +21,75 @@ interface TabDef {
 }
 
 const MENU_ITEMS: TabDef[] = [
-  // 🛒 Vendas
-  { value: 'dashboard', icon: BarChart3, label: 'Dashboard', group: 'Vendas' },
-  { value: 'kpis', icon: TrendingUp, label: 'KPIs', group: 'Vendas' },
-  { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vendas' },
-  { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vendas' },
-  { value: 'history', icon: History, label: 'Histórico', group: 'Vendas' },
-  { value: 'saved-quotes', icon: ShoppingBag, label: 'Orçamentos', group: 'Vendas' },
-  { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vendas' },
-  { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vendas' },
-  { value: 'demand-forecast', icon: TrendingUp, label: 'Previsão Demanda', group: 'Vendas' },
-  { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Vendas' },
-  { value: 'expedition', icon: PackageCheck, label: 'Expedição', group: 'Vendas' },
+  // 🛒 Vender
+  { value: 'dashboard', icon: BarChart3, label: 'Painel Geral', group: 'Vender' },
+  { value: 'kpis', icon: TrendingUp, label: 'Indicadores', group: 'Vender' },
+  { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vender' },
+  { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vender' },
+  { value: 'history', icon: History, label: 'Histórico', group: 'Vender' },
+  { value: 'saved-quotes', icon: ShoppingBag, label: 'Orçamentos', group: 'Vender' },
+  { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vender' },
+  { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vender' },
+  { value: 'demand-forecast', icon: TrendingUp, label: 'Previsão de Demanda', group: 'Vender' },
+  { value: 'fleet-rankings', icon: Car, label: 'Tendências de Mercado', group: 'Vender' },
+  { value: 'expedition', icon: PackageCheck, label: 'Expedição', group: 'Vender' },
 
   // 👥 Clientes
-  { value: 'customers', icon: Users, label: 'Clientes', group: 'Clientes' },
+  { value: 'customers', icon: Users, label: 'Meus Clientes', group: 'Clientes' },
   { value: 'carteira', icon: BookUser, label: 'Carteira', group: 'Clientes' },
-  { value: 'credit', icon: CreditCard, label: 'Crédito', group: 'Clientes' },
-  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas Recompra', group: 'Clientes' },
+  { value: 'credit', icon: CreditCard, label: 'Aprovação de Crédito', group: 'Clientes' },
+  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas de Recompra', group: 'Clientes' },
   { value: 'customer-profitability', icon: TrendingUp, label: 'Rentabilidade', group: 'Clientes' },
   { value: 'customer-interactions', icon: BookUser, label: 'Interações', group: 'Clientes' },
 
-  // 📦 Estoque
-  { value: 'inventory', icon: Package, label: 'Consulta', group: 'Estoque' },
-  { value: 'low-stock', icon: AlertTriangle, label: 'Estoque Baixo', group: 'Estoque' },
-  { value: 'replenishment', icon: TrendingUp, label: 'Reposição', group: 'Estoque' },
-  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar', group: 'Estoque' },
-  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar', group: 'Estoque' },
-  { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Estoque' },
-  { value: 'product-kits', icon: Package, label: 'Kits de Peças', group: 'Estoque' },
+  // 📦 Produtos & Estoque
+  { value: 'inventory', icon: Package, label: 'Consultar Estoque', group: 'Produtos' },
+  { value: 'low-stock', icon: AlertTriangle, label: 'Estoque Baixo', group: 'Produtos' },
+  { value: 'replenishment', icon: TrendingUp, label: 'Sugestão de Reposição', group: 'Produtos' },
+  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar Estoque', group: 'Produtos' },
+  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar Produto', group: 'Produtos' },
+  { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Produtos' },
+  { value: 'product-kits', icon: Package, label: 'Kits de Peças', group: 'Produtos' },
+  { value: 'price-history', icon: Clock, label: 'Histórico de Preços', group: 'Produtos' },
+  { value: 'distributor-prices', icon: FileSpreadsheet, label: 'Tabela Distribuidor', group: 'Produtos' },
+
   // 💰 Financeiro
   { value: 'markup', icon: Percent, label: 'Markup', group: 'Financeiro' },
-  { value: 'promotions', icon: Tag, label: 'Ofertas', group: 'Financeiro' },
-  { value: 'coupons', icon: Ticket, label: 'Cupons', group: 'Financeiro' },
-  { value: 'payment-terms', icon: Calendar, label: 'Prazos', group: 'Financeiro' },
+  { value: 'promotions', icon: Tag, label: 'Ofertas & Promoções', group: 'Financeiro' },
+  { value: 'coupons', icon: Ticket, label: 'Cupons de Desconto', group: 'Financeiro' },
+  { value: 'payment-terms', icon: Calendar, label: 'Prazos de Pagamento', group: 'Financeiro' },
   { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
   { value: 'accounts-receivable', icon: DollarSign, label: 'Contas a Receber', group: 'Financeiro' },
   { value: 'abc-curve', icon: TrendingUp, label: 'Curva ABC', group: 'Financeiro' },
-  { value: 'billing-calendar', icon: Calendar, label: 'Agenda Cobranças', group: 'Financeiro' },
+  { value: 'billing-calendar', icon: Calendar, label: 'Agenda de Cobranças', group: 'Financeiro' },
   { value: 'cash-flow', icon: TrendingUp, label: 'Fluxo de Caixa', group: 'Financeiro' },
-  { value: 'price-history', icon: Clock, label: 'Histórico Preços', group: 'Estoque' },
-  { value: 'distributor-prices', icon: FileSpreadsheet, label: 'Tabela Distribuidor', group: 'Estoque' },
   { value: 'customer-price-tiers', icon: Tag, label: 'Preços por Cliente', group: 'Financeiro' },
 
-  // 👥 Equipe
+  // 🏢 Equipe
   { value: 'goals', icon: Target, label: 'Metas', group: 'Equipe' },
   { value: 'sellers', icon: UserCog, label: 'Vendedores', group: 'Equipe' },
   { value: 'commissions', icon: DollarSign, label: 'Comissões', group: 'Equipe' },
-  { value: 'commission-payments', icon: Wallet, label: 'Pgto Comissões', group: 'Equipe' },
-  { value: 'report', icon: FileBarChart, label: 'Relatório', group: 'Equipe' },
+  { value: 'commission-payments', icon: Wallet, label: 'Pagto. Comissões', group: 'Equipe' },
+  { value: 'report', icon: FileBarChart, label: 'Relatório da Equipe', group: 'Equipe' },
 
-  // ❓ Ajuda
-  { value: 'warranty', icon: ShieldCheck, label: 'Garantia', group: 'Suporte' },
-  { value: 'audit-logs', icon: Shield, label: 'Logs', group: 'Suporte' },
-  { value: 'backup-excel', icon: FileSpreadsheet, label: 'Backup Excel', group: 'Suporte' },
-  { value: 'whatsapp-notif', icon: BellRing, label: 'WhatsApp', group: 'Suporte' },
-  { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Suporte' },
+  // ❓ Ajuda & Suporte
+  { value: 'warranty', icon: ShieldCheck, label: 'Garantia & Devoluções', group: 'Ajuda' },
+  { value: 'audit-logs', icon: Shield, label: 'Logs do Sistema', group: 'Ajuda' },
+  { value: 'backup-excel', icon: FileSpreadsheet, label: 'Backup Excel', group: 'Ajuda' },
+  { value: 'whatsapp-notif', icon: BellRing, label: 'Notificações WhatsApp', group: 'Ajuda' },
+  { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
 ];
 
 const GROUP_ICONS: Record<string, string> = {
-  'Vendas': '🛒',
+  'Vender': '🛒',
   'Clientes': '👥',
-  'Estoque': '📦',
+  'Produtos': '📦',
   'Financeiro': '💰',
   'Equipe': '🏢',
-  'Suporte': '❓',
+  'Ajuda': '❓',
 };
 
-const GROUPS = ['Vendas', 'Clientes', 'Estoque', 'Financeiro', 'Equipe', 'Suporte'];
+const GROUPS = ['Vender', 'Clientes', 'Produtos', 'Financeiro', 'Equipe', 'Ajuda'];
 
 interface SalesHubSidebarProps {
   activeTab: string;
@@ -107,8 +108,8 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs }: SalesHu
 
   // Collapsible state: Principal always open, active group open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = { Vendas: true };
-    GROUPS.forEach(g => { initial[g] = g === 'Principal' || g === activeGroup; });
+    const initial: Record<string, boolean> = { Vender: true };
+    GROUPS.forEach(g => { initial[g] = g === 'Vender' || g === activeGroup; });
     return initial;
   });
 
