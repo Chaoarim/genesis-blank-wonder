@@ -197,7 +197,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
             <Car className="w-5 h-5 text-primary" />
             Ranking Frota / Emplacamentos
           </h2>
-          <p className="text-sm text-muted-foreground">Importe dados FENABRAVE para prever demanda de peças</p>
+          <p className="text-sm text-muted-foreground">Análise de frota circulante para previsão de demanda de peças</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {!readOnly && (
