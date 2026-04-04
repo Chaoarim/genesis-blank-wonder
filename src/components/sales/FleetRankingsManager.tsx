@@ -205,38 +205,40 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
         </Button>
       </div>
 
-      {!readOnly && (
-        <Collapsible>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full justify-start gap-2 text-muted-foreground">
-              <Settings className="w-4 h-4" />
-              ⚙️ Gerenciar Dados
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <Card className="p-4 mt-2 space-y-3 border-dashed">
-              <p className="text-xs text-muted-foreground">
-                <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
-                Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
-                <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
-                  <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
-                </Button>
-                <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
-                  {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-                  Importar CSV
-                </Button>
-                {selectedYear && (
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
-                    <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
+{!readOnly && (
+        <Card className="border-primary/30 bg-primary/5">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-start gap-2 font-semibold text-primary hover:bg-primary/10">
+                <Settings className="w-4 h-4" />
+                ⚙️ Gerenciar Dados (Admin)
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="p-4 space-y-3 border-t border-primary/20">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
+                  Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input ref={fileRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleImportCSV} />
+                  <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
+                    <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
                   </Button>
-                )}
+                  <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                    {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                    Importar CSV
+                  </Button>
+                  {selectedYear && (
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
+                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
+                    </Button>
+                  )}
+                </div>
               </div>
-            </Card>
-          </CollapsibleContent>
-        </Collapsible>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
       )}
 
       {/* Filters */}
