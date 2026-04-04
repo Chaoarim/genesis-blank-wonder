@@ -130,6 +130,7 @@ const SalesHub = () => {
 
   // Filter visible tabs based on permissions
   const visibleTabs = ALL_TAB_VALUES.filter(tab => sellerPerms.hasPermission(tab));
+  const badgeCounts = useSidebarBadges(sellerPerms.adminUserId, salesData.allSales);
 
   // If active tab is not visible, fallback to new-sale
   useEffect(() => {
