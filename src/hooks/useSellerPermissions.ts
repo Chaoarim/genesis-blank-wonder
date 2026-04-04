@@ -116,7 +116,7 @@ export function useSellerPermissions(userId: string | null) {
     if (isAdmin) return true;
 
     // Core tabs always available for sellers (individual operation + visibility)
-    if (['new-sale', 'dashboard', 'history', 'report', 'carteira', 'help', 'fleet-rankings'].includes(tab)) return true;
+    if (['new-sale', 'dashboard', 'history', 'report', 'carteira', 'help', 'fleet-rankings', 'saved-quotes'].includes(tab)) return true;
 
     return permissions.includes(tab);
   }, [isAdmin, permissions]);
