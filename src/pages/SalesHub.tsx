@@ -6,6 +6,7 @@ import { usePartsDatabase } from '@/hooks/usePartsDatabase';
 import { useSellerPermissions } from '@/hooks/useSellerPermissions';
 import { RenewalWarning } from '@/components/RenewalWarning';
 import { SalesHubSidebar, ALL_TAB_VALUES } from '@/components/sales/SalesHubSidebar';
+import { useSidebarBadges } from '@/hooks/useSidebarBadges';
 import { CommandPalette } from '@/components/sales/CommandPalette';
 import { BottomNav } from '@/components/sales/BottomNav';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
