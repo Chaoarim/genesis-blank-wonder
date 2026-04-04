@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package, Award, Trophy } from 'lucide-react';
+import { DollarSign, TrendingUp, ShoppingBag, Target, PlusCircle, Crown, Medal, Package, Award, Trophy, Users, BarChart3, AlertTriangle, FileText, Search, Wallet, ClipboardList } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
 import type { Sale } from '@/hooks/useSalesData';
 import { getBusinessDaysInMonth, getRemainingBusinessDays, isBusinessDay } from '@/lib/businessDays';
@@ -44,6 +44,7 @@ interface SalesDashboardProps {
     storeMonthTotal?: number;
   };
   onNewSale: () => void;
+  onNavigate?: (tab: string) => void;
   recentSales: Sale[];
   allSales: Sale[];
   sellerName?: string | null;
@@ -64,7 +65,7 @@ const CHART_COLORS = [
   'hsl(142 50% 55%)',
 ];
 
-export function SalesDashboard({ stats, onNewSale, recentSales, allSales, sellerName, adminUserId, sellerAuthId }: SalesDashboardProps) {
+export function SalesDashboard({ stats, onNewSale, onNavigate, recentSales, allSales, sellerName, adminUserId, sellerAuthId }: SalesDashboardProps) {
   const includeSaturdays = useIncludeSaturdays();
 
   // Monthly evolution (last 6 months)
@@ -256,6 +257,31 @@ export function SalesDashboard({ stats, onNewSale, recentSales, allSales, seller
         <PlusCircle className="w-5 h-5" />
         Registrar Nova Venda
       </Button>
+
+      {/* Quick action cards - contextual by profile */}
+      {onNavigate && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+          {!sellerName ? (
+            <>
+              <QuickAction icon={<Search className="w-5 h-5" />} label="Estoque" onClick={() => onNavigate('inventory')} />
+              <QuickAction icon={<Users className="w-5 h-5" />} label="Clientes" onClick={() => onNavigate('customers')} />
+              <QuickAction icon={<ClipboardList className="w-5 h-5" />} label="Pedidos" onClick={() => onNavigate('orders')} />
+              <QuickAction icon={<AlertTriangle className="w-5 h-5" />} label="Estoque Baixo" onClick={() => onNavigate('low-stock')} />
+              <QuickAction icon={<BarChart3 className="w-5 h-5" />} label="Indicadores" onClick={() => onNavigate('kpis')} />
+              <QuickAction icon={<Wallet className="w-5 h-5" />} label="Financeiro" onClick={() => onNavigate('accounts-receivable')} />
+            </>
+          ) : (
+            <>
+              <QuickAction icon={<Search className="w-5 h-5" />} label="Estoque" onClick={() => onNavigate('inventory')} />
+              <QuickAction icon={<FileText className="w-5 h-5" />} label="Histórico" onClick={() => onNavigate('history')} />
+              <QuickAction icon={<Users className="w-5 h-5" />} label="Carteira" onClick={() => onNavigate('carteira')} />
+              <QuickAction icon={<Target className="w-5 h-5" />} label="Metas" onClick={() => onNavigate('goals')} />
+              <QuickAction icon={<Trophy className="w-5 h-5" />} label="Ranking" onClick={() => onNavigate('fleet-rankings')} />
+              <QuickAction icon={<FileText className="w-5 h-5" />} label="Relatório" onClick={() => onNavigate('report')} />
+            </>
+          )}
+        </div>
+      )}
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -685,5 +711,17 @@ function StatCard({ icon, label, value, sub, color, children }: {
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
       {children}
     </Card>
+  );
+}
+
+function QuickAction({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/30 transition-all text-center group"
+    >
+      <span className="text-muted-foreground group-hover:text-primary transition-colors">{icon}</span>
+      <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors leading-tight">{label}</span>
+    </button>
   );
 }
