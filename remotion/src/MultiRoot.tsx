@@ -6,6 +6,7 @@ import { EquipeVideo } from "./videos/equipe/EquipeVideo";
 import { FinanceiroVideo } from "./videos/financeiro/FinanceiroVideo";
 import { CompletoVideo } from "./videos/completo/CompletoVideo";
 import { CompletoReelsVideo } from "./videos/completo-reels/CompletoReelsVideo";
+import { CompletoPostVideo } from "./videos/completo-post/CompletoPostVideo";
 
 export const MultiRoot = () => (
   <>
@@ -16,5 +17,6 @@ export const MultiRoot = () => (
     <Composition id="financeiro" component={FinanceiroVideo} durationInFrames={500} fps={30} width={1920} height={1080} />
     <Composition id="completo" component={CompletoVideo} durationInFrames={1725} fps={30} width={1920} height={1080} />
     <Composition id="completo-reels" component={CompletoReelsVideo} durationInFrames={1390} fps={30} width={1080} height={1920} />
+    <Composition id="completo-post" component={CompletoPostVideo} durationInFrames={1390} fps={30} width={1080} height={1080} />
   </>
 );
