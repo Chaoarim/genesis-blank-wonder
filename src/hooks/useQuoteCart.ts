@@ -15,6 +15,13 @@ export interface SavedQuote {
   name: string;
   items: QuoteItem[];
   createdAt: string;
+  createdByUserId: string;
+}
+
+interface StoredQuotesPayload {
+  version: 2;
+  userId: string;
+  quotes: SavedQuote[];
 }
 
 const STORAGE_KEY = 'quote-cart-saved';
@@ -23,16 +30,43 @@ function getStorageKey(userId: string) {
   return `${STORAGE_KEY}:${userId}`;
 }
 
-function loadSavedQuotes(storageKey: string): SavedQuote[] {
+function loadSavedQuotes(userId: string): SavedQuote[] {
   try {
+    const storageKey = getStorageKey(userId);
     const raw = localStorage.getItem(storageKey);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as Partial<StoredQuotesPayload> | SavedQuote[];
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      localStorage.removeItem(storageKey);
+      return [];
+    }
+
+    if (parsed.version !== 2 || parsed.userId !== userId || !Array.isArray(parsed.quotes)) {
+      localStorage.removeItem(storageKey);
+      return [];
+    }
+
+    return parsed.quotes.filter((quote): quote is SavedQuote => {
+      const candidate = quote as Partial<SavedQuote>;
+      return typeof candidate.id === 'string'
+        && typeof candidate.name === 'string'
+        && typeof candidate.createdAt === 'string'
+        && Array.isArray(candidate.items)
+        && candidate.createdByUserId === userId;
+    });
   } catch { return []; }
 }
 
-function persistQuotes(storageKey: string, quotes: SavedQuote[]) {
+function persistQuotes(userId: string, quotes: SavedQuote[]) {
   try {
-    localStorage.setItem(storageKey, JSON.stringify(quotes));
+    const payload: StoredQuotesPayload = {
+      version: 2,
+      userId,
+      quotes,
+    };
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(payload));
   } catch {
     // Ignore storage write errors to avoid breaking the quote flow.
   }
@@ -41,9 +75,13 @@ function persistQuotes(storageKey: string, quotes: SavedQuote[]) {
 export function useQuoteCart() {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [quoteName, setQuoteName] = useState('');
-  const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
-  const [storageKey, setStorageKey] = useState<string | null>(null);
+  const [quoteStore, setQuoteStore] = useState<{ userId: string | null; savedQuotes: SavedQuote[] }>({
+    userId: null,
+    savedQuotes: [],
+  });
   const activeUserIdRef = useRef<string | null>(null);
+  const savedQuotes = quoteStore.savedQuotes;
+  const storageUserId = quoteStore.userId;
 
   useEffect(() => {
     const syncQuotesForUser = (userId: string | null) => {
@@ -52,16 +90,13 @@ export function useQuoteCart() {
       activeUserIdRef.current = userId;
 
       if (!userId) {
-        setStorageKey(null);
-        setSavedQuotes([]);
+        setQuoteStore({ userId: null, savedQuotes: [] });
         setItems([]);
         setQuoteName('');
         return;
       }
 
-      const nextStorageKey = getStorageKey(userId);
-      setStorageKey(nextStorageKey);
-      setSavedQuotes(loadSavedQuotes(nextStorageKey));
+      setQuoteStore({ userId, savedQuotes: loadSavedQuotes(userId) });
       setItems([]);
       setQuoteName('');
     };
@@ -84,9 +119,9 @@ export function useQuoteCart() {
   }, []);
 
   useEffect(() => {
-    if (!storageKey) return;
-    persistQuotes(storageKey, savedQuotes);
-  }, [savedQuotes, storageKey]);
+    if (!storageUserId) return;
+    persistQuotes(storageUserId, savedQuotes);
+  }, [savedQuotes, storageUserId]);
 
   const addItem = useCallback((part: { codigo: string; fornecedor: string; produto: string; aplicacao: string }) => {
     setItems(prev => {
@@ -114,18 +149,19 @@ export function useQuoteCart() {
   const clearCart = useCallback(() => { setItems([]); setQuoteName(''); }, []);
 
   const saveQuote = useCallback((name: string) => {
-    if (items.length === 0 || !name.trim()) return;
+    if (items.length === 0 || !name.trim() || !storageUserId) return;
     const newQuote: SavedQuote = {
       id: crypto.randomUUID(),
       name: name.trim(),
       items: [...items],
       createdAt: new Date().toISOString(),
+      createdByUserId: storageUserId,
     };
-    setSavedQuotes(prev => [newQuote, ...prev]);
+    setQuoteStore(prev => ({ ...prev, savedQuotes: [newQuote, ...prev.savedQuotes] }));
     setItems([]);
     setQuoteName('');
     return newQuote;
-  }, [items]);
+  }, [items, storageUserId]);
 
   const loadQuote = useCallback((quoteId: string) => {
     const q = savedQuotes.find(s => s.id === quoteId);
@@ -136,7 +172,10 @@ export function useQuoteCart() {
   }, [savedQuotes]);
 
   const deleteSavedQuote = useCallback((quoteId: string) => {
-    setSavedQuotes(prev => prev.filter(q => q.id !== quoteId));
+    setQuoteStore(prev => ({
+      ...prev,
+      savedQuotes: prev.savedQuotes.filter(q => q.id !== quoteId),
+    }));
   }, []);
 
   const sendToWhatsApp = useCallback((phone?: string) => {
