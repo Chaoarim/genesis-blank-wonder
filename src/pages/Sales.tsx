@@ -537,11 +537,18 @@ const Sales = () => {
             <p className="text-sm text-muted-foreground mb-6">Tudo que você precisa para encontrar peças</p>
 
             <div className="mb-6">
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold text-primary">R$ 29,90</span>
-                <span className="text-muted-foreground">/mês</span>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xl text-muted-foreground line-through">R$ 480,00</span>
+                <span className="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded-full">-38%</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">ou R$ 297,00/ano (economia de 17%)</p>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-5xl font-bold text-primary">R$ 297</span>
+                <span className="text-muted-foreground">/ano</span>
+              </div>
+              <div className="mt-3 space-y-1">
+                <p className="text-sm text-muted-foreground">💳 12x de <span className="font-semibold text-foreground">R$ 30,72</span> no cartão</p>
+                <p className="text-sm text-muted-foreground">ou <span className="font-semibold text-foreground">R$ 297,00</span> à vista no PIX</p>
+              </div>
             </div>
 
             <ul className="space-y-3 mb-8 text-left">
@@ -592,7 +599,7 @@ const Sales = () => {
               { q: "E a consulta por placa?", a: "Digite a placa e o sistema consulta o Detran em tempo real — retorna marca, modelo, motor, ano e combustível. As peças vêm filtradas para o veículo." },
               { q: "Preciso instalar algo?", a: "Não! Funciona 100% no navegador, celular ou computador." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
-              { q: "Quanto custa?", a: "R$ 29,90/mês ou R$ 297,00/ano (economia de 17%)." },
+              { q: "Quanto custa?", a: "Plano anual de R$ 297,00 — parcele em 12x de R$ 30,72 no cartão ou pague à vista no PIX." },
             ].map((faq, i) => (
               <Card key={i} className="p-5 glass-card">
                 <h4 className="font-bold text-sm mb-1.5 flex items-center gap-2">
