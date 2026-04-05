@@ -37,6 +37,8 @@ function detectSearchType(query: string): 'placa' | 'code' | 'general' {
 const PartsSearch = () => {
   const navigate = useNavigate();
   const { parts, isLoading: partsLoading } = usePartsDatabase();
+  const { items: cartItems, addItem, removeItem, updateItem, clearCart, total, sendToWhatsApp } = useQuoteCart();
+  const cartKeys = useMemo(() => cartItems.map(i => `${i.codigo}-${i.fornecedor}`), [cartItems]);
   const [mode, setMode] = useState<SearchMode>('unified');
 
   // Unified search with debounce
