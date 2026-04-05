@@ -268,7 +268,7 @@ const PartsSearch = () => {
           </div>
           {mode !== 'unified' && (
             <Badge variant="outline" className="text-xs gap-1 cursor-pointer" onClick={switchToUnified}>
-              {mode === 'placa' ? '🚗 Placa' : '📋 Veículo'}
+              {mode === 'placa' ? '🚗 Placa' : mode === 'frota' ? '📊 Frota' : '📋 Veículo'}
               <X className="w-3 h-3" />
             </Badge>
           )}
