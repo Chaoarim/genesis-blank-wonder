@@ -198,6 +198,31 @@ const PartsSearch = () => {
                     </p>
                   )}
                 </div>
+                {(() => {
+                  const key = `${part.fabricante}-${part.fornecedor}`;
+                  const inCart = cartKeys.includes(key);
+                  return (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-8 w-8 shrink-0 mt-0.5 ${inCart ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'}`}
+                      title={inCart ? 'Já no carrinho' : 'Adicionar à cotação'}
+                      disabled={inCart}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addItem({
+                          codigo: part.fabricante,
+                          fornecedor: part.fornecedor,
+                          produto: part.produto,
+                          aplicacao: part.aplicacao || [part.marca, part.modelo, part.ano].filter(Boolean).join(' '),
+                        });
+                        toast.success('Peça adicionada à cotação');
+                      }}
+                    >
+                      {inCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+                    </Button>
+                  );
+                })()}
                 <Button
                   variant="ghost"
                   size="icon"
