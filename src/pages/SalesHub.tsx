@@ -79,7 +79,7 @@ const SalesHub = () => {
   const [searchParams] = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'inventory');
 
   useEffect(() => {
     const check = async () => {
@@ -135,7 +135,7 @@ const SalesHub = () => {
   // If active tab is not visible, fallback to new-sale
   useEffect(() => {
     if (!sellerPerms.loading && !visibleTabs.includes(activeTab)) {
-      setActiveTab('new-sale');
+      setActiveTab('inventory');
     }
   }, [sellerPerms.loading, visibleTabs, activeTab]);
 
@@ -318,12 +318,12 @@ const SalesHub = () => {
                 <SidebarTrigger className="shrink-0" />
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-                    <BarChart3 className="w-4 h-4 text-primary-foreground" />
+                    <Search className="w-4 h-4 text-primary-foreground" />
                   </div>
                   <div className="hidden sm:block">
-                    <h1 className="text-sm font-bold leading-tight">Central de Vendas</h1>
+                    <h1 className="text-sm font-bold leading-tight">ConsultaParts AI</h1>
                     <p className="text-[10px] text-muted-foreground">
-                      {sellerPerms.isAdmin ? 'Administrador' : `Vendedor: ${sellerPerms.sellerRecord?.name}`}
+                      {sellerPerms.isAdmin ? 'Consulta de Peças' : `Vendedor: ${sellerPerms.sellerRecord?.name}`}
                     </p>
                   </div>
                 </div>
