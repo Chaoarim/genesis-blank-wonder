@@ -37,7 +37,7 @@ function detectSearchType(query: string): 'placa' | 'code' | 'general' {
 const PartsSearch = () => {
   const navigate = useNavigate();
   const { parts, isLoading: partsLoading } = usePartsDatabase();
-  const { items: cartItems, addItem, removeItem, updateItem, clearCart, total, sendToWhatsApp } = useQuoteCart();
+  const { items: cartItems, addItem, removeItem, updateItem, clearCart, sendToWhatsApp, quoteName, setQuoteName, saveQuote, savedQuotes, loadQuote, deleteSavedQuote } = useQuoteCart();
   const cartKeys = useMemo(() => cartItems.map(i => `${i.codigo}-${i.fornecedor}`), [cartItems]);
   const [mode, setMode] = useState<SearchMode>('unified');
 
@@ -304,11 +304,16 @@ const PartsSearch = () => {
             )}
             <QuotePanel
               items={cartItems}
-              total={total}
+              quoteName={quoteName}
+              onSetQuoteName={setQuoteName}
               onUpdateItem={updateItem}
               onRemoveItem={removeItem}
               onClearCart={clearCart}
               onSendWhatsApp={sendToWhatsApp}
+              onSaveQuote={saveQuote}
+              savedQuotes={savedQuotes}
+              onLoadQuote={loadQuote}
+              onDeleteSavedQuote={deleteSavedQuote}
             />
           </div>
         </div>
