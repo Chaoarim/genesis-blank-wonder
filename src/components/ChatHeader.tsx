@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CatalogsSheet } from './CatalogsSheet';
 import { QuotePanel } from './QuotePanel';
 import { Part } from '@/hooks/usePartsDatabase';
-import type { QuoteItem } from '@/hooks/useQuoteCart';
+import type { QuoteItem, SavedQuote } from '@/hooks/useQuoteCart';
 
 interface ChatHeaderProps {
   totalParts: number;
@@ -15,12 +15,17 @@ interface ChatHeaderProps {
   onConsultAI?: (supplierName: string) => void;
   quoteCart: {
     items: QuoteItem[];
-    total: number;
+    quoteName: string;
+    setQuoteName: (name: string) => void;
     addItem: (part: { codigo: string; fornecedor: string; produto: string; aplicacao: string }) => void;
     removeItem: (id: string) => void;
-    updateItem: (id: string, field: 'quantidade' | 'precoUnitario', value: number) => void;
+    updateItem: (id: string, field: 'quantidade', value: number) => void;
     clearCart: () => void;
     sendToWhatsApp: (phone?: string) => void;
+    saveQuote: (name: string) => SavedQuote | undefined;
+    savedQuotes: SavedQuote[];
+    loadQuote: (id: string) => void;
+    deleteSavedQuote: (id: string) => void;
   };
 }
 
@@ -62,11 +67,16 @@ export function ChatHeader({ totalParts, isLoadingDatabase, loadProgress = 0, on
           </div>
           <QuotePanel
             items={quoteCart.items}
-            total={quoteCart.total}
+            quoteName={quoteCart.quoteName}
+            onSetQuoteName={quoteCart.setQuoteName}
             onUpdateItem={quoteCart.updateItem}
             onRemoveItem={quoteCart.removeItem}
             onClearCart={quoteCart.clearCart}
             onSendWhatsApp={quoteCart.sendToWhatsApp}
+            onSaveQuote={quoteCart.saveQuote}
+            savedQuotes={quoteCart.savedQuotes}
+            onLoadQuote={quoteCart.loadQuote}
+            onDeleteSavedQuote={quoteCart.deleteSavedQuote}
           />
           <Button variant="outline" size="sm" onClick={() => navigate('/vendas')} className="gap-1.5">
             <BarChart3 className="w-4 h-4" />
