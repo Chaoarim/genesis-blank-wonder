@@ -1,4 +1,4 @@
-import { BarChart3, PlusCircle, Package, Users, ShoppingBag, History, Target, BookUser } from 'lucide-react';
+import { BarChart3, Package, FileSpreadsheet, Search, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface NavItem {
@@ -9,18 +9,15 @@ interface NavItem {
 
 const ADMIN_ITEMS: NavItem[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início' },
-  { value: 'new-sale', icon: PlusCircle, label: 'Vender' },
-  { value: 'orders', icon: ShoppingBag, label: 'Pedidos' },
   { value: 'inventory', icon: Package, label: 'Estoque' },
-  { value: 'customers', icon: Users, label: 'Clientes' },
+  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar' },
+  { value: 'help', icon: HelpCircle, label: 'Ajuda' },
 ];
 
 const SELLER_ITEMS: NavItem[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início' },
-  { value: 'new-sale', icon: PlusCircle, label: 'Vender' },
-  { value: 'history', icon: History, label: 'Histórico' },
-  { value: 'carteira', icon: BookUser, label: 'Carteira' },
-  { value: 'goals', icon: Target, label: 'Metas' },
+  { value: 'inventory', icon: Package, label: 'Estoque' },
+  { value: 'help', icon: HelpCircle, label: 'Ajuda' },
 ];
 
 interface BottomNavProps {

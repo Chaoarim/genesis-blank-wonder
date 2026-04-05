@@ -21,76 +21,24 @@ interface TabDef {
   group: string;
 }
 
+// Módulos visíveis (focado na busca de peças)
 const MENU_ITEMS: TabDef[] = [
-  // 🛒 Vender
-  { value: 'dashboard', icon: BarChart3, label: 'Painel Geral', group: 'Vender' },
-  { value: 'kpis', icon: TrendingUp, label: 'Indicadores', group: 'Vender' },
-  { value: 'new-sale', icon: PlusCircle, label: 'Nova Venda', group: 'Vender' },
-  { value: 'orders', icon: ShoppingBag, label: 'Pedidos', group: 'Vender' },
-  { value: 'history', icon: History, label: 'Histórico', group: 'Vender' },
-  { value: 'saved-quotes', icon: ShoppingBag, label: 'Orçamentos', group: 'Vender' },
-  { value: 'monthly-report', icon: FileText, label: 'Relatório Mensal', group: 'Vender' },
-  { value: 'sales-by-channel', icon: BarChart3, label: 'Vendas por Canal', group: 'Vender' },
-  { value: 'demand-forecast', icon: TrendingUp, label: 'Previsão de Demanda', group: 'Vender' },
-  { value: 'fleet-rankings', icon: Car, label: 'Tendências de Mercado', group: 'Vender' },
-  { value: 'expedition', icon: PackageCheck, label: 'Expedição', group: 'Vender' },
+  // 🔍 Consulta
+  { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
+  { value: 'inventory', icon: Package, label: 'Consultar Estoque', group: 'Consulta' },
+  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar Estoque', group: 'Consulta' },
+  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar Produto', group: 'Consulta' },
 
-  // 👥 Clientes
-  { value: 'customers', icon: Users, label: 'Meus Clientes', group: 'Clientes' },
-  { value: 'carteira', icon: BookUser, label: 'Carteira', group: 'Clientes' },
-  { value: 'credit', icon: CreditCard, label: 'Aprovação de Crédito', group: 'Clientes' },
-  { value: 'repurchase-alerts', icon: BellRing, label: 'Alertas de Recompra', group: 'Clientes' },
-  { value: 'customer-profitability', icon: TrendingUp, label: 'Rentabilidade', group: 'Clientes' },
-  { value: 'customer-interactions', icon: BookUser, label: 'Interações', group: 'Clientes' },
-
-  // 📦 Produtos & Estoque
-  { value: 'inventory', icon: Package, label: 'Consultar Estoque', group: 'Produtos' },
-  { value: 'low-stock', icon: AlertTriangle, label: 'Estoque Baixo', group: 'Produtos' },
-  { value: 'replenishment', icon: TrendingUp, label: 'Sugestão de Reposição', group: 'Produtos' },
-  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar Estoque', group: 'Produtos' },
-  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar Produto', group: 'Produtos' },
-  { value: 'supplier-contacts', icon: Contact, label: 'Fornecedores', group: 'Produtos' },
-  { value: 'product-kits', icon: Package, label: 'Kits de Peças', group: 'Produtos' },
-  { value: 'price-history', icon: Clock, label: 'Histórico de Preços', group: 'Produtos' },
-  { value: 'distributor-prices', icon: FileSpreadsheet, label: 'Tabela Distribuidor', group: 'Produtos' },
-
-  // 💰 Financeiro
-  { value: 'markup', icon: Percent, label: 'Markup', group: 'Financeiro' },
-  { value: 'promotions', icon: Tag, label: 'Ofertas & Promoções', group: 'Financeiro' },
-  { value: 'coupons', icon: Ticket, label: 'Cupons de Desconto', group: 'Financeiro' },
-  { value: 'payment-terms', icon: Calendar, label: 'Prazos de Pagamento', group: 'Financeiro' },
-  { value: 'accounts-payable', icon: Receipt, label: 'Contas a Pagar', group: 'Financeiro' },
-  { value: 'accounts-receivable', icon: DollarSign, label: 'Contas a Receber', group: 'Financeiro' },
-  { value: 'abc-curve', icon: TrendingUp, label: 'Curva ABC', group: 'Financeiro' },
-  { value: 'billing-calendar', icon: Calendar, label: 'Agenda de Cobranças', group: 'Financeiro' },
-  { value: 'cash-flow', icon: TrendingUp, label: 'Fluxo de Caixa', group: 'Financeiro' },
-  { value: 'customer-price-tiers', icon: Tag, label: 'Preços por Cliente', group: 'Financeiro' },
-
-  // 🏢 Equipe
-  { value: 'goals', icon: Target, label: 'Metas', group: 'Equipe' },
-  { value: 'sellers', icon: UserCog, label: 'Vendedores', group: 'Equipe' },
-  { value: 'commissions', icon: DollarSign, label: 'Comissões', group: 'Equipe' },
-  { value: 'commission-payments', icon: Wallet, label: 'Pagto. Comissões', group: 'Equipe' },
-  { value: 'report', icon: FileBarChart, label: 'Relatório da Equipe', group: 'Equipe' },
-
-  // ❓ Ajuda & Suporte
-  { value: 'warranty', icon: ShieldCheck, label: 'Garantia & Devoluções', group: 'Ajuda' },
-  { value: 'audit-logs', icon: Shield, label: 'Logs do Sistema', group: 'Ajuda' },
-  { value: 'backup-excel', icon: FileSpreadsheet, label: 'Backup Excel', group: 'Ajuda' },
-  { value: 'whatsapp-notif', icon: BellRing, label: 'Notificações WhatsApp', group: 'Ajuda' },
+  // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
 ];
 
 const GROUP_ICONS: Record<string, string> = {
-  'Vender': '🛒',
-  'Clientes': '👥',
-  'Produtos': '📦',
-  'Financeiro': '💰',
-  'Equipe': '🏢',
+  'Consulta': '🔍',
   'Ajuda': '❓',
 };
 
-const GROUPS = ['Vender', 'Clientes', 'Produtos', 'Financeiro', 'Equipe', 'Ajuda'];
+const GROUPS = ['Consulta', 'Ajuda'];
 
 interface SalesHubSidebarProps {
   activeTab: string;
