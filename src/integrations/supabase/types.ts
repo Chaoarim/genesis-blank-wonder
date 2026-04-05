@@ -1371,6 +1371,7 @@ export type Database = {
         Row: {
           converted_sale_id: string | null
           created_at: string
+          created_by_user_id: string
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
@@ -1388,6 +1389,7 @@ export type Database = {
         Insert: {
           converted_sale_id?: string | null
           created_at?: string
+          created_by_user_id: string
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
@@ -1405,6 +1407,7 @@ export type Database = {
         Update: {
           converted_sale_id?: string | null
           created_at?: string
+          created_by_user_id?: string
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string | null
