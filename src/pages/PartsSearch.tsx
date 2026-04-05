@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 const PAGE_SIZE = 50;
 
-type SearchMode = 'unified' | 'placa' | 'veiculo';
+type SearchMode = 'unified' | 'placa' | 'veiculo' | 'frota';
 
 function detectSearchType(query: string): 'placa' | 'code' | 'general' {
   const clean = query.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
