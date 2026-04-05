@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface QuoteItem {
   id: string;
@@ -18,24 +19,74 @@ export interface SavedQuote {
 
 const STORAGE_KEY = 'quote-cart-saved';
 
-function loadSavedQuotes(): SavedQuote[] {
+function getStorageKey(userId: string) {
+  return `${STORAGE_KEY}:${userId}`;
+}
+
+function loadSavedQuotes(storageKey: string): SavedQuote[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
 
-function persistQuotes(quotes: SavedQuote[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(quotes));
+function persistQuotes(storageKey: string, quotes: SavedQuote[]) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(quotes));
+  } catch {
+    // Ignore storage write errors to avoid breaking the quote flow.
+  }
 }
 
 export function useQuoteCart() {
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [quoteName, setQuoteName] = useState('');
-  const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>(loadSavedQuotes);
+  const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([]);
+  const [storageKey, setStorageKey] = useState<string | null>(null);
+  const activeUserIdRef = useRef<string | null>(null);
 
-  // Persist saved quotes on change
-  useEffect(() => { persistQuotes(savedQuotes); }, [savedQuotes]);
+  useEffect(() => {
+    const syncQuotesForUser = (userId: string | null) => {
+      if (activeUserIdRef.current === userId) return;
+
+      activeUserIdRef.current = userId;
+
+      if (!userId) {
+        setStorageKey(null);
+        setSavedQuotes([]);
+        setItems([]);
+        setQuoteName('');
+        return;
+      }
+
+      const nextStorageKey = getStorageKey(userId);
+      setStorageKey(nextStorageKey);
+      setSavedQuotes(loadSavedQuotes(nextStorageKey));
+      setItems([]);
+      setQuoteName('');
+    };
+
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      syncQuotesForUser(session?.user.id ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncQuotesForUser(session?.user.id ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    persistQuotes(storageKey, savedQuotes);
+  }, [savedQuotes, storageKey]);
 
   const addItem = useCallback((part: { codigo: string; fornecedor: string; produto: string; aplicacao: string }) => {
     setItems(prev => {
