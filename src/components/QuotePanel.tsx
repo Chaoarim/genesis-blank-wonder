@@ -184,12 +184,8 @@ export function QuotePanel({
                       Carregar
                     </Button>
                     <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => {
-                      // Send saved quote directly
-                      const title = q.name.toUpperCase();
-                      const lines = q.items.map((item, idx) =>
-                        `${idx + 1}. *${item.codigo}* - ${item.produto}\n   Fornecedor: ${item.fornecedor}\n   Aplicação: ${item.aplicacao}\n   Qtde: ${item.quantidade}`
-                      );
-                      const text = `*${title}*\n\nSegue a lista de peças para cotação:\n\n${lines.join('\n\n')}\n\n_Total de itens: ${q.items.length}_\n\nAguardo retorno com valores. Obrigado!`;
+                      const today = new Date().toLocaleDateString('pt-BR');
+                      const text = formatQuoteWhatsApp(q.name, q.items, today);
                       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
                     }}>
                       <Send className="w-3.5 h-3.5 mr-1" />
