@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import {
   Check, Zap, Search, ArrowRight, Settings,
   Car, Clock, Star, ScanLine, ChevronRight,
-  ImageIcon, Shield, Smartphone, BarChart3
+  ImageIcon, Shield, Smartphone, BarChart3, TrendingUp, Package
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -360,6 +360,84 @@ const Sales = () => {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════ */}
+      {/* RANKING FROTA — benefícios */}
+      {/* ═══════════════════════════════ */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                <BarChart3 className="w-3.5 h-3.5" />
+                RANKING DE FROTA
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Saiba quais carros{" "}
+                <span className="text-gradient">dominam o mercado</span>
+              </h2>
+              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                Dados reais de emplacamentos e frota circulante para você antecipar a demanda e nunca ficar sem as peças que mais vendem.
+              </p>
+              <div className="space-y-4">
+                {[
+                  { icon: TrendingUp, title: "Previsão de demanda inteligente", desc: "Identifique os Top 10 veículos mais emplacados e priorize estoque para esses modelos." },
+                  { icon: BarChart3, title: "Análise de participação de mercado", desc: "Veja o percentual de cada modelo no total de emplacamentos e tome decisões com dados." },
+                  { icon: Package, title: "Detecte oportunidades de venda", desc: "Descubra modelos com alta frota mas poucas peças no seu catálogo — oportunidade de lucro." },
+                  { icon: Car, title: "Dados FENABRAVE por ano e tipo", desc: "Automóveis e comerciais leves separados, com histórico por ano para análise de tendências." },
+                ].map((f, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <f.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{f.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Card className="p-6 glass-card border-primary/20">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <span className="text-sm font-bold flex-1">Ranking Frota / Emplacamentos</span>
+              </div>
+              <div className="space-y-2 mb-4">
+                {[
+                  { pos: "1°", model: "VW/GOL", qty: "303.014", share: "12.4%", priority: "🔴 Alta" },
+                  { pos: "2°", model: "FIAT/UNO", qty: "250.000", share: "10.2%", priority: "🔴 Alta" },
+                  { pos: "3°", model: "GM/ONIX", qty: "218.500", share: "8.9%", priority: "🔴 Alta" },
+                  { pos: "4°", model: "HYUNDAI/HB20", qty: "195.000", share: "8.0%", priority: "🔴 Alta" },
+                  { pos: "5°", model: "VW/VOYAGE", qty: "142.300", share: "5.8%", priority: "🔴 Alta" },
+                ].map((item, i) => (
+                  <div key={i} className="bg-card/80 rounded-lg p-2.5 border border-border/50 flex items-center gap-3">
+                    <span className="text-primary font-mono text-xs font-bold w-6">{item.pos}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold">{item.model}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.qty} emplacamentos · {item.share} mercado</p>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 bg-destructive/10 text-destructive rounded-full font-medium">{item.priority}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: "Total Emplacamentos", value: "1.2M+" },
+                  { label: "Modelos Analisados", value: "50+" },
+                  { label: "Top 10 = Mercado", value: "68.5%" },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-primary/5 rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-primary">{stat.value}</p>
+                    <p className="text-[9px] text-muted-foreground">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
       </section>
