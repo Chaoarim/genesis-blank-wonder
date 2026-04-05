@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import type { QuoteItem, SavedQuote } from '@/hooks/useQuoteCart';
+import { formatQuoteWhatsApp } from '@/lib/formatQuoteWhatsApp';
 
 interface QuotePanelProps {
   items: QuoteItem[];
