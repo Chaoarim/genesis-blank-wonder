@@ -76,6 +76,7 @@ export function SavedQuotesManager({ adminUserId, customers, onCreateSale }: Pro
     const { data } = await supabase
       .from('saved_quotes')
       .select('*')
+      .eq('user_id', adminUserId)
       .order('created_at', { ascending: false });
     if (data) {
       const parsed = data.map((q: any) => ({
