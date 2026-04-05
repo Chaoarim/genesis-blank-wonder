@@ -64,7 +64,7 @@ const Sales = () => {
             </Link>
             <Link to="/pre-cadastro">
               <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1.5">
-                Testar Grátis
+                Começar Agora
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -100,7 +100,7 @@ const Sales = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <Link to="/pre-cadastro">
               <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2 w-full sm:w-auto">
-                Começar Agora — 7 Dias Grátis
+                Começar Agora
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
@@ -522,15 +522,15 @@ const Sales = () => {
       <section className="py-20 px-4 bg-card/30">
         <div className="container mx-auto max-w-lg text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-3">
-            Comece com <span className="text-gradient">7 dias grátis</span>
+            Escolha seu <span className="text-gradient">plano</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-10 max-w-md mx-auto">
-            Teste a consulta de peças sem compromisso. Depois, pague apenas R$ 29,90/mês.
+            Acesse a consulta de peças mais completa do mercado.
           </p>
 
           <Card className="p-8 glass-card border-primary/50 relative overflow-hidden">
             <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-              7 DIAS GRÁTIS
+              MAIS VENDIDO
             </div>
 
             <h3 className="text-2xl font-bold mb-1 mt-2">Plano Consulta</h3>
@@ -565,13 +565,13 @@ const Sales = () => {
 
             <Link to="/pre-cadastro" className="block">
               <Button className="w-full text-lg py-6 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-                Começar 7 Dias Grátis
+                Assinar Agora
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
 
             <p className="text-center text-xs text-muted-foreground mt-4">
-              Sem cartão de crédito · Cancele quando quiser
+              Cancele quando quiser · Sem multa
             </p>
           </Card>
         </div>
@@ -592,7 +592,7 @@ const Sales = () => {
               { q: "E a consulta por placa?", a: "Digite a placa e o sistema consulta o Detran em tempo real — retorna marca, modelo, motor, ano e combustível. As peças vêm filtradas para o veículo." },
               { q: "Preciso instalar algo?", a: "Não! Funciona 100% no navegador, celular ou computador." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
-              { q: "Quanto custa?", a: "R$ 29,90/mês ou R$ 297,00/ano. Comece com 7 dias grátis." },
+              { q: "Quanto custa?", a: "R$ 29,90/mês ou R$ 297,00/ano (economia de 17%)." },
             ].map((faq, i) => (
               <Card key={i} className="p-5 glass-card">
                 <h4 className="font-bold text-sm mb-1.5 flex items-center gap-2">
@@ -620,11 +620,11 @@ const Sales = () => {
             Encontre a peça certa em segundos
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            61+ veículos, consulta por placa, 45+ fornecedores. Teste grátis por 7 dias.
+            61+ veículos, consulta por placa, 45+ fornecedores.
           </p>
           <Link to="/pre-cadastro">
             <Button size="lg" className="text-lg px-8 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-              Começar Grátis
+              Começar Agora
               <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
