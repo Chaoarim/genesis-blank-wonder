@@ -295,12 +295,22 @@ const PartsSearch = () => {
               Consulta de Peças
             </h1>
           </div>
-          {mode !== 'unified' && (
-            <Badge variant="outline" className="text-xs gap-1 cursor-pointer" onClick={switchToUnified}>
-              {mode === 'placa' ? '🚗 Placa' : mode === 'frota' ? '📊 Frota' : '📋 Veículo'}
-              <X className="w-3 h-3" />
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {mode !== 'unified' && (
+              <Badge variant="outline" className="text-xs gap-1 cursor-pointer" onClick={switchToUnified}>
+                {mode === 'placa' ? '🚗 Placa' : mode === 'frota' ? '📊 Frota' : '📋 Veículo'}
+                <X className="w-3 h-3" />
+              </Badge>
+            )}
+            <QuotePanel
+              items={cartItems}
+              total={total}
+              onUpdateItem={updateItem}
+              onRemoveItem={removeItem}
+              onClearCart={clearCart}
+              onSendWhatsApp={sendToWhatsApp}
+            />
+          </div>
         </div>
       </header>
 
