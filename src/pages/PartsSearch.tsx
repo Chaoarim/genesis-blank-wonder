@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3, ShoppingCart, Check } from 'lucide-react';
 
 const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useQuoteCart } from '@/hooks/useQuoteCart';
+import { QuotePanel } from '@/components/QuotePanel';
 
 const PAGE_SIZE = 50;
 
