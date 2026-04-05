@@ -691,6 +691,7 @@ export function NewSaleForm({ customers, onAddCustomer, onCreateSale, onDone, ad
 
                   const { error } = await supabase.from('saved_quotes').insert({
                     user_id: adminUserId || session.user.id,
+                    created_by_user_id: session.user.id,
                     customer_id: customerId || null,
                     customer_name: customerDisplayName,
                     customer_phone: selectedCustomer?.phone || null,
