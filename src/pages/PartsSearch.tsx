@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3, ShoppingCart, Check } from 'lucide-react';
 
 const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useQuoteCart } from '@/hooks/useQuoteCart';
+import { QuotePanel } from '@/components/QuotePanel';
 
 const PAGE_SIZE = 50;
 
@@ -35,6 +37,8 @@ function detectSearchType(query: string): 'placa' | 'code' | 'general' {
 const PartsSearch = () => {
   const navigate = useNavigate();
   const { parts, isLoading: partsLoading } = usePartsDatabase();
+  const { items: cartItems, addItem, removeItem, updateItem, clearCart, total, sendToWhatsApp } = useQuoteCart();
+  const cartKeys = useMemo(() => cartItems.map(i => `${i.codigo}-${i.fornecedor}`), [cartItems]);
   const [mode, setMode] = useState<SearchMode>('unified');
 
   // Unified search with debounce
@@ -194,6 +198,31 @@ const PartsSearch = () => {
                     </p>
                   )}
                 </div>
+                {(() => {
+                  const key = `${part.fabricante}-${part.fornecedor}`;
+                  const inCart = cartKeys.includes(key);
+                  return (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-8 w-8 shrink-0 mt-0.5 ${inCart ? 'text-green-600' : 'text-muted-foreground hover:text-green-600'}`}
+                      title={inCart ? 'Já no carrinho' : 'Adicionar à cotação'}
+                      disabled={inCart}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addItem({
+                          codigo: part.fabricante,
+                          fornecedor: part.fornecedor,
+                          produto: part.produto,
+                          aplicacao: part.aplicacao || [part.marca, part.modelo, part.ano].filter(Boolean).join(' '),
+                        });
+                        toast.success('Peça adicionada à cotação');
+                      }}
+                    >
+                      {inCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+                    </Button>
+                  );
+                })()}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -266,12 +295,22 @@ const PartsSearch = () => {
               Consulta de Peças
             </h1>
           </div>
-          {mode !== 'unified' && (
-            <Badge variant="outline" className="text-xs gap-1 cursor-pointer" onClick={switchToUnified}>
-              {mode === 'placa' ? '🚗 Placa' : mode === 'frota' ? '📊 Frota' : '📋 Veículo'}
-              <X className="w-3 h-3" />
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {mode !== 'unified' && (
+              <Badge variant="outline" className="text-xs gap-1 cursor-pointer" onClick={switchToUnified}>
+                {mode === 'placa' ? '🚗 Placa' : mode === 'frota' ? '📊 Frota' : '📋 Veículo'}
+                <X className="w-3 h-3" />
+              </Badge>
+            )}
+            <QuotePanel
+              items={cartItems}
+              total={total}
+              onUpdateItem={updateItem}
+              onRemoveItem={removeItem}
+              onClearCart={clearCart}
+              onSendWhatsApp={sendToWhatsApp}
+            />
+          </div>
         </div>
       </header>
 
