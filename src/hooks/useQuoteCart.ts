@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatQuoteWhatsApp } from '@/lib/formatQuoteWhatsApp';
 
 export interface QuoteItem {
   id: string;
@@ -181,12 +182,9 @@ export function useQuoteCart() {
   const sendToWhatsApp = useCallback((phone?: string) => {
     if (items.length === 0) return;
     const title = quoteName.trim() || 'COTAÇÃO DE PEÇAS';
+    const today = new Date().toLocaleDateString('pt-BR');
 
-    const lines = items.map((item, idx) => {
-      return `${idx + 1}. *${item.codigo}* - ${item.produto}\n   Fornecedor: ${item.fornecedor}\n   Aplicação: ${item.aplicacao}\n   Qtde: ${item.quantidade}`;
-    });
-
-    const text = `*${title.toUpperCase()}*\n\nSegue a lista de peças para cotação:\n\n${lines.join('\n\n')}\n\n_Total de itens: ${items.length}_\n\nAguardo retorno com valores. Obrigado!`;
+    const text = formatQuoteWhatsApp(title, items, today);
     const encoded = encodeURIComponent(text);
     const url = phone
       ? `https://api.whatsapp.com/send?phone=${encodeURIComponent(phone)}&text=${encoded}`
