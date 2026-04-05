@@ -25,6 +25,7 @@ interface TabDef {
 const MENU_ITEMS: TabDef[] = [
   // 🔍 Consulta
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
+  { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
