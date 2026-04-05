@@ -4,10 +4,10 @@ function cleanText(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
-function formatApplications(aplicacao?: string): string[] {
+function splitApplications(aplicacao?: string): string[] {
   if (!aplicacao) return [];
 
-  const uniqueApplications = Array.from(
+  return Array.from(
     new Set(
       aplicacao
         .split(/\s*,\s*/)
@@ -15,50 +15,68 @@ function formatApplications(aplicacao?: string): string[] {
         .filter(Boolean),
     ),
   );
+}
 
-  if (uniqueApplications.length === 0) return [];
-  if (uniqueApplications.length === 1) return [`Aplicação: ${uniqueApplications[0]}`];
-
-  return [
-    'Aplicações:',
-    ...uniqueApplications.map((entry) => `- ${entry}`),
+function formatItemBlock(index: number, item: QuoteItem): string {
+  const applications = splitApplications(item.aplicacao);
+  const lines = [
+    `${index}. ${cleanText(item.codigo)} - ${cleanText(item.produto)}`,
   ];
+
+  if (applications.length === 1) {
+    lines.push(`Aplicação: ${applications[0]}`);
+  }
+
+  if (applications.length > 1) {
+    lines.push('Aplicações:');
+    lines.push(...applications.map((entry) => `- ${entry}`));
+  }
+
+  lines.push(`Qtd: ${item.quantidade}`);
+
+  return lines.join('\n');
 }
 
 export function formatQuoteWhatsApp(title: string, items: QuoteItem[], date: string): string {
   const totalPieces = items.reduce((sum, item) => sum + item.quantidade, 0);
+  const groupedBySupplier = new Map<string, QuoteItem[]>();
 
-  const itemBlocks = items.map((item, index) => {
-    const lines = [
-      `*ITEM ${String(index + 1).padStart(2, '0')}*`,
-      `Código: ${cleanText(item.codigo)}`,
-      `Produto: ${cleanText(item.produto)}`,
-    ];
+  for (const item of items) {
+    const supplier = cleanText(item.fornecedor || 'Sem fornecedor');
+    const supplierItems = groupedBySupplier.get(supplier) ?? [];
+    supplierItems.push(item);
+    groupedBySupplier.set(supplier, supplierItems);
+  }
 
-    if (item.fornecedor?.trim()) {
-      lines.push(`Fornecedor: ${cleanText(item.fornecedor)}`);
-    }
+  let itemIndex = 1;
+  const supplierSections = Array.from(groupedBySupplier.entries()).map(([supplier, supplierItems]) => {
+    const blocks = supplierItems.map((item) => {
+      const block = formatItemBlock(itemIndex, item);
+      itemIndex += 1;
+      return block;
+    });
 
-    lines.push(...formatApplications(item.aplicacao));
-    lines.push(`Quantidade: ${item.quantidade}`);
-
-    return lines.join('\n');
+    return [
+      `FORNECEDOR: ${supplier}`,
+      '',
+      blocks.join('\n\n'),
+    ].join('\n');
   });
 
   return [
-    '*SOLICITAÇÃO DE COTAÇÃO*',
+    'SOLICITAÇÃO DE COTAÇÃO',
     `Referência: ${cleanText(title)}`,
     `Data: ${date}`,
     '',
-    'Olá! Segue abaixo a relação de peças para cotação:',
+    'Olá! Segue a relação de peças para cotação.',
     '',
-    itemBlocks.join('\n\n------------------------------\n\n'),
+    supplierSections.join('\n\n==============================\n\n'),
     '',
-    '------------------------------',
-    `Total de itens: ${items.length}`,
-    `Total de peças: ${totalPieces}`,
+    'RESUMO',
+    `Itens: ${items.length}`,
+    `Peças: ${totalPieces}`,
     '',
-    'Por favor, enviar disponibilidade e valores.',
+    'Por favor, informar disponibilidade e valores.',
     'Obrigado!',
   ].join('\n');
 }
