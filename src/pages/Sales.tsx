@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Check, Zap, Database, Search, ArrowRight, Settings,
-  Globe, Users, Wrench, Car, Clock, BarChart3, Package,
-  ChevronRight, Star, BookOpen, ShoppingCart, Target, Percent,
-  Link2, ImageIcon, Smartphone, Receipt,
-  ScanLine, Eye, FileSpreadsheet, TrendingUp
+  Check, Zap, Search, ArrowRight, Settings,
+  Car, Clock, Star, ScanLine, ChevronRight,
+  ImageIcon, Shield, Smartphone, BarChart3
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -13,9 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Sales = () => {
   const [isAdmin, setIsAdmin] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [spotsLeft, setSpotsLeft] = useState(23);
-  
 
   useEffect(() => {
     const randomSpots = Math.floor(Math.random() * 17) + 12;
@@ -25,7 +21,6 @@ const Sales = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          setUserId(user.id);
           const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
           setIsAdmin(data === true);
         }
@@ -48,11 +43,11 @@ const Sales = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center shadow-lg" style={{ boxShadow: 'var(--shadow-glow)' }}>
-              <Zap className="w-5 h-5 text-primary-foreground" />
+              <Search className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <span className="text-lg font-bold leading-none">ConsultaParts AI</span>
-              <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Sistema Completo para Auto Peças</p>
+              <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Consulta de Peças Automotivas</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -69,7 +64,7 @@ const Sales = () => {
             </Link>
             <Link to="/pre-cadastro">
               <Button size="sm" className="bg-primary hover:bg-primary/90 gap-1.5">
-                Começar
+                Testar Grátis
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -77,39 +72,39 @@ const Sales = () => {
         </div>
       </header>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* HERO — foco em busca por veículo e placa */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
+      {/* HERO — direto ao ponto */}
+      {/* ═══════════════════════════════ */}
       <section className="relative py-20 md:py-28 px-4 overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{ background: 'var(--gradient-hero)' }} />
         <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-10 left-10 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
 
-        <div className="container mx-auto text-center max-w-5xl relative z-10">
+        <div className="container mx-auto text-center max-w-4xl relative z-10">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-full text-sm font-medium mb-8">
             <Car className="w-4 h-4" />
-            Plataforma Completa para o Setor Automotivo
+            Consulta de Peças por Veículo e Placa
           </div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1]">
-            Selecione o veículo,{" "}
+            Encontre a <span className="text-gradient">peça certa</span>
             <br className="hidden md:block" />
-            encontre a <span className="text-gradient">peça certa</span>
+            em segundos
           </h1>
 
-          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-            Escolha entre 61+ veículos catalogados ou digite a placa — o sistema identifica marca, modelo, motor e ano.
-            Encontre peças compatíveis em segundos e venda com catálogo B2B online 24 horas no ar.
+          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+            Digite a <strong>placa</strong> ou selecione o <strong>veículo</strong> — o sistema identifica o modelo e mostra
+            apenas peças compatíveis. Sem erro, sem devolução.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
             <Link to="/pre-cadastro">
               <Button size="lg" className="text-lg px-10 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2 w-full sm:w-auto">
-                Começar Agora — R$ 297,00/ano
+                Começar Agora — 7 Dias Grátis
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <a href="#busca-veiculo">
+            <a href="#como-funciona">
               <Button size="lg" variant="outline" className="text-lg px-8 py-7 gap-2 w-full sm:w-auto">
                 Ver Como Funciona
                 <ChevronRight className="w-5 h-5" />
@@ -120,23 +115,21 @@ const Sales = () => {
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> 61+ veículos catalogados</span>
             <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> Consulta por placa</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> Catálogo B2B online</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> 26+ módulos de gestão</span>
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-primary" /> 45+ fornecedores</span>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       {/* NÚMEROS */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       <section className="py-12 px-4 border-y border-border/50 bg-card/30">
-        <div className="container mx-auto max-w-5xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div className="container mx-auto max-w-4xl">
+          <div className="grid grid-cols-3 gap-6 text-center">
             {[
-              { value: "61+", label: "Veículos Catalogados", sub: "Gol, Onix, HB20, Hilux..." },
-              { value: "4", label: "Modos de Busca", sub: "Veículo · Placa · Código · Geral" },
+              { value: "61+", label: "Veículos", sub: "Gol, Onix, HB20, Hilux..." },
+              { value: "4", label: "Modos de Busca", sub: "Placa · Veículo · Código · Geral" },
               { value: "45+", label: "Fornecedores", sub: "FRAS-LE, NAKATA, COFAP..." },
-              { value: "26+", label: "Módulos de Gestão", sub: "Vendas, estoque, CRM, expedição..." },
             ].map((s, i) => (
               <div key={i}>
                 <p className="text-3xl md:text-4xl font-bold text-primary">{s.value}</p>
@@ -148,10 +141,60 @@ const Sales = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* BUSCA POR VEÍCULO — destaque principal */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section id="busca-veiculo" className="py-20 px-4">
+      {/* ═══════════════════════════════ */}
+      {/* COMO FUNCIONA — 3 passos */}
+      {/* ═══════════════════════════════ */}
+      <section id="como-funciona" className="py-20 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">
+              Como funciona em <span className="text-gradient">3 passos</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Simples, rápido e sem erro.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                icon: ScanLine,
+                title: "Digite a placa ou selecione o veículo",
+                desc: "O sistema identifica marca, modelo, motor, ano e combustível automaticamente via Detran. Ou escolha entre 61+ veículos catalogados.",
+              },
+              {
+                step: "2",
+                icon: Search,
+                title: "Busque a peça",
+                desc: "Digite 'pastilha', 'filtro', 'amortecedor' — os resultados vêm filtrados para o veículo correto. Sem peça errada.",
+              },
+              {
+                step: "3",
+                icon: Check,
+                title: "Encontrou! Venda com confiança",
+                desc: "Veja código, fornecedor, aplicação e preço. Tenha certeza de que a peça é compatível antes de vender.",
+              },
+            ].map((item, i) => (
+              <Card key={i} className="p-7 glass-card hover:border-primary/30 transition-all text-center relative">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  {item.step}
+                </div>
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5 mt-2">
+                  <item.icon className="w-7 h-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════ */}
+      {/* BUSCA POR VEÍCULO — demo */}
+      {/* ═══════════════════════════════ */}
+      <section className="py-20 px-4 bg-card/30">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -164,16 +207,14 @@ const Sales = () => {
                 <span className="text-gradient">Achou a peça.</span>
               </h2>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                Selecione o veículo na grade de 61+ modelos catalogados — Gol, Onix, HB20, Hilux, Civic, Creta, Renegade e muito mais.
-                Todas as peças compatíveis aparecem na tela. Busque por nome dentro do catálogo com precisão total.
+                Selecione entre 61+ veículos catalogados. Todas as peças compatíveis aparecem na tela. Busque por nome dentro do catálogo.
               </p>
 
               <div className="space-y-4">
                 {[
-                  { icon: Car, title: "61+ veículos organizados em cards", desc: "Navegação visual: selecione o modelo e veja todas as peças disponíveis. Sem digitar, sem erro." },
-                  { icon: Search, title: "Busca estrita dentro do catálogo", desc: "Após selecionar o veículo, pesquise 'pastilha', 'filtro', 'amortecedor' — só mostra o que pertence ao modelo." },
-                  { icon: BookOpen, title: "Catálogos por fornecedor integrados", desc: "Além de veículos, navegue por 45+ fornecedores (FRAS-LE, NAKATA, COFAP, URBA, VIEMAR...)." },
-                  { icon: Clock, title: "Atendimento 5x mais rápido", desc: "O balconista encontra a peça em segundos. Sem catálogo físico, sem ligar para distribuidora." },
+                  { icon: Car, title: "61+ veículos em cards visuais", desc: "Gol, Onix, HB20, Hilux, Civic, Creta, Renegade e muito mais." },
+                  { icon: Search, title: "Busca dentro do catálogo", desc: "Após selecionar o veículo, filtre por 'pastilha', 'filtro', 'amortecedor'." },
+                  { icon: Clock, title: "Atendimento 5x mais rápido", desc: "Sem catálogo físico, sem ligar para distribuidora." },
                 ].map((f, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -188,27 +229,15 @@ const Sales = () => {
               </div>
             </div>
 
-            {/* Simulação: grade de veículos */}
+            {/* Demo visual */}
             <Card className="p-6 glass-card border-primary/20">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
                 <Search className="w-5 h-5 text-primary" />
                 <span className="text-sm font-bold flex-1">Consulta de Peças</span>
-                <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">buscar-pecas</span>
               </div>
-
-              {/* Tabs simuladas — VEÍCULO ativo */}
-              <div className="grid grid-cols-4 gap-1 bg-muted/50 rounded-lg p-1 mb-4">
-                {["PLACA", "VEÍCULO", "CÓDIGO", "GERAL"].map((tab, i) => (
-                  <div key={tab} className={`text-center py-1.5 rounded text-[10px] font-semibold ${i === 1 ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground'}`}>
-                    {tab}
-                  </div>
-                ))}
-              </div>
-
-              {/* Grade de veículos */}
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {["GOL", "ONIX", "HB20", "HILUX", "CIVIC", "CRETA", "RENEGADE", "COROLLA", "TRACKER"].map((name, i) => (
-                  <div key={name} className={`rounded-lg p-2.5 flex flex-col items-center gap-1.5 cursor-pointer transition-all ${i === 0 ? 'bg-primary/10 border-2 border-primary/40' : 'bg-muted/50 hover:bg-muted/80'}`}>
+                  <div key={name} className={`rounded-lg p-2.5 flex flex-col items-center gap-1.5 cursor-pointer transition-all ${i === 0 ? 'bg-primary/10 border-2 border-primary/40' : 'bg-muted/50'}`}>
                     <Car className={`w-5 h-5 ${i === 0 ? 'text-primary' : 'text-muted-foreground'}`} />
                     <p className={`text-[10px] font-bold ${i === 0 ? 'text-primary' : 'text-foreground'}`}>{name}</p>
                   </div>
@@ -216,14 +245,6 @@ const Sales = () => {
               </div>
               <div className="text-center mb-3">
                 <span className="text-[10px] text-muted-foreground">+ 52 veículos disponíveis</span>
-              </div>
-
-              {/* Resultado ao selecionar GOL */}
-              <div className="bg-muted/30 rounded-lg p-2.5 mb-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Search className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">Buscar peças para GOL...</span>
-                </div>
               </div>
               <div className="space-y-1.5">
                 {[
@@ -251,29 +272,18 @@ const Sales = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* BUSCA POR PLACA */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-card/30">
+      {/* ═══════════════════════════════ */}
+      {/* BUSCA POR PLACA — demo */}
+      {/* ═══════════════════════════════ */}
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Simulação visual — placa */}
+            {/* Demo visual */}
             <Card className="p-6 glass-card border-primary/20 order-2 lg:order-1">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
                 <ScanLine className="w-5 h-5 text-primary" />
                 <span className="text-sm font-bold flex-1">Consulta por Placa</span>
               </div>
-
-              {/* Tabs — PLACA ativo */}
-              <div className="grid grid-cols-4 gap-1 bg-muted/50 rounded-lg p-1 mb-4">
-                {["PLACA", "VEÍCULO", "CÓDIGO", "GERAL"].map((tab, i) => (
-                  <div key={tab} className={`text-center py-1.5 rounded text-[10px] font-semibold ${i === 0 ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground'}`}>
-                    {tab}
-                  </div>
-                ))}
-              </div>
-
-              {/* Input de placa */}
               <div className="flex flex-col items-center py-3 mb-4">
                 <div className="relative">
                   <div className="bg-muted/50 border-2 border-primary/30 rounded-lg px-8 py-3 text-center">
@@ -284,8 +294,6 @@ const Sales = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Veículo identificado */}
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-3">
                 <p className="text-[10px] font-bold uppercase text-primary opacity-80">Veículo Identificado:</p>
                 <p className="text-sm font-bold text-primary">VOLKSWAGEN GOL</p>
@@ -300,12 +308,6 @@ const Sales = () => {
                     <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />Flex
                   </span>
                 </div>
-              </div>
-
-              {/* Busca + resultados */}
-              <div className="bg-muted/30 rounded-lg p-2 mb-2 flex items-center gap-2">
-                <Search className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">pastilha</span>
               </div>
               <div className="space-y-1.5">
                 {[
@@ -326,7 +328,6 @@ const Sales = () => {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground text-center mt-2">2 resultados filtrados para Gol 1.0 Flex 2019</p>
             </Card>
 
             <div className="order-1 lg:order-2">
@@ -339,15 +340,13 @@ const Sales = () => {
                 <span className="text-gradient">faz o resto</span>
               </h2>
               <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                O cliente chegou com o carro e não sabe o modelo exato? Sem problema.
-                Digite a placa e o sistema consulta o Detran em tempo real — retorna marca, modelo,
-                motor (1.0, 1.4, 1.6...), ano e combustível (flex, gasolina, diesel) automaticamente.
+                O cliente chegou e não sabe o modelo exato? Digite a placa — o sistema consulta o Detran e retorna marca, modelo, motor, ano e combustível.
               </p>
               <div className="space-y-4">
                 {[
-                  { icon: ScanLine, title: "Identificação automática via Detran", desc: "Placa → marca, modelo, motor, ano e combustível em segundos. Funciona com placas antigas e Mercosul." },
-                  { icon: Search, title: "Peças já filtradas pelo veículo", desc: "Após identificar, pesquise qualquer peça e os resultados vêm filtrados para aquele modelo específico." },
-                  { icon: Clock, title: "Elimine erros de compra", desc: "Sem confundir modelo, sem peça errada, sem devolução. O veículo é identificado com precisão." },
+                  { icon: ScanLine, title: "Identificação automática via Detran", desc: "Funciona com placas antigas e Mercosul." },
+                  { icon: Search, title: "Peças filtradas pelo veículo", desc: "Resultados precisos para o modelo identificado." },
+                  { icon: Shield, title: "Elimine erros de compra", desc: "Sem peça errada, sem devolução." },
                 ].map((f, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -365,187 +364,11 @@ const Sales = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* CATÁLOGO B2B ONLINE */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-4">
-                <Globe className="w-3.5 h-3.5" />
-                CATÁLOGO B2B ONLINE
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Seu estoque vendendo{" "}
-                <span className="text-gradient">24 horas por dia</span>
-              </h2>
-              <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                Publique seu estoque na internet com um link exclusivo. Seus clientes acessam pelo celular,
-                pesquisam por código ou nome, veem preços atualizados e montam o pedido sozinhos.
-                Você recebe o pedido pronto — sem ligação, sem WhatsApp, sem espera.
-              </p>
-
-              <div className="space-y-4 mb-6">
-                {[
-                  { icon: Link2, title: "Link exclusivo da sua loja", desc: "partsai.online/catalogo/sua-loja — compartilhe por WhatsApp, Instagram, cartão de visita ou QR Code." },
-                  { icon: ShoppingCart, title: "Carrinho de compras completo", desc: "Seu cliente seleciona itens, escolhe quantidade e envia o pedido com nome e telefone." },
-                  { icon: Eye, title: "Preços com markup automático", desc: "Configure o markup uma vez. Os preços de revenda são calculados automaticamente para o cliente." },
-                  { icon: TrendingUp, title: "Promoções com cronômetro", desc: "Crie ofertas temporárias com desconto e cronômetro regressivo. Indicadores de prova social (ex: '🔥 150 vendidos')." },
-                  { icon: Users, title: "Cadastro de clientes B2B", desc: "Clientes criam login e acessam condições especiais. Pedidos sincronizados automaticamente na Central de Vendas." },
-                  { icon: Smartphone, title: "100% mobile e responsivo", desc: "Interface otimizada para celular. Seu cliente faz pedido na obra, na oficina, onde estiver — a qualquer hora." },
-                ].map((f, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <f.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">{f.title}</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Card className="p-6 glass-card border-primary/20">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-                <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-bold">Auto Peças Silva</span>
-                </div>
-                <span className="flex items-center gap-1.5 text-[10px] font-medium" style={{ color: 'hsl(var(--success))' }}>
-                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'hsl(var(--success))' }} />
-                  Online 24h
-                </span>
-              </div>
-
-              {/* Busca */}
-              <div className="bg-muted/50 rounded-lg p-2.5 flex items-center gap-2 mb-3">
-                <Search className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Buscar no catálogo...</span>
-              </div>
-
-              {/* Filtros de marca */}
-              <div className="flex gap-1.5 mb-3 overflow-hidden">
-                {["Todas", "FRAS-LE", "NAKATA", "COFAP", "URBA"].map((brand, i) => (
-                  <span key={brand} className={`text-[10px] px-2 py-1 rounded-full border shrink-0 ${i === 0 ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground'}`}>
-                    {brand}
-                  </span>
-                ))}
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  { code: "AM-3456", name: "Amortecedor Dianteiro", price: "R$ 189,90", stock: 8, badge: "🔥 150 vendidos" },
-                  { code: "PF-1234", name: "Pastilha de Freio Diant.", price: "R$ 79,90", stock: 24, badge: "" },
-                  { code: "CR-7890", name: "Correia Dentada", price: "R$ 45,00", stock: 15, badge: "⏰ Oferta" },
-                ].map((item, i) => (
-                  <div key={i} className="bg-muted/30 rounded-lg p-3 flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-mono text-primary font-semibold">{item.code}</p>
-                        {item.badge && <span className="text-[9px] text-muted-foreground">{item.badge}</span>}
-                      </div>
-                      <p className="text-xs text-foreground">{item.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">{item.price}</p>
-                      <p className="text-[10px] text-muted-foreground">Estoque: {item.stock}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 flex items-center justify-between bg-primary/5 rounded-lg p-3 border border-primary/10">
-                <span className="text-xs text-muted-foreground">🛒 Carrinho: 3 itens</span>
-                <span className="text-sm font-bold text-primary">R$ 314,80</span>
-              </div>
-              <div className="mt-2 text-center">
-                <span className="text-[10px] text-muted-foreground">✅ Enviar pedido → Pedido aparece na Central de Vendas</span>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* CENTRAL DE VENDAS — 21 MÓDULOS */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-card/30">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full mb-4">
-              <BarChart3 className="w-3.5 h-3.5" />
-              CENTRAL DE VENDAS
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              26+ módulos para{" "}
-              <span className="text-gradient">gerenciar tudo</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-              Vendas, clientes, estoque, financeiro, equipe e comercial — tudo integrado em um único painel.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              {
-                icon: BarChart3,
-                title: 'Vendas',
-                items: ['Dashboard com faturamento em tempo real', 'Nova Venda com busca por veículo integrada', 'Pedidos B2B (recebidos do catálogo)', 'Histórico completo de vendas'],
-              },
-              {
-                icon: Users,
-                title: 'Clientes',
-                items: ['CRM completo com dados e histórico', 'Carteira de clientes por vendedor', 'Aprovação de crédito com limites', 'Alertas de recompra automáticos'],
-              },
-              {
-                icon: Package,
-                title: 'Estoque',
-                items: ['Consulta rápida de estoque', 'Relatório de estoque baixo', 'Importar planilhas Excel/CSV', 'Cadastro manual de produto', 'Upload de fotos em lote por código'],
-              },
-              {
-                icon: Percent,
-                title: 'Comercial',
-                items: ['Markup configurável (distribuidor/revenda)', 'Promoções com cronômetro regressivo', 'Cupons de desconto personalizados', 'Regras de prazo de pagamento', 'Contatos de fornecedores'],
-              },
-              {
-                icon: Target,
-                title: 'Equipe',
-                items: ['Metas mensais por loja e vendedor', 'Gestão de vendedores com permissões', 'Comissões automáticas por venda', 'Relatórios de performance'],
-              },
-              {
-                icon: Receipt,
-                title: 'Financeiro',
-                items: ['Contas a pagar e receber', 'Fluxo de caixa e projeção', 'Curva ABC de produtos', 'Agenda de cobranças', 'Histórico de preços'],
-              },
-            ].map((group, i) => (
-              <Card key={i} className="p-5 glass-card hover:border-primary/30 transition-all">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <group.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <h4 className="font-bold text-sm">{group.title}</h4>
-                </div>
-                <ul className="space-y-1.5">
-                  {group.items.map((item) => (
-                    <li key={item} className="text-xs text-muted-foreground flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-primary shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       {/* PARA QUEM É */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-6xl">
+      {/* ═══════════════════════════════ */}
+      <section className="py-16 px-4 bg-card/30">
+        <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
               Feito para quem vive o{" "}
@@ -556,167 +379,37 @@ const Sales = () => {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                icon: Package,
+                emoji: "🏪",
                 title: "Loja de Auto Peças",
-                desc: "Busque por veículo, placa ou código. Publique seu catálogo B2B e gerencie tudo com a Central de Vendas.",
-                highlights: ["Busca por veículo e placa", "Catálogo B2B 24h online", "Estoque com importação de planilhas"]
+                desc: "Busque por veículo ou placa e encontre a peça certa para o cliente na hora.",
               },
               {
-                icon: Car,
-                title: "Auto Center",
-                desc: "O mecânico fala o carro e você acha a peça na hora. 61+ veículos catalogados com busca precisa.",
-                highlights: ["61+ veículos catalogados", "Consulta por placa com motor e ano", "CRM e carteira de clientes"]
-              },
-              {
-                icon: Wrench,
+                emoji: "🔧",
                 title: "Oficina Mecânica",
-                desc: "Cruze referências, encontre códigos similares e descubra qual peça serve — sem devolução por erro.",
-                highlights: ["4 modos de busca", "Códigos similares integrados", "Busca por fornecedor"]
+                desc: "O mecânico fala o carro, você digita a placa e já sabe qual peça serve.",
               },
-            ].map((seg, i) => (
-              <Card key={i} className="p-7 glass-card hover:border-primary/40 transition-all group">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                  <seg.icon className="w-7 h-7 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">{seg.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed mb-4">{seg.desc}</p>
-                <ul className="space-y-1.5">
-                  {seg.highlights.map((h, j) => (
-                    <li key={j} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Check className="w-3.5 h-3.5 text-primary shrink-0" />
-                      {h}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* DIFERENCIAIS */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-card/30">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Por que a ConsultaParts é{" "}
-              <span className="text-gradient">diferente</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {[
               {
                 emoji: "🚗",
-                title: "Busca por Veículo = Precisão",
-                desc: "Selecione o modelo entre 61+ veículos e veja só peças compatíveis. Sem resultado irrelevante, sem erro de aplicação."
+                title: "Auto Center",
+                desc: "61+ veículos catalogados com busca precisa. Atendimento 5x mais rápido.",
               },
-              {
-                emoji: "📱",
-                title: "Consulta por Placa = Velocidade",
-                desc: "Digite a placa e em segundos o sistema retorna marca, modelo, motor e combustível. As peças já vêm filtradas."
-              },
-              {
-                emoji: "🌐",
-                title: "Catálogo B2B = Vendas 24h",
-                desc: "Seu estoque publicado online com link exclusivo. Clientes fazem pedido pelo celular a qualquer hora — você recebe pronto na Central."
-              },
-              {
-                emoji: "📊",
-                title: "26+ Módulos = Gestão Completa",
-                desc: "Vendas, estoque, CRM, markup, comissões, metas, financeiro, expedição. Tudo integrado, sem software pesado, sem mensalidade cara."
-              },
-            ].map((b, i) => (
-              <Card key={i} className="p-7 glass-card hover:border-primary/40 transition-all">
-                <div className="text-4xl mb-3">{b.emoji}</div>
-                <h3 className="text-lg font-bold mb-2">{b.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{b.desc}</p>
+            ].map((seg, i) => (
+              <Card key={i} className="p-7 glass-card hover:border-primary/30 transition-all text-center">
+                <div className="text-4xl mb-4">{seg.emoji}</div>
+                <h3 className="text-xl font-bold mb-2">{seg.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{seg.desc}</p>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* COMPARATIVO */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
+      {/* DEPOIMENTOS */}
+      {/* ═══════════════════════════════ */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Compare e{" "}
-              <span className="text-gradient">decida</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Veja como a ConsultaParts se compara com outras soluções do mercado.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50">
-                  <th className="text-left py-3 px-4 font-semibold text-muted-foreground">Recurso</th>
-                  <th className="py-3 px-4 text-center">
-                    <span className="font-bold text-primary">ConsultaParts</span>
-                    <br /><span className="text-xs text-primary/70">R$ 20/mês</span>
-                  </th>
-                  <th className="py-3 px-4 text-center">
-                    <span className="font-semibold text-muted-foreground">ERPs Genéricos</span>
-                    <br /><span className="text-xs text-muted-foreground">R$ 80–200/mês</span>
-                  </th>
-                  <th className="py-3 px-4 text-center">
-                    <span className="font-semibold text-muted-foreground">Planilha Excel</span>
-                    <br /><span className="text-xs text-muted-foreground">Grátis</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { feature: "Busca por veículo (61+ modelos)", us: true, erp: false, excel: false },
-                  { feature: "Consulta por placa (motor/ano/comb.)", us: true, erp: false, excel: false },
-                  { feature: "Catálogo B2B online 24h", us: true, erp: false, excel: false },
-                  { feature: "Expedição e separação de pedidos", us: true, erp: "parcial", excel: false },
-                  { feature: "CRM e carteira de clientes", us: true, erp: true, excel: false },
-                  { feature: "Controle de estoque", us: true, erp: true, excel: "parcial" },
-                  { feature: "Comissões e metas por vendedor", us: true, erp: "parcial", excel: false },
-                  { feature: "Fluxo de caixa e projeções", us: true, erp: true, excel: "parcial" },
-                  { feature: "Específico para auto peças", us: true, erp: false, excel: false },
-                  { feature: "Sem instalação / 100% online", us: true, erp: "parcial", excel: true },
-                ].map((row, i) => (
-                  <tr key={i} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-4 text-foreground">{row.feature}</td>
-                    {[row.us, row.erp, row.excel].map((val, j) => (
-                      <td key={j} className="py-3 px-4 text-center">
-                        {val === true ? (
-                          <Check className="w-5 h-5 text-primary mx-auto" />
-                        ) : val === "parcial" ? (
-                          <span className="text-xs text-muted-foreground">Parcial</span>
-                        ) : (
-                          <span className="text-muted-foreground/40">—</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* DEPOIMENTOS */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      <section className="py-20 px-4 bg-card/30">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-              <Star className="w-4 h-4 fill-primary" />
-              +150 lojas já utilizam
-            </div>
+          <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
               Quem usa, <span className="text-gradient">recomenda</span>
             </h2>
@@ -724,26 +417,20 @@ const Sales = () => {
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { name: "Ricardo M.", role: "Auto Peças — SP", time: "Cliente há 8 meses", text: "A busca por veículo é incrível. Seleciono o modelo e já vejo todas as peças. Reduzi erros de compra a quase zero e o atendimento ficou 5x mais rápido." },
-              { name: "Carla S.", role: "Auto Center — MG", time: "Cliente há 6 meses", text: "O catálogo B2B mudou meu negócio. Meus clientes fazem pedido pelo celular a qualquer hora. Acordo com pedidos prontos todo dia — sem precisar atender telefone." },
-              { name: "João P.", role: "Oficina Mecânica — RJ", time: "Cliente há 4 meses", text: "A consulta por placa é sensacional. O cliente chega, digito a placa e já sei o motor, o ano e quais peças servem. Nunca mais comprei peça errada." },
-              { name: "Marcos A.", role: "Distribuidora — PR", time: "Cliente há 10 meses", text: "O módulo de expedição organizou todo meu processo de separação. Antes perdia 1h por dia conferindo pedidos. Agora meus separadores fazem tudo pelo sistema." },
-              { name: "Fernanda L.", role: "Auto Peças — GO", time: "Cliente há 5 meses", text: "Controlo comissões, metas e estoque tudo no mesmo lugar. Antes usava 3 planilhas e 2 sistemas. Agora é só a ConsultaParts e R$ 20/mês — absurdamente barato." },
-              { name: "Diego R.", role: "Loja de Peças — BA", time: "Cliente há 7 meses", text: "O fluxo de caixa e as contas a pagar me deram visão total do financeiro. Nunca mais perdi um boleto. E o suporte por WhatsApp responde rápido demais." },
+              { name: "Ricardo M.", role: "Auto Peças — SP", text: "A busca por veículo é incrível. Seleciono o modelo e já vejo todas as peças. O atendimento ficou 5x mais rápido." },
+              { name: "João P.", role: "Oficina Mecânica — RJ", text: "A consulta por placa é sensacional. Digito a placa e já sei o motor, o ano e quais peças servem. Nunca mais comprei peça errada." },
+              { name: "Carla S.", role: "Auto Center — MG", text: "Antes perdia tempo procurando em catálogo físico. Agora em segundos encontro a peça certa com código e fornecedor." },
             ].map((t, i) => (
-              <Card key={i} className="p-6 glass-card hover:border-primary/30 transition-all">
+              <Card key={i} className="p-6 glass-card">
                 <div className="flex gap-0.5 mb-3">
                   {Array.from({ length: 5 }).map((_, j) => (
                     <Star key={j} className="w-4 h-4 fill-primary text-primary" />
                   ))}
                 </div>
                 <p className="text-sm text-foreground mb-4 leading-relaxed italic">"{t.text}"</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                  <span className="text-[10px] text-primary/60 bg-primary/5 px-2 py-0.5 rounded-full">{t.time}</span>
+                <div>
+                  <p className="font-bold text-sm">{t.name}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}</p>
                 </div>
               </Card>
             ))}
@@ -751,91 +438,46 @@ const Sales = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* PRICING */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
+      {/* PRICING — simples */}
+      {/* ═══════════════════════════════ */}
       <section className="py-20 px-4 bg-card/30">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Tudo isso por menos de{" "}
-              <span className="text-gradient">R$ 2 por dia</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Quanto você perde por dia com consultas lentas e peças erradas? A ConsultaParts se paga no primeiro atendimento.
-            </p>
-          </div>
+        <div className="container mx-auto max-w-lg text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3">
+            Comece com <span className="text-gradient">7 dias grátis</span>
+          </h2>
+          <p className="text-muted-foreground text-lg mb-10 max-w-md mx-auto">
+            Teste a consulta de peças sem compromisso. Depois, pague apenas R$ 29,90/mês.
+          </p>
 
-
-          <Card className="max-w-lg mx-auto p-8 glass-card border-primary/50 relative overflow-hidden">
+          <Card className="p-8 glass-card border-primary/50 relative overflow-hidden">
             <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-              🔥 MELHOR OFERTA
+              7 DIAS GRÁTIS
             </div>
 
-            <div className="bg-gradient-to-r from-primary to-accent rounded-xl p-4 mb-6 text-primary-foreground">
-              <p className="text-xs uppercase tracking-wide font-semibold mb-1 text-center">
-                🎯 Economize R$ 183 por ano
-              </p>
+            <h3 className="text-2xl font-bold mb-1 mt-2">Plano Consulta</h3>
+            <p className="text-sm text-muted-foreground mb-6">Tudo que você precisa para encontrar peças</p>
 
-              <div className="text-center mb-2">
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-lg line-through opacity-70">R$ 480,00</span>
-                  <span className="text-4xl font-bold">R$ 297,00</span>
-                  <span className="text-sm opacity-80">/ano</span>
-                </div>
-                <p className="text-xs opacity-80 mt-1">equivale a R$ 24,75/mês — <strong>menos de R$ 1 por dia</strong></p>
+            <div className="mb-6">
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-5xl font-bold text-primary">R$ 29,90</span>
+                <span className="text-muted-foreground">/mês</span>
               </div>
-
-              <div className="flex items-center justify-center gap-2 bg-primary-foreground/15 rounded-full py-1.5 px-4">
-                <Users className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  Restam <strong>{spotsLeft}</strong> vagas neste preço!
-                </span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">ou R$ 297,00/ano (economia de 17%)</p>
             </div>
 
-            <div className="bg-muted/50 border border-border rounded-lg p-4 mb-5 space-y-2">
-                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  💳 Formas de Pagamento
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-background rounded-lg p-3 border border-primary/20 text-center">
-                    <p className="text-xs font-bold text-primary mb-0.5">PIX à vista</p>
-                    <p className="text-lg font-bold">R$ 297,00</p>
-                    <p className="text-[10px] text-muted-foreground">pagamento único</p>
-                  </div>
-                  <div className="bg-background rounded-lg p-3 border border-border text-center">
-                    <p className="text-xs font-bold text-primary mb-0.5">Cartão 12x</p>
-                    <p className="text-lg font-bold">12x R$ 30,72</p>
-                    <p className="text-[10px] text-muted-foreground">no cartão de crédito</p>
-                  </div>
-                </div>
-              </div>
-
-            <h3 className="text-xl font-bold mb-1">
-              Plano Anual Profissional
-            </h3>
-            <p className="text-sm text-muted-foreground mb-5">Todos os recursos inclusos</p>
-
-            <ul className="space-y-2 mb-8">
+            <ul className="space-y-3 mb-8 text-left">
               {[
-                "Busca por veículo — 61+ modelos catalogados",
-                "Consulta por placa — identifica motor, ano e combustível",
+                "Busca por veículo — 61+ modelos",
+                "Consulta por placa — motor, ano, combustível",
                 "Busca por código e código similar",
                 "Busca geral com lateralidade inteligente",
-                "Catálogos por fornecedor (45+ fornecedores)",
-                "Catálogo B2B online com link exclusivo",
-                "Central de Vendas completa (26+ módulos)",
-                "Controle de estoque + importação de planilhas",
-                "Upload de fotos em lote por código",
-                "CRM, carteira de clientes e aprovação de crédito",
-                "Markup, promoções, cupons e prazos de pagamento",
-                "Gestão de vendedores, comissões e metas",
-                "Garantias, devoluções e contas a pagar",
+                "45+ fornecedores catalogados",
+                "Acesso ilimitado 24h",
                 "Suporte via WhatsApp",
               ].map((b, i) => (
                 <li key={i} className="flex items-center gap-2.5">
-                  <div className="w-4.5 h-4.5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                     <Check className="w-3 h-3 text-primary" />
                   </div>
                   <span className="text-sm">{b}</span>
@@ -845,21 +487,21 @@ const Sales = () => {
 
             <Link to="/pre-cadastro" className="block">
               <Button className="w-full text-lg py-6 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-                Garantir Plano Anual — R$ 297,00
+                Começar 7 Dias Grátis
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
 
             <p className="text-center text-xs text-muted-foreground mt-4">
-              Pix à vista ou 12x no cartão · Ativação em até 24h · Garantia de 7 dias
+              Sem cartão de crédito · Cancele quando quiser
             </p>
           </Card>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       {/* FAQ */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-3xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
@@ -868,13 +510,11 @@ const Sales = () => {
 
           <div className="space-y-3">
             {[
-              { q: "Como funciona a busca por veículo?", a: "Na plataforma, clique na aba VEÍCULO e selecione entre 61+ modelos catalogados (Gol, Onix, HB20, Hilux, Civic...). Ao selecionar, todas as peças compatíveis aparecem. Você pode buscar dentro do catálogo por nome (pastilha, filtro, etc.) com precisão total." },
-              { q: "E a consulta por placa?", a: "Na aba PLACA, digite a placa do veículo. O sistema consulta o Detran em tempo real e retorna marca, modelo, motor (1.0, 1.4, 1.6...), ano e combustível. A partir daí, pesquise qualquer peça já filtrada para aquele veículo." },
-              { q: "Preciso instalar algum programa?", a: "Não! Funciona 100% no navegador, no celular ou computador. Basta acessar a plataforma e fazer login." },
-              { q: "O que é o Catálogo B2B Online?", a: "É uma loja virtual do seu estoque com link exclusivo. Seus clientes acessam pelo celular, pesquisam peças, veem preços com markup e fazem pedidos — 24 horas por dia, sem precisar ligar." },
-              { q: "Como importo meu estoque?", a: "Na Central de Vendas, vá em 'Importar'. O sistema aceita planilhas Excel e CSV, reconhece variações de cabeçalho e formatos de moeda brasileira automaticamente. Você também pode cadastrar produtos manualmente." },
-              { q: "Quantos módulos tem a Central de Vendas?", a: "São 26+ módulos incluindo: Dashboard, KPIs, Nova Venda, Pedidos B2B, Histórico, Orçamentos, Relatório Mensal, Vendas por Canal, Previsão de Demanda, Expedição, Clientes, Carteira, Crédito, Alertas de Recompra, Estoque, Importar, Markup, Ofertas, Cupons, Fluxo de Caixa, Curva ABC, Metas, Vendedores, Comissões e muito mais." },
+              { q: "Como funciona a busca por veículo?", a: "Selecione entre 61+ modelos catalogados (Gol, Onix, HB20, Hilux, Civic...). Todas as peças compatíveis aparecem. Busque por nome (pastilha, filtro, etc.) com precisão total." },
+              { q: "E a consulta por placa?", a: "Digite a placa e o sistema consulta o Detran em tempo real — retorna marca, modelo, motor, ano e combustível. As peças vêm filtradas para o veículo." },
+              { q: "Preciso instalar algo?", a: "Não! Funciona 100% no navegador, celular ou computador." },
               { q: "Posso cancelar a qualquer momento?", a: "Sim! Sem contrato, sem multa. Cancele pelo WhatsApp quando quiser." },
+              { q: "Quanto custa?", a: "R$ 29,90/mês ou R$ 297,00/ano. Comece com 7 dias grátis." },
             ].map((faq, i) => (
               <Card key={i} className="p-5 glass-card">
                 <h4 className="font-bold text-sm mb-1.5 flex items-center gap-2">
@@ -890,76 +530,49 @@ const Sales = () => {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       {/* CTA FINAL */}
-      {/* ═══════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════ */}
       <section className="py-20 px-4 bg-card/30">
         <div className="container mx-auto max-w-3xl text-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center mx-auto mb-6" style={{ boxShadow: 'var(--shadow-glow)' }}>
-            <Zap className="w-8 h-8 text-primary-foreground" />
+            <Search className="w-8 h-8 text-primary-foreground" />
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Pronto para vender mais e errar menos?
+            Encontre a peça certa em segundos
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Busca por veículo, consulta por placa, catálogo B2B 24h e central de vendas completa.
-            Tudo que sua loja precisa por apenas R$ 297,00/ano.
+            61+ veículos, consulta por placa, 45+ fornecedores. Teste grátis por 7 dias.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/pre-cadastro">
-              <Button size="lg" className="text-lg px-8 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
-                Plano Anual — R$ 297,00
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-          </div>
+          <Link to="/pre-cadastro">
+            <Button size="lg" className="text-lg px-8 py-7 bg-primary hover:bg-primary/90 animate-pulse-glow gap-2">
+              Começar Grátis
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
           <p className="text-sm text-muted-foreground mt-4">
-            Pix à vista ou 12x no cartão · Sem contrato · Ativação em até 24h
+            Sem cartão · Sem contrato · Ativação imediata
           </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-primary-foreground" />
-                </div>
-                <span className="font-bold">ConsultaParts AI</span>
+      <footer className="border-t border-border/50 py-8 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-600 flex items-center justify-center">
+                <Search className="w-4 h-4 text-primary-foreground" />
               </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Plataforma completa para lojas de auto peças. Busca por veículo, consulta por placa, catálogo B2B e 26+ módulos de gestão.
-              </p>
+              <span className="font-bold">ConsultaParts AI</span>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-3">Links Rápidos</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#busca-veiculo" className="hover:text-primary transition-colors">Como Funciona</a></li>
-                <li><Link to="/pre-cadastro" className="hover:text-primary transition-colors">Fazer Pré-Cadastro</Link></li>
-                <li><Link to="/login" className="hover:text-primary transition-colors">Entrar na Plataforma</Link></li>
-              </ul>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <Link to="/login" className="hover:text-primary transition-colors">Entrar</Link>
+              <Link to="/pre-cadastro" className="hover:text-primary transition-colors">Cadastrar</Link>
+              <a href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">WhatsApp</a>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-3">Suporte</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <a href="https://wa.me/5500000000000" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors flex items-center gap-1.5">
-                    📱 WhatsApp
-                  </a>
-                </li>
-                <li className="text-xs">Atendimento: Seg–Sex, 8h–18h</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border/30 pt-6 flex flex-col md:flex-row items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
-              © 2025 ConsultaParts AI. Todos os direitos reservados.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Criado por Mauricio Chaparim
+              © 2025 ConsultaParts AI
             </p>
           </div>
         </div>
