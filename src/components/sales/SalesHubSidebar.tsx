@@ -25,9 +25,6 @@ interface TabDef {
 const MENU_ITEMS: TabDef[] = [
   // 🔍 Consulta
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
-  { value: 'inventory', icon: Package, label: 'Consultar Estoque', group: 'Consulta' },
-  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar Estoque', group: 'Consulta' },
-  { value: 'manual-product', icon: PackagePlus, label: 'Cadastrar Produto', group: 'Consulta' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },

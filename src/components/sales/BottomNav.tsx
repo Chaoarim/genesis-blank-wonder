@@ -9,14 +9,11 @@ interface NavItem {
 
 const ADMIN_ITEMS: NavItem[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início' },
-  { value: 'inventory', icon: Package, label: 'Estoque' },
-  { value: 'import-inventory', icon: FileSpreadsheet, label: 'Importar' },
   { value: 'help', icon: HelpCircle, label: 'Ajuda' },
 ];
 
 const SELLER_ITEMS: NavItem[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início' },
-  { value: 'inventory', icon: Package, label: 'Estoque' },
   { value: 'help', icon: HelpCircle, label: 'Ajuda' },
 ];
 
