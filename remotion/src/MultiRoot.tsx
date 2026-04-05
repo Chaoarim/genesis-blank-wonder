@@ -6,6 +6,7 @@ import { EquipeVideo } from "./videos/equipe/EquipeVideo";
 import { FinanceiroVideo } from "./videos/financeiro/FinanceiroVideo";
 import { CompletoVideo } from "./videos/completo/CompletoVideo";
 import { CompletoReelsVideo } from "./videos/completo-reels/CompletoReelsVideo";
+import { CompletoPostVideo } from "./videos/completo-post/CompletoPostVideo";
 
 export const MultiRoot = () => (
   <>
