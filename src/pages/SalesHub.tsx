@@ -341,32 +341,10 @@ const SalesHub = () => {
                     onNavigate={setActiveTab}
                   />
                 )}
-                <CommandPalette onNavigate={setActiveTab} visibleTabs={visibleTabs} />
-                <Button variant="ghost" size="sm" className="gap-1.5 text-xs hidden md:flex" onClick={() => navigate('/buscar-pecas')}>
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => navigate('/buscar-pecas')}>
                   <Search className="w-3.5 h-3.5" />
                   Buscar Peças
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" title="Abrir Catálogo B2B" onClick={() => {
-                  const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
-                  window.open(catalogUrl, '_blank');
-                }}>
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-                <CatalogQRCode url={`${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`} />
-                <Button variant="ghost" size="icon" className="h-8 w-8" title="Copiar Link do Catálogo" onClick={() => {
-                  const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
-                  navigator.clipboard.writeText(catalogUrl);
-                  toast.success('Link do catálogo copiado!');
-                }}>
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" title="Enviar por WhatsApp" onClick={() => {
-                  const catalogUrl = `${window.location.origin}/catalogo/${sellerPerms.adminUserId || user?.id}`;
-                  const msg = encodeURIComponent(`Confira nosso catálogo de peças: ${catalogUrl}`);
-                  window.open(`https://wa.me/?text=${msg}`, '_blank');
-                }}>
-                  <Share2 className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1.5 text-xs">
                   <LogOut className="w-3.5 h-3.5" />
