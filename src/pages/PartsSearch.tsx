@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, ArrowLeft, Car, Link as LinkIcon, Loader2, CreditCard, Tag } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft } from 'lucide-react';
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
@@ -246,14 +246,21 @@ const PartsSearch = () => {
       <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => {
-              if (mode !== 'unified') switchToUnified();
-              else navigate(-1);
-            }} className="shrink-0">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" size="icon" onClick={async () => {
+              if (mode !== 'unified') {
+                switchToUnified();
+              } else {
+                await supabase.auth.signOut();
+                navigate('/login');
+              }
+            }} className="shrink-0" title={mode !== 'unified' ? 'Voltar' : 'Sair'}>
+              {mode !== 'unified' ? <ArrowLeft className="w-5 h-5" /> : <LogOut className="w-5 h-5" />}
             </Button>
             <h1 className="text-lg font-bold leading-tight flex items-center gap-2">
-              <Search className="w-5 h-5 text-primary" />
+              <div className="relative">
+                <Search className="w-5 h-5 text-primary" />
+                <span className="absolute -bottom-0.5 -right-0.5 block h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-card" />
+              </div>
               Consulta de Peças
             </h1>
           </div>
