@@ -1,9 +1,11 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3 } from 'lucide-react';
+
+const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
@@ -14,7 +16,7 @@ import { toast } from 'sonner';
 
 const PAGE_SIZE = 50;
 
-type SearchMode = 'unified' | 'placa' | 'veiculo';
+type SearchMode = 'unified' | 'placa' | 'veiculo' | 'frota';
 
 function detectSearchType(query: string): 'placa' | 'code' | 'general' {
   const clean = query.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -266,7 +268,7 @@ const PartsSearch = () => {
           </div>
           {mode !== 'unified' && (
             <Badge variant="outline" className="text-xs gap-1 cursor-pointer" onClick={switchToUnified}>
-              {mode === 'placa' ? '🚗 Placa' : '📋 Veículo'}
+              {mode === 'placa' ? '🚗 Placa' : mode === 'frota' ? '📊 Frota' : '📋 Veículo'}
               <X className="w-3 h-3" />
             </Badge>
           )}
@@ -346,6 +348,18 @@ const PartsSearch = () => {
                     <div>
                       <h3 className="font-semibold text-sm">Consulta por Veículos</h3>
                       <p className="text-xs text-muted-foreground">Navegue pelos catálogos</p>
+                    </div>
+                  </Card>
+                  <Card
+                    className="p-4 cursor-pointer hover:border-primary transition-colors flex items-center gap-3 col-span-2"
+                    onClick={() => setMode('frota')}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <BarChart3 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Ranking Frota / Emplacamentos</h3>
+                      <p className="text-xs text-muted-foreground">Tendências de mercado e veículos mais emplacados</p>
                     </div>
                   </Card>
                 </div>
@@ -499,6 +513,13 @@ const PartsSearch = () => {
                 </div>
               )}
             </>
+          )}
+
+          {/* === FROTA MODE === */}
+          {mode === 'frota' && (
+            <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Carregando...</div>}>
+              <FleetRankingsManager adminUserId={null} readOnly />
+            </Suspense>
           )}
         </div>
       </main>
