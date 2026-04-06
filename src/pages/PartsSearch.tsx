@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3, ShoppingCart, Check } from 'lucide-react';
+import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3, ShoppingCart, Check, BookOpen } from 'lucide-react';
 
 const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
@@ -392,6 +392,23 @@ const PartsSearch = () => {
                     <div>
                       <h3 className="font-semibold text-sm">Consulta por Veículos</h3>
                       <p className="text-xs text-muted-foreground">Navegue pelos catálogos</p>
+                    </div>
+                  </Card>
+                  <Card
+                    className="p-4 cursor-pointer hover:border-primary transition-colors flex items-center gap-3"
+                    onClick={() => {
+                      setMode('veiculo');
+                      setSelectedCatalog('CATÁLOGO MASTER');
+                      setSearch('');
+                      setSearchInput('');
+                    }}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <BookOpen className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">Catálogo Master</h3>
+                      <p className="text-xs text-muted-foreground">Base completa de peças</p>
                     </div>
                   </Card>
                   <Card
