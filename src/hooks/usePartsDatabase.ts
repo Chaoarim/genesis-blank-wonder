@@ -127,7 +127,7 @@ export function usePartsDatabase() {
                   fornecedor: row.fabricante || '',
                   fabricante: row.codigo_peca || '',
                   produto: row.descricao || '',
-                  aplicacao: cleanAplicacao,
+                  aplicacao: finalAplicacao,
                   marca: row.marca_veiculo || (row as any).catalogo || '',
                   modelo: row.modelo_veiculo || '',
                   ano: row.anos_aplicacao || '',
