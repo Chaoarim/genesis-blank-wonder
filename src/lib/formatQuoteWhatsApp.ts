@@ -4,23 +4,39 @@ function cleanText(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
 
+function normalizeApplicationKey(value: string): string {
+  return cleanText(value).toLowerCase().replace(/^[^:]+:\s*/, '');
+}
+
 function splitApplications(aplicacao?: string): string[] {
   if (!aplicacao) return [];
 
-  return Array.from(
-    new Set(
-      aplicacao
-        .split(/\s*,\s*/)
-        .map(cleanText)
-        .filter(Boolean),
-    ),
-  );
+  const seenEntries = new Set<string>();
+  const seenNormalizedEntries = new Set<string>();
+
+  return aplicacao
+    .split(/\s*,\s*/)
+    .map(cleanText)
+    .filter(Boolean)
+    .filter((entry) => {
+      const entryKey = entry.toLowerCase();
+      const normalizedKey = normalizeApplicationKey(entry);
+
+      if (seenEntries.has(entryKey) || seenNormalizedEntries.has(normalizedKey)) {
+        return false;
+      }
+
+      seenEntries.add(entryKey);
+      seenNormalizedEntries.add(normalizedKey);
+      return true;
+    });
 }
 
 function formatItemBlock(index: number, item: QuoteItem): string {
   const applications = splitApplications(item.aplicacao);
   const lines = [
-    `${index}. ${cleanText(item.codigo)} - ${cleanText(item.produto)}`,
+    `${index}) Código: ${cleanText(item.codigo)}`,
+    `Produto: ${cleanText(item.produto)}`,
   ];
 
   if (applications.length === 1) {
@@ -32,7 +48,7 @@ function formatItemBlock(index: number, item: QuoteItem): string {
     lines.push(...applications.map((entry) => `- ${entry}`));
   }
 
-  lines.push(`Qtd: ${item.quantidade}`);
+  lines.push(`Quantidade: ${item.quantidade}`);
 
   return lines.join('\n');
 }
@@ -57,26 +73,23 @@ export function formatQuoteWhatsApp(title: string, items: QuoteItem[], date: str
     });
 
     return [
-      `FORNECEDOR: ${supplier}`,
-      '',
+      `*Fornecedor: ${supplier}*`,
       blocks.join('\n\n'),
     ].join('\n');
   });
 
   return [
-    'SOLICITAÇÃO DE COTAÇÃO',
-    `Referência: ${cleanText(title)}`,
+    '*Solicitação de Cotação*',
+    `Ref.: ${cleanText(title)}`,
     `Data: ${date}`,
     '',
-    'Olá! Segue a relação de peças para cotação.',
+    'Olá! Segue a relação de peças para cotação:',
     '',
-    supplierSections.join('\n\n==============================\n\n'),
+    supplierSections.join('\n\n'),
     '',
-    'RESUMO',
-    `Itens: ${items.length}`,
-    `Peças: ${totalPieces}`,
+    `*Resumo:* ${items.length} itens / ${totalPieces} peças`,
     '',
-    'Por favor, informar disponibilidade e valores.',
+    'Favor informar disponibilidade e valores.',
     'Obrigado!',
   ].join('\n');
 }
