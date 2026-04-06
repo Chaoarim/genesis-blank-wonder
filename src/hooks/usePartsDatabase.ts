@@ -116,7 +116,13 @@ export function usePartsDatabase() {
                   row.fabricante || '',
                   row.codigo_peca || '',
                   row.descricao || ''
-                ) || aplicacaoFallback || (row as any).catalogo || '';
+                ) || aplicacaoFallback || '';
+                // Remove trailing "CATÁLOGO MASTER" from aplicacao display
+                const catalogName = (row as any).catalogo || '';
+                const finalAplicacao = cleanAplicacao
+                  .replace(/[,/\s]*CATÁLOGO MASTER\s*/gi, '')
+                  .replace(/[,/\s]*catalogo master\s*/gi, '')
+                  .trim();
                 allParts.push({
                   fornecedor: row.fabricante || '',
                   fabricante: row.codigo_peca || '',
