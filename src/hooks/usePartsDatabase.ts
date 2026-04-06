@@ -116,12 +116,18 @@ export function usePartsDatabase() {
                   row.fabricante || '',
                   row.codigo_peca || '',
                   row.descricao || ''
-                ) || aplicacaoFallback || (row as any).catalogo || '';
+                ) || aplicacaoFallback || '';
+                // Remove trailing "CATÁLOGO MASTER" from aplicacao display
+                const catalogName = (row as any).catalogo || '';
+                const finalAplicacao = cleanAplicacao
+                  .replace(/[,/\s]*CATÁLOGO MASTER\s*/gi, '')
+                  .replace(/[,/\s]*catalogo master\s*/gi, '')
+                  .trim();
                 allParts.push({
                   fornecedor: row.fabricante || '',
                   fabricante: row.codigo_peca || '',
                   produto: row.descricao || '',
-                  aplicacao: cleanAplicacao,
+                  aplicacao: finalAplicacao,
                   marca: row.marca_veiculo || (row as any).catalogo || '',
                   modelo: row.modelo_veiculo || '',
                   ano: row.anos_aplicacao || '',
