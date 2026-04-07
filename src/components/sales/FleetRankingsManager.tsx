@@ -352,6 +352,14 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
             </div>
           </TabsContent>
 
+          <TabsContent value="manutencao">
+            <MaintenanceCycleTab top10={top10} selectedYear={selectedYear} />
+          </TabsContent>
+
+          <TabsContent value="tendencia">
+            <MultiYearTrendTab rankings={rankings} selectedType={selectedType} />
+          </TabsContent>
+
           <TabsContent value="ranking">
             <Card className="p-4 max-h-[60vh] overflow-y-auto">
               <Table>
