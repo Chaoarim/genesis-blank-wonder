@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
 import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Search, Download, FileSpreadsheet, Settings } from 'lucide-react';
+import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
+import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
@@ -270,10 +272,12 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
         </Card>
       ) : (
         <Tabs defaultValue="demanda">
-          <TabsList>
-            <TabsTrigger value="demanda">📊 Demanda de Peças</TabsTrigger>
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
+            <TabsTrigger value="manutencao">🔧 Ciclo Manutenção</TabsTrigger>
+            <TabsTrigger value="tendencia">📈 Tendência Multi-Ano</TabsTrigger>
             <TabsTrigger value="ranking">🏆 Ranking</TabsTrigger>
-            <TabsTrigger value="grafico">📈 Gráfico</TabsTrigger>
+            <TabsTrigger value="grafico">📉 Gráfico</TabsTrigger>
           </TabsList>
 
           <TabsContent value="demanda" className="space-y-4">
@@ -346,6 +350,14 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
                 </p>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="manutencao">
+            <MaintenanceCycleTab top10={top10} selectedYear={selectedYear} />
+          </TabsContent>
+
+          <TabsContent value="tendencia">
+            <MultiYearTrendTab rankings={rankings} selectedType={selectedType} />
           </TabsContent>
 
           <TabsContent value="ranking">
