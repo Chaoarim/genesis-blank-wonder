@@ -272,10 +272,12 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
         </Card>
       ) : (
         <Tabs defaultValue="demanda">
-          <TabsList>
-            <TabsTrigger value="demanda">📊 Demanda de Peças</TabsTrigger>
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
+            <TabsTrigger value="manutencao">🔧 Ciclo Manutenção</TabsTrigger>
+            <TabsTrigger value="tendencia">📈 Tendência Multi-Ano</TabsTrigger>
             <TabsTrigger value="ranking">🏆 Ranking</TabsTrigger>
-            <TabsTrigger value="grafico">📈 Gráfico</TabsTrigger>
+            <TabsTrigger value="grafico">📉 Gráfico</TabsTrigger>
           </TabsList>
 
           <TabsContent value="demanda" className="space-y-4">
