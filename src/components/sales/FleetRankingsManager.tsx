@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
 import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Search, Download, FileSpreadsheet, Settings } from 'lucide-react';
+import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
+import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
