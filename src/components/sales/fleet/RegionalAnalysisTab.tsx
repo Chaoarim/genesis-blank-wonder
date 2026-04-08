@@ -322,7 +322,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
               <TableHeader>
                 <TableRow>
                   <TableHead>Região</TableHead>
-                  <TableHead className="text-right">Quantidade</TableHead>
+                  {!usePercentageAsValue && <TableHead className="text-right">Quantidade</TableHead>}
                   <TableHead className="text-right">Participação (%)</TableHead>
                 </TableRow>
               </TableHeader>
@@ -335,7 +335,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                         <span className="font-medium">{r.region}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-mono">{r.quantity.toLocaleString('pt-BR')}</TableCell>
+                    {!usePercentageAsValue && <TableCell className="text-right font-mono">{r.quantity.toLocaleString('pt-BR')}</TableCell>}
                     <TableCell className="text-right font-mono">
                       {r.percentage > 0 ? r.percentage.toFixed(1) : (totalQuantity > 0 ? ((r.quantity / totalQuantity) * 100).toFixed(1) : '0')}%
                     </TableCell>
@@ -343,7 +343,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                 ))}
                 <TableRow className="font-bold border-t-2">
                   <TableCell>Total</TableCell>
-                  <TableCell className="text-right font-mono">{totalQuantity.toLocaleString('pt-BR')}</TableCell>
+                  {!usePercentageAsValue && <TableCell className="text-right font-mono">{totalQuantity.toLocaleString('pt-BR')}</TableCell>}
                   <TableCell className="text-right font-mono">100%</TableCell>
                 </TableRow>
               </TableBody>
@@ -357,7 +357,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
             </h3>
             <ul className="text-sm space-y-1 text-muted-foreground">
               {regionSummary.length > 0 && (() => {
-                const sorted = [...regionSummary].sort((a, b) => b.quantity - a.quantity);
+                const sorted = [...regionSummary].sort((a, b) => (b.displayValue) - (a.displayValue));
                 const top = sorted[0];
                 const bottom = sorted[sorted.length - 1];
                 return (
