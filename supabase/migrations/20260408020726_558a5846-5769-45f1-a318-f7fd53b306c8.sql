@@ -1,0 +1,1 @@
+DELETE FROM fleet_rankings WHERE year = 2011;
