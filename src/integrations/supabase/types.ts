@@ -629,6 +629,39 @@ export type Database = {
         }
         Relationships: []
       }
+      fleet_regional_data: {
+        Row: {
+          created_at: string
+          id: string
+          month: number | null
+          percentage: number
+          quantity: number
+          region: string
+          vehicle_type: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month?: number | null
+          percentage?: number
+          quantity?: number
+          region: string
+          vehicle_type?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number | null
+          percentage?: number
+          quantity?: number
+          region?: string
+          vehicle_type?: string
+          year?: number
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           aplicacao: string | null

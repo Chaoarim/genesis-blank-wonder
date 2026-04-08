@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGri
 import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Search, Download, FileSpreadsheet, Settings } from 'lucide-react';
 import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
 import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
+import { RegionalAnalysisTab } from './fleet/RegionalAnalysisTab';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
@@ -274,6 +275,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
         <Tabs defaultValue="demanda">
           <TabsList className="flex-wrap">
             <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
+            <TabsTrigger value="regional">🗺️ Regional</TabsTrigger>
             <TabsTrigger value="manutencao">🔧 Ciclo Manutenção</TabsTrigger>
             <TabsTrigger value="tendencia">📈 Tendência Multi-Ano</TabsTrigger>
             <TabsTrigger value="ranking">🏆 Ranking</TabsTrigger>
@@ -350,6 +352,10 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
                 </p>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="regional">
+            <RegionalAnalysisTab readOnly={readOnly} />
           </TabsContent>
 
           <TabsContent value="manutencao">
