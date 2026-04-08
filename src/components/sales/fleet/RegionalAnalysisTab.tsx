@@ -76,12 +76,16 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       map[r.region].quantity += r.quantity;
       map[r.region].percentage += r.percentage;
     });
+    const hasAnyQuantity = Object.values(map).some(v => v.quantity > 0);
     return REGIONS.map(region => ({
       region,
       quantity: map[region]?.quantity || 0,
       percentage: map[region]?.percentage || 0,
+      displayValue: hasAnyQuantity ? (map[region]?.quantity || 0) : (map[region]?.percentage || 0),
     })).filter(r => r.quantity > 0 || r.percentage > 0);
   }, [filteredData]);
+
+  const usePercentageAsValue = useMemo(() => regionSummary.every(r => r.quantity === 0), [regionSummary]);
 
   const totalQuantity = useMemo(() => regionSummary.reduce((s, r) => s + r.quantity, 0), [regionSummary]);
 
@@ -274,15 +278,15 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
 
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" /> Volume por Região
+                <TrendingUp className="w-4 h-4 text-primary" /> {usePercentageAsValue ? 'Participação (%) por Região' : 'Volume por Região'}
               </h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={regionSummary}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="region" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={v => v > 1000 ? (v / 1000).toFixed(0) + 'k' : v} />
-                  <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
-                  <Bar dataKey="quantity" radius={[4, 4, 0, 0]}>
+                  <YAxis tickFormatter={v => usePercentageAsValue ? `${v}%` : (v > 1000 ? (v / 1000).toFixed(0) + 'k' : String(v))} />
+                  <Tooltip formatter={(v: number) => usePercentageAsValue ? `${v.toFixed(1)}%` : v.toLocaleString('pt-BR')} />
+                  <Bar dataKey="displayValue" radius={[4, 4, 0, 0]}>
                     {regionSummary.map((entry, i) => (
                       <Cell key={i} fill={REGION_COLORS[entry.region] || '#94a3b8'} />
                     ))}
