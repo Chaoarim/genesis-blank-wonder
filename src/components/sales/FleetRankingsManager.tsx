@@ -12,6 +12,7 @@ import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Searc
 import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
 import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
 import { RegionalAnalysisTab } from './fleet/RegionalAnalysisTab';
+import { MarketPotentialTab } from './fleet/MarketPotentialTab';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
@@ -272,8 +273,9 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           <p className="text-muted-foreground">Nenhum ranking importado ainda. Importe um CSV com dados FENABRAVE.</p>
         </Card>
       ) : (
-        <Tabs defaultValue="demanda">
-          <TabsList className="flex-wrap">
+        <Tabs defaultValue="potencial">
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="potencial">🎯 Potencial</TabsTrigger>
             <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
             <TabsTrigger value="regional">🗺️ Regional</TabsTrigger>
             <TabsTrigger value="manutencao">🔧 Ciclo Manutenção</TabsTrigger>
@@ -281,6 +283,10 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
             <TabsTrigger value="ranking">🏆 Ranking</TabsTrigger>
             <TabsTrigger value="grafico">📉 Gráfico</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="potencial">
+            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} />
+          </TabsContent>
 
           <TabsContent value="demanda" className="space-y-4">
             <Card className="p-4">
