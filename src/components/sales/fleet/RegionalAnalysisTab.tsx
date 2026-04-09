@@ -175,6 +175,19 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     toast.success('Modelo CSV baixado!');
   };
 
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) { toast.error('Nenhum dado para exportar'); return; }
+    const rows = filteredData.map(r => ({
+      'Região': r.region,
+      'Ano': r.year,
+      'Tipo': r.vehicle_type === 'automovel' ? 'Automóvel' : 'Comercial Leve',
+      'Quantidade': r.quantity,
+      'Participação (%)': r.percentage,
+    }));
+    exportToExcel(rows, `dados_regionais_${selectedYear || 'todos'}`, 'Regional');
+    toast.success('Excel exportado!');
+  };
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
