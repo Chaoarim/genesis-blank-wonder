@@ -285,7 +285,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           </TabsList>
 
           <TabsContent value="potencial">
-            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} />
+            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} readOnly={readOnly} />
           </TabsContent>
 
           <TabsContent value="demanda" className="space-y-4">

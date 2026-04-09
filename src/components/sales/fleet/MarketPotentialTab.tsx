@@ -26,6 +26,7 @@ interface Props {
   rankings: FleetRanking[];
   selectedYear: string;
   selectedType: string;
+  readOnly?: boolean;
 }
 
 interface SupplierItem {
@@ -78,7 +79,7 @@ function formatCompactUnits(value: number) {
   return Math.round(value).toLocaleString('pt-BR');
 }
 
-export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
+export function MarketPotentialTab({ rankings, selectedYear, selectedType, readOnly = false }: Props) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<SupplierItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -441,20 +442,25 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
         <h3 className="font-semibold">Potencial de Mercado — Listas de Fornecedores</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Importe listas de peças dos seus fornecedores. O sistema cruzará com os dados da FENABRAVE para identificar
-          quais peças têm maior potencial de venda imediata e quais são ideais para investimento a longo prazo.
+          {readOnly
+            ? 'Nenhuma lista de fornecedores foi importada ainda. O administrador precisa importar as listas pelo painel administrativo.'
+            : 'Importe listas de peças dos seus fornecedores. O sistema cruzará com os dados da FENABRAVE para identificar quais peças têm maior potencial de venda imediata e quais são ideais para investimento a longo prazo.'}
         </p>
-        <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-            {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
-            {importing ? 'Importando...' : 'Importar Lista do Fornecedor'}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-            <FileSpreadsheet className="w-4 h-4 mr-1.5" />
-            Baixar Modelo
-          </Button>
-        </div>
+        {!readOnly && (
+          <>
+            <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                {importing ? 'Importando...' : 'Importar Lista do Fornecedor'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+                <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+                Baixar Modelo
+              </Button>
+            </div>
+          </>
+        )}
       </Card>
     );
   }
@@ -504,29 +510,37 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
 
       {/* Action Bar */}
       <div className="flex flex-wrap gap-2">
-        <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
-        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-          {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
-          {importing ? 'Importando...' : 'Importar Lista'}
-        </Button>
+        {!readOnly && (
+          <>
+            <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+              {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+              {importing ? 'Importando...' : 'Importar Lista'}
+            </Button>
+          </>
+        )}
         <Button variant="outline" size="sm" onClick={handleExport} disabled={!filtered.length}>
           <Download className="w-4 h-4 mr-1.5" />
           Exportar Análise
         </Button>
-        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-          <FileSpreadsheet className="w-4 h-4 mr-1.5" />
-          Baixar Modelo
-        </Button>
-        <ConfirmDeleteDialog
-          description="Tem certeza que deseja excluir TODA a lista de fornecedores? Esta ação não pode ser desfeita."
-          onConfirm={handleDeleteAll}
-          trigger={
-            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-              <Trash2 className="w-4 h-4 mr-1.5" />
-              Excluir Toda Lista
+        {!readOnly && (
+          <>
+            <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+              <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+              Baixar Modelo
             </Button>
-          }
-        />
+            <ConfirmDeleteDialog
+              description="Tem certeza que deseja excluir TODA a lista de fornecedores? Esta ação não pode ser desfeita."
+              onConfirm={handleDeleteAll}
+              trigger={
+                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Excluir Toda Lista
+                </Button>
+              }
+            />
+          </>
+        )}
       </div>
 
       {/* Charts Row 1: Immediate Potential + Classification */}
