@@ -255,15 +255,21 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     return withPotential.length > 0 ? Math.round(withPotential.reduce((s, p) => s + p.potentialScore, 0) / withPotential.length) : 0;
   }, [withPotential]);
 
-  // Top 10 chart
+  // Top 10 chart — use demand when all revenues are zero (prices = 0)
+  const hasRevenue = useMemo(() => withPotential.some(p => p.revenueEstimate > 0), [withPotential]);
+
   const topItems = useMemo(() => {
-    return withPotential.slice(0, 10).map(p => ({
+    const sorted = hasRevenue
+      ? [...withPotential].sort((a, b) => b.revenueEstimate - a.revenueEstimate)
+      : [...withPotential].sort((a, b) => b.estimatedDemand - a.estimatedDemand);
+    return sorted.slice(0, 10).map(p => ({
       label: p.codigo.length > 12 ? p.codigo.substring(0, 12) + '…' : p.codigo,
       fullLabel: `${p.codigo} - ${p.produto}`,
       receita: p.revenueEstimate,
+      demanda: p.estimatedDemand,
       score: p.potentialScore,
     }));
-  }, [withPotential]);
+  }, [withPotential, hasRevenue]);
 
   // Opportunity distribution
   const oppDistribution = useMemo(() => {
