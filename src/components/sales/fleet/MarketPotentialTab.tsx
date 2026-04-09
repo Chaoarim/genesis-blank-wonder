@@ -45,6 +45,13 @@ interface InventoryPotential {
   opportunity: 'alta' | 'media' | 'baixa';
 }
 
+interface TopChartItem {
+  label: string;
+  fullLabel: string;
+  value: number;
+  score: number;
+}
+
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 const ANNUAL_REPLACEMENT_RATE = 0.15;
 
@@ -56,6 +63,18 @@ function normalize(text: string): string {
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function formatCompactCurrency(value: number) {
+  if (value >= 1_000_000) return `R$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `R$${(value / 1_000).toFixed(0)}k`;
+  return `R$${Math.round(value).toLocaleString('pt-BR')}`;
+}
+
+function formatCompactUnits(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return Math.round(value).toLocaleString('pt-BR');
 }
 
 export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
@@ -255,21 +274,39 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     return withPotential.length > 0 ? Math.round(withPotential.reduce((s, p) => s + p.potentialScore, 0) / withPotential.length) : 0;
   }, [withPotential]);
 
-  // Top 10 chart — use demand when all revenues are zero (prices = 0)
-  const hasRevenue = useMemo(() => withPotential.some(p => p.revenueEstimate > 0), [withPotential]);
-
-  const topItems = useMemo(() => {
-    const sorted = hasRevenue
-      ? [...withPotential].sort((a, b) => b.revenueEstimate - a.revenueEstimate)
-      : [...withPotential].sort((a, b) => b.estimatedDemand - a.estimatedDemand);
-    return sorted.slice(0, 10).map(p => ({
-      label: p.codigo.length > 12 ? p.codigo.substring(0, 12) + '…' : p.codigo,
+  // Top 10 chart — only use positive values; fallback to demand when revenue is not available
+  const topChart = useMemo(() => {
+    const toChartItem = (p: InventoryPotential, value: number): TopChartItem => ({
+      label: p.codigo.length > 12 ? `${p.codigo.substring(0, 12)}…` : p.codigo,
       fullLabel: `${p.codigo} - ${p.produto}`,
-      receita: p.revenueEstimate,
-      demanda: p.estimatedDemand,
+      value,
       score: p.potentialScore,
-    }));
-  }, [withPotential, hasRevenue]);
+    });
+
+    const revenueItems = [...withPotential]
+      .filter(p => p.revenueEstimate > 0)
+      .sort((a, b) => b.revenueEstimate - a.revenueEstimate)
+      .slice(0, 10)
+      .map(p => toChartItem(p, p.revenueEstimate));
+
+    if (revenueItems.length > 0) {
+      return {
+        mode: 'receita' as const,
+        items: revenueItems,
+      };
+    }
+
+    const demandItems = [...withPotential]
+      .filter(p => p.estimatedDemand > 0)
+      .sort((a, b) => b.estimatedDemand - a.estimatedDemand)
+      .slice(0, 10)
+      .map(p => toChartItem(p, p.estimatedDemand));
+
+    return {
+      mode: 'demanda' as const,
+      items: demandItems,
+    };
+  }, [withPotential]);
 
   // Opportunity distribution
   const oppDistribution = useMemo(() => {
@@ -396,29 +433,31 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-primary" />
-            Top 10 — {hasRevenue ? 'Maior Potencial de Receita' : 'Maior Demanda Estimada'}
+            Top 10 — {topChart.mode === 'receita' ? 'Maior Potencial de Receita' : 'Maior Demanda Estimada'}
           </h3>
-          {topItems.length > 0 ? (
+          {topChart.items.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topItems} layout="vertical" margin={{ left: 10 }}>
+              <BarChart data={topChart.items} layout="vertical" margin={{ left: 10, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   type="number"
-                  tickFormatter={v => hasRevenue
-                    ? `R$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v.toFixed(0)}`
-                    : v.toLocaleString('pt-BR')
+                  allowDecimals={false}
+                  domain={[0, (dataMax: number) => (dataMax > 0 ? Math.ceil(dataMax * 1.1) : 10)]}
+                  tickFormatter={(v: number) => topChart.mode === 'receita'
+                    ? formatCompactCurrency(v)
+                    : formatCompactUnits(v)
                   }
                 />
                 <YAxis type="category" dataKey="label" width={100} tick={{ fontSize: 10 }} />
                 <Tooltip
-                  formatter={(v: number) => hasRevenue
+                  formatter={(v: number) => topChart.mode === 'receita'
                     ? `R$ ${v.toLocaleString('pt-BR')}`
                     : `${v.toLocaleString('pt-BR')} unidades`
                   }
-                  labelFormatter={(label) => topItems.find(o => o.label === label)?.fullLabel || label}
+                  labelFormatter={(label) => topChart.items.find(o => o.label === label)?.fullLabel || label}
                 />
-                <Bar dataKey={hasRevenue ? 'receita' : 'demanda'} radius={[0, 4, 4, 0]}>
-                  {topItems.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={18} minPointSize={6}>
+                  {topChart.items.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
