@@ -373,6 +373,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
             </Button>
           }
         />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
