@@ -1,13 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Loader2, Target, TrendingUp, Package, Search, DollarSign, ShoppingCart } from 'lucide-react';
+import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { fetchAllInventory, type InventoryRow } from '@/lib/fetchAllInventory';
+import { exportToExcel } from '@/lib/exportExcel';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 interface FleetRanking {
   id: string;
@@ -57,6 +61,104 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
   const [loading, setLoading] = useState(true);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const reloadInventory = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { data: sellerRow } = await supabase
+      .from('seller_users')
+      .select('admin_user_id')
+      .eq('seller_auth_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+    const ownerId = sellerRow?.admin_user_id || user.id;
+    const items = await fetchAllInventory(ownerId, 'produto', true);
+    setInventory(items);
+    setLoading(false);
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = [
+      { codigo: 'ABC123', produto: 'Pastilha de Freio Dianteira', fornecedor: 'FRAS-LE', aplicacao: 'GOL G5/G6/G7', qtd_estoque: 50, preco: 89.90 },
+      { codigo: 'DEF456', produto: 'Disco de Freio Ventilado', fornecedor: 'FREMAX', aplicacao: 'ONIX/PRISMA', qtd_estoque: 30, preco: 149.90 },
+    ];
+    exportToExcel(template, 'modelo_estoque', 'Estoque');
+    toast.success('Modelo de planilha baixado!');
+  };
+
+  const handleExport = () => {
+    if (!filtered.length) { toast.error('Nenhum dado para exportar'); return; }
+    const data = filtered.map(p => ({
+      Código: p.codigo,
+      Produto: p.produto,
+      Fornecedor: p.fornecedor,
+      Aplicação: p.aplicacao,
+      'Qtd Estoque': p.qtd_estoque,
+      'Preço (R$)': p.preco,
+      Score: p.potentialScore,
+      'Frota Match': p.totalFleetMatched,
+      'Receita Estimada (R$)': p.revenueEstimate,
+      Oportunidade: p.opportunity === 'alta' ? 'Alta' : p.opportunity === 'media' ? 'Média' : 'Baixa',
+      'Modelos Compatíveis': p.matchedModels.join(', '),
+    }));
+    exportToExcel(data, `potencial_mercado_${selectedYear}`, 'Potencial');
+    toast.success('Dados exportados com sucesso!');
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data: sellerRow } = await supabase
+        .from('seller_users')
+        .select('admin_user_id')
+        .eq('seller_auth_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      const ownerId = sellerRow?.admin_user_id || user.id;
+
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
+
+      if (!rows.length) { toast.error('Planilha vazia'); setImporting(false); return; }
+
+      const items = rows.map(r => ({
+        user_id: ownerId,
+        codigo: String(r.codigo || r.Código || r['Codigo'] || '').trim(),
+        produto: String(r.produto || r.Produto || '').trim(),
+        fornecedor: String(r.fornecedor || r.Fornecedor || '').trim() || null,
+        aplicacao: String(r.aplicacao || r.Aplicação || r['Aplicacao'] || '').trim() || null,
+        qtd_estoque: Number(r.qtd_estoque || r['Qtd Estoque'] || r.quantidade || 0),
+        preco: Number(r.preco || r['Preço'] || r.Preco || r['Preço (R$)'] || 0),
+      })).filter(i => i.codigo && i.produto);
+
+      if (!items.length) { toast.error('Nenhum item válido encontrado. Verifique as colunas: codigo, produto, fornecedor, aplicacao, qtd_estoque, preco'); setImporting(false); return; }
+
+      const batchSize = 500;
+      for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        const { error } = await supabase.from('inventory_items').upsert(batch, { onConflict: 'user_id,codigo' });
+        if (error) throw error;
+      }
+
+      toast.success(`${items.length} itens importados com sucesso!`);
+      await reloadInventory();
+    } catch (err: any) {
+      toast.error(`Erro na importação: ${err.message}`);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const filteredRankings = useMemo(() => {
     return rankings
@@ -64,28 +166,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
       .sort((a, b) => a.position - b.position);
   }, [rankings, selectedYear, selectedType]);
 
-  // Load user inventory
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-
-      // Get admin user id (for sellers)
-      const { data: sellerRow } = await supabase
-        .from('seller_users')
-        .select('admin_user_id')
-        .eq('seller_auth_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      const ownerId = sellerRow?.admin_user_id || user.id;
-      const items = await fetchAllInventory(ownerId, 'produto', true);
-      setInventory(items);
-      setLoading(false);
-    };
-    load();
-  }, []);
+  useEffect(() => { reloadInventory(); }, []);
 
   // Cross inventory × fleet
   const inventoryPotentials: InventoryPotential[] = useMemo(() => {
@@ -248,7 +329,34 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         </Card>
       </div>
 
-      {/* Charts row */}
+      {/* Action Bar: Import / Export / Template */}
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".xlsx,.xls,.csv"
+          onChange={handleImport}
+          className="hidden"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={importing}
+        >
+          {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+          {importing ? 'Importando...' : 'Importar Estoque'}
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleExport} disabled={!filtered.length}>
+          <Download className="w-4 h-4 mr-1.5" />
+          Exportar Análise
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+          <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+          Baixar Modelo
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
