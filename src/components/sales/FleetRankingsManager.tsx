@@ -12,6 +12,7 @@ import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Searc
 import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
 import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
 import { RegionalAnalysisTab } from './fleet/RegionalAnalysisTab';
+import { MarketPotentialTab } from './fleet/MarketPotentialTab';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
