@@ -255,15 +255,21 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     return withPotential.length > 0 ? Math.round(withPotential.reduce((s, p) => s + p.potentialScore, 0) / withPotential.length) : 0;
   }, [withPotential]);
 
-  // Top 10 chart
+  // Top 10 chart — use demand when all revenues are zero (prices = 0)
+  const hasRevenue = useMemo(() => withPotential.some(p => p.revenueEstimate > 0), [withPotential]);
+
   const topItems = useMemo(() => {
-    return withPotential.slice(0, 10).map(p => ({
+    const sorted = hasRevenue
+      ? [...withPotential].sort((a, b) => b.revenueEstimate - a.revenueEstimate)
+      : [...withPotential].sort((a, b) => b.estimatedDemand - a.estimatedDemand);
+    return sorted.slice(0, 10).map(p => ({
       label: p.codigo.length > 12 ? p.codigo.substring(0, 12) + '…' : p.codigo,
       fullLabel: `${p.codigo} - ${p.produto}`,
       receita: p.revenueEstimate,
+      demanda: p.estimatedDemand,
       score: p.potentialScore,
     }));
-  }, [withPotential]);
+  }, [withPotential, hasRevenue]);
 
   // Opportunity distribution
   const oppDistribution = useMemo(() => {
@@ -390,19 +396,28 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-primary" />
-            Top 10 — Maior Potencial de Receita
+            Top 10 — {hasRevenue ? 'Maior Potencial de Receita' : 'Maior Demanda Estimada'}
           </h3>
           {topItems.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={topItems} layout="vertical" margin={{ left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                <XAxis
+                  type="number"
+                  tickFormatter={v => hasRevenue
+                    ? `R$${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v.toFixed(0)}`
+                    : v.toLocaleString('pt-BR')
+                  }
+                />
                 <YAxis type="category" dataKey="label" width={100} tick={{ fontSize: 10 }} />
                 <Tooltip
-                  formatter={(v: number) => `R$ ${v.toLocaleString('pt-BR')}`}
+                  formatter={(v: number) => hasRevenue
+                    ? `R$ ${v.toLocaleString('pt-BR')}`
+                    : `${v.toLocaleString('pt-BR')} unidades`
+                  }
                   labelFormatter={(label) => topItems.find(o => o.label === label)?.fullLabel || label}
                 />
-                <Bar dataKey="receita" radius={[0, 4, 4, 0]}>
+                <Bar dataKey={hasRevenue ? 'receita' : 'demanda'} radius={[0, 4, 4, 0]}>
                   {topItems.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
               </BarChart>
