@@ -329,7 +329,34 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         </Card>
       </div>
 
-      {/* Charts row */}
+      {/* Action Bar: Import / Export / Template */}
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".xlsx,.xls,.csv"
+          onChange={handleImport}
+          className="hidden"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={importing}
+        >
+          {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+          {importing ? 'Importando...' : 'Importar Estoque'}
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleExport} disabled={!filtered.length}>
+          <Download className="w-4 h-4 mr-1.5" />
+          Exportar Análise
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+          <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+          Baixar Modelo
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
