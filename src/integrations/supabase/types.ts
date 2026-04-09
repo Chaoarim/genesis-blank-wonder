@@ -1534,6 +1534,36 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_catalog_items: {
+        Row: {
+          aplicacao: string | null
+          codigo: string
+          created_at: string
+          fornecedor: string | null
+          id: string
+          produto: string
+          user_id: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          codigo: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          produto: string
+          user_id: string
+        }
+        Update: {
+          aplicacao?: string | null
+          codigo?: string
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          produto?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       supplier_contacts: {
         Row: {
           created_at: string
