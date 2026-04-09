@@ -37,8 +37,33 @@ const REGION_COLORS: Record<string, string> = {
   'Norte': '#10b981',
   'Nordeste': '#f59e0b',
   'Centro-Oeste': '#3b82f6',
-  'Sudeste': '#ef4444',
-  'Sul': '#8b5cf6',
+  'Sudeste': '#8b5cf6',
+  'Sul': '#ef4444',
+};
+
+// FENABRAVE 2016 seed data
+const FENABRAVE_2016_SEED: Record<string, Record<string, number[]>> = {
+  automovel: {
+    'Norte':        [4.56, 4.79, 4.42, 4.46, 4.14, 4.26, 4.10, 3.97, 3.50, 3.44, 3.60, 4.16],
+    'Nordeste':     [17.36, 15.72, 14.88, 16.74, 15.35, 14.85, 14.74, 14.91, 14.33, 13.99, 13.83, 15.98],
+    'Centro-Oeste': [10.10, 10.22, 9.26, 8.88, 8.70, 8.35, 8.59, 8.74, 8.40, 8.55, 8.01, 8.66],
+    'Sudeste':      [49.04, 51.76, 52.11, 52.65, 53.92, 54.17, 54.53, 54.94, 56.10, 56.71, 57.59, 52.40],
+    'Sul':          [18.94, 17.52, 19.34, 17.28, 17.89, 18.36, 18.04, 17.43, 17.66, 17.32, 16.97, 18.79],
+  },
+  comercial_leve: {
+    'Norte':        [7.53, 8.43, 7.97, 7.32, 7.85, 7.79, 7.59, 7.34, 8.05, 7.79, 8.17, 8.37],
+    'Nordeste':     [20.34, 17.97, 16.60, 16.88, 16.17, 16.06, 15.27, 17.36, 15.77, 15.91, 15.60, 17.32],
+    'Centro-Oeste': [12.00, 12.34, 13.46, 12.78, 12.52, 12.22, 11.08, 13.52, 12.28, 11.05, 11.53, 12.64],
+    'Sudeste':      [39.42, 41.05, 41.47, 40.42, 42.53, 43.35, 43.99, 41.72, 43.15, 44.74, 45.08, 40.43],
+    'Sul':          [20.90, 20.21, 20.50, 22.60, 20.92, 20.58, 20.07, 19.56, 20.76, 20.50, 19.62, 21.23],
+  },
+  automovel_comercial_leve: {
+    'Norte':        [4.93, 5.28, 4.94, 4.92, 4.71, 4.81, 4.66, 4.60, 4.21, 4.07, 4.26, 4.78],
+    'Nordeste':     [17.71, 16.02, 15.14, 16.76, 15.47, 15.05, 14.83, 15.31, 14.35, 14.27, 14.09, 16.18],
+    'Centro-Oeste': [10.31, 10.51, 9.88, 9.51, 9.28, 8.98, 9.12, 9.52, 9.00, 8.91, 8.51, 9.24],
+    'Sudeste':      [47.85, 50.30, 50.54, 50.67, 52.18, 52.43, 52.83, 52.77, 54.10, 54.97, 55.80, 50.66],
+    'Sul':          [19.19, 17.89, 19.51, 18.14, 18.35, 18.71, 18.37, 17.79, 18.14, 17.78, 17.35, 19.15],
+  },
 };
 
 export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabProps) {
@@ -202,6 +227,29 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     fetchData();
   };
 
+  const handleSeedFenabrave2016 = async () => {
+    if (!confirm('Carregar dados FENABRAVE 2016 (Automóveis, Comerciais Leves e Combinados)?')) return;
+    setImporting(true);
+    try {
+      await supabase.from('fleet_regional_data').delete().eq('year', 2016);
+      const rows: { year: number; month: number; region: string; vehicle_type: string; quantity: number; percentage: number }[] = [];
+      for (const [vtype, regions] of Object.entries(FENABRAVE_2016_SEED)) {
+        for (const [region, months] of Object.entries(regions)) {
+          months.forEach((pct, idx) => {
+            rows.push({ year: 2016, month: idx + 1, region, vehicle_type: vtype, quantity: 0, percentage: pct });
+          });
+        }
+      }
+      const { error } = await supabase.from('fleet_regional_data').insert(rows);
+      if (error) throw error;
+      toast.success(`${rows.length} registros FENABRAVE 2016 carregados!`);
+      fetchData();
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    }
+    setImporting(false);
+  };
+
   const handleDownloadTemplate = () => {
     const bom = '\uFEFF';
     const csv = bom +
@@ -279,6 +327,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                       <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
                     </Button>
                   )}
+                  <Button size="sm" variant="secondary" onClick={handleSeedFenabrave2016} disabled={importing}>
+                    📊 Carregar FENABRAVE 2016
+                  </Button>
                 </div>
               </div>
             </CollapsibleContent>
@@ -337,9 +388,12 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                 <BarChart data={monthlyChartData} stackOffset="expand" barCategoryGap="8%">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={v => `${(v * 100).toFixed(0)}%`} />
+                  <YAxis tickFormatter={v => `${(v * 100).toFixed(0)}%`} domain={[0, 1]} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [`${(value * 100).toFixed(2)}%`, name]}
+                    formatter={(value: number, name: string) => {
+                      const pct = typeof value === 'number' ? value : 0;
+                      return [`${(pct * 100).toFixed(2)}%`, name];
+                    }}
                     labelFormatter={(label) => `Mês: ${label}`}
                   />
                   <Legend />
