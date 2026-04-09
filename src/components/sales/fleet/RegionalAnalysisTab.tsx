@@ -327,6 +327,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                       <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
                     </Button>
                   )}
+                  <Button size="sm" variant="secondary" onClick={handleSeedFenabrave2016} disabled={importing}>
+                    📊 Carregar FENABRAVE 2016
+                  </Button>
                 </div>
               </div>
             </CollapsibleContent>
