@@ -211,15 +211,18 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
                     <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
                   </Button>
-                  <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
-                    {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-                    Importar CSV
-                  </Button>
-                  {selectedYear && (
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
-                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
-                    </Button>
-                  )}
+                   <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                     {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                     Importar CSV
+                   </Button>
+                   <Button size="sm" variant="outline" onClick={handleExportExcel}>
+                     <Download className="w-4 h-4 mr-1" /> Exportar Excel
+                   </Button>
+                   {selectedYear && (
+                     <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
+                       <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
+                     </Button>
+                   )}
                 </div>
               </div>
             </CollapsibleContent>
