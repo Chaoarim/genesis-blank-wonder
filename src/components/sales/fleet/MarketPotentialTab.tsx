@@ -466,6 +466,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
                 <TableHead className="text-right">Frota Match</TableHead>
                 <TableHead className="text-right">Receita Est.</TableHead>
                 <TableHead>Oportunidade</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
