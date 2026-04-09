@@ -498,6 +498,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
                       {p.opportunity === 'alta' ? '🔴 Alta' : p.opportunity === 'media' ? '🟡 Média' : '🟢 Baixa'}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <ConfirmDeleteDialog
+                      description={`Excluir item ${p.codigo} do estoque?`}
+                      onConfirm={async () => {
+                        const { error } = await supabase.from('inventory_items').delete().eq('id', p.id);
+                        if (error) { toast.error('Erro ao excluir'); return; }
+                        setInventory(prev => prev.filter(i => i.id !== p.id));
+                        toast.success(`${p.codigo} excluído`);
+                      }}
+                      iconSize="sm"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
