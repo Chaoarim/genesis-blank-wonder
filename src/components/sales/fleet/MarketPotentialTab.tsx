@@ -283,9 +283,20 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
 
   if (!inventory.length) {
     return (
-      <Card className="p-8 text-center">
+      <Card className="p-8 text-center space-y-4">
         <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
         <p className="text-muted-foreground">Nenhum item no estoque. Importe seu estoque primeiro para ver o potencial de mercado.</p>
+        <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+            {importing ? 'Importando...' : 'Importar Estoque'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+            <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+            Baixar Modelo
+          </Button>
+        </div>
       </Card>
     );
   }
