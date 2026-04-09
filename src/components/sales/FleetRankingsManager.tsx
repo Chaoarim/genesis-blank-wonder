@@ -284,7 +284,10 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
             <TabsTrigger value="grafico">📉 Gráfico</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="demanda" className="space-y-4">
+          <TabsContent value="potencial">
+            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} />
+          </TabsContent>
+
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" />
