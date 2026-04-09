@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Upload, Loader2, Trash2, MapPin, TrendingUp, FileSpreadsheet, Settings } from 'lucide-react';
+import { Upload, Loader2, Trash2, MapPin, TrendingUp, FileSpreadsheet, Settings, Download } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
+import { exportToExcel } from '@/lib/exportExcel';
 
 interface RegionalData {
   id: string;
