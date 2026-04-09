@@ -495,11 +495,17 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, value }) => `${name}: ${value}`}
+                  label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                  labelLine={{ strokeWidth: 1 }}
                 >
                   {oppDistribution.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: number, name: string) => {
+                    const item = oppDistribution.find(d => d.name === name);
+                    return [`${value.toLocaleString('pt-BR')} itens — ${item?.detail || ''}`, name];
+                  }}
+                />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
               </PieChart>
             </ResponsiveContainer>
