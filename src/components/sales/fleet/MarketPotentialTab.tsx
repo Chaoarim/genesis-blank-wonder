@@ -313,13 +313,27 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     const alta = inventoryPotentials.filter(p => p.opportunity === 'alta').length;
     const media = inventoryPotentials.filter(p => p.opportunity === 'media').length;
     const baixa = inventoryPotentials.filter(p => p.opportunity === 'baixa' && p.potentialScore > 0).length;
-    const sem = inventoryPotentials.filter(p => p.potentialScore === 0).length;
-    return [
-      { name: '🔴 Alta', value: alta, fill: '#ef4444' },
-      { name: '🟡 Média', value: media, fill: '#f59e0b' },
-      { name: '🟢 Baixa', value: baixa, fill: '#10b981' },
-      { name: 'Sem match', value: sem, fill: '#94a3b8' },
+    const semMatch = inventoryPotentials.filter(p => p.potentialScore === 0);
+    const semComAplicacao = semMatch.filter(p => p.aplicacao && p.aplicacao.trim().length > 0).length;
+    const semSemAplicacao = semMatch.length - semComAplicacao;
+    const total = inventoryPotentials.length;
+    const pct = (v: number) => total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0%';
+
+    const result = [
+      { name: 'Alta', value: alta, fill: '#ef4444', detail: `${pct(alta)} do estoque` },
+      { name: 'Média', value: media, fill: '#f59e0b', detail: `${pct(media)} do estoque` },
+      { name: 'Baixa', value: baixa, fill: '#10b981', detail: `${pct(baixa)} do estoque` },
     ].filter(d => d.value > 0);
+
+    // Split "sem match" into more informative categories
+    if (semComAplicacao > 0) {
+      result.push({ name: 'Sem match (c/ aplicação)', value: semComAplicacao, fill: '#94a3b8', detail: 'Aplicação não corresponde à frota' });
+    }
+    if (semSemAplicacao > 0) {
+      result.push({ name: 'Sem aplicação', value: semSemAplicacao, fill: '#cbd5e1', detail: 'Sem campo de aplicação preenchido' });
+    }
+
+    return result;
   }, [inventoryPotentials]);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
