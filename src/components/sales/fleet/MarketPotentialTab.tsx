@@ -626,7 +626,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
             <li>🚨 <strong>{highCount} peças</strong> com alta oportunidade — considere investir em mais estoque desses itens</li>
           )}
           <li>🎯 Peças com score alto e estoque baixo são candidatas ideais para reposição</li>
-          <li>📊 Peças sem match com a frota podem indicar itens de nicho ou aplicações não mapeadas</li>
+          <li>📊 Peças "Sem aplicação" precisam do campo aplicação preenchido para cruzar com a frota. Peças "Sem match" possuem aplicação mas não correspondem aos modelos do ranking.</li>
         </ul>
       </Card>
     </div>
