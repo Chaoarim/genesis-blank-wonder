@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet } from 'lucide-react';
+import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -355,6 +356,23 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
           <FileSpreadsheet className="w-4 h-4 mr-1.5" />
           Baixar Modelo
         </Button>
+        <ConfirmDeleteDialog
+          description="Tem certeza que deseja excluir TODO o estoque? Esta ação não pode ser desfeita."
+          onConfirm={async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { error } = await supabase.from('inventory_items').delete().eq('user_id', user.id);
+            if (error) { toast.error('Erro ao excluir estoque'); return; }
+            setInventory([]);
+            toast.success('Estoque excluído com sucesso!');
+          }}
+          trigger={
+            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Excluir Todo Estoque
+            </Button>
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -448,6 +466,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
                 <TableHead className="text-right">Frota Match</TableHead>
                 <TableHead className="text-right">Receita Est.</TableHead>
                 <TableHead>Oportunidade</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -479,11 +498,23 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
                       {p.opportunity === 'alta' ? '🔴 Alta' : p.opportunity === 'media' ? '🟡 Média' : '🟢 Baixa'}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <ConfirmDeleteDialog
+                      description={`Excluir item ${p.codigo} do estoque?`}
+                      onConfirm={async () => {
+                        const { error } = await supabase.from('inventory_items').delete().eq('id', p.id);
+                        if (error) { toast.error('Erro ao excluir'); return; }
+                        setInventory(prev => prev.filter(i => i.id !== p.id));
+                        toast.success(`${p.codigo} excluído`);
+                      }}
+                      iconSize="sm"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                     Nenhum item encontrado
                   </TableCell>
                 </TableRow>
