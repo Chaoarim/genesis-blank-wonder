@@ -356,7 +356,23 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
           <FileSpreadsheet className="w-4 h-4 mr-1.5" />
           Baixar Modelo
         </Button>
-      </div>
+        <ConfirmDeleteDialog
+          description="Tem certeza que deseja excluir TODO o estoque? Esta ação não pode ser desfeita."
+          onConfirm={async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { error } = await supabase.from('inventory_items').delete().eq('user_id', user.id);
+            if (error) { toast.error('Erro ao excluir estoque'); return; }
+            setInventory([]);
+            toast.success('Estoque excluído com sucesso!');
+          }}
+          trigger={
+            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Excluir Todo Estoque
+            </Button>
+          }
+        />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
