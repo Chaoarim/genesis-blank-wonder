@@ -388,9 +388,12 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                 <BarChart data={monthlyChartData} stackOffset="expand" barCategoryGap="8%">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={v => `${(v * 100).toFixed(0)}%`} />
+                  <YAxis tickFormatter={v => `${(v * 100).toFixed(0)}%`} domain={[0, 1]} />
                   <Tooltip
-                    formatter={(value: number, name: string) => [`${(value * 100).toFixed(2)}%`, name]}
+                    formatter={(value: number, name: string) => {
+                      const pct = typeof value === 'number' ? value : 0;
+                      return [`${(pct * 100).toFixed(2)}%`, name];
+                    }}
                     labelFormatter={(label) => `Mês: ${label}`}
                   />
                   <Legend />
