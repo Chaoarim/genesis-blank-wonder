@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Upload, Loader2, Trash2, MapPin, TrendingUp, FileSpreadsheet, Settings } from 'lucide-react';
+import { Upload, Loader2, Trash2, MapPin, TrendingUp, FileSpreadsheet, Settings, Download } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
+import { exportToExcel } from '@/lib/exportExcel';
 
 interface RegionalData {
   id: string;
@@ -174,6 +175,19 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     toast.success('Modelo CSV baixado!');
   };
 
+  const handleExportExcel = () => {
+    if (filteredData.length === 0) { toast.error('Nenhum dado para exportar'); return; }
+    const rows = filteredData.map(r => ({
+      'Região': r.region,
+      'Ano': r.year,
+      'Tipo': r.vehicle_type === 'automovel' ? 'Automóvel' : 'Comercial Leve',
+      'Quantidade': r.quantity,
+      'Participação (%)': r.percentage,
+    }));
+    exportToExcel(rows, `dados_regionais_${selectedYear || 'todos'}`, 'Regional');
+    toast.success('Excel exportado!');
+  };
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
@@ -197,15 +211,18 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   <Button size="sm" variant="outline" onClick={handleDownloadTemplate}>
                     <FileSpreadsheet className="w-4 h-4 mr-1" /> Modelo CSV
                   </Button>
-                  <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
-                    {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-                    Importar CSV
-                  </Button>
-                  {selectedYear && (
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
-                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
-                    </Button>
-                  )}
+                   <Button size="sm" onClick={() => fileRef.current?.click()} disabled={importing}>
+                     {importing ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                     Importar CSV
+                   </Button>
+                   <Button size="sm" variant="outline" onClick={handleExportExcel}>
+                     <Download className="w-4 h-4 mr-1" /> Exportar Excel
+                   </Button>
+                   {selectedYear && (
+                     <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
+                       <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
+                     </Button>
+                   )}
                 </div>
               </div>
             </CollapsibleContent>
