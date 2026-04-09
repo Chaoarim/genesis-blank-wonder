@@ -166,28 +166,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
       .sort((a, b) => a.position - b.position);
   }, [rankings, selectedYear, selectedType]);
 
-  // Load user inventory
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-
-      // Get admin user id (for sellers)
-      const { data: sellerRow } = await supabase
-        .from('seller_users')
-        .select('admin_user_id')
-        .eq('seller_auth_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      const ownerId = sellerRow?.admin_user_id || user.id;
-      const items = await fetchAllInventory(ownerId, 'produto', true);
-      setInventory(items);
-      setLoading(false);
-    };
-    load();
-  }, []);
+  useEffect(() => { reloadInventory(); }, []);
 
   // Cross inventory × fleet
   const inventoryPotentials: InventoryPotential[] = useMemo(() => {
