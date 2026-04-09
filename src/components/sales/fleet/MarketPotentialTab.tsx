@@ -4,9 +4,10 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Loader2, Target, TrendingUp, Package, AlertTriangle, CheckCircle, Search } from 'lucide-react';
+import { Loader2, Target, TrendingUp, Package, Search, DollarSign, ShoppingCart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { fetchAllInventory, type InventoryRow } from '@/lib/fetchAllInventory';
 
 interface FleetRanking {
   id: string;
@@ -17,199 +18,201 @@ interface FleetRanking {
   vehicle_type: string;
 }
 
-interface RegionalData {
-  region: string;
-  percentage: number;
-  quantity: number;
-}
-
 interface Props {
   rankings: FleetRanking[];
   selectedYear: string;
   selectedType: string;
 }
 
-interface ModelPotential {
-  model: string;
-  position: number;
-  fleetSize: number;
-  partsInCatalog: number;
-  inventoryItems: number;
+interface InventoryPotential {
+  id: string;
+  codigo: string;
+  produto: string;
+  fornecedor: string;
+  aplicacao: string;
+  qtd_estoque: number;
+  preco: number;
+  matchedModels: string[];
+  totalFleetMatched: number;
   estimatedDemand: number;
-  coveragePercent: number;
-  opportunity: 'alta' | 'media' | 'baixa';
   revenueEstimate: number;
+  potentialScore: number;
+  opportunity: 'alta' | 'media' | 'baixa';
 }
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
-
-// Average maintenance cost per vehicle per year (estimated in BRL)
-const AVG_PARTS_SPEND_PER_VEHICLE = 350;
-// Average replacement cycle - fraction of fleet needing parts per year
 const ANNUAL_REPLACEMENT_RATE = 0.15;
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
   const [loading, setLoading] = useState(true);
-  const [partsMatchMap, setPartsMatchMap] = useState<Record<string, number>>({});
-  const [inventoryMatchMap, setInventoryMatchMap] = useState<Record<string, number>>({});
-  const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
+  const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [totalInventoryItems, setTotalInventoryItems] = useState(0);
 
   const filteredRankings = useMemo(() => {
-    let data = rankings.filter(r => r.year === Number(selectedYear) && r.vehicle_type === selectedType);
-    return data.sort((a, b) => a.position - b.position);
+    return rankings
+      .filter(r => r.year === Number(selectedYear) && r.vehicle_type === selectedType)
+      .sort((a, b) => a.position - b.position);
   }, [rankings, selectedYear, selectedType]);
 
-  // Load parts and inventory matches
+  // Load user inventory
   useEffect(() => {
-    if (!filteredRankings.length) { setLoading(false); return; }
-
-    const loadData = async () => {
+    const load = async () => {
       setLoading(true);
-      const models = filteredRankings.map(r => r.model);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
 
-      // Get total inventory count
-      const { count: invCount } = await supabase
-        .from('inventory_items')
-        .select('*', { count: 'exact', head: true });
-      setTotalInventoryItems(invCount || 0);
+      // Get admin user id (for sellers)
+      const { data: sellerRow } = await supabase
+        .from('seller_users')
+        .select('admin_user_id')
+        .eq('seller_auth_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
 
-      // Match parts catalog
-      const partsMap: Record<string, number> = {};
-      const invMap: Record<string, number> = {};
-
-      for (const model of models.slice(0, 30)) {
-        const keywords = model.replace(/\//g, ' ').split(' ').filter(w => w.length > 2);
-        if (!keywords.length) continue;
-
-        // Search in parts catalog
-        const searchTerm = `%${keywords[keywords.length - 1]}%`;
-        const { count: pCount } = await supabase
-          .from('parts')
-          .select('*', { count: 'exact', head: true })
-          .or(`chave_de_busca.ilike.${searchTerm},marca_veiculo.ilike.${searchTerm},modelo_veiculo.ilike.${searchTerm}`);
-        partsMap[model] = pCount || 0;
-
-        // Search in inventory
-        const { count: iCount } = await supabase
-          .from('inventory_items')
-          .select('*', { count: 'exact', head: true })
-          .or(`aplicacao.ilike.${searchTerm},produto.ilike.${searchTerm}`);
-        invMap[model] = iCount || 0;
-      }
-
-      setPartsMatchMap(partsMap);
-      setInventoryMatchMap(invMap);
-
-      // Load regional data
-      const { data: regData } = await supabase
-        .from('fleet_regional_data')
-        .select('region, quantity, percentage')
-        .eq('year', Number(selectedYear))
-        .eq('vehicle_type', selectedType);
-      setRegionalData((regData || []) as RegionalData[]);
-
+      const ownerId = sellerRow?.admin_user_id || user.id;
+      const items = await fetchAllInventory(ownerId, 'produto', true);
+      setInventory(items);
       setLoading(false);
     };
+    load();
+  }, []);
 
-    loadData();
-  }, [filteredRankings, selectedYear, selectedType]);
+  // Cross inventory × fleet
+  const inventoryPotentials: InventoryPotential[] = useMemo(() => {
+    if (!inventory.length || !filteredRankings.length) return [];
 
-  // Calculate market potential for each model
-  const modelPotentials: ModelPotential[] = useMemo(() => {
-    const totalFleet = filteredRankings.reduce((s, r) => s + r.quantity, 0);
+    // Pre-process fleet models for matching
+    const fleetModels = filteredRankings.map(r => ({
+      ...r,
+      normalized: normalize(r.model),
+      keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+    }));
 
-    return filteredRankings.map(r => {
-      const partsInCatalog = partsMatchMap[r.model] || 0;
-      const inventoryItems = inventoryMatchMap[r.model] || 0;
-      const estimatedDemand = Math.round(r.quantity * ANNUAL_REPLACEMENT_RATE);
-      const revenueEstimate = Math.round(estimatedDemand * AVG_PARTS_SPEND_PER_VEHICLE);
+    return inventory.map(item => {
+      const itemText = normalize(`${item.aplicacao} ${item.produto}`);
 
-      // Coverage: ratio of inventory items matched vs parts in catalog
-      const coveragePercent = partsInCatalog > 0
-        ? Math.min(Math.round((inventoryItems / partsInCatalog) * 100), 100)
+      // Find which fleet models match this inventory item
+      const matchedModels: string[] = [];
+      let totalFleetMatched = 0;
+
+      for (const fm of fleetModels) {
+        // Check if at least 2 keywords match OR the main model name is found
+        const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
+        const strongMatch = fm.keywords.length <= 2
+          ? matchCount >= 1
+          : matchCount >= 2;
+
+        if (strongMatch) {
+          matchedModels.push(fm.model);
+          totalFleetMatched += fm.quantity;
+        }
+      }
+
+      const estimatedDemand = Math.round(totalFleetMatched * ANNUAL_REPLACEMENT_RATE);
+      const revenueEstimate = Math.round(estimatedDemand * item.preco);
+
+      // Score: demand × price × stock availability
+      const potentialScore = totalFleetMatched > 0
+        ? Math.min(100, Math.round(
+            (Math.log10(totalFleetMatched + 1) * 20) +
+            (item.qtd_estoque > 0 ? 20 : 0) +
+            (item.preco > 50 ? 15 : 5) +
+            (matchedModels.length * 5)
+          ))
         : 0;
 
       let opportunity: 'alta' | 'media' | 'baixa' = 'baixa';
-      if (r.position <= 5 && coveragePercent < 50) opportunity = 'alta';
-      else if (r.position <= 10 && coveragePercent < 70) opportunity = 'media';
-      else if (r.position <= 15 && coveragePercent < 30) opportunity = 'alta';
+      if (potentialScore >= 60) opportunity = 'alta';
+      else if (potentialScore >= 35) opportunity = 'media';
 
       return {
-        model: r.model,
-        position: r.position,
-        fleetSize: r.quantity,
-        partsInCatalog,
-        inventoryItems,
+        id: item.id,
+        codigo: item.codigo,
+        produto: item.produto,
+        fornecedor: item.fornecedor,
+        aplicacao: item.aplicacao,
+        qtd_estoque: item.qtd_estoque,
+        preco: item.preco,
+        matchedModels,
+        totalFleetMatched,
         estimatedDemand,
-        coveragePercent,
-        opportunity,
         revenueEstimate,
+        potentialScore,
+        opportunity,
       };
-    });
-  }, [filteredRankings, partsMatchMap, inventoryMatchMap]);
+    })
+    .sort((a, b) => b.potentialScore - a.potentialScore);
+  }, [inventory, filteredRankings]);
 
   const filtered = useMemo(() => {
-    if (!searchQuery) return modelPotentials;
-    const q = searchQuery.toLowerCase();
-    return modelPotentials.filter(m => m.model.toLowerCase().includes(q));
-  }, [modelPotentials, searchQuery]);
+    if (!searchQuery) return inventoryPotentials;
+    const q = normalize(searchQuery);
+    return inventoryPotentials.filter(p =>
+      normalize(p.codigo).includes(q) ||
+      normalize(p.produto).includes(q) ||
+      normalize(p.fornecedor).includes(q) ||
+      normalize(p.aplicacao).includes(q)
+    );
+  }, [inventoryPotentials, searchQuery]);
 
-  // Summary metrics
-  const totalFleet = useMemo(() => filteredRankings.reduce((s, r) => s + r.quantity, 0), [filteredRankings]);
-  const totalEstimatedDemand = useMemo(() => modelPotentials.reduce((s, m) => s + m.estimatedDemand, 0), [modelPotentials]);
-  const totalRevenuePotential = useMemo(() => modelPotentials.reduce((s, m) => s + m.revenueEstimate, 0), [modelPotentials]);
-  const avgCoverage = useMemo(() => {
-    const withParts = modelPotentials.filter(m => m.partsInCatalog > 0);
-    return withParts.length > 0 ? Math.round(withParts.reduce((s, m) => s + m.coveragePercent, 0) / withParts.length) : 0;
-  }, [modelPotentials]);
-  const highOpportunities = useMemo(() => modelPotentials.filter(m => m.opportunity === 'alta').length, [modelPotentials]);
+  // Summary
+  const withPotential = useMemo(() => inventoryPotentials.filter(p => p.potentialScore > 0), [inventoryPotentials]);
+  const totalRevenueEst = useMemo(() => withPotential.reduce((s, p) => s + p.revenueEstimate, 0), [withPotential]);
+  const highCount = useMemo(() => inventoryPotentials.filter(p => p.opportunity === 'alta').length, [inventoryPotentials]);
+  const avgScore = useMemo(() => {
+    return withPotential.length > 0 ? Math.round(withPotential.reduce((s, p) => s + p.potentialScore, 0) / withPotential.length) : 0;
+  }, [withPotential]);
 
-  // Regional demand estimation
-  const regionalDemand = useMemo(() => {
-    return regionalData.map(r => ({
-      region: r.region,
-      percentage: r.percentage,
-      estimatedDemand: Math.round(totalEstimatedDemand * (r.percentage / 100)),
-      estimatedRevenue: Math.round(totalRevenuePotential * (r.percentage / 100)),
-    })).sort((a, b) => b.estimatedDemand - a.estimatedDemand);
-  }, [regionalData, totalEstimatedDemand, totalRevenuePotential]);
+  // Top 10 chart
+  const topItems = useMemo(() => {
+    return withPotential.slice(0, 10).map(p => ({
+      label: p.codigo.length > 12 ? p.codigo.substring(0, 12) + '…' : p.codigo,
+      fullLabel: `${p.codigo} - ${p.produto}`,
+      receita: p.revenueEstimate,
+      score: p.potentialScore,
+    }));
+  }, [withPotential]);
 
-  // Coverage distribution for pie chart
-  const coverageDistribution = useMemo(() => {
-    const high = modelPotentials.filter(m => m.coveragePercent >= 70).length;
-    const medium = modelPotentials.filter(m => m.coveragePercent >= 30 && m.coveragePercent < 70).length;
-    const low = modelPotentials.filter(m => m.coveragePercent > 0 && m.coveragePercent < 30).length;
-    const none = modelPotentials.filter(m => m.coveragePercent === 0).length;
+  // Opportunity distribution
+  const oppDistribution = useMemo(() => {
+    const alta = inventoryPotentials.filter(p => p.opportunity === 'alta').length;
+    const media = inventoryPotentials.filter(p => p.opportunity === 'media').length;
+    const baixa = inventoryPotentials.filter(p => p.opportunity === 'baixa' && p.potentialScore > 0).length;
+    const sem = inventoryPotentials.filter(p => p.potentialScore === 0).length;
     return [
-      { name: 'Alta (≥70%)', value: high, fill: '#10b981' },
-      { name: 'Média (30-70%)', value: medium, fill: '#f59e0b' },
-      { name: 'Baixa (<30%)', value: low, fill: '#ef4444' },
-      { name: 'Sem cobertura', value: none, fill: '#94a3b8' },
+      { name: '🔴 Alta', value: alta, fill: '#ef4444' },
+      { name: '🟡 Média', value: media, fill: '#f59e0b' },
+      { name: '🟢 Baixa', value: baixa, fill: '#10b981' },
+      { name: 'Sem match', value: sem, fill: '#94a3b8' },
     ].filter(d => d.value > 0);
-  }, [modelPotentials]);
-
-  // Top opportunities chart
-  const topOpportunities = useMemo(() => {
-    return [...modelPotentials]
-      .sort((a, b) => b.revenueEstimate - a.revenueEstimate)
-      .slice(0, 10)
-      .map(m => ({
-        model: m.model.length > 15 ? m.model.substring(0, 15) + '...' : m.model,
-        fullModel: m.model,
-        receita: m.revenueEstimate,
-        cobertura: m.coveragePercent,
-      }));
-  }, [modelPotentials]);
+  }, [inventoryPotentials]);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+
+  if (!inventory.length) {
+    return (
+      <Card className="p-8 text-center">
+        <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+        <p className="text-muted-foreground">Nenhum item no estoque. Importe seu estoque primeiro para ver o potencial de mercado.</p>
+      </Card>
+    );
+  }
 
   if (!filteredRankings.length) {
     return (
       <Card className="p-8 text-center">
         <Target className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <p className="text-muted-foreground">Nenhum dado de frota disponível para calcular o potencial de mercado.</p>
+        <p className="text-muted-foreground">Nenhum dado de frota disponível para o ano/tipo selecionado.</p>
       </Card>
     );
   }
@@ -219,109 +222,93 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Frota Total</p>
-          <p className="text-xl font-bold">{totalFleet.toLocaleString('pt-BR')}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Itens no Estoque</p>
+          <p className="text-xl font-bold">{inventory.length.toLocaleString('pt-BR')}</p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Demanda Estimada/Ano</p>
-          <p className="text-xl font-bold text-primary">{totalEstimatedDemand.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] text-muted-foreground">{(ANNUAL_REPLACEMENT_RATE * 100).toFixed(0)}% da frota</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Com Potencial</p>
+          <p className="text-xl font-bold text-primary">{withPotential.length.toLocaleString('pt-BR')}</p>
+          <p className="text-[10px] text-muted-foreground">{inventory.length > 0 ? Math.round((withPotential.length / inventory.length) * 100) : 0}% do estoque</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Receita Potencial</p>
-          <p className="text-xl font-bold text-emerald-600">R$ {(totalRevenuePotential / 1000000).toFixed(1)}M</p>
+          <p className="text-xl font-bold text-emerald-600">
+            R$ {totalRevenueEst >= 1000000 ? `${(totalRevenueEst / 1000000).toFixed(1)}M` : `${(totalRevenueEst / 1000).toFixed(0)}k`}
+          </p>
         </Card>
         <Card className="p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Cobertura Média</p>
-          <p className="text-xl font-bold">{avgCoverage}%</p>
-          <Progress value={avgCoverage} className="mt-1 h-1.5" />
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Score Médio</p>
+          <p className="text-xl font-bold">{avgScore}</p>
+          <Progress value={avgScore} className="mt-1 h-1.5" />
         </Card>
-        <Card className="p-3 text-center border-amber-500/30">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Oportunidades</p>
-          <p className="text-xl font-bold text-amber-600">{highOpportunities}</p>
-          <p className="text-[10px] text-muted-foreground">modelos com alta demanda + baixa cobertura</p>
+        <Card className="p-3 text-center border-red-500/30">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">🔴 Alta Oportunidade</p>
+          <p className="text-xl font-bold text-red-600">{highCount}</p>
+          <p className="text-[10px] text-muted-foreground">peças para investir</p>
         </Card>
       </div>
 
       {/* Charts row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Top 10 Revenue Potential */}
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-primary" />
-            Top 10 — Receita Potencial (R$)
+            Top 10 — Maior Potencial de Receita
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={topOpportunities} layout="vertical" margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
-              <YAxis type="category" dataKey="model" width={120} tick={{ fontSize: 10 }} />
-              <Tooltip
-                formatter={(v: number) => `R$ ${v.toLocaleString('pt-BR')}`}
-                labelFormatter={(label) => {
-                  const item = topOpportunities.find(o => o.model === label);
-                  return item?.fullModel || label;
-                }}
-              />
-              <Bar dataKey="receita" radius={[0, 4, 4, 0]}>
-                {topOpportunities.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {topItems.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={topItems} layout="vertical" margin={{ left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="label" width={100} tick={{ fontSize: 10 }} />
+                <Tooltip
+                  formatter={(v: number) => `R$ ${v.toLocaleString('pt-BR')}`}
+                  labelFormatter={(label) => topItems.find(o => o.label === label)?.fullLabel || label}
+                />
+                <Bar dataKey="receita" radius={[0, 4, 4, 0]}>
+                  {topItems.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-10">Nenhum match encontrado</p>
+          )}
         </Card>
 
-        {/* Coverage Distribution */}
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <Target className="w-4 h-4 text-primary" />
-            Cobertura do Catálogo vs Frota
+            Distribuição de Oportunidade
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={coverageDistribution}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={({ name, value }) => `${name}: ${value}`}
-              >
-                {coverageDistribution.map((entry, i) => (
-                  <Cell key={i} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-            </PieChart>
-          </ResponsiveContainer>
+          {oppDistribution.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={oppDistribution}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
+                  {oppDistribution.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Pie>
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-10">Sem dados</p>
+          )}
         </Card>
       </div>
-
-      {/* Regional demand */}
-      {regionalDemand.length > 0 && (
-        <Card className="p-4">
-          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-            🗺️ Potencial de Mercado por Região
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {regionalDemand.map(r => (
-              <Card key={r.region} className="p-3 text-center bg-accent/30">
-                <p className="text-xs font-semibold">{r.region}</p>
-                <p className="text-sm font-bold mt-1">{r.estimatedDemand.toLocaleString('pt-BR')} veículos</p>
-                <p className="text-xs text-emerald-600 font-medium">R$ {(r.estimatedRevenue / 1000).toFixed(0)}k</p>
-                <p className="text-[10px] text-muted-foreground">{r.percentage.toFixed(1)}% do mercado</p>
-              </Card>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar modelo..."
+          placeholder="Buscar por código, produto, fornecedor ou aplicação..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="pl-8"
@@ -332,92 +319,90 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
       <Card className="p-0 overflow-hidden">
         <div className="p-3 border-b bg-accent/30">
           <h3 className="font-semibold text-sm flex items-center gap-2">
-            <Package className="w-4 h-4 text-primary" />
-            Análise de Potencial por Modelo — {selectedYear}
+            <ShoppingCart className="w-4 h-4 text-primary" />
+            Potencial de Mercado do Seu Estoque — {selectedYear}
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            Cruzamento entre frota circulante × catálogo de peças × estoque disponível
+            Cruzamento entre seu estoque × frota circulante ({filteredRankings.length} modelos)
           </p>
         </div>
         <div className="overflow-auto max-h-[50vh]">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-8">#</TableHead>
-                <TableHead>Modelo</TableHead>
-                <TableHead className="text-right">Frota</TableHead>
-                <TableHead className="text-right">Demanda Est.</TableHead>
-                <TableHead className="text-right">Peças Catálogo</TableHead>
-                <TableHead className="text-right">No Estoque</TableHead>
-                <TableHead className="text-center">Cobertura</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Produto</TableHead>
+                <TableHead>Fornecedor</TableHead>
+                <TableHead>Aplicação</TableHead>
+                <TableHead className="text-right">Qtd Estoque</TableHead>
+                <TableHead className="text-right">Preço</TableHead>
+                <TableHead className="text-center">Score</TableHead>
+                <TableHead className="text-right">Frota Match</TableHead>
                 <TableHead className="text-right">Receita Est.</TableHead>
                 <TableHead>Oportunidade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.slice(0, 50).map(m => (
-                <TableRow key={m.model}>
-                  <TableCell className="font-mono text-xs">{m.position}°</TableCell>
-                  <TableCell className="font-medium text-sm">{m.model}</TableCell>
-                  <TableCell className="text-right font-mono text-xs">{m.fleetSize.toLocaleString('pt-BR')}</TableCell>
-                  <TableCell className="text-right font-mono text-xs text-primary">{m.estimatedDemand.toLocaleString('pt-BR')}</TableCell>
-                  <TableCell className="text-right">
-                    {m.partsInCatalog > 0 ? (
-                      <Badge variant="secondary" className="gap-1 text-xs">
-                        <Package className="w-3 h-3" /> {m.partsInCatalog}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="gap-1 text-xs text-destructive">
-                        <AlertTriangle className="w-3 h-3" /> 0
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {m.inventoryItems > 0 ? (
-                      <Badge variant="secondary" className="gap-1 text-xs">
-                        <CheckCircle className="w-3 h-3" /> {m.inventoryItems}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
+              {filtered.slice(0, 100).map(p => (
+                <TableRow key={p.id}>
+                  <TableCell className="font-mono text-xs font-medium">{p.codigo}</TableCell>
+                  <TableCell className="text-sm max-w-[200px] truncate" title={p.produto}>{p.produto}</TableCell>
+                  <TableCell className="text-xs">{p.fornecedor}</TableCell>
+                  <TableCell className="text-xs max-w-[180px] truncate" title={p.aplicacao}>{p.aplicacao || '—'}</TableCell>
+                  <TableCell className="text-right font-mono text-xs">{p.qtd_estoque}</TableCell>
+                  <TableCell className="text-right font-mono text-xs">R$ {p.preco.toFixed(2)}</TableCell>
                   <TableCell className="text-center">
-                    <div className="flex items-center gap-2">
-                      <Progress value={m.coveragePercent} className="h-1.5 w-12" />
-                      <span className="text-xs font-mono">{m.coveragePercent}%</span>
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <Progress value={p.potentialScore} className="h-1.5 w-10" />
+                      <span className="text-xs font-mono">{p.potentialScore}</span>
                     </div>
                   </TableCell>
+                  <TableCell className="text-right font-mono text-xs">
+                    {p.totalFleetMatched > 0 ? p.totalFleetMatched.toLocaleString('pt-BR') : '—'}
+                  </TableCell>
                   <TableCell className="text-right font-mono text-xs text-emerald-600">
-                    R$ {(m.revenueEstimate / 1000).toFixed(0)}k
+                    {p.revenueEstimate > 0 ? `R$ ${(p.revenueEstimate / 1000).toFixed(0)}k` : '—'}
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={m.opportunity === 'alta' ? 'default' : m.opportunity === 'media' ? 'secondary' : 'outline'}
-                      className={m.opportunity === 'alta' ? 'bg-red-500 text-white border-0' : ''}
+                      variant={p.opportunity === 'alta' ? 'default' : p.opportunity === 'media' ? 'secondary' : 'outline'}
+                      className={p.opportunity === 'alta' ? 'bg-red-500 text-white border-0' : ''}
                     >
-                      {m.opportunity === 'alta' ? '🔴 Alta' : m.opportunity === 'media' ? '🟡 Média' : '🟢 Baixa'}
+                      {p.opportunity === 'alta' ? '🔴 Alta' : p.opportunity === 'media' ? '🟡 Média' : '🟢 Baixa'}
                     </Badge>
                   </TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    Nenhum item encontrado
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
+        {filtered.length > 100 && (
+          <div className="p-2 text-center text-xs text-muted-foreground border-t">
+            Mostrando 100 de {filtered.length} itens. Use a busca para filtrar.
+          </div>
+        )}
       </Card>
 
       {/* Insights */}
       <Card className="p-4 bg-primary/5 border-primary/20">
         <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-          💡 Insights de Potencial de Mercado
+          💡 Insights do Seu Estoque
         </h3>
         <ul className="text-sm space-y-1.5 text-muted-foreground">
-          <li>🎯 <strong>{totalFleet.toLocaleString('pt-BR')}</strong> veículos na frota geram demanda estimada de <strong>{totalEstimatedDemand.toLocaleString('pt-BR')}</strong> manutenções/ano</li>
-          <li>💰 Potencial de receita total estimado em <strong>R$ {(totalRevenuePotential / 1000000).toFixed(1)}M</strong> (base R$ {AVG_PARTS_SPEND_PER_VEHICLE}/veículo/ano)</li>
-          <li>📦 Cobertura média do catálogo: <strong>{avgCoverage}%</strong> — {avgCoverage < 50 ? 'há grande espaço para ampliar o mix de peças' : 'boa cobertura, foque na profundidade do estoque'}</li>
-          {highOpportunities > 0 && (
-            <li>🚨 <strong>{highOpportunities} modelos</strong> com alta demanda e baixa cobertura — priorize a inclusão de peças para estes veículos</li>
+          <li>📦 Seu estoque tem <strong>{inventory.length}</strong> itens, dos quais <strong>{withPotential.length}</strong> ({inventory.length > 0 ? Math.round((withPotential.length / inventory.length) * 100) : 0}%) têm match com a frota circulante</li>
+          <li>💰 Receita potencial estimada: <strong>R$ {totalRevenueEst >= 1000000 ? `${(totalRevenueEst / 1000000).toFixed(1)}M` : `${(totalRevenueEst / 1000).toFixed(0)}k`}</strong> baseada na demanda de reposição de {(ANNUAL_REPLACEMENT_RATE * 100).toFixed(0)}% da frota</li>
+          {highCount > 0 && (
+            <li>🚨 <strong>{highCount} peças</strong> com alta oportunidade — considere investir em mais estoque desses itens</li>
           )}
-          <li>📊 Seu estoque cobre <strong>{totalInventoryItems.toLocaleString('pt-BR')}</strong> itens — cruze com os modelos mais emplacados para maximizar o retorno</li>
+          <li>🎯 Peças com score alto e estoque baixo são candidatas ideais para reposição</li>
+          <li>📊 Peças sem match com a frota podem indicar itens de nicho ou aplicações não mapeadas</li>
         </ul>
       </Card>
     </div>
