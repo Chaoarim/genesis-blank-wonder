@@ -1,13 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
-import { Loader2, Target, TrendingUp, Package, Search, DollarSign, ShoppingCart } from 'lucide-react';
+import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { fetchAllInventory, type InventoryRow } from '@/lib/fetchAllInventory';
+import { exportToExcel } from '@/lib/exportExcel';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 interface FleetRanking {
   id: string;
