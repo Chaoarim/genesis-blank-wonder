@@ -27,6 +27,7 @@ interface Props {
   selectedYear: string;
   selectedType: string;
   readOnly?: boolean;
+  externalProductSearch?: string;
 }
 
 interface PartItem {
@@ -91,7 +92,7 @@ function isStrongFleetMatch(itemText: string, normalizedModel: string, keywords:
   return matchedKeywordCount >= 2;
 }
 
-export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
+export function MarketPotentialTab({ rankings, selectedYear, selectedType, externalProductSearch = '' }: Props) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
