@@ -293,6 +293,20 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       );
     }
 
+    if (filtered.length === 0 && selectedYear === '2014' && FENABRAVE_2014_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2014_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2014-${selectedType}-${region}-${index + 1}`,
+          year: 2014,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
     if (filtered.length === 0 && selectedYear === '2016' && FENABRAVE_2016_SEED[selectedType]) {
       return REGIONS.flatMap(region =>
         FENABRAVE_2016_SEED[selectedType][region].map((percentage, index) => ({
@@ -357,6 +371,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       2011: FENABRAVE_2011_SEED,
       2012: FENABRAVE_2012_SEED,
       2013: FENABRAVE_2013_SEED,
+      2014: FENABRAVE_2014_SEED,
       2016: FENABRAVE_2016_SEED,
     };
 
@@ -568,6 +583,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2013, FENABRAVE_2013_SEED)} disabled={importing}>
                     📊 FENABRAVE 2013
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2014, FENABRAVE_2014_SEED)} disabled={importing}>
+                    📊 FENABRAVE 2014
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2016, FENABRAVE_2016_SEED)} disabled={importing}>
                     📊 FENABRAVE 2016
