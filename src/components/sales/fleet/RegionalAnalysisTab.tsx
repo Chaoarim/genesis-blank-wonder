@@ -245,21 +245,42 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
 
   const totalQuantity = useMemo(() => regionSummary.reduce((s, r) => s + r.quantity, 0), [regionSummary]);
 
-  // Multi-year comparison
+  // Multi-year comparison — includes seed/fallback data for years without DB records
   const multiYearData = useMemo(() => {
     if (!selectedType) return [];
+
+    const SEED_MAP: Record<number, Record<string, Record<string, number[]>>> = {
+      2010: FENABRAVE_2010_SEED,
+      2011: FENABRAVE_2011_SEED,
+      2016: FENABRAVE_2016_SEED,
+    };
+
     const typeData = data.filter(r => r.vehicle_type === selectedType);
-    const allYears = [...new Set(typeData.map(r => r.year))].sort();
+    const dbYears = new Set(typeData.map(r => r.year));
+    const allYears = [...new Set([...dbYears, ...BUILTIN_YEAR_OPTIONS])].sort();
+
     return allYears.map(year => {
       const yearData = typeData.filter(r => r.year === year);
       const row: Record<string, any> = { year };
-      REGIONS.forEach(region => {
-        const regionRows = yearData.filter(r => r.region === region);
-        if (regionRows.length > 0) {
-          const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
-          row[region] = Number(avg.toFixed(2));
-        }
-      });
+
+      if (yearData.length > 0) {
+        REGIONS.forEach(region => {
+          const regionRows = yearData.filter(r => r.region === region);
+          if (regionRows.length > 0) {
+            const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
+            row[region] = Number(avg.toFixed(2));
+          }
+        });
+      } else if (SEED_MAP[year]?.[selectedType]) {
+        const seed = SEED_MAP[year][selectedType];
+        REGIONS.forEach(region => {
+          if (seed[region]) {
+            const avg = seed[region].reduce((s, v) => s + v, 0) / seed[region].length;
+            row[region] = Number(avg.toFixed(2));
+          }
+        });
+      }
+
       return row;
     });
   }, [data, selectedType]);
