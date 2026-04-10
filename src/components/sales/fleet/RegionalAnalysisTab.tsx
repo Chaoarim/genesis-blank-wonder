@@ -252,22 +252,22 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     fetchData();
   };
 
-  const handleSeedFenabrave2016 = async () => {
-    if (!confirm('Carregar dados FENABRAVE 2016 (Automóveis, Comerciais Leves e Combinados)?')) return;
+  const handleSeedFenabrave = async (year: number, seedData: Record<string, Record<string, number[]>>) => {
+    if (!confirm(`Carregar dados FENABRAVE ${year} (Automóveis, Comerciais Leves e Combinados)?`)) return;
     setImporting(true);
     try {
-      await supabase.from('fleet_regional_data').delete().eq('year', 2016);
+      await supabase.from('fleet_regional_data').delete().eq('year', year);
       const rows: { year: number; month: number; region: string; vehicle_type: string; quantity: number; percentage: number }[] = [];
-      for (const [vtype, regions] of Object.entries(FENABRAVE_2016_SEED)) {
+      for (const [vtype, regions] of Object.entries(seedData)) {
         for (const [region, months] of Object.entries(regions)) {
           months.forEach((pct, idx) => {
-            rows.push({ year: 2016, month: idx + 1, region, vehicle_type: vtype, quantity: 0, percentage: pct });
+            rows.push({ year, month: idx + 1, region, vehicle_type: vtype, quantity: 0, percentage: pct });
           });
         }
       }
       const { error } = await supabase.from('fleet_regional_data').insert(rows);
       if (error) throw error;
-      toast.success(`${rows.length} registros FENABRAVE 2016 carregados!`);
+      toast.success(`${rows.length} registros FENABRAVE ${year} carregados!`);
       fetchData();
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
