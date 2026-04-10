@@ -40,6 +40,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('automovel');
   const [searchQuery, setSearchQuery] = useState('');
+  const [productSearch, setProductSearch] = useState('');
   const [partsMatches, setPartsMatches] = useState<Record<string, number>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -261,9 +262,13 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
             <SelectItem value="comercial_leve">Comerciais Leves</SelectItem>
           </SelectContent>
         </Select>
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[150px]">
           <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Buscar modelo..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8" />
+        </div>
+        <div className="relative flex-1 min-w-[150px]">
+          <Package className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Buscar produto/código..." value={productSearch} onChange={e => setProductSearch(e.target.value)} className="pl-8" />
         </div>
       </div>
 
@@ -285,7 +290,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           </TabsList>
 
           <TabsContent value="potencial">
-            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} />
+            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} externalProductSearch={productSearch} />
           </TabsContent>
 
           <TabsContent value="demanda" className="space-y-4">
