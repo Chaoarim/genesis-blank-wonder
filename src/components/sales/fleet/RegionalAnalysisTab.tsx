@@ -41,7 +41,7 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
-const BUILTIN_YEAR_OPTIONS = [2016, 2014, 2013, 2012, 2011, 2010];
+const BUILTIN_YEAR_OPTIONS = [2016, 2015, 2014, 2013, 2012, 2011, 2010];
 
 // FENABRAVE 2010 seed data
 const FENABRAVE_2010_SEED: Record<string, Record<string, number[]>> = {
