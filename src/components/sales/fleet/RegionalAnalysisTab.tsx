@@ -41,7 +41,7 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
-const BUILTIN_YEAR_OPTIONS = [2016, 2013, 2012, 2011, 2010];
+const BUILTIN_YEAR_OPTIONS = [2016, 2014, 2013, 2012, 2011, 2010];
 
 // FENABRAVE 2010 seed data
 const FENABRAVE_2010_SEED: Record<string, Record<string, number[]>> = {
@@ -168,6 +168,31 @@ const FENABRAVE_2013_SEED: Record<string, Record<string, number[]>> = {
   },
 };
 
+// FENABRAVE 2014 seed data
+const FENABRAVE_2014_SEED: Record<string, Record<string, number[]>> = {
+  automovel: {
+    'Norte':        [4.08, 4.08, 4.26, 3.94, 4.47, 4.35, 4.99, 4.48, 4.34, 3.09, 4.40, 4.58],
+    'Nordeste':     [16.71, 16.11, 15.25, 15.31, 15.99, 15.84, 16.89, 16.22, 16.01, 15.43, 15.71, 16.57],
+    'Centro-Oeste': [10.29, 10.25, 9.71, 9.82, 9.20, 9.36, 9.89, 9.55, 9.58, 8.90, 8.90, 8.67],
+    'Sudeste':      [48.97, 50.13, 50.61, 52.00, 50.44, 51.25, 48.37, 50.01, 49.20, 52.04, 51.04, 48.57],
+    'Sul':          [19.95, 19.43, 20.04, 18.93, 19.90, 19.21, 19.85, 19.73, 20.88, 19.63, 19.95, 21.61],
+  },
+  comercial_leve: {
+    'Norte':        [6.42, 6.20, 6.98, 6.47, 7.14, 6.95, 7.71, 7.40, 7.25, 7.54, 7.56, 9.00],
+    'Nordeste':     [18.43, 17.99, 17.69, 17.75, 16.37, 16.05, 16.83, 18.05, 16.78, 16.51, 17.01, 18.43],
+    'Centro-Oeste': [10.94, 11.84, 12.55, 12.03, 12.22, 12.40, 12.40, 12.08, 12.09, 11.42, 10.85, 11.36],
+    'Sudeste':      [43.29, 42.71, 41.19, 42.51, 42.22, 42.05, 40.50, 41.11, 41.80, 42.54, 42.37, 39.13],
+    'Sul':          [20.92, 21.27, 21.60, 21.25, 22.05, 22.55, 22.56, 21.36, 22.08, 21.98, 22.22, 22.09],
+  },
+  automovel_comercial_leve: {
+    'Norte':        [4.43, 4.44, 4.72, 4.34, 4.90, 4.75, 5.41, 4.95, 4.83, 4.58, 4.91, 5.21],
+    'Nordeste':     [16.96, 16.43, 15.75, 15.70, 16.05, 15.87, 16.88, 16.52, 16.14, 15.61, 15.92, 16.83],
+    'Centro-Oeste': [10.39, 10.52, 10.19, 10.17, 9.69, 9.83, 10.30, 9.96, 10.01, 9.32, 9.21, 9.05],
+    'Sudeste':      [48.13, 48.87, 49.03, 50.48, 49.10, 49.81, 47.10, 48.57, 47.94, 50.46, 49.65, 47.22],
+    'Sul':          [20.09, 19.74, 20.31, 19.30, 20.25, 19.73, 20.29, 20.00, 21.08, 20.02, 20.32, 21.68],
+  },
+};
+
 export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabProps) {
   const [data, setData] = useState<RegionalData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,6 +293,20 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       );
     }
 
+    if (filtered.length === 0 && selectedYear === '2014' && FENABRAVE_2014_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2014_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2014-${selectedType}-${region}-${index + 1}`,
+          year: 2014,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
     if (filtered.length === 0 && selectedYear === '2016' && FENABRAVE_2016_SEED[selectedType]) {
       return REGIONS.flatMap(region =>
         FENABRAVE_2016_SEED[selectedType][region].map((percentage, index) => ({
@@ -332,6 +371,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       2011: FENABRAVE_2011_SEED,
       2012: FENABRAVE_2012_SEED,
       2013: FENABRAVE_2013_SEED,
+      2014: FENABRAVE_2014_SEED,
       2016: FENABRAVE_2016_SEED,
     };
 
@@ -543,6 +583,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2013, FENABRAVE_2013_SEED)} disabled={importing}>
                     📊 FENABRAVE 2013
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2014, FENABRAVE_2014_SEED)} disabled={importing}>
+                    📊 FENABRAVE 2014
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2016, FENABRAVE_2016_SEED)} disabled={importing}>
                     📊 FENABRAVE 2016
