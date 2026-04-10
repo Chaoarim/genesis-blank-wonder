@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet, Trash2, Zap, Clock } from 'lucide-react';
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
@@ -84,6 +85,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
   const [items, setItems] = useState<SupplierItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [importing, setImporting] = useState(false);
+  const [selectedFornecedor, setSelectedFornecedor] = useState<string>('__all__');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getOwnerId = async () => {
@@ -130,6 +132,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
     setLoading(false);
   };
 
+  // Unique fornecedor list for selection
+  const fornecedores = useMemo(() => {
+    const unique = [...new Set(items.map(i => i.fornecedor).filter(Boolean))].sort();
+    return unique;
+  }, [items]);
+
+  // Items filtered by selected fornecedor
+  const activeItems = useMemo(() => {
+    if (selectedFornecedor === '__all__') return items;
+    return items.filter(i => i.fornecedor === selectedFornecedor);
+  }, [items, selectedFornecedor]);
+
   useEffect(() => { reloadItems(); }, []);
 
   // Get all years available in rankings for trend analysis
@@ -149,7 +163,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
 
   // Cross supplier items × fleet (current + multi-year trend)
   const itemPotentials: ItemPotential[] = useMemo(() => {
-    if (!items.length || !filteredRankings.length) return [];
+    if (!activeItems.length || !filteredRankings.length) return [];
 
     const fleetModels = filteredRankings.map(r => ({
       ...r,
@@ -170,7 +184,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       fleetByYear.set(year, yearRankings);
     }
 
-    return items.map(item => {
+    return activeItems.map(item => {
       const itemText = normalize(`${item.aplicacao} ${item.produto}`);
 
       // Match current year
@@ -210,7 +224,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
 
       const estimatedDemandCurrent = Math.round(totalFleetCurrent * ANNUAL_REPLACEMENT_RATE);
 
-      // Potential score: immediate sales potential
       const potentialScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
             (Math.log10(totalFleetCurrent + 1) * 25) +
@@ -219,7 +232,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
           ))
         : 0;
 
-      // Investment score: long-term value (growth trend + fleet size)
       const investmentScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
             (trendGrowth > 0 ? Math.min(trendGrowth, 50) : 0) +
@@ -229,7 +241,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
           ))
         : 0;
 
-      // Classification
       let classification: ItemPotential['classification'] = 'sem_match';
       if (potentialScore >= 50 && investmentScore >= 40) classification = 'imediato';
       else if (investmentScore >= 50) classification = 'investimento';
@@ -251,7 +262,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         classification,
       };
     }).sort((a, b) => b.potentialScore - a.potentialScore);
-  }, [items, filteredRankings, allYearRankings, availableYears]);
+  }, [activeItems, filteredRankings, allYearRankings, availableYears]);
 
   const filtered = useMemo(() => {
     if (!searchQuery) return itemPotentials;
@@ -311,7 +322,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         quantity: r.quantity,
       }));
       let totalDemandYear = 0;
-      for (const item of items) {
+      for (const item of activeItems) {
         const itemText = normalize(`${item.aplicacao} ${item.produto}`);
         for (const fm of fleetKws) {
           const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
@@ -325,7 +336,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         frota: totalDemandYear,
       };
     });
-  }, [availableYears, allYearRankings, items, withMatch]);
+  }, [availableYears, allYearRankings, activeItems, withMatch]);
 
   // Classification distribution
   const classDistribution = useMemo(() => {
@@ -480,12 +491,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Peças Analisadas</p>
-          <p className="text-xl font-bold">{items.length.toLocaleString('pt-BR')}</p>
+          <p className="text-xl font-bold">{activeItems.length.toLocaleString('pt-BR')}</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Com Potencial</p>
           <p className="text-xl font-bold text-primary">{withMatch.length.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] text-muted-foreground">{items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}% da lista</p>
+          <p className="text-[10px] text-muted-foreground">{activeItems.length > 0 ? Math.round((withMatch.length / activeItems.length) * 100) : 0}% da lista</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Demanda Total Est.</p>
@@ -508,7 +519,26 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         </Card>
       </div>
 
-      {/* Action Bar */}
+      {/* Fornecedor Selection + Action Bar */}
+      {fornecedores.length > 1 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Lista:</span>
+          <Select value={selectedFornecedor} onValueChange={setSelectedFornecedor}>
+            <SelectTrigger className="w-[220px] h-9">
+              <SelectValue placeholder="Selecionar lista" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas as listas ({items.length})</SelectItem>
+              {fornecedores.map(f => (
+                <SelectItem key={f} value={f}>
+                  {f} ({items.filter(i => i.fornecedor === f).length})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {!readOnly && (
           <>
