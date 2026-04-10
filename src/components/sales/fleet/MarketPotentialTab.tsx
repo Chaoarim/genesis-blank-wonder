@@ -27,6 +27,7 @@ interface Props {
   selectedYear: string;
   selectedType: string;
   readOnly?: boolean;
+  externalProductSearch?: string;
 }
 
 interface PartItem {
@@ -91,7 +92,7 @@ function isStrongFleetMatch(itemText: string, normalizedModel: string, keywords:
   return matchedKeywordCount >= 2;
 }
 
-export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
+export function MarketPotentialTab({ rankings, selectedYear, selectedType, externalProductSearch = '' }: Props) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -282,21 +283,24 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     }).sort((a, b) => b.potentialScore - a.potentialScore);
   }, [activeItems, filteredRankings, allYearRankings, availableYears]);
 
+  const combinedSearch = externalProductSearch || searchQuery;
+
   const filtered = useMemo(() => {
-    if (!searchQuery) return itemPotentials;
-    const q = normalize(searchQuery);
+    if (!combinedSearch) return itemPotentials;
+    const q = normalize(combinedSearch);
     return itemPotentials.filter(p =>
       normalize(p.codigo).includes(q) ||
       normalize(p.produto).includes(q) ||
       normalize(p.fornecedor).includes(q) ||
       normalize(p.aplicacao).includes(q)
     );
-  }, [itemPotentials, searchQuery]);
+  }, [itemPotentials, combinedSearch]);
 
-  // KPIs
-  const withMatch = useMemo(() => itemPotentials.filter(p => p.potentialScore > 0), [itemPotentials]);
-  const immediateCount = useMemo(() => itemPotentials.filter(p => p.classification === 'imediato').length, [itemPotentials]);
-  const investCount = useMemo(() => itemPotentials.filter(p => p.classification === 'investimento').length, [itemPotentials]);
+  // KPIs — use filtered data when product search is active
+  const displayItems = combinedSearch ? filtered : itemPotentials;
+  const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
+  const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
+  const investCount = useMemo(() => displayItems.filter(p => p.classification === 'investimento').length, [displayItems]);
   const totalDemand = useMemo(() => withMatch.reduce((s, p) => s + p.estimatedDemandCurrent, 0), [withMatch]);
 
   // Top 10 chart — by demand
@@ -314,7 +318,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
 
   // Top 10 investment
   const topInvestment = useMemo((): TopChartItem[] => {
-    return [...itemPotentials]
+    return [...displayItems]
       .filter(p => p.investmentScore > 0)
       .sort((a, b) => b.investmentScore - a.investmentScore)
       .slice(0, 10)
@@ -355,12 +359,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
   // Classification distribution
   const classDistribution = useMemo(() => {
     const counts = {
-      imediato: itemPotentials.filter(p => p.classification === 'imediato').length,
-      investimento: itemPotentials.filter(p => p.classification === 'investimento').length,
-      nicho: itemPotentials.filter(p => p.classification === 'nicho').length,
-      sem_match: itemPotentials.filter(p => p.classification === 'sem_match').length,
+      imediato: displayItems.filter(p => p.classification === 'imediato').length,
+      investimento: displayItems.filter(p => p.classification === 'investimento').length,
+      nicho: displayItems.filter(p => p.classification === 'nicho').length,
+      sem_match: displayItems.filter(p => p.classification === 'sem_match').length,
     };
-    const total = itemPotentials.length;
+    const total = displayItems.length;
     const pct = (v: number) => total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0%';
     return [
       { name: '🔥 Venda Imediata', value: counts.imediato, fill: '#ef4444', detail: `${pct(counts.imediato)} — Alta demanda atual + tendência` },
@@ -368,7 +372,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
       { name: '🔹 Nicho', value: counts.nicho, fill: '#10b981', detail: `${pct(counts.nicho)} — Demanda menor` },
       { name: '⚪ Sem match', value: counts.sem_match, fill: '#94a3b8', detail: `${pct(counts.sem_match)} — Sem correspondência na frota` },
     ].filter(d => d.value > 0);
-  }, [itemPotentials]);
+  }, [displayItems]);
 
   const handleExport = () => {
     if (!filtered.length) { toast.error('Nenhum dado para exportar'); return; }
@@ -416,6 +420,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
 
   return (
     <div className="space-y-4">
+      {externalProductSearch && (
+        <Badge variant="secondary" className="gap-1.5">
+          <Search className="w-3 h-3" />
+          Filtro produto: "{externalProductSearch}" — {filtered.length} resultados
+        </Badge>
+      )}
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
