@@ -41,6 +41,8 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
+const BUILTIN_YEAR_OPTIONS = [2016, 2010];
+
 // FENABRAVE 2010 seed data
 const FENABRAVE_2010_SEED: Record<string, Record<string, number[]>> = {
   automovel: {
@@ -116,7 +118,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     }
 
     const items = (rows || []) as RegionalData[];
-    const uniqueYears = [...new Set(items.map(r => r.year))].sort((a, b) => b - a);
+    const uniqueYears = [...new Set([...items.map(r => r.year), ...BUILTIN_YEAR_OPTIONS])].sort((a, b) => b - a);
 
     setData(items);
     setYears(uniqueYears);
@@ -134,6 +136,35 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     let filtered = data;
     if (selectedYear) filtered = filtered.filter(r => r.year === Number(selectedYear));
     if (selectedType) filtered = filtered.filter(r => r.vehicle_type === selectedType);
+
+    if (filtered.length === 0 && selectedYear === '2010' && FENABRAVE_2010_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2010_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2010-${selectedType}-${region}-${index + 1}`,
+          year: 2010,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
+    if (filtered.length === 0 && selectedYear === '2016' && FENABRAVE_2016_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2016_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2016-${selectedType}-${region}-${index + 1}`,
+          year: 2016,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
     return filtered;
   }, [data, selectedYear, selectedType]);
 
