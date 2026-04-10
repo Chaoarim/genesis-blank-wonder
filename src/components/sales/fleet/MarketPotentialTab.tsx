@@ -296,10 +296,11 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     );
   }, [itemPotentials, combinedSearch]);
 
-  // KPIs
-  const withMatch = useMemo(() => itemPotentials.filter(p => p.potentialScore > 0), [itemPotentials]);
-  const immediateCount = useMemo(() => itemPotentials.filter(p => p.classification === 'imediato').length, [itemPotentials]);
-  const investCount = useMemo(() => itemPotentials.filter(p => p.classification === 'investimento').length, [itemPotentials]);
+  // KPIs — use filtered data when product search is active
+  const displayItems = combinedSearch ? filtered : itemPotentials;
+  const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
+  const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
+  const investCount = useMemo(() => displayItems.filter(p => p.classification === 'investimento').length, [displayItems]);
   const totalDemand = useMemo(() => withMatch.reduce((s, p) => s + p.estimatedDemandCurrent, 0), [withMatch]);
 
   // Top 10 chart — by demand
