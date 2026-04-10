@@ -420,6 +420,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
   return (
     <div className="space-y-4">
+      {externalProductSearch && (
+        <Badge variant="secondary" className="gap-1.5">
+          <Search className="w-3 h-3" />
+          Filtro produto: "{externalProductSearch}" — {filtered.length} resultados
+        </Badge>
+      )}
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
