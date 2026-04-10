@@ -88,9 +88,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     setData(items);
     const uniqueYears = [...new Set(items.map(r => r.year))].sort((a, b) => b - a);
     setYears(uniqueYears);
-    if (!selectedYear && uniqueYears.length > 0) setSelectedYear(String(uniqueYears[0]));
+    setSelectedYear(prev => (!prev && uniqueYears.length > 0) ? String(uniqueYears[0]) : prev);
     setLoading(false);
-  }, [selectedYear]);
+  }, []);
 
   useEffect(() => { fetchData(); }, []);
 
