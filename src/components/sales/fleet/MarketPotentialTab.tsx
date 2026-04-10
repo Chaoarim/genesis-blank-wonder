@@ -184,7 +184,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       fleetByYear.set(year, yearRankings);
     }
 
-    return items.map(item => {
+    return activeItems.map(item => {
       const itemText = normalize(`${item.aplicacao} ${item.produto}`);
 
       // Match current year
@@ -224,7 +224,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
 
       const estimatedDemandCurrent = Math.round(totalFleetCurrent * ANNUAL_REPLACEMENT_RATE);
 
-      // Potential score: immediate sales potential
       const potentialScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
             (Math.log10(totalFleetCurrent + 1) * 25) +
@@ -233,7 +232,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
           ))
         : 0;
 
-      // Investment score: long-term value (growth trend + fleet size)
       const investmentScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
             (trendGrowth > 0 ? Math.min(trendGrowth, 50) : 0) +
@@ -243,7 +241,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
           ))
         : 0;
 
-      // Classification
       let classification: ItemPotential['classification'] = 'sem_match';
       if (potentialScore >= 50 && investmentScore >= 40) classification = 'imediato';
       else if (investmentScore >= 50) classification = 'investimento';
@@ -265,7 +262,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         classification,
       };
     }).sort((a, b) => b.potentialScore - a.potentialScore);
-  }, [items, filteredRankings, allYearRankings, availableYears]);
+  }, [activeItems, filteredRankings, allYearRankings, availableYears]);
 
   const filtered = useMemo(() => {
     if (!searchQuery) return itemPotentials;
