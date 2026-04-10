@@ -322,7 +322,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         quantity: r.quantity,
       }));
       let totalDemandYear = 0;
-      for (const item of items) {
+      for (const item of activeItems) {
         const itemText = normalize(`${item.aplicacao} ${item.produto}`);
         for (const fm of fleetKws) {
           const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
@@ -336,7 +336,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         frota: totalDemandYear,
       };
     });
-  }, [availableYears, allYearRankings, items, withMatch]);
+  }, [availableYears, allYearRankings, activeItems, withMatch]);
 
   // Classification distribution
   const classDistribution = useMemo(() => {
