@@ -100,7 +100,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
   const [selectedType, setSelectedType] = useState<string>('automovel');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (preferredYear?: number) => {
     setLoading(true);
     const { data: rows, error } = await supabase
       .from('fleet_regional_data')
@@ -108,16 +108,27 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       .order('year', { ascending: false })
       .order('month', { ascending: true })
       .order('region', { ascending: true });
-    if (error) { toast.error('Erro ao carregar dados regionais'); setLoading(false); return; }
+
+    if (error) {
+      toast.error('Erro ao carregar dados regionais');
+      setLoading(false);
+      return;
+    }
+
     const items = (rows || []) as RegionalData[];
-    setData(items);
     const uniqueYears = [...new Set(items.map(r => r.year))].sort((a, b) => b - a);
+
+    setData(items);
     setYears(uniqueYears);
-    setSelectedYear(prev => (!prev && uniqueYears.length > 0) ? String(uniqueYears[0]) : prev);
+    setSelectedYear(prev => {
+      if (preferredYear && uniqueYears.includes(preferredYear)) return String(preferredYear);
+      if (prev && uniqueYears.includes(Number(prev))) return prev;
+      return uniqueYears.length > 0 ? String(uniqueYears[0]) : '';
+    });
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const filteredData = useMemo(() => {
     let filtered = data;
@@ -215,9 +226,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
         if (!REGIONS.some(r => r.toLowerCase() === region.toLowerCase())) continue;
         const matchedRegion = REGIONS.find(r => r.toLowerCase() === region.toLowerCase()) || region;
 
-        // Check if we have monthly data (13+ columns: region + 12 months)
         if (parts.length >= 13) {
-          // Monthly percentages: region;jan;fev;mar;abr;mai;jun;jul;ago;set;out;nov;dez
           for (let m = 0; m < 12; m++) {
             const pct = parseFloat(parts[m + 1]?.replace(',', '.') || '0');
             if (pct > 0) {
@@ -225,7 +234,6 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
             }
           }
         } else {
-          // Annual: region;quantidade;percentual
           const qty = parseInt(parts[1]?.replace(/\./g, '').replace(/,/g, '') || '0');
           const pct = parseFloat(parts[2]?.replace(',', '.') || '0');
           rows.push({ year, month: null, region: matchedRegion, vehicle_type: vehicleType, quantity: qty, percentage: pct });
@@ -236,8 +244,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
 
       const { error } = await supabase.from('fleet_regional_data').insert(rows);
       if (error) throw error;
+      setSelectedType(vehicleType);
       toast.success(`${rows.length} registros importados para ${year} (${VEHICLE_TYPES.find(v => v.value === vehicleType)?.label})`);
-      fetchData();
+      await fetchData(year);
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     }
@@ -249,7 +258,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     if (!confirm(`Excluir todos os dados regionais de ${year}?`)) return;
     await supabase.from('fleet_regional_data').delete().eq('year', year);
     toast.success(`Dados regionais de ${year} excluídos`);
-    fetchData();
+    await fetchData();
   };
 
   const handleSeedFenabrave = async (year: number, seedData: Record<string, Record<string, number[]>>) => {
@@ -268,7 +277,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       const { error } = await supabase.from('fleet_regional_data').insert(rows);
       if (error) throw error;
       toast.success(`${rows.length} registros FENABRAVE ${year} carregados!`);
-      fetchData();
+      await fetchData(year);
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     }
