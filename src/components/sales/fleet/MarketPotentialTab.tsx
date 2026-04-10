@@ -85,6 +85,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
   const [items, setItems] = useState<SupplierItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [importing, setImporting] = useState(false);
+  const [selectedFornecedor, setSelectedFornecedor] = useState<string>('__all__');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getOwnerId = async () => {
