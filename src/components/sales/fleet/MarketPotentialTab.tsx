@@ -251,9 +251,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         : 0;
 
       let classification: ItemPotential['classification'] = 'sem_match';
-      if (potentialScore >= 50 && investmentScore >= 40) classification = 'imediato';
-      else if (investmentScore >= 50) classification = 'investimento';
-      else if (potentialScore > 0) classification = 'nicho';
+      if (totalFleetCurrent > 0 && trendGrowth > 15) {
+        // Has current fleet presence AND growing trend
+        if (potentialScore >= 60) classification = 'imediato';
+        else classification = 'investimento';
+      } else if (totalFleetCurrent > 0 && trendGrowth > 0) {
+        // Growing but modest — investment opportunity
+        classification = 'investimento';
+      } else if (potentialScore >= 40) {
+        classification = 'imediato';
+      } else if (potentialScore > 0) {
+        classification = 'nicho';
+      }
 
       return {
         id: item.id,
