@@ -519,7 +519,26 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         </Card>
       </div>
 
-      {/* Action Bar */}
+      {/* Fornecedor Selection + Action Bar */}
+      {fornecedores.length > 1 && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Lista:</span>
+          <Select value={selectedFornecedor} onValueChange={setSelectedFornecedor}>
+            <SelectTrigger className="w-[220px] h-9">
+              <SelectValue placeholder="Selecionar lista" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas as listas ({items.length})</SelectItem>
+              {fornecedores.map(f => (
+                <SelectItem key={f} value={f}>
+                  {f} ({items.filter(i => i.fornecedor === f).length})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {!readOnly && (
           <>
