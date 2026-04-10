@@ -41,7 +41,7 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
-const BUILTIN_YEAR_OPTIONS = [2016, 2010];
+const BUILTIN_YEAR_OPTIONS = [2016, 2011, 2010];
 
 // FENABRAVE 2010 seed data
 const FENABRAVE_2010_SEED: Record<string, Record<string, number[]>> = {
@@ -65,6 +65,31 @@ const FENABRAVE_2010_SEED: Record<string, Record<string, number[]>> = {
     'Centro-Oeste': [9.53, 10.00, 9.86, 9.83, 9.71, 9.94, 9.63, 10.08, 9.84, 9.46, 9.13, 10.40],
     'Sudeste':      [50.62, 51.63, 51.79, 51.93, 51.53, 52.07, 51.81, 51.53, 52.45, 52.38, 51.44, 49.86],
     'Sul':          [18.76, 18.28, 18.32, 18.11, 18.16, 18.61, 18.10, 18.32, 17.72, 19.22, 18.98, 18.85],
+  },
+};
+
+// FENABRAVE 2011 seed data
+const FENABRAVE_2011_SEED: Record<string, Record<string, number[]>> = {
+  automovel: {
+    'Norte':        [4.12, 4.15, 4.24, 4.24, 4.18, 3.80, 4.01, 4.49, 3.71, 4.01, 4.30, 4.30],
+    'Nordeste':     [17.05, 16.25, 14.81, 14.49, 14.98, 14.44, 14.98, 15.35, 15.32, 14.23, 14.20, 15.01],
+    'Centro-Oeste': [10.02, 9.90, 9.73, 9.87, 9.67, 9.26, 9.29, 9.35, 8.83, 9.23, 8.72, 9.12],
+    'Sudeste':      [49.86, 51.35, 52.01, 52.58, 51.95, 53.02, 52.28, 51.62, 52.45, 52.77, 53.94, 50.37],
+    'Sul':          [18.95, 18.34, 19.21, 18.83, 19.17, 19.65, 19.66, 18.92, 20.07, 19.13, 21.20, 21.20],
+  },
+  comercial_leve: {
+    'Norte':        [6.61, 6.02, 6.70, 6.84, 6.66, 6.63, 6.10, 6.64, 8.15, 7.08, 7.26, 7.84],
+    'Nordeste':     [16.97, 15.31, 15.42, 15.54, 14.68, 14.95, 15.45, 15.46, 15.80, 14.37, 15.69, 15.76],
+    'Centro-Oeste': [10.43, 10.71, 11.27, 11.59, 11.14, 10.69, 11.04, 11.29, 10.34, 10.57, 10.04, 10.69],
+    'Sudeste':      [47.06, 49.24, 48.08, 47.53, 48.72, 49.39, 48.17, 47.63, 47.60, 48.04, 48.11, 45.73],
+    'Sul':          [18.92, 18.71, 18.53, 18.49, 18.81, 18.34, 19.25, 18.98, 18.10, 19.95, 18.91, 19.98],
+  },
+  automovel_comercial_leve: {
+    'Norte':        [4.49, 4.44, 4.62, 4.63, 4.61, 4.46, 4.17, 4.43, 5.04, 4.22, 4.50, 4.81],
+    'Nordeste':     [17.04, 16.11, 14.90, 14.65, 14.94, 14.32, 15.05, 15.37, 15.29, 14.25, 14.43, 15.12],
+    'Centro-Oeste': [10.08, 10.03, 9.97, 10.13, 9.89, 9.48, 9.57, 9.66, 9.09, 9.43, 8.92, 9.35],
+    'Sudeste':      [49.45, 51.03, 51.40, 51.81, 51.45, 52.46, 51.63, 50.98, 51.72, 52.05, 53.07, 49.70],
+    'Sul':          [18.94, 18.40, 19.11, 18.78, 19.11, 18.98, 19.58, 19.55, 18.79, 20.05, 19.09, 21.03],
   },
 };
 
@@ -142,6 +167,20 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
         FENABRAVE_2010_SEED[selectedType][region].map((percentage, index) => ({
           id: `seed-2010-${selectedType}-${region}-${index + 1}`,
           year: 2010,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
+    if (filtered.length === 0 && selectedYear === '2011' && FENABRAVE_2011_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2011_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2011-${selectedType}-${region}-${index + 1}`,
+          year: 2011,
           month: index + 1,
           region,
           vehicle_type: selectedType,
@@ -394,6 +433,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   )}
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2010, FENABRAVE_2010_SEED)} disabled={importing}>
                     📊 FENABRAVE 2010
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2011, FENABRAVE_2011_SEED)} disabled={importing}>
+                    📊 FENABRAVE 2011
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2016, FENABRAVE_2016_SEED)} disabled={importing}>
                     📊 FENABRAVE 2016
