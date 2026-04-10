@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend, Area, AreaChart } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet, Trash2, Zap, Clock } from 'lucide-react';
-import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
+import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Zap, Clock, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
 
 interface FleetRanking {
   id: string;
@@ -30,7 +28,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-interface SupplierItem {
+interface PartItem {
   id: string;
   codigo: string;
   produto: string;
@@ -48,9 +46,9 @@ interface ItemPotential {
   totalFleetCurrent: number;
   totalFleetAllYears: number;
   estimatedDemandCurrent: number;
-  trendGrowth: number; // % growth trend across years
+  trendGrowth: number;
   potentialScore: number;
-  investmentScore: number; // long-term investment score
+  investmentScore: number;
   classification: 'imediato' | 'investimento' | 'nicho' | 'sem_match';
 }
 
@@ -80,50 +78,32 @@ function formatCompactUnits(value: number) {
   return Math.round(value).toLocaleString('pt-BR');
 }
 
-export function MarketPotentialTab({ rankings, selectedYear, selectedType, readOnly = false }: Props) {
+export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<SupplierItem[]>([]);
+  const [items, setItems] = useState<PartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [selectedFornecedor, setSelectedFornecedor] = useState<string>('__all__');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const getOwnerId = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data: sellerRow } = await supabase
-      .from('seller_users')
-      .select('admin_user_id')
-      .eq('seller_auth_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle();
-    return sellerRow?.admin_user_id || user.id;
-  };
+  const [selectedFabricante, setSelectedFabricante] = useState<string>('__all__');
 
   const reloadItems = async () => {
     setLoading(true);
-    const ownerId = await getOwnerId();
-    if (!ownerId) { setLoading(false); return; }
-
-    // Paginate through all supplier catalog items
-    const allItems: SupplierItem[] = [];
+    // Fetch all parts (shared table, no user_id filter)
+    const allItems: PartItem[] = [];
     let page = 0;
     const pageSize = 1000;
     let hasMore = true;
     while (hasMore) {
       const { data, error } = await supabase
-        .from('supplier_catalog_items')
-        .select('id, codigo, produto, aplicacao, fornecedor')
-        .eq('user_id', ownerId)
+        .from('parts')
+        .select('id, codigo_peca, descricao, modelo_veiculo, marca_veiculo, fabricante, anos_aplicacao')
         .order('created_at', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (error || !data || data.length === 0) { hasMore = false; break; }
       allItems.push(...data.map(d => ({
         id: d.id,
-        codigo: d.codigo,
-        produto: d.produto,
-        aplicacao: d.aplicacao || '',
-        fornecedor: d.fornecedor || '',
+        codigo: d.codigo_peca || '',
+        produto: d.descricao || '',
+        aplicacao: [d.marca_veiculo, d.modelo_veiculo, d.anos_aplicacao].filter(Boolean).join(' '),
+        fornecedor: d.fabricante || '',
       })));
       if (data.length < pageSize) hasMore = false;
       else page++;
@@ -132,17 +112,17 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
     setLoading(false);
   };
 
-  // Unique fornecedor list for selection
-  const fornecedores = useMemo(() => {
+  // Unique fabricante list for selection
+  const fabricantes = useMemo(() => {
     const unique = [...new Set(items.map(i => i.fornecedor).filter(Boolean))].sort();
     return unique;
   }, [items]);
 
-  // Items filtered by selected fornecedor
+  // Items filtered by selected fabricante
   const activeItems = useMemo(() => {
-    if (selectedFornecedor === '__all__') return items;
-    return items.filter(i => i.fornecedor === selectedFornecedor);
-  }, [items, selectedFornecedor]);
+    if (selectedFabricante === '__all__') return items;
+    return items.filter(i => i.fornecedor === selectedFabricante);
+  }, [items, selectedFabricante]);
 
   useEffect(() => { reloadItems(); }, []);
 
@@ -161,7 +141,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       .sort((a, b) => a.position - b.position);
   }, [rankings, selectedYear, selectedType]);
 
-  // Cross supplier items × fleet (current + multi-year trend)
+  // Cross parts × fleet (current + multi-year trend)
   const itemPotentials: ItemPotential[] = useMemo(() => {
     if (!activeItems.length || !filteredRankings.length) return [];
 
@@ -171,7 +151,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
     }));
 
-    // Build per-year fleet data for trend
     const fleetByYear = new Map<number, typeof fleetModels>();
     for (const year of availableYears) {
       const yearRankings = allYearRankings
@@ -187,7 +166,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
     return activeItems.map(item => {
       const itemText = normalize(`${item.aplicacao} ${item.produto}`);
 
-      // Match current year
       const matchedModels: string[] = [];
       let totalFleetCurrent = 0;
       for (const fm of fleetModels) {
@@ -199,7 +177,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         }
       }
 
-      // Multi-year trend: total fleet matched per year
       let totalFleetAllYears = 0;
       const yearlyFleet: number[] = [];
       for (const year of availableYears) {
@@ -214,7 +191,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         yearlyFleet.push(yearTotal);
       }
 
-      // Calculate growth trend (linear regression slope as %)
       let trendGrowth = 0;
       if (yearlyFleet.length >= 2) {
         const first = yearlyFleet[0] || 1;
@@ -280,9 +256,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
   const immediateCount = useMemo(() => itemPotentials.filter(p => p.classification === 'imediato').length, [itemPotentials]);
   const investCount = useMemo(() => itemPotentials.filter(p => p.classification === 'investimento').length, [itemPotentials]);
   const totalDemand = useMemo(() => withMatch.reduce((s, p) => s + p.estimatedDemandCurrent, 0), [withMatch]);
-  const avgScore = useMemo(() => {
-    return withMatch.length > 0 ? Math.round(withMatch.reduce((s, p) => s + p.potentialScore, 0) / withMatch.length) : 0;
-  }, [withMatch]);
 
   // Top 10 chart — by demand
   const topImmediate = useMemo((): TopChartItem[] => {
@@ -297,7 +270,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       }));
   }, [withMatch]);
 
-  // Top 10 investment — by investment score
+  // Top 10 investment
   const topInvestment = useMemo((): TopChartItem[] => {
     return [...itemPotentials]
       .filter(p => p.investmentScore > 0)
@@ -311,7 +284,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       }));
   }, [itemPotentials]);
 
-  // Demand forecast by year (trend chart)
+  // Demand forecast by year
   const demandTrend = useMemo(() => {
     if (availableYears.length < 2 || !withMatch.length) return [];
     return availableYears.map(year => {
@@ -356,71 +329,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
     ].filter(d => d.value > 0);
   }, [itemPotentials]);
 
-  // Import handler
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    try {
-      const ownerId = await getOwnerId();
-      if (!ownerId) throw new Error('Usuário não autenticado');
-
-      const ab = await file.arrayBuffer();
-      const wb = XLSX.read(ab);
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
-
-      if (!rows.length) { toast.error('Planilha vazia'); setImporting(false); return; }
-
-      const parsed = rows.map(r => ({
-        user_id: ownerId,
-        codigo: String(r.codigo || r.Código || r['Codigo'] || r['Código do Fabricante'] || '').trim(),
-        produto: String(r.produto || r.Produto || r.descricao || r.Descrição || '').trim(),
-        aplicacao: String(r.aplicacao || r.Aplicação || r['Aplicacao'] || '').trim() || null,
-        fornecedor: String(r.fornecedor || r.Fornecedor || r.marca || r.Marca || '').trim() || null,
-      })).filter(i => i.codigo && i.produto);
-
-      if (!parsed.length) {
-        toast.error('Nenhum item válido. Verifique colunas: codigo, produto, aplicacao, fornecedor');
-        setImporting(false);
-        return;
-      }
-
-      const batchSize = 500;
-      for (let i = 0; i < parsed.length; i += batchSize) {
-        const batch = parsed.slice(i, i + batchSize);
-        const { error } = await supabase
-          .from('supplier_catalog_items')
-          .upsert(batch, { onConflict: 'user_id,codigo,fornecedor' });
-        if (error) throw error;
-      }
-
-      toast.success(`${parsed.length} peças do fornecedor importadas!`);
-      await reloadItems();
-    } catch (err: any) {
-      toast.error(`Erro na importação: ${err.message}`);
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleDownloadTemplate = () => {
-    const template = [
-      { codigo: 'RCDI06820', produto: 'DISCO FREIO DIANT VENTILADO', aplicacao: 'GOL G5/G6/SAVEIRO/VOYAGE', fornecedor: 'FREMAX' },
-      { codigo: 'PD/581', produto: 'PASTILHA DE FREIO DIANTEIRA', aplicacao: 'ONIX/PRISMA/COBALT/SPIN', fornecedor: 'FRAS-LE' },
-      { codigo: 'HK4577', produto: 'AMORTECEDOR DIANTEIRO', aplicacao: 'HB20 1.0/1.6', fornecedor: 'KAYABA' },
-    ];
-    exportToExcel(template, 'modelo_lista_fornecedor', 'Lista');
-    toast.success('Modelo de planilha baixado!');
-  };
-
   const handleExport = () => {
     if (!filtered.length) { toast.error('Nenhum dado para exportar'); return; }
     const data = filtered.map(p => ({
       Código: p.codigo,
       Produto: p.produto,
-      Fornecedor: p.fornecedor,
+      Fabricante: p.fornecedor,
       Aplicação: p.aplicacao,
       'Score Potencial': p.potentialScore,
       'Score Investimento': p.investmentScore,
@@ -432,17 +346,8 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         : p.classification === 'nicho' ? 'Nicho' : 'Sem Match',
       'Modelos Compatíveis': p.matchedModels.join(', '),
     }));
-    exportToExcel(data, `potencial_fornecedor_${selectedYear}`, 'Potencial');
+    exportToExcel(data, `potencial_pecas_${selectedYear}`, 'Potencial');
     toast.success('Dados exportados!');
-  };
-
-  const handleDeleteAll = async () => {
-    const ownerId = await getOwnerId();
-    if (!ownerId) return;
-    const { error } = await supabase.from('supplier_catalog_items').delete().eq('user_id', ownerId);
-    if (error) { toast.error('Erro ao excluir'); return; }
-    setItems([]);
-    toast.success('Lista de fornecedores excluída!');
   };
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -451,27 +356,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
     return (
       <Card className="p-8 text-center space-y-4">
         <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <h3 className="font-semibold">Potencial de Mercado — Listas de Fornecedores</h3>
+        <h3 className="font-semibold">Potencial de Mercado — Lista de Peças</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {readOnly
-            ? 'Nenhuma lista de fornecedores foi importada ainda. O administrador precisa importar as listas pelo painel administrativo.'
-            : 'Importe listas de peças dos seus fornecedores. O sistema cruzará com os dados da FENABRAVE para identificar quais peças têm maior potencial de venda imediata e quais são ideais para investimento a longo prazo.'}
+          Nenhuma peça encontrada na base de dados. Adicione peças pelo painel administrativo para que o sistema cruze com os dados da FENABRAVE e identifique oportunidades de venda.
         </p>
-        {!readOnly && (
-          <>
-            <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-                {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
-                {importing ? 'Importando...' : 'Importar Lista do Fornecedor'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-                <FileSpreadsheet className="w-4 h-4 mr-1.5" />
-                Baixar Modelo
-              </Button>
-            </div>
-          </>
-        )}
       </Card>
     );
   }
@@ -519,58 +407,30 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         </Card>
       </div>
 
-      {/* Fornecedor Selection + Action Bar */}
-      {fornecedores.length > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Lista:</span>
-          <Select value={selectedFornecedor} onValueChange={setSelectedFornecedor}>
-            <SelectTrigger className="w-[220px] h-9">
-              <SelectValue placeholder="Selecionar lista" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Todas as listas ({items.length})</SelectItem>
-              {fornecedores.map(f => (
-                <SelectItem key={f} value={f}>
-                  {f} ({items.filter(i => i.fornecedor === f).length})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        {!readOnly && (
-          <>
-            <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
-            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
-              {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
-              {importing ? 'Importando...' : 'Importar Lista'}
-            </Button>
-          </>
+      {/* Fabricante Selection */}
+      <div className="flex flex-wrap items-center gap-2">
+        {fabricantes.length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Fabricante:</span>
+            <Select value={selectedFabricante} onValueChange={setSelectedFabricante}>
+              <SelectTrigger className="w-[220px] h-9">
+                <SelectValue placeholder="Selecionar fabricante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos os fabricantes ({items.length})</SelectItem>
+                {fabricantes.map(f => (
+                  <SelectItem key={f} value={f}>
+                    {f} ({items.filter(i => i.fornecedor === f).length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         <Button variant="outline" size="sm" onClick={handleExport} disabled={!filtered.length}>
           <Download className="w-4 h-4 mr-1.5" />
           Exportar Análise
         </Button>
-        {!readOnly && (
-          <>
-            <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
-              <FileSpreadsheet className="w-4 h-4 mr-1.5" />
-              Baixar Modelo
-            </Button>
-            <ConfirmDeleteDialog
-              description="Tem certeza que deseja excluir TODA a lista de fornecedores? Esta ação não pode ser desfeita."
-              onConfirm={handleDeleteAll}
-              trigger={
-                <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                  <Trash2 className="w-4 h-4 mr-1.5" />
-                  Excluir Toda Lista
-                </Button>
-              }
-            />
-          </>
-        )}
       </div>
 
       {/* Charts Row 1: Immediate Potential + Classification */}
@@ -704,7 +564,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       <div className="relative">
         <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por código, produto, fornecedor ou aplicação..."
+          placeholder="Buscar por código, produto, fabricante ou aplicação..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="pl-8"
@@ -716,7 +576,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
         <div className="p-3 border-b bg-accent/30">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-primary" />
-            Análise de Potencial — Lista de Fornecedores ({selectedYear})
+            Análise de Potencial — Lista de Peças ({selectedYear})
           </h3>
           <p className="text-[10px] text-muted-foreground">
             Cruzamento: lista de peças × frota FENABRAVE ({filteredRankings.length} modelos)
@@ -728,7 +588,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
               <TableRow>
                 <TableHead>Código</TableHead>
                 <TableHead>Produto</TableHead>
-                <TableHead>Fornecedor</TableHead>
+                <TableHead>Fabricante</TableHead>
                 <TableHead>Aplicação</TableHead>
                 <TableHead className="text-center">Score Potencial</TableHead>
                 <TableHead className="text-center">Score Invest.</TableHead>
@@ -736,7 +596,6 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
                 <TableHead className="text-right">Frota Match</TableHead>
                 <TableHead className="text-right">Tendência</TableHead>
                 <TableHead>Classificação</TableHead>
-                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -784,23 +643,11 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
                        p.classification === 'nicho' ? '🔹 Nicho' : '⚪ Sem match'}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <ConfirmDeleteDialog
-                      description={`Excluir item ${p.codigo} da lista?`}
-                      onConfirm={async () => {
-                        const { error } = await supabase.from('supplier_catalog_items').delete().eq('id', p.id);
-                        if (error) { toast.error('Erro ao excluir'); return; }
-                        setItems(prev => prev.filter(i => i.id !== p.id));
-                        toast.success(`${p.codigo} excluído`);
-                      }}
-                      iconSize="sm"
-                    />
-                  </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                     Nenhum item encontrado
                   </TableCell>
                 </TableRow>
@@ -821,9 +668,9 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
           💡 Insights Estratégicos
         </h3>
         <ul className="text-sm space-y-1.5 text-muted-foreground">
-          <li>📦 Sua lista contém <strong>{items.length}</strong> peças de fornecedores, <strong>{withMatch.length}</strong> ({items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}%) têm match com a frota circulante</li>
+          <li>📦 A lista de peças contém <strong>{items.length}</strong> itens, <strong>{withMatch.length}</strong> ({items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}%) têm match com a frota circulante</li>
           <li>🔥 <strong>{immediateCount} peças</strong> classificadas como "Venda Imediata" — alta demanda atual, ideal para compra imediata</li>
-          <li>📈 <strong>{investCount} peças</strong> com potencial de "Investimento" — tendência de crescimento na frota, bom para investimento a longo prazo</li>
+          <li>📈 <strong>{investCount} peças</strong> com potencial de "Investimento" — tendência de crescimento na frota</li>
           {demandTrend.length >= 2 && (
             <li>📊 Demanda estimada: de <strong>{formatCompactUnits(demandTrend[0]?.demanda || 0)}</strong> ({demandTrend[0]?.ano}) para <strong>{formatCompactUnits(demandTrend[demandTrend.length - 1]?.demanda || 0)}</strong> ({demandTrend[demandTrend.length - 1]?.ano})</li>
           )}
