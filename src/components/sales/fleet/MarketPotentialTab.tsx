@@ -132,6 +132,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
     setLoading(false);
   };
 
+  // Unique fornecedor list for selection
+  const fornecedores = useMemo(() => {
+    const unique = [...new Set(items.map(i => i.fornecedor).filter(Boolean))].sort();
+    return unique;
+  }, [items]);
+
+  // Items filtered by selected fornecedor
+  const activeItems = useMemo(() => {
+    if (selectedFornecedor === '__all__') return items;
+    return items.filter(i => i.fornecedor === selectedFornecedor);
+  }, [items, selectedFornecedor]);
+
   useEffect(() => { reloadItems(); }, []);
 
   // Get all years available in rankings for trend analysis
