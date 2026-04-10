@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
+import { extractApplicationFromChave } from '@/hooks/usePartsDatabase';
 
 interface FleetRanking {
   id: string;
@@ -34,6 +35,7 @@ interface PartItem {
   produto: string;
   aplicacao: string;
   fornecedor: string;
+  searchText: string;
 }
 
 interface ItemPotential {
@@ -78,6 +80,17 @@ function formatCompactUnits(value: number) {
   return Math.round(value).toLocaleString('pt-BR');
 }
 
+function isStrongFleetMatch(itemText: string, normalizedModel: string, keywords: string[]) {
+  if (!itemText) return false;
+  if (normalizedModel && itemText.includes(normalizedModel)) return true;
+  if (!keywords.length) return false;
+
+  const matchedKeywordCount = keywords.filter(keyword => itemText.includes(keyword)).length;
+  if (keywords.length <= 2) return matchedKeywordCount >= 1;
+
+  return matchedKeywordCount >= 2;
+}
+
 export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PartItem[]>([]);
@@ -94,17 +107,38 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     while (hasMore) {
       const { data, error } = await supabase
         .from('parts')
-        .select('id, codigo_peca, descricao, modelo_veiculo, marca_veiculo, fabricante, anos_aplicacao')
+        .select('id, codigo_peca, descricao, modelo_veiculo, marca_veiculo, fabricante, anos_aplicacao, chave_de_busca, contexto_ia')
         .order('created_at', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
       if (error || !data || data.length === 0) { hasMore = false; break; }
-      allItems.push(...data.map(d => ({
-        id: d.id,
-        codigo: d.codigo_peca || '',
-        produto: d.descricao || '',
-        aplicacao: [d.marca_veiculo, d.modelo_veiculo, d.anos_aplicacao].filter(Boolean).join(' '),
-        fornecedor: d.fabricante || '',
-      })));
+      allItems.push(...data.map(d => {
+        const fornecedor = (d.fabricante || '').trim();
+        const codigo = (d.codigo_peca || '').trim();
+        const produto = (d.descricao || '').trim();
+        const chaveBusca = (d.chave_de_busca || '').trim();
+        const aplicacaoFallback = [d.marca_veiculo, d.modelo_veiculo, d.anos_aplicacao].filter(Boolean).join(' ').trim();
+        const aplicacaoLimpa = extractApplicationFromChave(chaveBusca, fornecedor, codigo, produto)
+          .replace(/[,/\s]*CAT[ÁA]LOGO MASTER\s*/gi, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        return {
+          id: d.id,
+          codigo,
+          produto,
+          aplicacao: aplicacaoLimpa || aplicacaoFallback || chaveBusca,
+          fornecedor,
+          searchText: [
+            aplicacaoLimpa,
+            aplicacaoFallback,
+            d.marca_veiculo || '',
+            d.modelo_veiculo || '',
+            d.anos_aplicacao || '',
+            chaveBusca,
+            d.contexto_ia || '',
+          ].filter(Boolean).join(' '),
+        };
+      }));
       if (data.length < pageSize) hasMore = false;
       else page++;
     }
@@ -121,7 +155,8 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
   // Items filtered by selected fabricante
   const activeItems = useMemo(() => {
     if (selectedFabricante === '__all__') return items;
-    return items.filter(i => i.fornecedor === selectedFabricante);
+    const fabricanteNormalizado = normalize(selectedFabricante);
+    return items.filter(i => normalize(i.fornecedor) === fabricanteNormalizado);
   }, [items, selectedFabricante]);
 
   useEffect(() => { reloadItems(); }, []);
@@ -148,7 +183,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
     const fleetModels = filteredRankings.map(r => ({
       ...r,
       normalized: normalize(r.model),
-      keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+      keywords: normalize(r.model).split(' ').filter(Boolean).filter(w => w.length > 2),
     }));
 
     const fleetByYear = new Map<number, typeof fleetModels>();
@@ -158,19 +193,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         .map(r => ({
           ...r,
           normalized: normalize(r.model),
-          keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+          keywords: normalize(r.model).split(' ').filter(Boolean).filter(w => w.length > 2),
         }));
       fleetByYear.set(year, yearRankings);
     }
 
     return activeItems.map(item => {
-      const itemText = normalize(`${item.aplicacao} ${item.produto}`);
+      const itemText = normalize(`${item.aplicacao} ${item.produto} ${item.searchText}`);
 
       const matchedModels: string[] = [];
       let totalFleetCurrent = 0;
       for (const fm of fleetModels) {
-        const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
-        const strongMatch = fm.keywords.length <= 2 ? matchCount >= 1 : matchCount >= 2;
+        const strongMatch = isStrongFleetMatch(itemText, fm.normalized, fm.keywords);
         if (strongMatch) {
           matchedModels.push(fm.model);
           totalFleetCurrent += fm.quantity;
@@ -183,8 +217,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
         const yearModels = fleetByYear.get(year) || [];
         let yearTotal = 0;
         for (const fm of yearModels) {
-          const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
-          const strongMatch = fm.keywords.length <= 2 ? matchCount >= 1 : matchCount >= 2;
+          const strongMatch = isStrongFleetMatch(itemText, fm.normalized, fm.keywords);
           if (strongMatch) yearTotal += fm.quantity;
         }
         totalFleetAllYears += yearTotal;
@@ -296,10 +329,9 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Pro
       }));
       let totalDemandYear = 0;
       for (const item of activeItems) {
-        const itemText = normalize(`${item.aplicacao} ${item.produto}`);
+        const itemText = normalize(`${item.aplicacao} ${item.produto} ${item.searchText}`);
         for (const fm of fleetKws) {
-          const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
-          const strongMatch = fm.keywords.length <= 2 ? matchCount >= 1 : matchCount >= 2;
+          const strongMatch = isStrongFleetMatch(itemText, fm.normalized, fm.keywords);
           if (strongMatch) totalDemandYear += fm.quantity;
         }
       }
