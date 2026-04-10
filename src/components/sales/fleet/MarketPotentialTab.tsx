@@ -491,12 +491,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Peças Analisadas</p>
-          <p className="text-xl font-bold">{items.length.toLocaleString('pt-BR')}</p>
+          <p className="text-xl font-bold">{activeItems.length.toLocaleString('pt-BR')}</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Com Potencial</p>
           <p className="text-xl font-bold text-primary">{withMatch.length.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] text-muted-foreground">{items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}% da lista</p>
+          <p className="text-[10px] text-muted-foreground">{activeItems.length > 0 ? Math.round((withMatch.length / activeItems.length) * 100) : 0}% da lista</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Demanda Total Est.</p>
