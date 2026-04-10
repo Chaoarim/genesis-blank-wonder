@@ -318,7 +318,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
   // Top 10 investment
   const topInvestment = useMemo((): TopChartItem[] => {
-    return [...itemPotentials]
+    return [...displayItems]
       .filter(p => p.investmentScore > 0)
       .sort((a, b) => b.investmentScore - a.investmentScore)
       .slice(0, 10)
