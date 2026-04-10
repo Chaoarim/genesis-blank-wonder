@@ -359,12 +359,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   // Classification distribution
   const classDistribution = useMemo(() => {
     const counts = {
-      imediato: itemPotentials.filter(p => p.classification === 'imediato').length,
-      investimento: itemPotentials.filter(p => p.classification === 'investimento').length,
-      nicho: itemPotentials.filter(p => p.classification === 'nicho').length,
-      sem_match: itemPotentials.filter(p => p.classification === 'sem_match').length,
+      imediato: displayItems.filter(p => p.classification === 'imediato').length,
+      investimento: displayItems.filter(p => p.classification === 'investimento').length,
+      nicho: displayItems.filter(p => p.classification === 'nicho').length,
+      sem_match: displayItems.filter(p => p.classification === 'sem_match').length,
     };
-    const total = itemPotentials.length;
+    const total = displayItems.length;
     const pct = (v: number) => total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0%';
     return [
       { name: '🔥 Venda Imediata', value: counts.imediato, fill: '#ef4444', detail: `${pct(counts.imediato)} — Alta demanda atual + tendência` },
@@ -372,7 +372,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
       { name: '🔹 Nicho', value: counts.nicho, fill: '#10b981', detail: `${pct(counts.nicho)} — Demanda menor` },
       { name: '⚪ Sem match', value: counts.sem_match, fill: '#94a3b8', detail: `${pct(counts.sem_match)} — Sem correspondência na frota` },
     ].filter(d => d.value > 0);
-  }, [itemPotentials]);
+  }, [displayItems]);
 
   const handleExport = () => {
     if (!filtered.length) { toast.error('Nenhum dado para exportar'); return; }
