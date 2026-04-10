@@ -163,7 +163,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, readO
 
   // Cross supplier items × fleet (current + multi-year trend)
   const itemPotentials: ItemPotential[] = useMemo(() => {
-    if (!items.length || !filteredRankings.length) return [];
+    if (!activeItems.length || !filteredRankings.length) return [];
 
     const fleetModels = filteredRankings.map(r => ({
       ...r,
