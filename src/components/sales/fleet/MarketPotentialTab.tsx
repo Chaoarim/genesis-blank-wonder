@@ -283,16 +283,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     }).sort((a, b) => b.potentialScore - a.potentialScore);
   }, [activeItems, filteredRankings, allYearRankings, availableYears]);
 
+  const combinedSearch = externalProductSearch || searchQuery;
+
   const filtered = useMemo(() => {
-    if (!searchQuery) return itemPotentials;
-    const q = normalize(searchQuery);
+    if (!combinedSearch) return itemPotentials;
+    const q = normalize(combinedSearch);
     return itemPotentials.filter(p =>
       normalize(p.codigo).includes(q) ||
       normalize(p.produto).includes(q) ||
       normalize(p.fornecedor).includes(q) ||
       normalize(p.aplicacao).includes(q)
     );
-  }, [itemPotentials, searchQuery]);
+  }, [itemPotentials, combinedSearch]);
 
   // KPIs
   const withMatch = useMemo(() => itemPotentials.filter(p => p.potentialScore > 0), [itemPotentials]);
