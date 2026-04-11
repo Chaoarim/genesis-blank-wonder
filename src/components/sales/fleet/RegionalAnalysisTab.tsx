@@ -463,6 +463,20 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       );
     }
 
+    if (filtered.length === 0 && selectedYear === '2019' && FENABRAVE_2019_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2019_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2019-${selectedType}-${region}-${index + 1}`,
+          year: 2019,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
     return filtered;
   }, [data, selectedYear, selectedType]);
 
@@ -509,6 +523,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     if (!selectedType) return [];
 
     const SEED_MAP: Record<number, Record<string, Record<string, number[]>>> = {
+      2019: FENABRAVE_2019_SEED,
       2018: FENABRAVE_2018_SEED,
       2017: FENABRAVE_2017_SEED,
       2016: FENABRAVE_2016_SEED,
