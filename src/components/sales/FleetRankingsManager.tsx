@@ -149,6 +149,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
   const [searchQuery, setSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [listMatches, setListMatches] = useState<Record<string, number>>({});
+  const [activeTab, setActiveTab] = useState('potencial');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchRankings = useCallback(async () => {
