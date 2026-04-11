@@ -260,7 +260,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   const itemsConsideredCount = displayItems.length;
   const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
   const growthItems = useMemo(
-    () => displayItems.filter(p => p.totalFleetCurrent > 0 && p.trendGrowth > 0),
+    () => displayItems.filter(p => p.classification === 'investimento'),
     [displayItems],
   );
   const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
