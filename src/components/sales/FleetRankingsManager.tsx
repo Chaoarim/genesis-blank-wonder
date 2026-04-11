@@ -13,6 +13,7 @@ import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
 import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
 import { RegionalAnalysisTab } from './fleet/RegionalAnalysisTab';
 import { MarketPotentialTab } from './fleet/MarketPotentialTab';
+import { getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText } from './fleet/fleetAnalysisData';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
@@ -41,7 +42,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
   const [selectedType, setSelectedType] = useState<string>('automovel');
   const [searchQuery, setSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
-  const [partsMatches, setPartsMatches] = useState<Record<string, number>>({});
+  const [listMatches, setListMatches] = useState<Record<string, number>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchRankings = useCallback(async () => {
@@ -62,26 +63,33 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
   useEffect(() => { fetchRankings(); }, []);
 
-  // Count parts matches for demand suggestion
+  // Count item matches from the user's list for demand suggestion
   useEffect(() => {
     if (!rankings.length) return;
+
     const matchModels = async () => {
+      const { items } = await loadFleetAnalysisItems(adminUserId);
+      if (!items.length) {
+        setListMatches({});
+        return;
+      }
+
+      const itemTexts = items.map(item => normalizeFleetText(`${item.aplicacao} ${item.produto} ${item.searchText}`));
       const models = [...new Set(rankings.map(r => r.model))];
       const counts: Record<string, number> = {};
+
       for (const model of models.slice(0, 30)) {
-        const keywords = model.replace(/\//g, ' ').split(' ').filter(w => w.length > 2);
-        if (!keywords.length) continue;
-        const searchTerm = `%${keywords[keywords.length - 1]}%`;
-        const { count } = await supabase
-          .from('parts')
-          .select('*', { count: 'exact', head: true })
-          .or(`chave_de_busca.ilike.${searchTerm},marca_veiculo.ilike.${searchTerm}`);
-        counts[model] = count || 0;
+        const { normalized, keywords } = getFleetModelKeywords(model);
+        counts[model] = itemTexts.reduce((total, itemText) => {
+          return total + (itemMatchesFleetModel(itemText, normalized, keywords) ? 1 : 0);
+        }, 0);
       }
-      setPartsMatches(counts);
+
+      setListMatches(counts);
     };
+
     matchModels();
-  }, [rankings]);
+  }, [rankings, adminUserId]);
 
   const filteredRankings = useMemo(() => {
     let filtered = rankings;
@@ -184,14 +192,14 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
   const demandSuggestions = useMemo(() => {
     return top10.map(r => {
-      const partsCount = partsMatches[r.model] || 0;
+      const partsCount = listMatches[r.model] || 0;
       const sharePercent = totalEmplacamentos > 0 ? ((r.quantity / totalEmplacamentos) * 100).toFixed(1) : '0';
       let priority: 'alta' | 'media' | 'baixa' = 'baixa';
       if (r.position <= 5) priority = 'alta';
       else if (r.position <= 15) priority = 'media';
       return { ...r, partsCount, sharePercent, priority };
     });
-  }, [top10, partsMatches, totalEmplacamentos]);
+  }, [top10, listMatches, totalEmplacamentos]);
 
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -290,7 +298,13 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           </TabsList>
 
           <TabsContent value="potencial">
-            <MarketPotentialTab rankings={rankings} selectedYear={selectedYear} selectedType={selectedType} externalProductSearch={productSearch} />
+            <MarketPotentialTab
+              rankings={rankings}
+              selectedYear={selectedYear}
+              selectedType={selectedType}
+              externalProductSearch={productSearch}
+              adminUserId={adminUserId}
+            />
           </TabsContent>
 
           <TabsContent value="demanda" className="space-y-4">
@@ -310,7 +324,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
                     <TableHead>Modelo</TableHead>
                     <TableHead className="text-right">Emplacamentos</TableHead>
                     <TableHead className="text-right">% Mercado</TableHead>
-                    <TableHead className="text-right">Peças no Catálogo</TableHead>
+                      <TableHead className="text-right">Peças na Lista</TableHead>
                     <TableHead>Prioridade</TableHead>
                   </TableRow>
                 </TableHeader>
