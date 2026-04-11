@@ -195,22 +195,25 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           ))
         : 0;
 
+      // Investment score: consider fleet presence even without multi-year trend
       const investmentScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
             (trendGrowth > 0 ? Math.min(trendGrowth, 50) : 0) +
             (Math.log10(totalFleetAllYears + 1) * 15) +
             (matchedModels.length * 5) +
-            (availableYears.length > 3 && trendGrowth > 20 ? 20 : 0)
+            (availableYears.length > 3 && trendGrowth > 20 ? 20 : 0) +
+            (totalFleetCurrent > 0 && availableYears.length <= 1 ? 15 : 0)
           ))
         : 0;
 
       let classification: ItemPotential['classification'] = 'sem_match';
       if (totalFleetCurrent > 0 && trendGrowth > 15) {
-        // Has current fleet presence AND growing trend
         if (potentialScore >= 60) classification = 'imediato';
         else classification = 'investimento';
       } else if (totalFleetCurrent > 0 && trendGrowth > 0) {
-        // Growing but modest — investment opportunity
+        classification = 'investimento';
+      } else if (totalFleetCurrent > 0 && availableYears.length <= 1) {
+        // Only 1 year of data — still count as investment if fleet match exists
         classification = 'investimento';
       } else if (potentialScore >= 40) {
         classification = 'imediato';
@@ -257,7 +260,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   const itemsConsideredCount = displayItems.length;
   const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
   const growthItems = useMemo(
-    () => displayItems.filter(p => p.totalFleetCurrent > 0 && p.trendGrowth > 0),
+    () => displayItems.filter(p => p.classification === 'investimento'),
     [displayItems],
   );
   const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
