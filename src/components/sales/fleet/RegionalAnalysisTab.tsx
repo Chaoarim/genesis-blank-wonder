@@ -139,20 +139,25 @@ export function RegionalAnalysisTab({
     return filtered;
   }, [data, activeSelectedYear, activeSelectedType]);
 
-  // Monthly stacked chart data
+  // Monthly stacked chart data — use quantities when available for visual differentiation
   const monthlyChartData = useMemo(() => {
     const hasMonthly = filteredData.some(r => r.month !== null);
     if (!hasMonthly) return [];
+    const hasQuantities = filteredData.some(r => r.month !== null && r.quantity > 0);
     return MONTHS.map((label, idx) => {
       const monthNum = idx + 1;
       const monthRows = filteredData.filter(r => r.month === monthNum);
       const row: Record<string, any> = { month: label };
       REGIONS.forEach(region => {
         const match = monthRows.find(r => r.region === region);
-        row[region] = match ? match.percentage : 0;
+        row[region] = match ? (hasQuantities ? match.quantity : match.percentage) : 0;
       });
       return row;
     }).filter(r => REGIONS.some(reg => r[reg] > 0));
+  }, [filteredData]);
+
+  const monthlyChartUsesQuantity = useMemo(() => {
+    return filteredData.some(r => r.month !== null && r.quantity > 0);
   }, [filteredData]);
 
   // Annual summary (aggregate)
@@ -177,7 +182,7 @@ export function RegionalAnalysisTab({
 
   const totalQuantity = useMemo(() => regionSummary.reduce((s, r) => s + r.quantity, 0), [regionSummary]);
 
-  // Multi-year evolution chart — pure DB
+  // Multi-year evolution chart — use quantities when available for visual differentiation
   const multiYearData = useMemo(() => {
     if (!activeSelectedType) return [];
 
@@ -188,6 +193,7 @@ export function RegionalAnalysisTab({
       return r.year <= selectedYearNumber;
     });
     const allYears = [...new Set(typeData.map(r => r.year))].sort((a, b) => a - b);
+    const hasQty = typeData.some(r => r.quantity > 0);
 
     return allYears.map(year => {
       const yearData = typeData.filter(r => r.year === year);
@@ -195,8 +201,12 @@ export function RegionalAnalysisTab({
       REGIONS.forEach(region => {
         const regionRows = yearData.filter(r => r.region === region);
         if (regionRows.length > 0) {
-          const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
-          row[region] = Number(avg.toFixed(2));
+          if (hasQty) {
+            row[region] = regionRows.reduce((s, r) => s + r.quantity, 0);
+          } else {
+            const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
+            row[region] = Number(avg.toFixed(2));
+          }
         } else {
           row[region] = 0;
         }
@@ -204,6 +214,11 @@ export function RegionalAnalysisTab({
       return row;
     });
   }, [data, activeSelectedType, activeSelectedYear]);
+
+  const evolutionUsesQuantity = useMemo(() => {
+    if (!activeSelectedType) return false;
+    return data.some(r => r.vehicle_type === activeSelectedType && r.quantity > 0);
+  }, [data, activeSelectedType]);
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -397,14 +412,20 @@ export function RegionalAnalysisTab({
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" />
-                Participação Mensal por Região — {activeSelectedYear}
+                {monthlyChartUsesQuantity
+                  ? `Emplacamentos Mensais por Região — ${activeSelectedYear}`
+                  : `Participação Mensal por Região — ${activeSelectedYear}`}
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={monthlyChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip formatter={(v: number) => `${v.toFixed(2)}%`} />
+                  <YAxis
+                    tickFormatter={v => monthlyChartUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`}
+                    tick={{ fontSize: 11 }}
+                    {...(!monthlyChartUsesQuantity ? { domain: [0, 100] } : {})}
+                  />
+                  <Tooltip formatter={(v: number) => monthlyChartUsesQuantity ? v.toLocaleString('pt-BR') : `${v.toFixed(2)}%`} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   {REGIONS.map(region => (
                     <Bar key={region} dataKey={region} stackId="a" fill={REGION_COLORS[region]} />
@@ -464,8 +485,8 @@ export function RegionalAnalysisTab({
                     textAnchor={multiYearData.length > 10 ? 'end' : 'middle'}
                     height={multiYearData.length > 10 ? 50 : 30}
                   />
-                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => `${v}%`} />
+                  <YAxis tickFormatter={v => evolutionUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number) => evolutionUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   {REGIONS.map(region => (
                     <Bar key={region} dataKey={region} stackId="a" fill={REGION_COLORS[region]} />
