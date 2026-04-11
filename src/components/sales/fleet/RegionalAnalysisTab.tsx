@@ -402,14 +402,20 @@ export function RegionalAnalysisTab({
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" />
-                Participação Mensal por Região — {activeSelectedYear}
+                {monthlyChartUsesQuantity
+                  ? `Emplacamentos Mensais por Região — ${activeSelectedYear}`
+                  : `Participação Mensal por Região — ${activeSelectedYear}`}
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={monthlyChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <Tooltip formatter={(v: number) => `${v.toFixed(2)}%`} />
+                  <YAxis
+                    tickFormatter={v => monthlyChartUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`}
+                    tick={{ fontSize: 11 }}
+                    {...(!monthlyChartUsesQuantity ? { domain: [0, 100] } : {})}
+                  />
+                  <Tooltip formatter={(v: number) => monthlyChartUsesQuantity ? v.toLocaleString('pt-BR') : `${v.toFixed(2)}%`} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   {REGIONS.map(region => (
                     <Bar key={region} dataKey={region} stackId="a" fill={REGION_COLORS[region]} />
