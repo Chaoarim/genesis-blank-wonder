@@ -49,15 +49,22 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
     return years[years.length - 1] ?? 0;
   }, [selectedYear, years]);
 
-  // Use ALL available years for growth analysis (full range)
-  const currentWindowYears = useMemo(() => years, [years]);
+  const visibleYears = useMemo(() => {
+    return years.filter(year => year <= selectedYearNumber);
+  }, [years, selectedYearNumber]);
+
+  const filteredUpToSelectedYear = useMemo(() => {
+    return filtered.filter(r => r.year <= selectedYearNumber);
+  }, [filtered, selectedYearNumber]);
+
+  const currentWindowYears = useMemo(() => buildTrailingYearWindow(visibleYears, selectedYearNumber), [visibleYears, selectedYearNumber]);
   const currentWindowLabel = useMemo(() => formatYearWindowLabel(currentWindowYears), [currentWindowYears]);
-  const rollingWindows = useMemo(() => buildRollingYearWindows(years), [years]);
+  const rollingWindows = useMemo(() => buildRollingYearWindows(visibleYears), [visibleYears]);
 
   const trends = useMemo(() => {
-    if (years.length < 2 || currentWindowYears.length < 2) return [];
+    if (visibleYears.length < 2 || currentWindowYears.length < 2) return [];
     const modelMap = new Map<string, { year: number; quantity: number; position: number }[]>();
-    filtered.forEach(r => {
+    filteredUpToSelectedYear.forEach(r => {
       if (!modelMap.has(r.model)) modelMap.set(r.model, []);
       modelMap.get(r.model)!.push({ year: r.year, quantity: r.quantity, position: r.position });
     });
@@ -68,8 +75,7 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
       const quantityByYear = new Map(sorted.map(e => [e.year, e.quantity]));
       const windowSummary = summarizeSeriesWindow(quantityByYear, currentWindowYears);
       const bestWindow = pickBestWindow(quantityByYear, rollingWindows);
-      const latestInSelection = sorted.filter(e => e.year <= selectedYearNumber);
-      const latest = latestInSelection[latestInSelection.length - 1] ?? sorted[sorted.length - 1];
+      const latest = sorted[sorted.length - 1];
       const avgPos = sorted.reduce((s, d) => s + d.position, 0) / sorted.length;
       const growth = roundTrend(windowSummary.growthPercent);
       const cagr = roundTrend(windowSummary.cagrPercent);
@@ -93,7 +99,7 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
     });
 
     return results.sort((a, b) => b.growth !== a.growth ? b.growth - a.growth : b.latestQty - a.latestQty);
-  }, [filtered, years, currentWindowYears, rollingWindows, selectedYearNumber]);
+  }, [filteredUpToSelectedYear, visibleYears, currentWindowYears, rollingWindows]);
 
   const growing = useMemo(() => trends.filter(t => t.trend === 'up').slice(0, 5), [trends]);
   const declining = useMemo(() => [...trends].filter(t => t.trend === 'down').sort((a, b) => a.growth - b.growth).slice(0, 5), [trends]);
@@ -105,22 +111,22 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
   }, [trends]);
 
   const chartDataTop = useMemo(() => {
-    return years.map(year => {
+    return visibleYears.map(year => {
       const point: Record<string, number | string> = { year: String(year) };
       chartModelsTop.forEach(model => {
-        const entry = filtered.find(r => r.year === year && r.model === model);
+        const entry = filteredUpToSelectedYear.find(r => r.year === year && r.model === model);
         point[model] = entry ? entry.quantity : 0;
       });
       return point;
     });
-  }, [years, chartModelsTop, filtered]);
+  }, [visibleYears, chartModelsTop, filteredUpToSelectedYear]);
 
-  if (years.length < 2 || currentWindowYears.length < 2) {
+  if (visibleYears.length < 2 || currentWindowYears.length < 2) {
     return (
       <Card className="p-8 text-center">
         <BarChart3 className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
         <p className="text-muted-foreground">Selecione um ano com pelo menos 2 anos de histórico para ver tendência em janelas de 5 anos.</p>
-        <p className="text-xs text-muted-foreground mt-1">Anos disponíveis: {years.join(', ') || 'nenhum'}</p>
+        <p className="text-xs text-muted-foreground mt-1">Anos disponíveis até o filtro atual: {visibleYears.join(', ') || 'nenhum'}</p>
       </Card>
     );
   }
@@ -132,10 +138,10 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
           <BarChart3 className="w-5 h-5 text-primary" />
           <div>
             <p className="font-semibold text-sm">
-              Crescimento Período Completo: {currentWindowLabel}
+              Tendência até {selectedYearNumber}: {currentWindowLabel}
             </p>
             <p className="text-xs text-muted-foreground">
-              Analisa o crescimento de todos os anos disponíveis — ideal para planejar investimento em compra de peças.
+              A troca de ano recalcula a janela e limita a leitura ao histórico até o ano selecionado.
             </p>
           </div>
         </div>
@@ -148,12 +154,12 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="year"
-              ticks={years.map(year => String(year))}
+                ticks={visibleYears.map(year => String(year))}
               interval={0}
               tick={{ fontSize: 12 }}
-              angle={years.length > 8 ? -35 : 0}
-              textAnchor={years.length > 8 ? 'end' : 'middle'}
-              height={years.length > 8 ? 56 : 30}
+                angle={visibleYears.length > 8 ? -35 : 0}
+                textAnchor={visibleYears.length > 8 ? 'end' : 'middle'}
+                height={visibleYears.length > 8 ? 56 : 30}
             />
             <YAxis tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
