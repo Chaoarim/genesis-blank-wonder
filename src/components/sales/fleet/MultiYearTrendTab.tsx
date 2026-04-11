@@ -134,10 +134,10 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
           <BarChart3 className="w-5 h-5 text-primary" />
           <div>
             <p className="font-semibold text-sm">
-              Janela de Crescimento 5 Anos: {currentWindowLabel}
+              Crescimento Período Completo: {currentWindowLabel}
             </p>
             <p className="text-xs text-muted-foreground">
-              Detecta quais carros aceleraram mais nesse bloco — ideal para planejar investimento em compra de peças.
+              Analisa o crescimento de todos os anos disponíveis — ideal para planejar investimento em compra de peças.
             </p>
           </div>
         </div>
