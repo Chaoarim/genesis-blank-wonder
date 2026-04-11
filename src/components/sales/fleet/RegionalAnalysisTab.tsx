@@ -139,20 +139,25 @@ export function RegionalAnalysisTab({
     return filtered;
   }, [data, activeSelectedYear, activeSelectedType]);
 
-  // Monthly stacked chart data
+  // Monthly stacked chart data — use quantities when available for visual differentiation
   const monthlyChartData = useMemo(() => {
     const hasMonthly = filteredData.some(r => r.month !== null);
     if (!hasMonthly) return [];
+    const hasQuantities = filteredData.some(r => r.month !== null && r.quantity > 0);
     return MONTHS.map((label, idx) => {
       const monthNum = idx + 1;
       const monthRows = filteredData.filter(r => r.month === monthNum);
       const row: Record<string, any> = { month: label };
       REGIONS.forEach(region => {
         const match = monthRows.find(r => r.region === region);
-        row[region] = match ? match.percentage : 0;
+        row[region] = match ? (hasQuantities ? match.quantity : match.percentage) : 0;
       });
       return row;
     }).filter(r => REGIONS.some(reg => r[reg] > 0));
+  }, [filteredData]);
+
+  const monthlyChartUsesQuantity = useMemo(() => {
+    return filteredData.some(r => r.month !== null && r.quantity > 0);
   }, [filteredData]);
 
   // Annual summary (aggregate)
