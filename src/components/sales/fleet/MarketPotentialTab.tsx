@@ -144,6 +144,11 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     [analysisWindowYears],
   );
 
+  const historyYears = useMemo(
+    () => availableYears.filter(year => year <= selectedYearNumber),
+    [availableYears, selectedYearNumber],
+  );
+
   // Pre-compute fleet models per year once
   const fleetByYear = useMemo(() => {
     const map = new Map<number, Array<FleetRanking & { normalized: string; keywords: string[] }>>();
@@ -315,14 +320,14 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
   // Demand forecast by year
   const demandTrend = useMemo(() => {
-    if (availableYears.length < 2 || !displayItems.length) return [];
+    if (historyYears.length < 2 || !displayItems.length) return [];
     const matchedItems = displayItems.filter(p => p.totalFleetAllYears > 0);
     if (!matchedItems.length) return [];
-    return availableYears.map(year => {
+    return historyYears.map(year => {
       const total = matchedItems.reduce((s, p) => s + (p.yearlyFleet.get(year) || 0), 0);
       return { ano: String(year), demanda: Math.round(total * ANNUAL_REPLACEMENT_RATE), frota: total };
     });
-  }, [availableYears, displayItems]);
+  }, [historyYears, displayItems]);
 
   // Classification distribution
   const classDistribution = useMemo(() => {
@@ -565,7 +570,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
-            Previsão de Demanda — Evolução por Ano
+            Previsão de Demanda — Evolução até {selectedYearNumber}
           </h3>
           {demandTrend.length >= 2 ? (
             <ResponsiveContainer width="100%" height={300}>

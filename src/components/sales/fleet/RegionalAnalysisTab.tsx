@@ -22,6 +22,10 @@ interface RegionalData {
 
 interface RegionalAnalysisTabProps {
   readOnly?: boolean;
+  selectedYear?: string;
+  selectedType?: string;
+  onSelectedYearChange?: (value: string) => void;
+  onSelectedTypeChange?: (value: string) => void;
 }
 
 const REGIONS = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
@@ -41,14 +45,42 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
-export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabProps) {
+export function RegionalAnalysisTab({
+  readOnly = false,
+  selectedYear: externalSelectedYear,
+  selectedType: externalSelectedType,
+  onSelectedYearChange,
+  onSelectedTypeChange,
+}: RegionalAnalysisTabProps) {
   const [data, setData] = useState<RegionalData[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [years, setYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('automovel');
+  const [localSelectedYear, setLocalSelectedYear] = useState<string>('');
+  const [localSelectedType, setLocalSelectedType] = useState<string>('automovel');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const activeSelectedYear = externalSelectedYear ?? localSelectedYear;
+  const activeSelectedType = externalSelectedType ?? localSelectedType;
+  const isUsingSharedFilters = externalSelectedYear !== undefined || externalSelectedType !== undefined;
+
+  const handleYearChange = useCallback((value: string) => {
+    if (onSelectedYearChange) {
+      onSelectedYearChange(value);
+      return;
+    }
+
+    setLocalSelectedYear(value);
+  }, [onSelectedYearChange]);
+
+  const handleTypeChange = useCallback((value: string) => {
+    if (onSelectedTypeChange) {
+      onSelectedTypeChange(value);
+      return;
+    }
+
+    setLocalSelectedType(value);
+  }, [onSelectedTypeChange]);
 
   const fetchData = useCallback(async (preferredYear?: number) => {
     setLoading(true);
@@ -89,7 +121,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
 
     setData(allRows);
     setYears(uniqueYears);
-    setSelectedYear(prev => {
+    setLocalSelectedYear(prev => {
       if (preferredYear && uniqueYears.includes(preferredYear)) return String(preferredYear);
       if (prev && uniqueYears.includes(Number(prev))) return prev;
       return uniqueYears.length > 0 ? String(uniqueYears[0]) : '';
@@ -102,10 +134,10 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
   // Filter data by year and type — pure DB, no seed fallback
   const filteredData = useMemo(() => {
     let filtered = data;
-    if (selectedYear) filtered = filtered.filter(r => r.year === Number(selectedYear));
-    if (selectedType) filtered = filtered.filter(r => r.vehicle_type === selectedType);
+    if (activeSelectedYear) filtered = filtered.filter(r => r.year === Number(activeSelectedYear));
+    if (activeSelectedType) filtered = filtered.filter(r => r.vehicle_type === activeSelectedType);
     return filtered;
-  }, [data, selectedYear, selectedType]);
+  }, [data, activeSelectedYear, activeSelectedType]);
 
   // Monthly stacked chart data
   const monthlyChartData = useMemo(() => {
@@ -147,8 +179,14 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
 
   // Multi-year evolution chart — pure DB
   const multiYearData = useMemo(() => {
-    if (!selectedType) return [];
-    const typeData = data.filter(r => r.vehicle_type === selectedType);
+    if (!activeSelectedType) return [];
+
+    const selectedYearNumber = Number(activeSelectedYear);
+    const typeData = data.filter(r => {
+      if (r.vehicle_type !== activeSelectedType) return false;
+      if (!selectedYearNumber) return true;
+      return r.year <= selectedYearNumber;
+    });
     const allYears = [...new Set(typeData.map(r => r.year))].sort((a, b) => a - b);
 
     return allYears.map(year => {
@@ -165,7 +203,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       });
       return row;
     });
-  }, [data, selectedType]);
+  }, [data, activeSelectedType, activeSelectedYear]);
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -217,9 +255,11 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
 
       const { error } = await supabase.from('fleet_regional_data').insert(rows);
       if (error) throw error;
-      setSelectedType(vehicleType);
+      setLocalSelectedType(vehicleType);
       toast.success(`${rows.length} registros importados para ${year} (${VEHICLE_TYPES.find(v => v.value === vehicleType)?.label})`);
       await fetchData(year);
+      onSelectedTypeChange?.(vehicleType);
+      onSelectedYearChange?.(String(year));
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     }
@@ -263,7 +303,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       'Quantidade': r.quantity,
       'Participação (%)': r.percentage,
     }));
-    exportToExcel(rows, `regional_${selectedType}_${selectedYear || 'todos'}`, 'Regional');
+    exportToExcel(rows, `regional_${activeSelectedType}_${activeSelectedYear || 'todos'}`, 'Regional');
     toast.success('Excel exportado!');
   };
 
@@ -299,9 +339,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   <Button size="sm" variant="outline" onClick={handleExportExcel}>
                     <Download className="w-4 h-4 mr-1" /> Exportar Excel
                   </Button>
-                  {selectedYear && (
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
-                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
+                  {activeSelectedYear && (
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(activeSelectedYear))}>
+                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {activeSelectedYear}
                     </Button>
                   )}
                 </div>
@@ -311,23 +351,24 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
         </Card>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-28"><SelectValue placeholder="Ano" /></SelectTrigger>
-          <SelectContent>
-            {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {VEHICLE_TYPES.map(t => (
-              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {!isUsingSharedFilters && (
+        <div className="flex flex-wrap gap-2">
+          <Select value={activeSelectedYear} onValueChange={handleYearChange}>
+            <SelectTrigger className="w-28"><SelectValue placeholder="Ano" /></SelectTrigger>
+            <SelectContent>
+              {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={activeSelectedType} onValueChange={handleTypeChange}>
+            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {VEHICLE_TYPES.map(t => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {regionSummary.length === 0 ? (
         <Card className="p-8 text-center">
@@ -356,7 +397,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" />
-                Participação Mensal por Região — {selectedYear}
+                Participação Mensal por Região — {activeSelectedYear}
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={monthlyChartData}>
@@ -376,7 +417,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
           {/* Region summary table */}
           <Card className="p-0 overflow-hidden">
             <div className="p-4 border-b">
-              <h3 className="font-semibold text-sm">Resumo Regional — {selectedYear}</h3>
+              <h3 className="font-semibold text-sm">Resumo Regional — {activeSelectedYear}</h3>
             </div>
             <Table>
               <TableHeader>
@@ -410,7 +451,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" />
-                Evolução Regional por Ano ({VEHICLE_TYPES.find(v => v.value === selectedType)?.label})
+                Evolução Regional por Ano até {activeSelectedYear} ({VEHICLE_TYPES.find(v => v.value === activeSelectedType)?.label})
               </h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={multiYearData}>
