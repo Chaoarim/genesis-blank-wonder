@@ -104,8 +104,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
     return [...trends].sort((a, b) => b.latestQty - a.latestQty).slice(0, 5).map(t => t.model);
   }, [trends]);
 
-  const allChartModels = useMemo(() => trends.map(t => t.model), [trends]);
-
   const chartDataTop = useMemo(() => {
     return years.map(year => {
       const point: Record<string, number | string> = { year: String(year) };
@@ -116,25 +114,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
       return point;
     });
   }, [years, chartModelsTop, filtered]);
-
-  const allChartData = useMemo(() => {
-    return years.map(year => {
-      const point: Record<string, number | string> = { year: String(year) };
-      allChartModels.forEach(model => {
-        const entry = filtered.find(r => r.year === year && r.model === model);
-        point[model] = entry ? entry.quantity : 0;
-      });
-      return point;
-    });
-  }, [years, allChartModels, filtered]);
-
-  const ALL_COLORS = useMemo(() => {
-    const base = [...CHART_COLORS];
-    const extra = ['#14b8a6', '#a855f7', '#f43f5e', '#0ea5e9', '#d946ef', '#facc15', '#22d3ee', '#fb923c', '#4ade80', '#e879f9',
-      '#7c3aed', '#059669', '#dc2626', '#2563eb', '#c026d3', '#ca8a04', '#0891b2', '#ea580c', '#16a34a', '#a21caf'];
-    while (base.length < allChartModels.length) base.push(extra[base.length % extra.length]);
-    return base;
-  }, [allChartModels]);
 
   if (years.length < 2 || currentWindowYears.length < 2) {
     return (
