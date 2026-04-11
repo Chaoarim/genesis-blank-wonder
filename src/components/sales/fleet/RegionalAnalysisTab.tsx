@@ -182,7 +182,7 @@ export function RegionalAnalysisTab({
 
   const totalQuantity = useMemo(() => regionSummary.reduce((s, r) => s + r.quantity, 0), [regionSummary]);
 
-  // Multi-year evolution chart — pure DB
+  // Multi-year evolution chart — use quantities when available for visual differentiation
   const multiYearData = useMemo(() => {
     if (!activeSelectedType) return [];
 
@@ -193,6 +193,7 @@ export function RegionalAnalysisTab({
       return r.year <= selectedYearNumber;
     });
     const allYears = [...new Set(typeData.map(r => r.year))].sort((a, b) => a - b);
+    const hasQty = typeData.some(r => r.quantity > 0);
 
     return allYears.map(year => {
       const yearData = typeData.filter(r => r.year === year);
@@ -200,8 +201,12 @@ export function RegionalAnalysisTab({
       REGIONS.forEach(region => {
         const regionRows = yearData.filter(r => r.region === region);
         if (regionRows.length > 0) {
-          const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
-          row[region] = Number(avg.toFixed(2));
+          if (hasQty) {
+            row[region] = regionRows.reduce((s, r) => s + r.quantity, 0);
+          } else {
+            const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
+            row[region] = Number(avg.toFixed(2));
+          }
         } else {
           row[region] = 0;
         }
@@ -209,6 +214,11 @@ export function RegionalAnalysisTab({
       return row;
     });
   }, [data, activeSelectedType, activeSelectedYear]);
+
+  const evolutionUsesQuantity = useMemo(() => {
+    if (!activeSelectedType) return false;
+    return data.some(r => r.vehicle_type === activeSelectedType && r.quantity > 0);
+  }, [data, activeSelectedType]);
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
