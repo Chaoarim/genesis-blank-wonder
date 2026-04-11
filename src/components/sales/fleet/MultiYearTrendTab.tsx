@@ -78,8 +78,7 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
       if (windowSummary.delta > 0 && (windowSummary.growthPercent > 10 || windowSummary.cagrPercent > 3)) trend = 'up';
       else if (windowSummary.delta < 0 && windowSummary.growthPercent < -10) trend = 'down';
 
-      if (avgPos <= 25 || latest.position <= 25 || bestWindow.growthPercent > 10) {
-        results.push({
+      results.push({
           model,
           years: sorted,
           latestQty: latest.quantity,
@@ -91,7 +90,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
           bestWindowGrowth: roundTrend(bestWindow.growthPercent),
           bestWindowLabel: formatYearWindowLabel(bestWindow.years),
         });
-      }
     });
 
     return results.sort((a, b) => b.growth !== a.growth ? b.growth - a.growth : b.latestQty - a.latestQty);
@@ -100,11 +98,13 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
   const growing = useMemo(() => trends.filter(t => t.trend === 'up').slice(0, 5), [trends]);
   const declining = useMemo(() => [...trends].filter(t => t.trend === 'down').sort((a, b) => a.growth - b.growth).slice(0, 5), [trends]);
 
-  const chartModels = useMemo(() => {
+  const chartModelsTop = useMemo(() => {
     const positive = trends.filter(t => t.growth > 0).slice(0, 5).map(t => t.model);
     if (positive.length) return positive;
     return [...trends].sort((a, b) => b.latestQty - a.latestQty).slice(0, 5).map(t => t.model);
   }, [trends]);
+
+  const allChartModels = useMemo(() => trends.map(t => t.model), [trends]);
 
   const chartData = useMemo(() => {
     return years.map(year => {
