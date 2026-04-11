@@ -104,8 +104,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
     return [...trends].sort((a, b) => b.latestQty - a.latestQty).slice(0, 5).map(t => t.model);
   }, [trends]);
 
-  const allChartModels = useMemo(() => trends.map(t => t.model), [trends]);
-
   const chartDataTop = useMemo(() => {
     return years.map(year => {
       const point: Record<string, number | string> = { year: String(year) };
@@ -116,25 +114,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
       return point;
     });
   }, [years, chartModelsTop, filtered]);
-
-  const allChartData = useMemo(() => {
-    return years.map(year => {
-      const point: Record<string, number | string> = { year: String(year) };
-      allChartModels.forEach(model => {
-        const entry = filtered.find(r => r.year === year && r.model === model);
-        point[model] = entry ? entry.quantity : 0;
-      });
-      return point;
-    });
-  }, [years, allChartModels, filtered]);
-
-  const ALL_COLORS = useMemo(() => {
-    const base = [...CHART_COLORS];
-    const extra = ['#14b8a6', '#a855f7', '#f43f5e', '#0ea5e9', '#d946ef', '#facc15', '#22d3ee', '#fb923c', '#4ade80', '#e879f9',
-      '#7c3aed', '#059669', '#dc2626', '#2563eb', '#c026d3', '#ca8a04', '#0891b2', '#ea580c', '#16a34a', '#a21caf'];
-    while (base.length < allChartModels.length) base.push(extra[base.length % extra.length]);
-    return base;
-  }, [allChartModels]);
 
   if (years.length < 2 || currentWindowYears.length < 2) {
     return (
@@ -186,29 +165,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
         </ResponsiveContainer>
       </Card>
 
-      <Card className="p-4">
-        <h3 className="font-semibold text-sm mb-3">Todos os Veículos — Evolução Histórica Completa ({allChartModels.length} modelos)</h3>
-        <ResponsiveContainer width="100%" height={450}>
-          <LineChart data={allChartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-            <YAxis tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
-            <Legend wrapperStyle={{ fontSize: 9 }} />
-            {allChartModels.map((model, index) => (
-              <Line
-                key={model}
-                type="monotone"
-                dataKey={model}
-                stroke={ALL_COLORS[index]}
-                strokeWidth={1.5}
-                dot={false}
-                connectNulls
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-0 overflow-hidden border-emerald-500/30">
