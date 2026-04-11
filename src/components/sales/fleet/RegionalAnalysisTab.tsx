@@ -485,8 +485,8 @@ export function RegionalAnalysisTab({
                     textAnchor={multiYearData.length > 10 ? 'end' : 'middle'}
                     height={multiYearData.length > 10 ? 50 : 30}
                   />
-                  <YAxis tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => `${v}%`} />
+                  <YAxis tickFormatter={v => evolutionUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number) => evolutionUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   {REGIONS.map(region => (
                     <Bar key={region} dataKey={region} stackId="a" fill={REGION_COLORS[region]} />
