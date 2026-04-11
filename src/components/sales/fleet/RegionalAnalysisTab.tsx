@@ -484,14 +484,15 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     if (!selectedType) return [];
 
     const SEED_MAP: Record<number, Record<string, Record<string, number[]>>> = {
+      2018: FENABRAVE_2018_SEED,
       2017: FENABRAVE_2017_SEED,
-      2010: FENABRAVE_2010_SEED,
-      2011: FENABRAVE_2011_SEED,
-      2012: FENABRAVE_2012_SEED,
-      2013: FENABRAVE_2013_SEED,
-      2014: FENABRAVE_2014_SEED,
-      2015: FENABRAVE_2015_SEED,
       2016: FENABRAVE_2016_SEED,
+      2015: FENABRAVE_2015_SEED,
+      2014: FENABRAVE_2014_SEED,
+      2013: FENABRAVE_2013_SEED,
+      2012: FENABRAVE_2012_SEED,
+      2011: FENABRAVE_2011_SEED,
+      2010: FENABRAVE_2010_SEED,
     };
 
     const typeData = data.filter(r => r.vehicle_type === selectedType);
