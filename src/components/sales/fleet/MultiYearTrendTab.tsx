@@ -146,7 +146,15 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartDataTop}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+            <XAxis
+              dataKey="year"
+              ticks={years.map(year => String(year))}
+              interval={0}
+              tick={{ fontSize: 12 }}
+              angle={years.length > 8 ? -35 : 0}
+              textAnchor={years.length > 8 ? 'end' : 'middle'}
+              height={years.length > 8 ? 56 : 30}
+            />
             <YAxis tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
             <Legend wrapperStyle={{ fontSize: 11 }} />

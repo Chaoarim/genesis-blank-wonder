@@ -571,7 +571,15 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={demandTrend} margin={{ left: 10, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="ano" tick={{ fontSize: 11 }} />
+                <XAxis
+                  dataKey="ano"
+                  ticks={demandTrend.map(item => item.ano)}
+                  interval={0}
+                  tick={{ fontSize: 11 }}
+                  angle={demandTrend.length > 8 ? -35 : 0}
+                  textAnchor={demandTrend.length > 8 ? 'end' : 'middle'}
+                  height={demandTrend.length > 8 ? 56 : 30}
+                />
                 <YAxis tickFormatter={formatCompactUnits} />
                 <Tooltip
                   formatter={(v: number, name: string) => [
