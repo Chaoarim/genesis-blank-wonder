@@ -541,6 +541,20 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       );
     }
 
+    if (filtered.length === 0 && selectedYear === '2021' && FENABRAVE_2021_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2021_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2021-${selectedType}-${region}-${index + 1}`,
+          year: 2021,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
     return filtered;
   }, [data, selectedYear, selectedType]);
 
