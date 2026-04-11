@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useTransition } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -468,6 +468,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
   const [productSearch, setProductSearch] = useState('');
   const [listMatches, setListMatches] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState('potencial');
+  const [, startFilterTransition] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchRankings = useCallback(async () => {
@@ -501,11 +502,15 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
     setRankings(rows);
     const uniqueYears = [...new Set(rows.map(r => r.year))].sort((a, b) => b - a);
     setYears(uniqueYears);
-    if (!selectedYear && uniqueYears.length > 0) setSelectedYear(String(uniqueYears[0]));
+    setSelectedYear(prev => {
+      if (!uniqueYears.length) return '';
+      if (prev && uniqueYears.includes(Number(prev))) return prev;
+      return String(uniqueYears[0]);
+    });
     setLoading(false);
-  }, [selectedYear]);
+  }, []);
 
-  useEffect(() => { fetchRankings(); }, []);
+  useEffect(() => { fetchRankings(); }, [fetchRankings]);
 
   // Only load item matches when the "demanda" tab is active (lazy)
   useEffect(() => {
@@ -701,13 +706,13 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
+        <Select value={selectedYear} onValueChange={v => startFilterTransition(() => setSelectedYear(v))}>
           <SelectTrigger className="w-28"><SelectValue placeholder="Ano" /></SelectTrigger>
           <SelectContent>
             {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={selectedType} onValueChange={setSelectedType}>
+        <Select value={selectedType} onValueChange={v => startFilterTransition(() => setSelectedType(v))}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="automovel">Automóveis</SelectItem>
@@ -832,7 +837,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           </TabsContent>
 
           <TabsContent value="tendencia">
-            <MultiYearTrendTab rankings={rankings} selectedType={selectedType} />
+            <MultiYearTrendTab rankings={rankings} selectedType={selectedType} selectedYear={selectedYear} />
           </TabsContent>
 
           <TabsContent value="ranking">

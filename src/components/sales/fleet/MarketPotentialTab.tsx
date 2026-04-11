@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
 import { getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText, type FleetAnalysisItem } from './fleetAnalysisData';
+import { buildTrailingYearWindow, formatYearWindowLabel, roundTrend, sortYearsAsc, summarizeSeriesWindow } from './fleetTrendUtils';
 
 interface FleetRanking {
   id: string;
@@ -47,6 +48,8 @@ interface ItemPotential {
   potentialScore: number;
   investmentScore: number;
   classification: 'imediato' | 'investimento' | 'nicho' | 'sem_match';
+  yearlyFleet: Map<number, number>;
+  windowCagr: number;
 }
 
 interface TopChartItem {
@@ -123,67 +126,79 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   }, [rankings, selectedType]);
 
   const availableYears = useMemo(() => {
-    return [...new Set(allYearRankings.map(r => r.year))].sort();
+    return sortYearsAsc([...new Set(allYearRankings.map(r => r.year))]);
   }, [allYearRankings]);
+
+  const selectedYearNumber = useMemo(() => {
+    const n = Number(selectedYear);
+    if (Number.isFinite(n) && availableYears.includes(n)) return n;
+    return availableYears[availableYears.length - 1] ?? 0;
+  }, [selectedYear, availableYears]);
+
+  const analysisWindowYears = useMemo(
+    () => buildTrailingYearWindow(availableYears, selectedYearNumber),
+    [availableYears, selectedYearNumber],
+  );
+  const analysisWindowLabel = useMemo(
+    () => formatYearWindowLabel(analysisWindowYears),
+    [analysisWindowYears],
+  );
+
+  // Pre-compute fleet models per year once
+  const fleetByYear = useMemo(() => {
+    const map = new Map<number, Array<FleetRanking & { normalized: string; keywords: string[] }>>();
+    for (const year of availableYears) {
+      map.set(year, allYearRankings
+        .filter(r => r.year === year)
+        .map(r => ({ ...r, ...getFleetModelKeywords(r.model) })));
+    }
+    return map;
+  }, [allYearRankings, availableYears]);
+
+  const selectedYearFleetModels = useMemo(
+    () => fleetByYear.get(selectedYearNumber) || [],
+    [fleetByYear, selectedYearNumber],
+  );
 
   const filteredRankings = useMemo(() => {
     return rankings
-      .filter(r => r.year === Number(selectedYear) && r.vehicle_type === selectedType)
+      .filter(r => r.year === selectedYearNumber && r.vehicle_type === selectedType)
       .sort((a, b) => a.position - b.position);
-  }, [rankings, selectedYear, selectedType]);
+  }, [rankings, selectedYearNumber, selectedType]);
 
-  // Cross parts × fleet (current + multi-year trend)
-  const itemPotentials: ItemPotential[] = useMemo(() => {
-    if (!activeItems.length || !filteredRankings.length) return [];
-
-    const fleetModels = filteredRankings.map(r => ({
-      ...r,
-      ...getFleetModelKeywords(r.model),
-    }));
-
-    const fleetByYear = new Map<number, typeof fleetModels>();
-    for (const year of availableYears) {
-      const yearRankings = allYearRankings
-        .filter(r => r.year === year)
-        .map(r => ({
-          ...r,
-            ...getFleetModelKeywords(r.model),
-        }));
-      fleetByYear.set(year, yearRankings);
-    }
-
+  // Pre-compute per-item yearly fleet history ONCE (doesn't depend on selectedYear)
+  const itemHistories = useMemo(() => {
+    if (!activeItems.length || !availableYears.length) return [];
     return activeItems.map(item => {
       const itemText = normalizeFleetText(`${item.aplicacao} ${item.produto} ${item.searchText}`);
-
-      const matchedModels: string[] = [];
-      let totalFleetCurrent = 0;
-      for (const fm of fleetModels) {
-        const strongMatch = itemMatchesFleetModel(itemText, fm.normalized, fm.keywords);
-        if (strongMatch) {
-          matchedModels.push(fm.model);
-          totalFleetCurrent += fm.quantity;
-        }
-      }
-
+      const yearlyFleet = new Map<number, number>();
       let totalFleetAllYears = 0;
-      const yearlyFleet: number[] = [];
+      let matchedYearsCount = 0;
       for (const year of availableYears) {
         const yearModels = fleetByYear.get(year) || [];
         let yearTotal = 0;
-        for (const fm of yearModels) {
-          const strongMatch = itemMatchesFleetModel(itemText, fm.normalized, fm.keywords);
-          if (strongMatch) yearTotal += fm.quantity;
-        }
+        for (const fm of yearModels) { if (itemMatchesFleetModel(itemText, fm.normalized, fm.keywords)) yearTotal += fm.quantity; }
+        yearlyFleet.set(year, yearTotal);
         totalFleetAllYears += yearTotal;
-        yearlyFleet.push(yearTotal);
+        if (yearTotal > 0) matchedYearsCount++;
       }
+      return { item, itemText, yearlyFleet, totalFleetAllYears, matchedYearsCount };
+    });
+  }, [activeItems, availableYears, fleetByYear]);
 
-      let trendGrowth = 0;
-      if (yearlyFleet.length >= 2) {
-        const first = yearlyFleet[0] || 1;
-        const last = yearlyFleet[yearlyFleet.length - 1];
-        trendGrowth = ((last - first) / Math.max(first, 1)) * 100;
+  // Cross parts × fleet – now only the selected-year slice changes on year switch
+  const itemPotentials: ItemPotential[] = useMemo(() => {
+    if (!itemHistories.length || !selectedYearFleetModels.length) return [];
+
+    return itemHistories.map(h => {
+      const matchedModels: string[] = [];
+      for (const fm of selectedYearFleetModels) {
+        if (itemMatchesFleetModel(h.itemText, fm.normalized, fm.keywords)) matchedModels.push(fm.model);
       }
+      const totalFleetCurrent = h.yearlyFleet.get(selectedYearNumber) || 0;
+      const windowSummary = summarizeSeriesWindow(h.yearlyFleet, analysisWindowYears);
+      const trendGrowth = roundTrend(windowSummary.growthPercent);
+      const windowCagr = roundTrend(windowSummary.cagrPercent);
 
       const estimatedDemandCurrent = Math.round(totalFleetCurrent * ANNUAL_REPLACEMENT_RATE);
 
@@ -195,49 +210,50 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           ))
         : 0;
 
-      // Investment score: consider fleet presence even without multi-year trend
-      const investmentScore = totalFleetCurrent > 0
+      const hasPositiveWindowTrend = analysisWindowYears.length >= 2 && windowSummary.delta > 0 && (windowSummary.growthPercent >= 8 || windowSummary.cagrPercent >= 2.5);
+
+      const investmentScore = h.totalFleetAllYears > 0
         ? Math.min(100, Math.round(
-            (trendGrowth > 0 ? Math.min(trendGrowth, 50) : 0) +
-            (Math.log10(totalFleetAllYears + 1) * 15) +
-            (matchedModels.length * 5) +
-            (availableYears.length > 3 && trendGrowth > 20 ? 20 : 0) +
-            (totalFleetCurrent > 0 && availableYears.length <= 1 ? 15 : 0)
+            (windowSummary.growthPercent > 0 ? Math.min(windowSummary.growthPercent, 45) : 0) +
+            (windowSummary.cagrPercent > 0 ? Math.min(windowSummary.cagrPercent * 4, 18) : 0) +
+            (windowSummary.delta > 0 ? Math.min(Math.log10(windowSummary.delta + 1) * 12, 18) : 0) +
+            (Math.log10(windowSummary.total + 1) * 10) +
+            (Math.log10(h.totalFleetAllYears + 1) * 8) +
+            (matchedModels.length * 4) +
+            (h.matchedYearsCount >= Math.min(analysisWindowYears.length, 3) ? 10 : 0)
           ))
         : 0;
 
       let classification: ItemPotential['classification'] = 'sem_match';
-      if (totalFleetCurrent > 0 && trendGrowth > 15) {
-        if (potentialScore >= 60) classification = 'imediato';
-        else classification = 'investimento';
-      } else if (totalFleetCurrent > 0 && trendGrowth > 0) {
-        classification = 'investimento';
-      } else if (totalFleetCurrent > 0 && availableYears.length <= 1) {
-        // Only 1 year of data — still count as investment if fleet match exists
-        classification = 'investimento';
-      } else if (potentialScore >= 40) {
+      if (potentialScore >= 60 && totalFleetCurrent > 0) {
         classification = 'imediato';
-      } else if (potentialScore > 0) {
+      } else if (hasPositiveWindowTrend && investmentScore > 0) {
+        classification = 'investimento';
+      } else if (potentialScore >= 30) {
         classification = 'nicho';
+      } else if (investmentScore > 0 && totalFleetCurrent > 0) {
+        classification = 'investimento';
       }
 
       return {
-        id: item.id,
-        codigo: item.codigo,
-        produto: item.produto,
-        aplicacao: item.aplicacao,
-        fornecedor: item.fornecedor,
+        id: h.item.id,
+        codigo: h.item.codigo,
+        produto: h.item.produto,
+        aplicacao: h.item.aplicacao,
+        fornecedor: h.item.fornecedor,
         matchedModels,
         totalFleetCurrent,
-        totalFleetAllYears,
+        totalFleetAllYears: h.totalFleetAllYears,
         estimatedDemandCurrent,
         trendGrowth,
         potentialScore,
         investmentScore,
         classification,
+        yearlyFleet: h.yearlyFleet,
+        windowCagr,
       };
-    }).sort((a, b) => b.potentialScore - a.potentialScore);
-  }, [activeItems, filteredRankings, allYearRankings, availableYears]);
+    }).sort((a, b) => b.potentialScore !== a.potentialScore ? b.potentialScore - a.potentialScore : b.investmentScore - a.investmentScore);
+  }, [itemHistories, selectedYearFleetModels, selectedYearNumber, analysisWindowYears]);
 
   const searchTerms = useMemo(() => {
     return [externalProductSearch, searchQuery]
@@ -260,7 +276,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   const itemsConsideredCount = displayItems.length;
   const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
   const growthItems = useMemo(
-    () => displayItems.filter(p => p.classification === 'investimento'),
+    () => displayItems.filter(p => p.investmentScore > 0 && p.trendGrowth > 0),
     [displayItems],
   );
   const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
@@ -297,40 +313,16 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
       }));
   }, [growthItems]);
 
-  const activeItemsById = useMemo(() => {
-    return new Map(activeItems.map(item => [item.id, item]));
-  }, [activeItems]);
-
-  const itemsForTrend = useMemo(() => {
-    return displayItems
-      .map(item => activeItemsById.get(item.id))
-      .filter((item): item is PartItem => Boolean(item));
-  }, [displayItems, activeItemsById]);
-
   // Demand forecast by year
   const demandTrend = useMemo(() => {
-    if (availableYears.length < 2 || !withMatch.length || !itemsForTrend.length) return [];
+    if (availableYears.length < 2 || !displayItems.length) return [];
+    const matchedItems = displayItems.filter(p => p.totalFleetAllYears > 0);
+    if (!matchedItems.length) return [];
     return availableYears.map(year => {
-      const yearModels = allYearRankings.filter(r => r.year === year);
-      const fleetKws = yearModels.map(r => ({
-        ...getFleetModelKeywords(r.model),
-        quantity: r.quantity,
-      }));
-      let totalDemandYear = 0;
-      for (const item of itemsForTrend) {
-        const itemText = normalizeFleetText(`${item.aplicacao} ${item.produto} ${item.searchText}`);
-        for (const fm of fleetKws) {
-          const strongMatch = itemMatchesFleetModel(itemText, fm.normalized, fm.keywords);
-          if (strongMatch) totalDemandYear += fm.quantity;
-        }
-      }
-      return {
-        ano: String(year),
-        demanda: Math.round(totalDemandYear * ANNUAL_REPLACEMENT_RATE),
-        frota: totalDemandYear,
-      };
+      const total = matchedItems.reduce((s, p) => s + (p.yearlyFleet.get(year) || 0), 0);
+      return { ano: String(year), demanda: Math.round(total * ANNUAL_REPLACEMENT_RATE), frota: total };
     });
-  }, [availableYears, allYearRankings, itemsForTrend, withMatch]);
+  }, [availableYears, displayItems]);
 
   // Classification distribution
   const classDistribution = useMemo(() => {
@@ -361,7 +353,9 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
       'Score Investimento': p.investmentScore,
       'Demanda Estimada': p.estimatedDemandCurrent,
       'Frota Match (Atual)': p.totalFleetCurrent,
-      'Tendência (%)': `${p.trendGrowth.toFixed(1)}%`,
+      'Crescimento 5 anos (%)': `${p.trendGrowth.toFixed(1)}%`,
+      'CAGR (%)': `${p.windowCagr.toFixed(1)}%`,
+      'Janela': analysisWindowLabel,
       Classificação: p.classification === 'imediato' ? 'Venda Imediata'
         : p.classification === 'investimento' ? 'Investimento'
         : p.classification === 'nicho' ? 'Nicho' : 'Sem Match',
@@ -403,6 +397,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <Badge variant="outline">Fonte da análise: {sourceLabel}</Badge>
+        <Badge variant="outline">Janela 5 anos: {analysisWindowLabel}</Badge>
         {selectedFabricante !== '__all__' && <Badge variant="secondary">Fabricante: {selectedFabricante}</Badge>}
         {searchTerms.length > 0 && (
           <Badge variant="secondary" className="gap-1.5">
@@ -440,7 +435,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
             <Clock className="w-3 h-3" /> Investimento
           </p>
           <p className="text-xl font-bold text-blue-600">{growthCount}</p>
-          <p className="text-[10px] text-muted-foreground">peças c/ crescimento</p>
+          <p className="text-[10px] text-muted-foreground">peças c/ crescimento 5 anos</p>
         </Card>
       </div>
 
@@ -542,7 +537,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" />
-            Top 10 — Melhor Investimento a Longo Prazo
+            Top 10 — Investimento ({analysisWindowLabel})
           </h3>
           {topInvestment.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -563,7 +558,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-10">Nenhuma peça com crescimento positivo no período histórico</p>
+            <p className="text-sm text-muted-foreground text-center py-10">Nenhuma peça com crescimento na janela {analysisWindowLabel}</p>
           )}
         </Card>
 
@@ -613,10 +608,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <div className="p-3 border-b bg-accent/30">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-primary" />
-            Análise de Potencial — {sourceLabel} ({selectedYear})
+            Análise de Potencial — {sourceLabel} ({selectedYearNumber})
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            Cruzamento: {sourceLabel.toLowerCase()} × frota FENABRAVE ({filteredRankings.length} modelos)
+            Cruzamento: {sourceLabel.toLowerCase()} × frota FENABRAVE ({filteredRankings.length} modelos, crescimento {analysisWindowLabel})
           </p>
         </div>
         <div className="overflow-auto max-h-[50vh]">
@@ -631,7 +626,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
                 <TableHead className="text-center">Score Invest.</TableHead>
                 <TableHead className="text-right">Demanda Est.</TableHead>
                 <TableHead className="text-right">Frota Match</TableHead>
-                <TableHead className="text-right">Tendência</TableHead>
+                <TableHead className="text-right">Cresc. 5 anos</TableHead>
                 <TableHead>Classificação</TableHead>
               </TableRow>
             </TableHeader>
@@ -705,9 +700,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           💡 Insights Estratégicos
         </h3>
         <ul className="text-sm space-y-1.5 text-muted-foreground">
+          <li>🗓️ Janela de análise: <strong>{analysisWindowLabel}</strong> — crescimento calculado dentro deste bloco de 5 anos</li>
           <li>📦 A fonte atual (<strong>{sourceLabel}</strong>) contém <strong>{activeItems.length}</strong> itens; no recorte exibido, <strong>{withMatch.length}</strong> ({itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}%) têm match com a frota circulante</li>
           <li>🔥 <strong>{immediateCount} peças</strong> classificadas como "Venda Imediata" — alta demanda atual, ideal para compra imediata</li>
-          <li>📈 <strong>{growthCount} peças</strong> com tendência positiva de crescimento na frota — oportunidades de investimento no médio/longo prazo</li>
+          <li>📈 <strong>{growthCount} peças</strong> com tendência positiva na janela de 5 anos — oportunidades de investimento</li>
           {demandTrend.length >= 2 && (
             <li>📊 Demanda estimada: de <strong>{formatCompactUnits(demandTrend[0]?.demanda || 0)}</strong> ({demandTrend[0]?.ano}) para <strong>{formatCompactUnits(demandTrend[demandTrend.length - 1]?.demanda || 0)}</strong> ({demandTrend[demandTrend.length - 1]?.ano})</li>
           )}
