@@ -923,7 +923,14 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={multiYearData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
+                  <XAxis
+                    dataKey="year"
+                    ticks={multiYearData.map(item => item.year)}
+                    interval={0}
+                    angle={multiYearData.length > 8 ? -35 : 0}
+                    textAnchor={multiYearData.length > 8 ? 'end' : 'middle'}
+                    height={multiYearData.length > 8 ? 56 : 30}
+                  />
                   <YAxis tickFormatter={v => `${v}%`} />
                   <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
                   <Legend />
