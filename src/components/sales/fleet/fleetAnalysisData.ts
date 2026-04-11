@@ -189,17 +189,32 @@ async function _loadFleetAnalysisItemsInternal(preferredOwnerId?: string | null)
     };
   }
 
-  // Only use supplier catalog items for fleet cross-reference analysis
-  // Inventory is NOT included — the goal is to cross supplier parts × fleet demand
-  const supplierItems = await fetchSupplierCatalogItems(ownerId);
+  const [inventoryItems, supplierItems] = await Promise.all([
+    fetchInventoryAnalysisItems(ownerId),
+    fetchSupplierCatalogItems(ownerId),
+  ]);
+
+  const mergedItems = new Map<string, FleetAnalysisItem>();
+
+  inventoryItems.forEach(item => {
+    mergedItems.set(getItemUniqueKey(item), item);
+  });
+
+  supplierItems.forEach(item => {
+    mergedItems.set(getItemUniqueKey(item), item);
+  });
 
   const sourceLabel =
-    supplierItems.length > 0
-      ? 'Lista de fornecedores'
-      : 'Nenhuma lista de fornecedores encontrada';
+    inventoryItems.length > 0 && supplierItems.length > 0
+      ? 'Estoque + lista de fornecedores'
+      : supplierItems.length > 0
+        ? 'Lista de fornecedores'
+        : inventoryItems.length > 0
+          ? 'Estoque / lista de peças'
+          : 'Nenhuma lista de peças encontrada';
 
   return {
-    items: supplierItems,
+    items: [...mergedItems.values()],
     ownerId,
     sourceLabel,
   };
