@@ -94,6 +94,14 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
   useEffect(() => { fetchRankings(); }, [fetchRankings]);
 
+  const handleYearChange = useCallback((value: string) => {
+    startFilterTransition(() => setSelectedYear(value));
+  }, [startFilterTransition]);
+
+  const handleTypeChange = useCallback((value: string) => {
+    startFilterTransition(() => setSelectedType(value));
+  }, [startFilterTransition]);
+
   // Only load item matches when the "demanda" tab is active (lazy)
   useEffect(() => {
     if (activeTab !== 'demanda' || !rankings.length) return;
@@ -283,13 +291,13 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
-        <Select value={selectedYear} onValueChange={v => startFilterTransition(() => setSelectedYear(v))}>
+        <Select value={selectedYear} onValueChange={handleYearChange}>
           <SelectTrigger className="w-28"><SelectValue placeholder="Ano" /></SelectTrigger>
           <SelectContent>
             {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={selectedType} onValueChange={v => startFilterTransition(() => setSelectedType(v))}>
+        <Select value={selectedType} onValueChange={handleTypeChange}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="automovel">Automóveis</SelectItem>
@@ -406,7 +414,13 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           </TabsContent>
 
           <TabsContent value="regional">
-            <RegionalAnalysisTab readOnly={readOnly} />
+            <RegionalAnalysisTab
+              readOnly={readOnly}
+              selectedYear={selectedYear}
+              selectedType={selectedType}
+              onSelectedYearChange={handleYearChange}
+              onSelectedTypeChange={handleTypeChange}
+            />
           </TabsContent>
 
           <TabsContent value="manutencao">
