@@ -256,8 +256,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   const displayItems = filtered;
   const itemsConsideredCount = displayItems.length;
   const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
+  const growthItems = useMemo(
+    () => displayItems.filter(p => p.totalFleetCurrent > 0 && p.trendGrowth > 0),
+    [displayItems],
+  );
   const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
-  const investCount = useMemo(() => displayItems.filter(p => p.classification === 'investimento').length, [displayItems]);
+  const growthCount = useMemo(() => growthItems.length, [growthItems]);
   const totalDemand = useMemo(() => withMatch.reduce((s, p) => s + p.estimatedDemandCurrent, 0), [withMatch]);
 
   // Top 10 chart — by demand
@@ -275,9 +279,12 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
   // Top 10 investment
   const topInvestment = useMemo((): TopChartItem[] => {
-    return [...displayItems]
+    return [...growthItems]
       .filter(p => p.investmentScore > 0)
-      .sort((a, b) => b.investmentScore - a.investmentScore)
+      .sort((a, b) => {
+        if (b.investmentScore !== a.investmentScore) return b.investmentScore - a.investmentScore;
+        return b.trendGrowth - a.trendGrowth;
+      })
       .slice(0, 10)
       .map(p => ({
         label: p.codigo.length > 14 ? `${p.codigo.substring(0, 14)}…` : p.codigo,
@@ -285,7 +292,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         value: p.investmentScore,
         score: p.trendGrowth,
       }));
-  }, [displayItems]);
+  }, [growthItems]);
 
   const activeItemsById = useMemo(() => {
     return new Map(activeItems.map(item => [item.id, item]));
@@ -429,7 +436,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center justify-center gap-1">
             <Clock className="w-3 h-3" /> Investimento
           </p>
-          <p className="text-xl font-bold text-blue-600">{investCount}</p>
+          <p className="text-xl font-bold text-blue-600">{growthCount}</p>
           <p className="text-[10px] text-muted-foreground">peças c/ crescimento</p>
         </Card>
       </div>
@@ -553,7 +560,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-10">Dados insuficientes para análise de tendência</p>
+            <p className="text-sm text-muted-foreground text-center py-10">Nenhuma peça com crescimento positivo no período histórico</p>
           )}
         </Card>
 
@@ -697,7 +704,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <ul className="text-sm space-y-1.5 text-muted-foreground">
           <li>📦 A fonte atual (<strong>{sourceLabel}</strong>) contém <strong>{activeItems.length}</strong> itens; no recorte exibido, <strong>{withMatch.length}</strong> ({itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}%) têm match com a frota circulante</li>
           <li>🔥 <strong>{immediateCount} peças</strong> classificadas como "Venda Imediata" — alta demanda atual, ideal para compra imediata</li>
-          <li>📈 <strong>{investCount} peças</strong> com potencial de "Investimento" — tendência de crescimento na frota</li>
+          <li>📈 <strong>{growthCount} peças</strong> com tendência positiva de crescimento na frota — oportunidades de investimento no médio/longo prazo</li>
           {demandTrend.length >= 2 && (
             <li>📊 Demanda estimada: de <strong>{formatCompactUnits(demandTrend[0]?.demanda || 0)}</strong> ({demandTrend[0]?.ano}) para <strong>{formatCompactUnits(demandTrend[demandTrend.length - 1]?.demanda || 0)}</strong> ({demandTrend[demandTrend.length - 1]?.ano})</li>
           )}
