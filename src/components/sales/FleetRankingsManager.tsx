@@ -268,15 +268,20 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
     if (error) { toast.error('Erro ao carregar rankings'); setLoading(false); return; }
     const dbRows = (data || []) as FleetRanking[];
 
-    // Merge seed data for 2017 if not already in DB
-    const has2017InDb = dbRows.some(r => r.year === 2017);
+    // Merge seed data for years not already in DB
     let rows = dbRows;
-    if (!has2017InDb) {
-      const seedRows: FleetRanking[] = FENABRAVE_2017_RANKING_SEED.map((s, i) => ({
-        ...s,
-        id: `seed-2017-${s.vehicle_type}-${i}`,
-      }));
-      rows = [...dbRows, ...seedRows];
+    const seedSets: { year: number; data: Omit<FleetRanking, 'id'>[] }[] = [
+      { year: 2017, data: FENABRAVE_2017_RANKING_SEED },
+      { year: 2018, data: FENABRAVE_2018_RANKING_SEED },
+    ];
+    for (const { year, data: seedData } of seedSets) {
+      if (!dbRows.some(r => r.year === year)) {
+        const seedRows: FleetRanking[] = seedData.map((s, i) => ({
+          ...s,
+          id: `seed-${year}-${s.vehicle_type}-${i}`,
+        }));
+        rows = [...rows, ...seedRows];
+      }
     }
 
     setRankings(rows);
