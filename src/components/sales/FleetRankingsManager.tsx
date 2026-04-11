@@ -159,7 +159,19 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
       .order('year', { ascending: false })
       .order('position', { ascending: true });
     if (error) { toast.error('Erro ao carregar rankings'); setLoading(false); return; }
-    const rows = (data || []) as FleetRanking[];
+    const dbRows = (data || []) as FleetRanking[];
+
+    // Merge seed data for 2017 if not already in DB
+    const has2017InDb = dbRows.some(r => r.year === 2017);
+    let rows = dbRows;
+    if (!has2017InDb) {
+      const seedRows: FleetRanking[] = FENABRAVE_2017_RANKING_SEED.map((s, i) => ({
+        ...s,
+        id: `seed-2017-${s.vehicle_type}-${i}`,
+      }));
+      rows = [...dbRows, ...seedRows];
+    }
+
     setRankings(rows);
     const uniqueYears = [...new Set(rows.map(r => r.year))].sort((a, b) => b - a);
     setYears(uniqueYears);
