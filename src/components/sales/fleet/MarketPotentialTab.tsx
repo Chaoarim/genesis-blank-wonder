@@ -397,6 +397,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <Badge variant="outline">Fonte da análise: {sourceLabel}</Badge>
+        <Badge variant="outline">Janela 5 anos: {analysisWindowLabel}</Badge>
         {selectedFabricante !== '__all__' && <Badge variant="secondary">Fabricante: {selectedFabricante}</Badge>}
         {searchTerms.length > 0 && (
           <Badge variant="secondary" className="gap-1.5">
@@ -434,7 +435,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
             <Clock className="w-3 h-3" /> Investimento
           </p>
           <p className="text-xl font-bold text-blue-600">{growthCount}</p>
-          <p className="text-[10px] text-muted-foreground">peças c/ crescimento</p>
+          <p className="text-[10px] text-muted-foreground">peças c/ crescimento 5 anos</p>
         </Card>
       </div>
 
@@ -536,7 +537,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" />
-            Top 10 — Melhor Investimento a Longo Prazo
+            Top 10 — Investimento ({analysisWindowLabel})
           </h3>
           {topInvestment.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -557,7 +558,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-10">Nenhuma peça com crescimento positivo no período histórico</p>
+            <p className="text-sm text-muted-foreground text-center py-10">Nenhuma peça com crescimento na janela {analysisWindowLabel}</p>
           )}
         </Card>
 
@@ -607,10 +608,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <div className="p-3 border-b bg-accent/30">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-primary" />
-            Análise de Potencial — {sourceLabel} ({selectedYear})
+            Análise de Potencial — {sourceLabel} ({selectedYearNumber})
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            Cruzamento: {sourceLabel.toLowerCase()} × frota FENABRAVE ({filteredRankings.length} modelos)
+            Cruzamento: {sourceLabel.toLowerCase()} × frota FENABRAVE ({filteredRankings.length} modelos, crescimento {analysisWindowLabel})
           </p>
         </div>
         <div className="overflow-auto max-h-[50vh]">
@@ -625,7 +626,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
                 <TableHead className="text-center">Score Invest.</TableHead>
                 <TableHead className="text-right">Demanda Est.</TableHead>
                 <TableHead className="text-right">Frota Match</TableHead>
-                <TableHead className="text-right">Tendência</TableHead>
+                <TableHead className="text-right">Cresc. 5 anos</TableHead>
                 <TableHead>Classificação</TableHead>
               </TableRow>
             </TableHeader>
@@ -699,9 +700,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           💡 Insights Estratégicos
         </h3>
         <ul className="text-sm space-y-1.5 text-muted-foreground">
+          <li>🗓️ Janela de análise: <strong>{analysisWindowLabel}</strong> — crescimento calculado dentro deste bloco de 5 anos</li>
           <li>📦 A fonte atual (<strong>{sourceLabel}</strong>) contém <strong>{activeItems.length}</strong> itens; no recorte exibido, <strong>{withMatch.length}</strong> ({itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}%) têm match com a frota circulante</li>
           <li>🔥 <strong>{immediateCount} peças</strong> classificadas como "Venda Imediata" — alta demanda atual, ideal para compra imediata</li>
-          <li>📈 <strong>{growthCount} peças</strong> com tendência positiva de crescimento na frota — oportunidades de investimento no médio/longo prazo</li>
+          <li>📈 <strong>{growthCount} peças</strong> com tendência positiva na janela de 5 anos — oportunidades de investimento</li>
           {demandTrend.length >= 2 && (
             <li>📊 Demanda estimada: de <strong>{formatCompactUnits(demandTrend[0]?.demanda || 0)}</strong> ({demandTrend[0]?.ano}) para <strong>{formatCompactUnits(demandTrend[demandTrend.length - 1]?.demanda || 0)}</strong> ({demandTrend[demandTrend.length - 1]?.ano})</li>
           )}
