@@ -49,7 +49,8 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
     return years[years.length - 1] ?? 0;
   }, [selectedYear, years]);
 
-  const currentWindowYears = useMemo(() => buildTrailingYearWindow(years, selectedYearNumber), [years, selectedYearNumber]);
+  // Use ALL available years for growth analysis (full range)
+  const currentWindowYears = useMemo(() => years, [years]);
   const currentWindowLabel = useMemo(() => formatYearWindowLabel(currentWindowYears), [currentWindowYears]);
   const rollingWindows = useMemo(() => buildRollingYearWindows(years), [years]);
 
@@ -133,10 +134,10 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
           <BarChart3 className="w-5 h-5 text-primary" />
           <div>
             <p className="font-semibold text-sm">
-              Janela de Crescimento 5 Anos: {currentWindowLabel}
+              Crescimento Período Completo: {currentWindowLabel}
             </p>
             <p className="text-xs text-muted-foreground">
-              Detecta quais carros aceleraram mais nesse bloco — ideal para planejar investimento em compra de peças.
+              Analisa o crescimento de todos os anos disponíveis — ideal para planejar investimento em compra de peças.
             </p>
           </div>
         </div>
