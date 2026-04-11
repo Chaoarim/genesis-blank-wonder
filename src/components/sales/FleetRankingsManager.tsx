@@ -486,6 +486,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
       { year: 2017, data: FENABRAVE_2017_RANKING_SEED },
       { year: 2018, data: FENABRAVE_2018_RANKING_SEED },
       { year: 2019, data: FENABRAVE_2019_RANKING_SEED },
+      { year: 2020, data: FENABRAVE_2020_RANKING_SEED },
     ];
     for (const { year, data: seedData } of seedSets) {
       if (!dbRows.some(r => r.year === year)) {
