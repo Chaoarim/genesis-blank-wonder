@@ -165,29 +165,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
         </ResponsiveContainer>
       </Card>
 
-      <Card className="p-4">
-        <h3 className="font-semibold text-sm mb-3">Todos os Veículos — Evolução Histórica Completa ({allChartModels.length} modelos)</h3>
-        <ResponsiveContainer width="100%" height={450}>
-          <LineChart data={allChartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-            <YAxis tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
-            <Legend wrapperStyle={{ fontSize: 9 }} />
-            {allChartModels.map((model, index) => (
-              <Line
-                key={model}
-                type="monotone"
-                dataKey={model}
-                stroke={ALL_COLORS[index]}
-                strokeWidth={1.5}
-                dot={false}
-                connectNulls
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-0 overflow-hidden border-emerald-500/30">
