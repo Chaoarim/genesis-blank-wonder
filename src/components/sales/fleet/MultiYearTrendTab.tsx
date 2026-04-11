@@ -78,8 +78,7 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
       if (windowSummary.delta > 0 && (windowSummary.growthPercent > 10 || windowSummary.cagrPercent > 3)) trend = 'up';
       else if (windowSummary.delta < 0 && windowSummary.growthPercent < -10) trend = 'down';
 
-      if (avgPos <= 25 || latest.position <= 25 || bestWindow.growthPercent > 10) {
-        results.push({
+      results.push({
           model,
           years: sorted,
           latestQty: latest.quantity,
@@ -91,7 +90,6 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
           bestWindowGrowth: roundTrend(bestWindow.growthPercent),
           bestWindowLabel: formatYearWindowLabel(bestWindow.years),
         });
-      }
     });
 
     return results.sort((a, b) => b.growth !== a.growth ? b.growth - a.growth : b.latestQty - a.latestQty);
@@ -100,22 +98,43 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
   const growing = useMemo(() => trends.filter(t => t.trend === 'up').slice(0, 5), [trends]);
   const declining = useMemo(() => [...trends].filter(t => t.trend === 'down').sort((a, b) => a.growth - b.growth).slice(0, 5), [trends]);
 
-  const chartModels = useMemo(() => {
+  const chartModelsTop = useMemo(() => {
     const positive = trends.filter(t => t.growth > 0).slice(0, 5).map(t => t.model);
     if (positive.length) return positive;
     return [...trends].sort((a, b) => b.latestQty - a.latestQty).slice(0, 5).map(t => t.model);
   }, [trends]);
 
-  const chartData = useMemo(() => {
+  const allChartModels = useMemo(() => trends.map(t => t.model), [trends]);
+
+  const chartDataTop = useMemo(() => {
     return years.map(year => {
       const point: Record<string, number | string> = { year: String(year) };
-      chartModels.forEach(model => {
+      chartModelsTop.forEach(model => {
         const entry = filtered.find(r => r.year === year && r.model === model);
         point[model] = entry ? entry.quantity : 0;
       });
       return point;
     });
-  }, [years, chartModels, filtered]);
+  }, [years, chartModelsTop, filtered]);
+
+  const allChartData = useMemo(() => {
+    return years.map(year => {
+      const point: Record<string, number | string> = { year: String(year) };
+      allChartModels.forEach(model => {
+        const entry = filtered.find(r => r.year === year && r.model === model);
+        point[model] = entry ? entry.quantity : 0;
+      });
+      return point;
+    });
+  }, [years, allChartModels, filtered]);
+
+  const ALL_COLORS = useMemo(() => {
+    const base = [...CHART_COLORS];
+    const extra = ['#14b8a6', '#a855f7', '#f43f5e', '#0ea5e9', '#d946ef', '#facc15', '#22d3ee', '#fb923c', '#4ade80', '#e879f9',
+      '#7c3aed', '#059669', '#dc2626', '#2563eb', '#c026d3', '#ca8a04', '#0891b2', '#ea580c', '#16a34a', '#a21caf'];
+    while (base.length < allChartModels.length) base.push(extra[base.length % extra.length]);
+    return base;
+  }, [allChartModels]);
 
   if (years.length < 2 || currentWindowYears.length < 2) {
     return (
@@ -144,15 +163,15 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
       </Card>
 
       <Card className="p-4">
-        <h3 className="font-semibold text-sm mb-3">Evolução histórica dos modelos com maior crescimento</h3>
+        <h3 className="font-semibold text-sm mb-3">Top 5 — Modelos com maior crescimento</h3>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
+          <LineChart data={chartDataTop}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="year" tick={{ fontSize: 12 }} />
             <YAxis tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            {chartModels.map((model, index) => (
+            {chartModelsTop.map((model, index) => (
               <Line
                 key={model}
                 type="monotone"
@@ -160,6 +179,30 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
                 stroke={CHART_COLORS[index]}
                 strokeWidth={2}
                 dot={{ r: 3 }}
+                connectNulls
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold text-sm mb-3">Todos os Veículos — Evolução Histórica Completa ({allChartModels.length} modelos)</h3>
+        <ResponsiveContainer width="100%" height={450}>
+          <LineChart data={allChartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+            <YAxis tickFormatter={v => `${(Number(v) / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+            <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR')} />
+            <Legend wrapperStyle={{ fontSize: 9 }} />
+            {allChartModels.map((model, index) => (
+              <Line
+                key={model}
+                type="monotone"
+                dataKey={model}
+                stroke={ALL_COLORS[index]}
+                strokeWidth={1.5}
+                dot={false}
                 connectNulls
               />
             ))}
@@ -264,7 +307,7 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trends.slice(0, 30).map(t => (
+              {trends.map(t => (
                 <TableRow key={t.model}>
                   <TableCell className="font-medium text-sm">{t.model}</TableCell>
                   <TableCell className="text-right font-mono text-xs">{t.latestQty.toLocaleString('pt-BR')}</TableCell>
