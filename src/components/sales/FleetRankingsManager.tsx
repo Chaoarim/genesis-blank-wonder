@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell } from 'recharts';
 import { Upload, Loader2, Trash2, Car, TrendingUp, AlertTriangle, Package, Search, Download, FileSpreadsheet, Settings } from 'lucide-react';
 import { MaintenanceCycleTab } from './fleet/MaintenanceCycleTab';
 import { MultiYearTrendTab } from './fleet/MultiYearTrendTab';
@@ -49,16 +49,40 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
   const fetchRankings = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('fleet_rankings')
-      .select('*')
-      .order('year', { ascending: false })
-      .order('position', { ascending: true });
-    if (error) { toast.error('Erro ao carregar rankings'); setLoading(false); return; }
-    const rows = (data || []) as FleetRanking[];
 
-    setRankings(rows);
-    const uniqueYears = [...new Set(rows.map(r => r.year))].sort((a, b) => b - a);
+    // Paginate to fetch ALL records (Supabase default limit = 1000)
+    const PAGE_SIZE = 1000;
+    let allRows: FleetRanking[] = [];
+    let page = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error } = await supabase
+        .from('fleet_rankings')
+        .select('*')
+        .order('year', { ascending: false })
+        .order('position', { ascending: true })
+        .range(from, to);
+
+      if (error) {
+        toast.error('Erro ao carregar rankings');
+        setLoading(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        hasMore = false;
+      } else {
+        allRows = allRows.concat(data as FleetRanking[]);
+        if (data.length < PAGE_SIZE) hasMore = false;
+        else page++;
+      }
+    }
+
+    setRankings(allRows);
+    const uniqueYears = [...new Set(allRows.map(r => r.year))].sort((a, b) => b - a);
     setYears(uniqueYears);
     setSelectedYear(prev => {
       if (!uniqueYears.length) return '';
@@ -125,23 +149,19 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
       const hasHeader = header.includes('posicao') || header.includes('modelo') || header.includes('position');
       const dataLines = hasHeader ? lines.slice(1) : lines;
 
-      // Prompt for year
       const yearInput = prompt('Qual o ANO deste ranking? (ex: 2009)');
       if (!yearInput || isNaN(Number(yearInput))) { toast.error('Ano inválido'); setImporting(false); return; }
       const year = Number(yearInput);
 
-      // Prompt for type
       const typeInput = prompt('Tipo: 1 = Automóvel, 2 = Comercial Leve');
       const vehicleType = typeInput === '2' ? 'comercial_leve' : 'automovel';
 
-      // Delete existing data for this year+type
       await supabase.from('fleet_rankings').delete().eq('year', year).eq('vehicle_type', vehicleType);
 
       const rows: { year: number; position: number; model: string; quantity: number; vehicle_type: string }[] = [];
       for (let i = 0; i < dataLines.length; i++) {
         const parts = dataLines[i].split(/[,;\t]/).map(s => s.trim().replace(/"/g, ''));
         if (parts.length < 3) continue;
-        // Try: position, model, quantity
         const pos = parseInt(parts[0].replace(/[°ºª]/g, ''));
         const model = parts[1];
         const qty = parseInt(parts[2].replace(/\./g, '').replace(/,/g, ''));
@@ -208,7 +228,6 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
     });
   }, [top10, listMatches, totalEmplacamentos]);
 
-
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
@@ -226,7 +245,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
         </Button>
       </div>
 
-{!readOnly && (
+      {!readOnly && (
         <Card className="border-primary/30 bg-primary/5">
           <Collapsible>
             <CollapsibleTrigger asChild>
@@ -238,7 +257,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
             <CollapsibleContent>
               <div className="p-4 space-y-3 border-t border-primary/20">
                 <p className="text-xs text-muted-foreground">
-                  <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>). 
+                  <strong>Formato CSV:</strong> posição, modelo, quantidade (ex: <code>1,VW/GOL,303014</code>).
                   Separe automóveis e comerciais leves em importações distintas. Ao importar, informe o ano e o tipo do ranking.
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -290,7 +309,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
       {filteredRankings.length === 0 ? (
         <Card className="p-8 text-center">
           <Car className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">Nenhum ranking importado ainda. Importe um CSV com dados FENABRAVE.</p>
+          <p className="text-muted-foreground">Nenhum ranking encontrado para este filtro.</p>
         </Card>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -321,7 +340,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
                 Expectativa de Alta Demanda — Top 10 ({selectedYear})
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
-                Veículos com maior frota circulante geram maior demanda por peças de reposição. 
+                Veículos com maior frota circulante geram maior demanda por peças de reposição.
                 Priorize estoque para os modelos mais emplacados.
               </p>
               <Table>
@@ -331,7 +350,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
                     <TableHead>Modelo</TableHead>
                     <TableHead className="text-right">Emplacamentos</TableHead>
                     <TableHead className="text-right">% Mercado</TableHead>
-                      <TableHead className="text-right">Peças na Lista</TableHead>
+                    <TableHead className="text-right">Peças na Lista</TableHead>
                     <TableHead>Prioridade</TableHead>
                   </TableRow>
                 </TableHeader>
