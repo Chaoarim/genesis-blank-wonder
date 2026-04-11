@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
-import { extractApplicationFromChave } from '@/hooks/usePartsDatabase';
+import { getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText, type FleetAnalysisItem } from './fleetAnalysisData';
 
 interface FleetRanking {
   id: string;
@@ -28,16 +28,10 @@ interface Props {
   selectedType: string;
   readOnly?: boolean;
   externalProductSearch?: string;
+  adminUserId?: string | null;
 }
 
-interface PartItem {
-  id: string;
-  codigo: string;
-  produto: string;
-  aplicacao: string;
-  fornecedor: string;
-  searchText: string;
-}
+type PartItem = FleetAnalysisItem;
 
 interface ItemPotential {
   id: string;
@@ -65,87 +59,37 @@ interface TopChartItem {
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6'];
 const ANNUAL_REPLACEMENT_RATE = 0.15;
 
-function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 function formatCompactUnits(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
   return Math.round(value).toLocaleString('pt-BR');
 }
 
-function isStrongFleetMatch(itemText: string, normalizedModel: string, keywords: string[]) {
-  if (!itemText) return false;
-  if (normalizedModel && itemText.includes(normalizedModel)) return true;
-  if (!keywords.length) return false;
-
-  const matchedKeywordCount = keywords.filter(keyword => itemText.includes(keyword)).length;
-  if (keywords.length <= 2) return matchedKeywordCount >= 1;
-
-  return matchedKeywordCount >= 2;
-}
-
-export function MarketPotentialTab({ rankings, selectedYear, selectedType, externalProductSearch = '' }: Props) {
+export function MarketPotentialTab({ rankings, selectedYear, selectedType, externalProductSearch = '', adminUserId = null }: Props) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFabricante, setSelectedFabricante] = useState<string>('__all__');
+  const [sourceLabel, setSourceLabel] = useState('Lista de peças');
+  const [hasOwnerContext, setHasOwnerContext] = useState(true);
 
-  const reloadItems = async () => {
+  const reloadItems = useCallback(async () => {
     setLoading(true);
-    // Fetch all parts (shared table, no user_id filter)
-    const allItems: PartItem[] = [];
-    let page = 0;
-    const pageSize = 1000;
-    let hasMore = true;
-    while (hasMore) {
-      const { data, error } = await supabase
-        .from('parts')
-        .select('id, codigo_peca, descricao, modelo_veiculo, marca_veiculo, fabricante, anos_aplicacao, chave_de_busca, contexto_ia')
-        .order('created_at', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
-      if (error || !data || data.length === 0) { hasMore = false; break; }
-      allItems.push(...data.map(d => {
-        const fornecedor = (d.fabricante || '').trim();
-        const codigo = (d.codigo_peca || '').trim();
-        const produto = (d.descricao || '').trim();
-        const chaveBusca = (d.chave_de_busca || '').trim();
-        const aplicacaoFallback = [d.marca_veiculo, d.modelo_veiculo, d.anos_aplicacao].filter(Boolean).join(' ').trim();
-        const aplicacaoLimpa = extractApplicationFromChave(chaveBusca, fornecedor, codigo, produto)
-          .replace(/[,/\s]*CAT[ÁA]LOGO MASTER\s*/gi, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        return {
-          id: d.id,
-          codigo,
-          produto,
-          aplicacao: aplicacaoLimpa || aplicacaoFallback || chaveBusca,
-          fornecedor,
-          searchText: [
-            aplicacaoLimpa,
-            aplicacaoFallback,
-            d.marca_veiculo || '',
-            d.modelo_veiculo || '',
-            d.anos_aplicacao || '',
-            chaveBusca,
-            d.contexto_ia || '',
-          ].filter(Boolean).join(' '),
-        };
-      }));
-      if (data.length < pageSize) hasMore = false;
-      else page++;
+    try {
+      const { items: loadedItems, sourceLabel: resolvedSourceLabel, ownerId } = await loadFleetAnalysisItems(adminUserId);
+      setItems(loadedItems);
+      setSourceLabel(resolvedSourceLabel);
+      setHasOwnerContext(Boolean(ownerId));
+    } catch (error) {
+      console.error('Erro ao carregar lista para análise de potencial:', error);
+      toast.error('Erro ao carregar a lista de peças da análise');
+      setItems([]);
+      setSourceLabel('Erro ao carregar lista de peças');
+      setHasOwnerContext(Boolean(adminUserId));
+    } finally {
+      setLoading(false);
     }
-    setItems(allItems);
-    setLoading(false);
-  };
+  }, [adminUserId]);
 
   // Unique fabricante list for selection
   const fabricantes = useMemo(() => {
@@ -156,11 +100,22 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   // Items filtered by selected fabricante
   const activeItems = useMemo(() => {
     if (selectedFabricante === '__all__') return items;
-    const fabricanteNormalizado = normalize(selectedFabricante);
-    return items.filter(i => normalize(i.fornecedor) === fabricanteNormalizado);
+    const fabricanteNormalizado = normalizeFleetText(selectedFabricante);
+    return items.filter(i => normalizeFleetText(i.fornecedor) === fabricanteNormalizado);
   }, [items, selectedFabricante]);
 
-  useEffect(() => { reloadItems(); }, []);
+  useEffect(() => {
+    reloadItems();
+  }, [reloadItems]);
+
+  useEffect(() => {
+    if (
+      selectedFabricante !== '__all__' &&
+      !fabricantes.some(fabricante => normalizeFleetText(fabricante) === normalizeFleetText(selectedFabricante))
+    ) {
+      setSelectedFabricante('__all__');
+    }
+  }, [fabricantes, selectedFabricante]);
 
   // Get all years available in rankings for trend analysis
   const allYearRankings = useMemo(() => {
@@ -183,8 +138,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
     const fleetModels = filteredRankings.map(r => ({
       ...r,
-      normalized: normalize(r.model),
-      keywords: normalize(r.model).split(' ').filter(Boolean).filter(w => w.length > 2),
+      ...getFleetModelKeywords(r.model),
     }));
 
     const fleetByYear = new Map<number, typeof fleetModels>();
@@ -193,19 +147,18 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         .filter(r => r.year === year)
         .map(r => ({
           ...r,
-          normalized: normalize(r.model),
-          keywords: normalize(r.model).split(' ').filter(Boolean).filter(w => w.length > 2),
+            ...getFleetModelKeywords(r.model),
         }));
       fleetByYear.set(year, yearRankings);
     }
 
     return activeItems.map(item => {
-      const itemText = normalize(`${item.aplicacao} ${item.produto} ${item.searchText}`);
+      const itemText = normalizeFleetText(`${item.aplicacao} ${item.produto} ${item.searchText}`);
 
       const matchedModels: string[] = [];
       let totalFleetCurrent = 0;
       for (const fm of fleetModels) {
-        const strongMatch = isStrongFleetMatch(itemText, fm.normalized, fm.keywords);
+        const strongMatch = itemMatchesFleetModel(itemText, fm.normalized, fm.keywords);
         if (strongMatch) {
           matchedModels.push(fm.model);
           totalFleetCurrent += fm.quantity;
@@ -218,7 +171,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         const yearModels = fleetByYear.get(year) || [];
         let yearTotal = 0;
         for (const fm of yearModels) {
-          const strongMatch = isStrongFleetMatch(itemText, fm.normalized, fm.keywords);
+          const strongMatch = itemMatchesFleetModel(itemText, fm.normalized, fm.keywords);
           if (strongMatch) yearTotal += fm.quantity;
         }
         totalFleetAllYears += yearTotal;
@@ -283,21 +236,25 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     }).sort((a, b) => b.potentialScore - a.potentialScore);
   }, [activeItems, filteredRankings, allYearRankings, availableYears]);
 
-  const combinedSearch = externalProductSearch || searchQuery;
+  const searchTerms = useMemo(() => {
+    return [externalProductSearch, searchQuery]
+      .map(term => term.trim())
+      .filter(Boolean);
+  }, [externalProductSearch, searchQuery]);
+
+  const searchLabel = useMemo(() => searchTerms.join(' • '), [searchTerms]);
 
   const filtered = useMemo(() => {
-    if (!combinedSearch) return itemPotentials;
-    const q = normalize(combinedSearch);
-    return itemPotentials.filter(p =>
-      normalize(p.codigo).includes(q) ||
-      normalize(p.produto).includes(q) ||
-      normalize(p.fornecedor).includes(q) ||
-      normalize(p.aplicacao).includes(q)
-    );
-  }, [itemPotentials, combinedSearch]);
+    if (!searchTerms.length) return itemPotentials;
 
-  // KPIs — use filtered data when product search is active
-  const displayItems = combinedSearch ? filtered : itemPotentials;
+    return itemPotentials.filter(item => {
+      const searchableText = normalizeFleetText(`${item.codigo} ${item.produto} ${item.fornecedor} ${item.aplicacao}`);
+      return searchTerms.every(term => searchableText.includes(normalizeFleetText(term)));
+    });
+  }, [itemPotentials, searchTerms]);
+
+  const displayItems = filtered;
+  const itemsConsideredCount = displayItems.length;
   const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
   const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
   const investCount = useMemo(() => displayItems.filter(p => p.classification === 'investimento').length, [displayItems]);
@@ -328,23 +285,32 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         value: p.investmentScore,
         score: p.trendGrowth,
       }));
-  }, [itemPotentials]);
+  }, [displayItems]);
+
+  const activeItemsById = useMemo(() => {
+    return new Map(activeItems.map(item => [item.id, item]));
+  }, [activeItems]);
+
+  const itemsForTrend = useMemo(() => {
+    return displayItems
+      .map(item => activeItemsById.get(item.id))
+      .filter((item): item is PartItem => Boolean(item));
+  }, [displayItems, activeItemsById]);
 
   // Demand forecast by year
   const demandTrend = useMemo(() => {
-    if (availableYears.length < 2 || !withMatch.length) return [];
+    if (availableYears.length < 2 || !withMatch.length || !itemsForTrend.length) return [];
     return availableYears.map(year => {
       const yearModels = allYearRankings.filter(r => r.year === year);
       const fleetKws = yearModels.map(r => ({
-        normalized: normalize(r.model),
-        keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+        ...getFleetModelKeywords(r.model),
         quantity: r.quantity,
       }));
       let totalDemandYear = 0;
-      for (const item of activeItems) {
-        const itemText = normalize(`${item.aplicacao} ${item.produto} ${item.searchText}`);
+      for (const item of itemsForTrend) {
+        const itemText = normalizeFleetText(`${item.aplicacao} ${item.produto} ${item.searchText}`);
         for (const fm of fleetKws) {
-          const strongMatch = isStrongFleetMatch(itemText, fm.normalized, fm.keywords);
+          const strongMatch = itemMatchesFleetModel(itemText, fm.normalized, fm.keywords);
           if (strongMatch) totalDemandYear += fm.quantity;
         }
       }
@@ -354,7 +320,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         frota: totalDemandYear,
       };
     });
-  }, [availableYears, allYearRankings, activeItems, withMatch]);
+  }, [availableYears, allYearRankings, itemsForTrend, withMatch]);
 
   // Classification distribution
   const classDistribution = useMemo(() => {
@@ -403,8 +369,13 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
         <h3 className="font-semibold">Potencial de Mercado — Lista de Peças</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          Nenhuma peça encontrada na base de dados. Adicione peças pelo painel administrativo para que o sistema cruze com os dados da FENABRAVE e identifique oportunidades de venda.
+          {hasOwnerContext
+            ? 'Nenhuma peça encontrada no estoque ou na lista de fornecedores. Importe sua lista para cruzar com a frota circulante e prever demanda real.'
+            : 'Faça login para carregar sua lista de peças e cruzar os itens com a frota circulante da FENABRAVE.'}
         </p>
+        <Badge variant="outline" className="mx-auto">
+          Fonte da análise: {sourceLabel}
+        </Badge>
       </Card>
     );
   }
@@ -420,22 +391,27 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
   return (
     <div className="space-y-4">
-      {externalProductSearch && (
-        <Badge variant="secondary" className="gap-1.5">
-          <Search className="w-3 h-3" />
-          Filtro produto: "{externalProductSearch}" — {filtered.length} resultados
-        </Badge>
-      )}
+      <div className="flex flex-wrap gap-2">
+        <Badge variant="outline">Fonte da análise: {sourceLabel}</Badge>
+        {selectedFabricante !== '__all__' && <Badge variant="secondary">Fabricante: {selectedFabricante}</Badge>}
+        {searchTerms.length > 0 && (
+          <Badge variant="secondary" className="gap-1.5">
+            <Search className="w-3 h-3" />
+            Filtro produto: "{searchLabel}" — {filtered.length} resultados
+          </Badge>
+        )}
+      </div>
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Peças Analisadas</p>
-          <p className="text-xl font-bold">{activeItems.length.toLocaleString('pt-BR')}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Itens Considerados</p>
+          <p className="text-xl font-bold">{itemsConsideredCount.toLocaleString('pt-BR')}</p>
+          <p className="text-[10px] text-muted-foreground">de {activeItems.length.toLocaleString('pt-BR')} na fonte atual</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Com Potencial</p>
           <p className="text-xl font-bold text-primary">{withMatch.length.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] text-muted-foreground">{activeItems.length > 0 ? Math.round((withMatch.length / activeItems.length) * 100) : 0}% da lista</p>
+          <p className="text-[10px] text-muted-foreground">{itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}% do recorte</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Demanda Total Est.</p>
@@ -627,10 +603,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <div className="p-3 border-b bg-accent/30">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-primary" />
-            Análise de Potencial — Lista de Peças ({selectedYear})
+            Análise de Potencial — {sourceLabel} ({selectedYear})
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            Cruzamento: lista de peças × frota FENABRAVE ({filteredRankings.length} modelos)
+            Cruzamento: {sourceLabel.toLowerCase()} × frota FENABRAVE ({filteredRankings.length} modelos)
           </p>
         </div>
         <div className="overflow-auto max-h-[50vh]">
@@ -719,7 +695,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           💡 Insights Estratégicos
         </h3>
         <ul className="text-sm space-y-1.5 text-muted-foreground">
-          <li>📦 A lista de peças contém <strong>{items.length}</strong> itens, <strong>{withMatch.length}</strong> ({items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}%) têm match com a frota circulante</li>
+          <li>📦 A fonte atual (<strong>{sourceLabel}</strong>) contém <strong>{activeItems.length}</strong> itens; no recorte exibido, <strong>{withMatch.length}</strong> ({itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}%) têm match com a frota circulante</li>
           <li>🔥 <strong>{immediateCount} peças</strong> classificadas como "Venda Imediata" — alta demanda atual, ideal para compra imediata</li>
           <li>📈 <strong>{investCount} peças</strong> com potencial de "Investimento" — tendência de crescimento na frota</li>
           {demandTrend.length >= 2 && (
