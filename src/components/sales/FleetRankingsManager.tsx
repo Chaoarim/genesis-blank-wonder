@@ -33,6 +33,112 @@ interface FleetRankingsManagerProps {
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
 
+// ── FENABRAVE – Ranking dos emplacamentos acumulados até Dezembro/2017 ──
+const FENABRAVE_2017_RANKING_SEED: Omit<FleetRanking, 'id'>[] = [
+  // AUTOMÓVEIS
+  { year: 2017, vehicle_type: 'automovel', position: 1, model: 'GM/ONIX', quantity: 188654 },
+  { year: 2017, vehicle_type: 'automovel', position: 2, model: 'HYUNDAI/HB20', quantity: 105539 },
+  { year: 2017, vehicle_type: 'automovel', position: 3, model: 'FORD/KA', quantity: 94803 },
+  { year: 2017, vehicle_type: 'automovel', position: 4, model: 'VW/GOL', quantity: 73919 },
+  { year: 2017, vehicle_type: 'automovel', position: 5, model: 'GM/PRISMA', quantity: 68988 },
+  { year: 2017, vehicle_type: 'automovel', position: 6, model: 'RENAULT/SANDERO', quantity: 67344 },
+  { year: 2017, vehicle_type: 'automovel', position: 7, model: 'TOYOTA/COROLLA', quantity: 66188 },
+  { year: 2017, vehicle_type: 'automovel', position: 8, model: 'FIAT/MOBI', quantity: 54270 },
+  { year: 2017, vehicle_type: 'automovel', position: 9, model: 'JEEP/COMPASS', quantity: 49187 },
+  { year: 2017, vehicle_type: 'automovel', position: 10, model: 'HONDA/HR-V', quantity: 47775 },
+  { year: 2017, vehicle_type: 'automovel', position: 11, model: 'VW/FOX/CROSS FOX', quantity: 42716 },
+  { year: 2017, vehicle_type: 'automovel', position: 12, model: 'TOYOTA/ETIOS HB', quantity: 41986 },
+  { year: 2017, vehicle_type: 'automovel', position: 13, model: 'HYUNDAI/CRETA', quantity: 41625 },
+  { year: 2017, vehicle_type: 'automovel', position: 14, model: 'VW/VOYAGE', quantity: 40822 },
+  { year: 2017, vehicle_type: 'automovel', position: 15, model: 'JEEP/RENEGADE', quantity: 38330 },
+  { year: 2017, vehicle_type: 'automovel', position: 16, model: 'FIAT/UNO', quantity: 34165 },
+  { year: 2017, vehicle_type: 'automovel', position: 17, model: 'VW/UP', quantity: 34161 },
+  { year: 2017, vehicle_type: 'automovel', position: 18, model: 'NISSAN/KICKS', quantity: 33464 },
+  { year: 2017, vehicle_type: 'automovel', position: 19, model: 'HYUNDAI/HB20S', quantity: 32232 },
+  { year: 2017, vehicle_type: 'automovel', position: 20, model: 'TOYOTA/ETIOS SEDAN', quantity: 31395 },
+  { year: 2017, vehicle_type: 'automovel', position: 21, model: 'FORD/ECOSPORT', quantity: 31195 },
+  { year: 2017, vehicle_type: 'automovel', position: 22, model: 'FIAT/ARGO', quantity: 27925 },
+  { year: 2017, vehicle_type: 'automovel', position: 23, model: 'FORD/KA SEDAN', quantity: 27647 },
+  { year: 2017, vehicle_type: 'automovel', position: 24, model: 'RENAULT/LOGAN', quantity: 26010 },
+  { year: 2017, vehicle_type: 'automovel', position: 25, model: 'HONDA/CIVIC', quantity: 25871 },
+  { year: 2017, vehicle_type: 'automovel', position: 26, model: 'HONDA/FIT', quantity: 25347 },
+  { year: 2017, vehicle_type: 'automovel', position: 27, model: 'FIAT/SIENA', quantity: 24955 },
+  { year: 2017, vehicle_type: 'automovel', position: 28, model: 'GM/SPIN', quantity: 24713 },
+  { year: 2017, vehicle_type: 'automovel', position: 29, model: 'NISSAN/VERSA', quantity: 23370 },
+  { year: 2017, vehicle_type: 'automovel', position: 30, model: 'GM/COBALT', quantity: 22949 },
+  { year: 2017, vehicle_type: 'automovel', position: 31, model: 'RENAULT/KWID', quantity: 22576 },
+  { year: 2017, vehicle_type: 'automovel', position: 32, model: 'FIAT/PALIO', quantity: 20138 },
+  { year: 2017, vehicle_type: 'automovel', position: 33, model: 'GM/CRUZE SEDAN', quantity: 19192 },
+  { year: 2017, vehicle_type: 'automovel', position: 34, model: 'FORD/FIESTA', quantity: 19057 },
+  { year: 2017, vehicle_type: 'automovel', position: 35, model: 'RENAULT/DUSTER', quantity: 17638 },
+  { year: 2017, vehicle_type: 'automovel', position: 36, model: 'HONDA/CITY', quantity: 15974 },
+  { year: 2017, vehicle_type: 'automovel', position: 37, model: 'HONDA/WR-V', quantity: 15353 },
+  { year: 2017, vehicle_type: 'automovel', position: 38, model: 'NISSAN/MARCH', quantity: 14052 },
+  { year: 2017, vehicle_type: 'automovel', position: 39, model: 'RENAULT/CAPTUR', quantity: 13742 },
+  { year: 2017, vehicle_type: 'automovel', position: 40, model: 'TOYOTA/HILUX SW4', quantity: 12567 },
+  { year: 2017, vehicle_type: 'automovel', position: 41, model: 'PEUGEOT/208', quantity: 12157 },
+  { year: 2017, vehicle_type: 'automovel', position: 42, model: 'GM/TRACKER', quantity: 12136 },
+  { year: 2017, vehicle_type: 'automovel', position: 43, model: 'PEUGEOT/2008', quantity: 10571 },
+  { year: 2017, vehicle_type: 'automovel', position: 44, model: 'HYUNDAI/IX35', quantity: 10254 },
+  { year: 2017, vehicle_type: 'automovel', position: 45, model: 'CITROEN/C3', quantity: 9881 },
+  { year: 2017, vehicle_type: 'automovel', position: 46, model: 'VW/POLO', quantity: 8685 },
+  { year: 2017, vehicle_type: 'automovel', position: 47, model: 'CITROEN/AIRCROSS', quantity: 8314 },
+  { year: 2017, vehicle_type: 'automovel', position: 48, model: 'VW/JETTA', quantity: 7669 },
+  { year: 2017, vehicle_type: 'automovel', position: 49, model: 'GM/CRUZE HB', quantity: 7328 },
+  { year: 2017, vehicle_type: 'automovel', position: 50, model: 'FORD/FOCUS SEDAN', quantity: 6163 },
+  // COMERCIAIS LEVES
+  { year: 2017, vehicle_type: 'comercial_leve', position: 1, model: 'FIAT/STRADA', quantity: 54870 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 2, model: 'FIAT/TORO', quantity: 50723 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 3, model: 'VW/SAVEIRO', quantity: 42414 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 4, model: 'TOYOTA/HILUX', quantity: 34368 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 5, model: 'GM/S10', quantity: 30438 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 6, model: 'FORD/RANGER', quantity: 17830 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 7, model: 'GM/MONTANA', quantity: 14872 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 8, model: 'VW/AMAROK', quantity: 11964 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 9, model: 'RENAULT/OROCH', quantity: 11047 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 10, model: 'FIAT/FIORINO', quantity: 10947 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 11, model: 'MITSUBISHI/L200', quantity: 9946 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 12, model: 'RENAULT/MASTER', quantity: 6181 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 13, model: 'NISSAN/FRONTIER', quantity: 4057 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 14, model: 'HYUNDAI/HR', quantity: 4041 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 15, model: 'IVECO/DAILY 3514', quantity: 2008 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 16, model: 'KIA/K2500', quantity: 1650 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 17, model: 'FIAT/DUCATO', quantity: 1544 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 18, model: 'RENAULT/KANGOO', quantity: 1254 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 19, model: 'PEUGEOT/PARTNER', quantity: 939 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 20, model: 'M.BENZ/SPRINTER 313', quantity: 620 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 21, model: 'FIAT/DOBLO', quantity: 606 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 22, model: 'M.BENZ/VITO', quantity: 438 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 23, model: 'M.BENZ/SPRINTER', quantity: 424 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 24, model: 'CITROEN/JUMPER', quantity: 415 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 25, model: 'TOYOTA/HILUX SW4', quantity: 391 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 26, model: 'LIFAN/FOISON', quantity: 380 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 27, model: 'RAM/2500', quantity: 332 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 28, model: 'M.BENZ/SPRINTER 311', quantity: 283 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 29, model: 'FIAT/UNO', quantity: 166 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 30, model: 'PEUGEOT/EXPERT', quantity: 154 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 31, model: 'CITROEN/JUMPY', quantity: 121 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 32, model: 'EFFA/K01', quantity: 107 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 33, model: 'PEUGEOT/BOXER', quantity: 87 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 34, model: 'IVECO/DAILY', quantity: 82 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 35, model: 'M.BENZ/SPRINTER 415', quantity: 67 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 36, model: 'FOTON/AUMARK 1039', quantity: 53 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 37, model: 'RENAULT/RENAULT', quantity: 46 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 38, model: 'EFFA/V21', quantity: 26 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 39, model: 'JAC/T8', quantity: 25 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 40, model: 'VICS/SAVEIRO', quantity: 24 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 41, model: 'RELY/RELY PICK-UP', quantity: 24 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 42, model: 'EFFA/K02', quantity: 23 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 43, model: 'FOTON/AUMARK 3.5-12DT', quantity: 23 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 44, model: 'M.BENZ/SPRINTER 515', quantity: 22 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 45, model: 'HAFEI/RUIYI', quantity: 22 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 46, model: 'TOYOTA/BANDEIRANTE', quantity: 21 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 47, model: 'SHINERAY/P TRUCKS', quantity: 18 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 48, model: 'HAFEI/TOWNER', quantity: 18 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 49, model: 'FOTON/AUMARK 3.5-14DT', quantity: 18 },
+  { year: 2017, vehicle_type: 'comercial_leve', position: 50, model: 'EFFA/V22', quantity: 17 },
+];
+
 export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRankingsManagerProps) {
   const [rankings, setRankings] = useState<FleetRanking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +159,19 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
       .order('year', { ascending: false })
       .order('position', { ascending: true });
     if (error) { toast.error('Erro ao carregar rankings'); setLoading(false); return; }
-    const rows = (data || []) as FleetRanking[];
+    const dbRows = (data || []) as FleetRanking[];
+
+    // Merge seed data for 2017 if not already in DB
+    const has2017InDb = dbRows.some(r => r.year === 2017);
+    let rows = dbRows;
+    if (!has2017InDb) {
+      const seedRows: FleetRanking[] = FENABRAVE_2017_RANKING_SEED.map((s, i) => ({
+        ...s,
+        id: `seed-2017-${s.vehicle_type}-${i}`,
+      }));
+      rows = [...dbRows, ...seedRows];
+    }
+
     setRankings(rows);
     const uniqueYears = [...new Set(rows.map(r => r.year))].sort((a, b) => b - a);
     setYears(uniqueYears);
