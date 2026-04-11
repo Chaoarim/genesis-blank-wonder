@@ -49,7 +49,8 @@ export function MultiYearTrendTab({ rankings, selectedType, selectedYear }: Prop
     return years[years.length - 1] ?? 0;
   }, [selectedYear, years]);
 
-  const currentWindowYears = useMemo(() => buildTrailingYearWindow(years, selectedYearNumber), [years, selectedYearNumber]);
+  // Use ALL available years for growth analysis (full range)
+  const currentWindowYears = useMemo(() => years, [years]);
   const currentWindowLabel = useMemo(() => formatYearWindowLabel(currentWindowYears), [currentWindowYears]);
   const rollingWindows = useMemo(() => buildRollingYearWindows(years), [years]);
 
