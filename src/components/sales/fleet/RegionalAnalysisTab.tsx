@@ -756,6 +756,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2017, FENABRAVE_2017_SEED)} disabled={importing}>
                     📊 FENABRAVE 2017
                   </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2019, FENABRAVE_2019_SEED)} disabled={importing}>
+                    📊 FENABRAVE 2019
+                  </Button>
                 </div>
               </div>
             </CollapsibleContent>
