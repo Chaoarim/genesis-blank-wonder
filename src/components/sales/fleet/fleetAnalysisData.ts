@@ -119,7 +119,36 @@ async function fetchSupplierCatalogItems(ownerId: string): Promise<FleetAnalysis
   return items;
 }
 
+// ── Module-level cache to avoid redundant fetches across components ──
+let _cachedResult: FleetAnalysisSourceResult | null = null;
+let _cacheKey: string | null = null;
+let _cachePromise: Promise<FleetAnalysisSourceResult> | null = null;
+
+export function invalidateFleetAnalysisCache() {
+  _cachedResult = null;
+  _cacheKey = null;
+  _cachePromise = null;
+}
+
 export async function loadFleetAnalysisItems(preferredOwnerId?: string | null): Promise<FleetAnalysisSourceResult> {
+  const key = preferredOwnerId ?? '__auto__';
+  if (_cachedResult && _cacheKey === key) return _cachedResult;
+  if (_cachePromise && _cacheKey === key) return _cachePromise;
+
+  _cacheKey = key;
+  _cachePromise = _loadFleetAnalysisItemsInternal(preferredOwnerId).then(result => {
+    _cachedResult = result;
+    _cachePromise = null;
+    return result;
+  }).catch(err => {
+    _cachePromise = null;
+    _cacheKey = null;
+    throw err;
+  });
+  return _cachePromise;
+}
+
+async function _loadFleetAnalysisItemsInternal(preferredOwnerId?: string | null): Promise<FleetAnalysisSourceResult> {
   const ownerId = await resolveFleetAnalysisOwnerId(preferredOwnerId);
 
   if (!ownerId) {

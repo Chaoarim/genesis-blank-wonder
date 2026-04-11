@@ -149,6 +149,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
   const [searchQuery, setSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [listMatches, setListMatches] = useState<Record<string, number>>({});
+  const [activeTab, setActiveTab] = useState('potencial');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchRankings = useCallback(async () => {
@@ -181,9 +182,9 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
 
   useEffect(() => { fetchRankings(); }, []);
 
-  // Count item matches from the user's list for demand suggestion
+  // Only load item matches when the "demanda" tab is active (lazy)
   useEffect(() => {
-    if (!rankings.length) return;
+    if (activeTab !== 'demanda' || !rankings.length) return;
 
     const matchModels = async () => {
       const { items } = await loadFleetAnalysisItems(adminUserId);
@@ -207,7 +208,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
     };
 
     matchModels();
-  }, [rankings, adminUserId]);
+  }, [activeTab, rankings, adminUserId]);
 
   const filteredRankings = useMemo(() => {
     let filtered = rankings;
@@ -404,7 +405,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           <p className="text-muted-foreground">Nenhum ranking importado ainda. Importe um CSV com dados FENABRAVE.</p>
         </Card>
       ) : (
-        <Tabs defaultValue="potencial">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="potencial">🎯 Potencial</TabsTrigger>
             <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
