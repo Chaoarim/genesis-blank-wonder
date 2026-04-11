@@ -405,7 +405,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           <p className="text-muted-foreground">Nenhum ranking importado ainda. Importe um CSV com dados FENABRAVE.</p>
         </Card>
       ) : (
-        <Tabs defaultValue="potencial">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="potencial">🎯 Potencial</TabsTrigger>
             <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
