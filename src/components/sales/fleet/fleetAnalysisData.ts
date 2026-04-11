@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { fetchAllInventory } from '@/lib/fetchAllInventory';
 
 export interface FleetAnalysisItem {
   id: string;
@@ -65,6 +64,37 @@ async function resolveFleetAnalysisOwnerId(preferredOwnerId?: string | null) {
   } = await supabase.auth.getUser();
 
   return user?.id ?? null;
+}
+
+async function fetchInventoryAnalysisItems(ownerId: string): Promise<FleetAnalysisItem[]> {
+  const pageSize = 1000;
+  const items: FleetAnalysisItem[] = [];
+  let page = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .select('id, codigo, produto, aplicacao, fornecedor')
+      .eq('user_id', ownerId)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+    if (error) throw error;
+    if (!data || data.length === 0) { hasMore = false; continue; }
+    items.push(...data.map(row => ({
+      id: row.id,
+      codigo: (row.codigo || '').trim(),
+      produto: (row.produto || '').trim(),
+      aplicacao: (row.aplicacao || '').trim(),
+      fornecedor: (row.fornecedor || '').trim(),
+      searchText: buildSearchText([(row.codigo || '').trim(), (row.produto || '').trim(), (row.aplicacao || '').trim(), (row.fornecedor || '').trim()]),
+      source: 'inventory' as const,
+    })));
+    if (data.length < pageSize) hasMore = false;
+    else page += 1;
+  }
+  return items;
 }
 
 async function fetchSupplierCatalogItems(ownerId: string): Promise<FleetAnalysisItem[]> {
@@ -160,24 +190,14 @@ async function _loadFleetAnalysisItemsInternal(preferredOwnerId?: string | null)
   }
 
   const [inventoryItems, supplierItems] = await Promise.all([
-    fetchAllInventory(ownerId),
+    fetchInventoryAnalysisItems(ownerId),
     fetchSupplierCatalogItems(ownerId),
   ]);
 
   const mergedItems = new Map<string, FleetAnalysisItem>();
 
   inventoryItems.forEach(item => {
-    const mappedItem: FleetAnalysisItem = {
-      id: item.id,
-      codigo: (item.codigo || '').trim(),
-      produto: (item.produto || '').trim(),
-      aplicacao: (item.aplicacao || '').trim(),
-      fornecedor: (item.fornecedor || '').trim(),
-      searchText: buildSearchText([item.codigo, item.produto, item.aplicacao, item.fornecedor]),
-      source: 'inventory',
-    };
-
-    mergedItems.set(getItemUniqueKey(mappedItem), mappedItem);
+    mergedItems.set(getItemUniqueKey(item), item);
   });
 
   supplierItems.forEach(item => {
