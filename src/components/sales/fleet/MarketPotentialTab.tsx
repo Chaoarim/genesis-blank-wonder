@@ -379,8 +379,8 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <h3 className="font-semibold">Potencial de Mercado — Lista de Peças</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           {hasOwnerContext
-            ? 'Nenhuma peça encontrada no estoque ou na lista de fornecedores. Importe sua lista para cruzar com a frota circulante e prever demanda real.'
-            : 'Faça login para carregar sua lista de peças e cruzar os itens com a frota circulante da FENABRAVE.'}
+            ? 'Nenhuma peça encontrada na lista de fornecedores. Importe sua lista de fornecedores para cruzar com a frota circulante e gerar demanda de compra atual e investimento a longo prazo.'
+            : 'Faça login para carregar sua lista de fornecedores e cruzar os itens com a frota circulante da FENABRAVE.'}
         </p>
         <Badge variant="outline" className="mx-auto">
           Fonte da análise: {sourceLabel}
@@ -624,7 +624,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
             Análise de Potencial — {sourceLabel} ({selectedYearNumber})
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            Cruzamento: {sourceLabel.toLowerCase()} × frota FENABRAVE ({filteredRankings.length} modelos, crescimento {analysisWindowLabel})
+            Cruzamento: peças de cada fornecedor × frota FENABRAVE ({filteredRankings.length} modelos) — demanda de compra atual + investimento 5 anos
           </p>
         </div>
         <div className="overflow-auto max-h-[50vh]">
