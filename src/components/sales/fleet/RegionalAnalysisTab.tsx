@@ -41,7 +41,7 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
-const BUILTIN_YEAR_OPTIONS = [2016, 2015, 2014, 2013, 2012, 2011, 2010];
+const BUILTIN_YEAR_OPTIONS = [2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010];
 
 // FENABRAVE 2010 seed data
 const FENABRAVE_2010_SEED: Record<string, Record<string, number[]>> = {
@@ -115,6 +115,31 @@ const FENABRAVE_2016_SEED: Record<string, Record<string, number[]>> = {
     'Centro-Oeste': [10.31, 10.51, 9.88, 9.51, 9.28, 8.98, 9.12, 9.52, 9.00, 8.91, 8.51, 9.24],
     'Sudeste':      [47.85, 50.30, 50.54, 50.67, 52.18, 52.43, 52.83, 52.77, 54.10, 54.97, 55.80, 50.66],
     'Sul':          [19.19, 17.89, 19.51, 18.14, 18.35, 18.71, 18.37, 17.79, 18.14, 17.78, 17.35, 19.15],
+  },
+};
+
+// FENABRAVE 2017 seed data
+const FENABRAVE_2017_SEED: Record<string, Record<string, number[]>> = {
+  automovel: {
+    'Norte':        [4.06, 4.32, 4.09, 3.98, 3.98, 3.90, 3.50, 4.07, 3.80, 4.44, 4.04, 4.88],
+    'Nordeste':     [16.88, 15.02, 14.81, 15.23, 14.90, 14.39, 15.50, 14.65, 14.19, 14.64, 14.16, 15.75],
+    'Centro-Oeste': [9.87, 9.44, 8.88, 8.39, 8.37, 8.49, 8.45, 8.20, 7.61, 8.31, 7.89, 8.90],
+    'Sudeste':      [49.80, 53.72, 54.76, 55.56, 56.01, 57.12, 54.82, 56.80, 58.81, 55.40, 56.18, 51.55],
+    'Sul':          [19.40, 17.50, 17.46, 16.84, 16.73, 16.10, 17.27, 16.27, 15.59, 17.21, 17.53, 18.92],
+  },
+  comercial_leve: {
+    'Norte':        [7.00, 7.30, 8.67, 8.63, 8.46, 8.92, 8.64, 8.76, 8.45, 7.97, 8.24, 9.41],
+    'Nordeste':     [16.97, 17.00, 16.33, 16.71, 16.34, 14.57, 16.51, 17.97, 16.20, 15.18, 15.79, 16.26],
+    'Centro-Oeste': [12.30, 12.07, 12.98, 12.54, 13.10, 11.92, 11.89, 12.78, 11.30, 10.93, 11.44, 13.34],
+    'Sudeste':      [41.27, 44.18, 43.13, 42.71, 42.61, 46.03, 45.41, 42.56, 43.17, 45.65, 43.96, 39.46],
+    'Sul':          [22.46, 19.45, 18.89, 19.41, 19.49, 18.56, 17.55, 17.93, 20.88, 20.26, 20.57, 21.53],
+  },
+  automovel_comercial_leve: {
+    'Norte':        [4.51, 4.77, 4.73, 4.62, 4.61, 4.45, 4.67, 4.72, 4.41, 4.97, 4.65, 5.61],
+    'Nordeste':     [16.89, 15.32, 15.02, 15.43, 15.10, 14.42, 15.65, 15.11, 14.46, 14.72, 14.39, 15.83],
+    'Centro-Oeste': [10.24, 9.84, 9.46, 8.96, 9.04, 8.99, 8.98, 8.83, 8.10, 8.71, 8.40, 9.61],
+    'Sudeste':      [48.48, 52.28, 53.13, 53.80, 54.12, 55.48, 53.39, 54.83, 56.75, 53.92, 54.59, 49.61],
+    'Sul':          [19.87, 17.80, 17.66, 17.19, 17.12, 16.47, 17.31, 16.50, 16.29, 17.68, 17.97, 19.34],
   },
 };
 
@@ -360,6 +385,20 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
       );
     }
 
+    if (filtered.length === 0 && selectedYear === '2017' && FENABRAVE_2017_SEED[selectedType]) {
+      return REGIONS.flatMap(region =>
+        FENABRAVE_2017_SEED[selectedType][region].map((percentage, index) => ({
+          id: `seed-2017-${selectedType}-${region}-${index + 1}`,
+          year: 2017,
+          month: index + 1,
+          region,
+          vehicle_type: selectedType,
+          quantity: 0,
+          percentage,
+        }))
+      );
+    }
+
     return filtered;
   }, [data, selectedYear, selectedType]);
 
@@ -406,6 +445,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     if (!selectedType) return [];
 
     const SEED_MAP: Record<number, Record<string, Record<string, number[]>>> = {
+      2017: FENABRAVE_2017_SEED,
       2010: FENABRAVE_2010_SEED,
       2011: FENABRAVE_2011_SEED,
       2012: FENABRAVE_2012_SEED,
@@ -632,6 +672,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2016, FENABRAVE_2016_SEED)} disabled={importing}>
                     📊 FENABRAVE 2016
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2017, FENABRAVE_2017_SEED)} disabled={importing}>
+                    📊 FENABRAVE 2017
                   </Button>
                 </div>
               </div>
