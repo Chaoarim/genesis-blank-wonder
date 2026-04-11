@@ -548,6 +548,7 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
     if (!selectedType) return [];
 
     const SEED_MAP: Record<number, Record<string, Record<string, number[]>>> = {
+      2020: FENABRAVE_2020_SEED,
       2019: FENABRAVE_2019_SEED,
       2018: FENABRAVE_2018_SEED,
       2017: FENABRAVE_2017_SEED,
@@ -783,6 +784,9 @@ export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabPro
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2019, FENABRAVE_2019_SEED)} disabled={importing}>
                     📊 FENABRAVE 2019
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => handleSeedFenabrave(2020, FENABRAVE_2020_SEED)} disabled={importing}>
+                    📊 FENABRAVE 2020
                   </Button>
                 </div>
               </div>
