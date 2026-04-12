@@ -778,6 +778,78 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_cache: {
+        Row: {
+          created_at: string
+          disponivel_regiao: boolean
+          estado_vendedor: string
+          expires_at: string
+          fornecedor_id: string
+          fornecedor_nome: string
+          fornecedor_reputacao: string
+          fornecedor_total_vendas: number
+          id: string
+          link_anuncio: string
+          menor_preco: number
+          ml_item_id: string
+          peca_codigo: string
+          peca_nome: string
+          preco_atual: number
+          preco_medio: number
+          regiao: string
+          thumbnail: string
+          titulo_ml: string
+          total_vendido: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          disponivel_regiao?: boolean
+          estado_vendedor?: string
+          expires_at?: string
+          fornecedor_id?: string
+          fornecedor_nome?: string
+          fornecedor_reputacao?: string
+          fornecedor_total_vendas?: number
+          id?: string
+          link_anuncio?: string
+          menor_preco?: number
+          ml_item_id?: string
+          peca_codigo?: string
+          peca_nome?: string
+          preco_atual?: number
+          preco_medio?: number
+          regiao?: string
+          thumbnail?: string
+          titulo_ml?: string
+          total_vendido?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          disponivel_regiao?: boolean
+          estado_vendedor?: string
+          expires_at?: string
+          fornecedor_id?: string
+          fornecedor_nome?: string
+          fornecedor_reputacao?: string
+          fornecedor_total_vendas?: number
+          id?: string
+          link_anuncio?: string
+          menor_preco?: number
+          ml_item_id?: string
+          peca_codigo?: string
+          peca_nome?: string
+          preco_atual?: number
+          preco_medio?: number
+          regiao?: string
+          thumbnail?: string
+          titulo_ml?: string
+          total_vendido?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       ml_market_data: {
         Row: {
           created_at: string
