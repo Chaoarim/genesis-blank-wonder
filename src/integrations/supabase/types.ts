@@ -1336,6 +1336,111 @@ export type Database = {
         }
         Relationships: []
       }
+      radar_cache: {
+        Row: {
+          created_at: string
+          estado_filtro: string
+          expires_at: string
+          id: string
+          payload_json: Json
+          preco_maximo: number
+          preco_medio: number
+          preco_minimo: number
+          termo_busca: string
+          tipo_busca: string
+          total_anuncios: number
+          total_vendido_soma: number
+          vendedor_lider_nome: string
+          vendedor_lider_vendas: number
+        }
+        Insert: {
+          created_at?: string
+          estado_filtro?: string
+          expires_at?: string
+          id?: string
+          payload_json?: Json
+          preco_maximo?: number
+          preco_medio?: number
+          preco_minimo?: number
+          termo_busca?: string
+          tipo_busca?: string
+          total_anuncios?: number
+          total_vendido_soma?: number
+          vendedor_lider_nome?: string
+          vendedor_lider_vendas?: number
+        }
+        Update: {
+          created_at?: string
+          estado_filtro?: string
+          expires_at?: string
+          id?: string
+          payload_json?: Json
+          preco_maximo?: number
+          preco_medio?: number
+          preco_minimo?: number
+          termo_busca?: string
+          tipo_busca?: string
+          total_anuncios?: number
+          total_vendido_soma?: number
+          vendedor_lider_nome?: string
+          vendedor_lider_vendas?: number
+        }
+        Relationships: []
+      }
+      radar_favoritos: {
+        Row: {
+          created_at: string
+          id: string
+          label_personalizado: string | null
+          termo_busca: string
+          tipo_busca: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label_personalizado?: string | null
+          termo_busca?: string
+          tipo_busca?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label_personalizado?: string | null
+          termo_busca?: string
+          tipo_busca?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radar_historico: {
+        Row: {
+          data_registro: string
+          estado: string
+          id: string
+          preco_medio: number
+          termo_busca: string
+          total_vendido: number
+        }
+        Insert: {
+          data_registro?: string
+          estado?: string
+          id?: string
+          preco_medio?: number
+          termo_busca?: string
+          total_vendido?: number
+        }
+        Update: {
+          data_registro?: string
+          estado?: string
+          id?: string
+          preco_medio?: number
+          termo_busca?: string
+          total_vendido?: number
+        }
+        Relationships: []
+      }
       sale_items: {
         Row: {
           codigo: string
