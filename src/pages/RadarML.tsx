@@ -70,10 +70,21 @@ export default function RadarML({ embedded = false }: { embedded?: boolean }) {
       const data = await radarSearchComplete(query, estadoFiltro, setLoadingStep);
       setResult(data);
       if (data.items.length === 0) {
-        toast.info('Nenhum resultado encontrado. Tente variações do termo.');
+        toast.info(`🔍 Nenhum produto encontrado para '${query}'. Tente um termo diferente.`, {
+          action: { label: 'Tentar novamente', onClick: handleSearch },
+        });
       }
     } catch (e: any) {
-      toast.error(e.message || 'Erro ao buscar no ML');
+      const msg = e.message || 'Erro ao buscar no ML';
+      if (msg.includes('Timeout') || msg.includes('demorou')) {
+        toast.error(`⏱️ ${msg}`, { action: { label: 'Tentar novamente', onClick: handleSearch } });
+      } else if (msg.includes('403') || msg.includes('bloqueado')) {
+        toast.error(`⚠️ ${msg}`, { action: { label: 'Tentar novamente', onClick: handleSearch } });
+      } else if (msg.includes('conexão') || msg.includes('network')) {
+        toast.error(`❌ ${msg}`, { action: { label: 'Tentar novamente', onClick: handleSearch } });
+      } else {
+        toast.error(`❌ ${msg}`, { action: { label: 'Tentar novamente', onClick: handleSearch } });
+      }
     } finally {
       setLoading(false);
       setLoadingStep('');
