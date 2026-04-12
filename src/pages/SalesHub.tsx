@@ -298,8 +298,6 @@ const SalesHub = () => {
         return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} readOnly />;
       case 'mercadolivre':
         return <MercadoLivreMarket adminUserId={sellerPerms.adminUserId} />;
-      case 'demand-analysis':
-        return <DemandAnalysis adminUserId={sellerPerms.adminUserId} />;
       case 'help':
         return <HelpGuide />;
       default:
