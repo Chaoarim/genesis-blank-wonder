@@ -162,22 +162,23 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// --- Proxy helper ---
+// --- Direct fetch to ML public API (browser-side, avoids datacenter IP blocks) ---
 async function mlFetch<T>(url: string, timeoutMs = 15000): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const { data, error } = await supabase.functions.invoke('ml-proxy', {
-      body: { url },
-    });
+    const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
-    if (error) throw new Error(error.message || 'Erro proxy ML');
-    if (data?.ok === false) throw new Error(data?.error || 'Erro ML');
-    // ml-proxy wraps in { ok, data }
-    return (data?.data ?? data) as T;
-  } catch (e) {
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.warn(`[ML API] ${res.status} for ${url}:`, body.substring(0, 200));
+      throw new Error(`Mercado Livre API error ${res.status}`);
+    }
+    return (await res.json()) as T;
+  } catch (e: any) {
     clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('Timeout ao consultar o Mercado Livre');
     throw e;
   }
 }
