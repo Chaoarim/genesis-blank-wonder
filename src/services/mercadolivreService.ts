@@ -109,16 +109,25 @@ export interface FornecedorRanking {
   estado: string;
 }
 
-// --- Direct fetch to ML public API (browser-side) ---
+// --- Proxy helper via Edge Function (avoids CORS) ---
 
 async function mlProxyFetch<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    console.error('[mlProxyFetch] ML API error:', res.status, body.substring(0, 200));
-    throw new Error(`Mercado Livre API error ${res.status}`);
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
+
+  if (error) {
+    console.error('[mlProxyFetch] invoke error:', error);
+    throw new Error('Sem conexão com o Mercado Livre. Tente novamente.');
   }
-  return (await res.json()) as T;
+
+  if (!data?.ok) {
+    const msg = data?.error || 'Erro ao consultar o Mercado Livre';
+    console.error('[mlProxyFetch] proxy error:', msg, data?.details);
+    throw new Error(msg);
+  }
+
+  return data.data as T;
 }
 
 // --- FUNÇÃO 1: buscarPecaML ---
