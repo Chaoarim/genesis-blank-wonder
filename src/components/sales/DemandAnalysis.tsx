@@ -13,9 +13,12 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
 import {
-  searchML, summarizeMLResults, getIndicadorCompra, ML_STATES,
-  type MLSearchResult, type MLMarketSummary,
-} from '@/lib/mercadoLivreApi';
+  buscarPecaML,
+  calcularMetricasML,
+  getIndicadorCompra,
+  ML_STATES,
+  type MLMetricas,
+} from '@/services/mercadolivreService';
 import {
   getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText,
   type FleetAnalysisItem,
