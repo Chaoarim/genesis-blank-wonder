@@ -44,23 +44,35 @@ export function MLKpiCards({ metricas }: MLKpiCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {cards.map((card) => (
-        <Card key={card.title} className="border-border/50">
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className={`p-1.5 rounded-md ${card.bg}`}>
-                <card.icon className={`w-3.5 h-3.5 ${card.color}`} />
+    <TooltipProvider>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {cards.map((card) => (
+          <Card key={card.title} className="border-border/50">
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`p-1.5 rounded-md ${card.bg}`}>
+                  <card.icon className={`w-3.5 h-3.5 ${card.color}`} />
+                </div>
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">{card.title}</p>
+                {card.tooltip && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-muted-foreground/60 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] text-xs">
+                      {card.tooltip}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
-              <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">{card.title}</p>
-            </div>
-            <p className={`text-lg font-bold ${card.color} truncate`}>{card.value}</p>
-            {card.subtitle && (
-              <p className="text-[10px] text-muted-foreground mt-0.5">{card.subtitle}</p>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+              <p className={`text-lg font-bold ${card.color} truncate`}>{card.value}</p>
+              {card.subtitle && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">{card.subtitle}</p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 }
