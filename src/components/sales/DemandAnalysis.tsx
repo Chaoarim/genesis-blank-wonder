@@ -67,6 +67,8 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
   const [enriching, setEnriching] = useState(false);
   const [enrichedItems, setEnrichedItems] = useState<MLEnrichedItem[]>([]);
   const [selectedState, setSelectedState] = useState('BR-SP');
+  const [fornecedorFilter, setFornecedorFilter] = useState('');
+  const [pecaFilter, setPecaFilter] = useState('');
 
   // Load fleet rankings
   useEffect(() => {
