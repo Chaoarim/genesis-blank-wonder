@@ -77,6 +77,38 @@ export interface MLItemDetail {
   seller_address: { state: { name: string } };
 }
 
+export interface MLSellerDetail {
+  id: number;
+  nickname: string;
+  seller_reputation: {
+    level_id: string;
+    transactions: { completed: number };
+  };
+  address: { state: string };
+}
+
+export interface MLMetricas {
+  precoMedio: number;
+  menorPreco: number;
+  totalVendido: number;
+  fornecedorLider: string;
+  fornecedorIdLider: number;
+  fornecedorLiderVendas: number;
+  linkMaisVendido: string;
+  thumbnailMaisVendido: string;
+  mlItemId: string;
+  disponibilidadeRegional: boolean;
+  resultados: MLResultItem[];
+}
+
+export interface FornecedorRanking {
+  fornecedor: string;
+  sellerId: number;
+  totalVendido: number;
+  participacao: number;
+  estado: string;
+}
+
 // --- Proxy helper ---
 
 async function mlProxyFetch<T>(url: string): Promise<T> {
