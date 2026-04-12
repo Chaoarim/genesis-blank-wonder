@@ -419,7 +419,7 @@ const PartsSearch = () => {
                       <BarChart3 className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-sm">Ranking Frota</h3>
+                      <h3 className="font-semibold text-sm">Inteligência Automotiva</h3>
                       <p className="text-xs text-muted-foreground">Previsão de demanda de peças</p>
                     </div>
                   </Card>
