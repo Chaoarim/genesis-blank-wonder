@@ -67,6 +67,7 @@ const WhatsAppNotifications = lazy(() => import('@/components/sales/WhatsAppNoti
 const DistributorPriceImporter = lazy(() => import('@/components/sales/DistributorPriceImporter').then(m => ({ default: m.DistributorPriceImporter })));
 const ExpeditionManager = lazy(() => import('@/components/sales/ExpeditionManager').then(m => ({ default: m.ExpeditionManager })));
 const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
+const MercadoLivreMarket = lazy(() => import('@/components/sales/MercadoLivreMarket').then(m => ({ default: m.MercadoLivreMarket })));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -294,6 +295,8 @@ const SalesHub = () => {
         return <WhatsAppNotifications adminUserId={sellerPerms.adminUserId} allSales={salesData.allSales} sellers={sellerPerms.sellers} goals={salesData.goals} />;
       case 'fleet-rankings':
         return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} readOnly />;
+      case 'mercadolivre':
+        return <MercadoLivreMarket adminUserId={sellerPerms.adminUserId} />;
       case 'help':
         return <HelpGuide />;
       default:

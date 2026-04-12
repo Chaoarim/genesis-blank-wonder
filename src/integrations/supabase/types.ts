@@ -778,6 +778,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ml_market_data: {
+        Row: {
+          created_at: string
+          data_consulta: string
+          fornecedor_lider: string
+          id: string
+          link_anuncio: string
+          menor_preco: number
+          ml_item_id: string
+          peca_codigo: string
+          peca_produto: string
+          preco_atual: number
+          regiao: string
+          reputacao_vendedor: string
+          thumbnail_url: string
+          titulo_ml: string
+          total_vendido: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_consulta?: string
+          fornecedor_lider?: string
+          id?: string
+          link_anuncio?: string
+          menor_preco?: number
+          ml_item_id?: string
+          peca_codigo: string
+          peca_produto?: string
+          preco_atual?: number
+          regiao?: string
+          reputacao_vendedor?: string
+          thumbnail_url?: string
+          titulo_ml?: string
+          total_vendido?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_consulta?: string
+          fornecedor_lider?: string
+          id?: string
+          link_anuncio?: string
+          menor_preco?: number
+          ml_item_id?: string
+          peca_codigo?: string
+          peca_produto?: string
+          preco_atual?: number
+          regiao?: string
+          reputacao_vendedor?: string
+          thumbnail_url?: string
+          titulo_ml?: string
+          total_vendido?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       parts: {
         Row: {
           anos_aplicacao: string | null
