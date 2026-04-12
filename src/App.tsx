@@ -57,6 +57,7 @@ const App = () => (
           
           {/* Teste de Webhook (pode ser removido) */}
           <Route path="/webhook-test" element={<WebhookTest />} />
+          <Route path="/radar-ml" element={<RadarML />} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
