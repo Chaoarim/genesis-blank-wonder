@@ -68,7 +68,7 @@ const DistributorPriceImporter = lazy(() => import('@/components/sales/Distribut
 const ExpeditionManager = lazy(() => import('@/components/sales/ExpeditionManager').then(m => ({ default: m.ExpeditionManager })));
 const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
 const MercadoLivreMarket = lazy(() => import('@/components/sales/MercadoLivreMarket').then(m => ({ default: m.MercadoLivreMarket })));
-const DemandAnalysis = lazy(() => import('@/components/sales/DemandAnalysis').then(m => ({ default: m.DemandAnalysis })));
+
 
 const TabLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -298,8 +298,6 @@ const SalesHub = () => {
         return <FleetRankingsManager adminUserId={sellerPerms.adminUserId} readOnly />;
       case 'mercadolivre':
         return <MercadoLivreMarket adminUserId={sellerPerms.adminUserId} />;
-      case 'demand-analysis':
-        return <DemandAnalysis adminUserId={sellerPerms.adminUserId} />;
       case 'help':
         return <HelpGuide />;
       default:

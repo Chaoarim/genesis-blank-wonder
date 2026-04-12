@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, useTransition } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, useTransition, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { MarketPotentialTab } from './fleet/MarketPotentialTab';
 import { getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText } from './fleet/fleetAnalysisData';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
+
+const DemandAnalysisTab = lazy(() => import('@/components/sales/DemandAnalysis').then(m => ({ default: m.DemandAnalysis })));
 
 interface FleetRanking {
   id: string;
@@ -324,6 +326,7 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="potencial">🎯 Potencial</TabsTrigger>
             <TabsTrigger value="demanda">📊 Demanda</TabsTrigger>
+            <TabsTrigger value="mercado-ml">🛒 Mercado ML</TabsTrigger>
             <TabsTrigger value="regional">🗺️ Regional</TabsTrigger>
             <TabsTrigger value="manutencao">🔧 Ciclo Manutenção</TabsTrigger>
             <TabsTrigger value="tendencia">📈 Tendência Multi-Ano</TabsTrigger>
@@ -411,6 +414,12 @@ export function FleetRankingsManager({ adminUserId, readOnly = false }: FleetRan
                 </p>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="mercado-ml">
+            <Suspense fallback={<div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>}>
+              <DemandAnalysisTab adminUserId={adminUserId} />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="regional">

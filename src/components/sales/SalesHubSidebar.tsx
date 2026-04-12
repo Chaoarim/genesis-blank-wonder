@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
 
-  Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
+  Users, BookUser, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
   Clock, Wallet, PackageCheck, Car
@@ -27,7 +27,6 @@ const MENU_ITEMS: TabDef[] = [
   // 🔍 Consulta
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
   { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
-  { value: 'demand-analysis', icon: Target, label: 'Análise de Demanda', group: 'Consulta' },
   { value: 'mercadolivre', icon: ShoppingBag, label: 'Mercado Livre', group: 'Consulta' },
 
   // ❓ Ajuda
