@@ -17,6 +17,23 @@ const TABLES_CONFIG = [
   { table: 'inventory_items', label: 'Estoque', columns: { codigo: 'Código', produto: 'Produto', fornecedor: 'Fornecedor', preco: 'Preço', qtd_estoque: 'Qtd Estoque', aplicacao: 'Aplicação', created_at: 'Data' } },
   { table: 'accounts_payable', label: 'Contas a Pagar', columns: { supplier_name: 'Fornecedor', description: 'Descrição', amount: 'Valor', due_date: 'Vencimento', status: 'Status', paid_amount: 'Valor Pago', paid_at: 'Pago Em' } },
   { table: 'supplier_contacts', label: 'Fornecedores', columns: { distributor_name: 'Distribuidora', seller_name: 'Vendedor', phone: 'Telefone', whatsapp: 'WhatsApp', email: 'Email', notes: 'Notas' } },
+  { table: 'ml_cache', label: 'Mercado Livre', columns: {
+    peca_nome: 'Peça',
+    titulo_ml: 'Título ML',
+    preco_atual: 'Preço Atual ML',
+    preco_medio: 'Preço Médio ML',
+    menor_preco: 'Menor Preço ML',
+    total_vendido: 'Total Vendido ML',
+    fornecedor_nome: 'Fornecedor Líder ML',
+    estado_vendedor: 'Estado Vendedor',
+    regiao: 'Região',
+    disponivel_regiao: 'Disponível na Região',
+    fornecedor_reputacao: 'Reputação Vendedor',
+    link_anuncio: 'Link Anúncio ML',
+    ml_item_id: 'Item ID ML',
+    created_at: 'Data Consulta ML',
+    expires_at: 'Expira Em',
+  } },
 ] as const;
 
 async function fetchAllRows(table: string) {
@@ -86,7 +103,7 @@ export function BackupExcelDownload({ adminUserId }: BackupExcelDownloadProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Exporte os dados principais do sistema (vendas, clientes, estoque, contas a pagar e fornecedores) em um arquivo Excel com múltiplas abas.
+          Exporte os dados principais do sistema (vendas, clientes, estoque, contas a pagar, fornecedores e dados ML) em um arquivo Excel com múltiplas abas.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
