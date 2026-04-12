@@ -100,7 +100,7 @@ export default function RadarML({ embedded = false }: { embedded?: boolean }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white">
+    <div className={embedded ? "text-white" : "min-h-screen bg-[#0f0f0f] text-white"}>
       {/* Header */}
       <div className="border-b border-[#2a2a2a] bg-[#111111]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
