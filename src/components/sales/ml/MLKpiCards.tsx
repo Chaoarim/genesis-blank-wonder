@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { DollarSign, TrendingDown, ShoppingCart, Crown } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DollarSign, TrendingDown, ShoppingCart, Crown, Info } from 'lucide-react';
 import type { MLMetricas } from '@/services/mercadolivreService';
 
 interface MLKpiCardsProps {
