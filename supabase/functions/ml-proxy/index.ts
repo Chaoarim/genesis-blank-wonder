@@ -4,6 +4,50 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
+// --- OAuth Token Cache ---
+let cachedToken: string | null = null;
+let tokenExpiresAt = 0;
+
+const ML_CLIENT_ID = '7461192017586183';
+
+async function getAccessToken(): Promise<string> {
+  // Return cached token if still valid (with 60s margin)
+  if (cachedToken && Date.now() < tokenExpiresAt - 60_000) {
+    return cachedToken;
+  }
+
+  const clientSecret = Deno.env.get('ML_CLIENT_SECRET');
+  if (!clientSecret) {
+    throw new Error('ML_CLIENT_SECRET not configured');
+  }
+
+  console.log('[ml-proxy] Requesting new OAuth token...');
+
+  const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: ML_CLIENT_ID,
+      client_secret: clientSecret,
+    }),
+  });
+
+  const body = await resp.json();
+
+  if (!resp.ok) {
+    console.error('[ml-proxy] OAuth error:', JSON.stringify(body));
+    throw new Error(`OAuth failed: ${body.error || resp.status}`);
+  }
+
+  cachedToken = body.access_token;
+  // ML tokens typically expire in 6 hours
+  tokenExpiresAt = Date.now() + (body.expires_in || 21600) * 1000;
+  console.log('[ml-proxy] OAuth token obtained successfully');
+
+  return cachedToken!;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -27,6 +71,9 @@ Deno.serve(async (req) => {
       return respond(400, { error: 'Apenas URLs do Mercado Livre são permitidas' });
     }
 
+    // Get OAuth token
+    const accessToken = await getAccessToken();
+
     console.log(`[ml-proxy] Fetching: ${url}`);
 
     const controller = new AbortController();
@@ -36,8 +83,8 @@ Deno.serve(async (req) => {
       method: 'GET',
       signal: controller.signal,
       headers: {
+        'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
     });
 
@@ -47,6 +94,13 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       console.error(`[ml-proxy] ML API error ${response.status}:`, JSON.stringify(data).substring(0, 300));
+      
+      // If 401, invalidate token cache so next request gets a fresh one
+      if (response.status === 401) {
+        cachedToken = null;
+        tokenExpiresAt = 0;
+      }
+      
       return respond(200, {
         ok: false,
         error: `ML API retornou status ${response.status}`,
