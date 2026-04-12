@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+const ML_BASE = "https://api.mercadolibre.com";
+const CATEGORY_AUTOPARTS = "MLB1743";
 
 const ML_STATES = [
   { code: "BR-SP", name: "São Paulo" },
@@ -79,35 +80,27 @@ export interface MLMarketSummary {
   disponibilidadeRegional: boolean;
 }
 
-async function callProxy<T>(body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(
-    "mercadolivre-proxy",
-    { body }
-  );
-  if (error) {
-    console.error("[ML Proxy] invoke error:", error);
-    throw new Error(error.message || "Erro ao consultar Mercado Livre");
+// Direct client-side fetch to ML public API (no proxy needed)
+async function mlFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text();
+    console.warn(`[ML API] ${res.status} for ${url}:`, body);
+    throw new Error(`Mercado Livre API error ${res.status}`);
   }
-  // Handle structured error responses from the edge function
-  if (data && typeof data === 'object' && 'ok' in data && data.ok === false) {
-    console.warn("[ML Proxy] API returned error:", data.error);
-    // Return the data as-is so callers can use fallback fields (results, paging)
-    return data as T;
-  }
-  return data as T;
+  return res.json() as Promise<T>;
 }
 
 export async function searchML(
   query: string,
   options?: { limit?: number; offset?: number; sort?: string }
 ): Promise<MLSearchResponse> {
-  return callProxy<MLSearchResponse>({
-    action: "search",
-    query,
-    limit: options?.limit || 50,
-    offset: options?.offset || 0,
-    sort: options?.sort || "sold_quantity_desc",
-  });
+  const q = encodeURIComponent(query);
+  const limit = options?.limit || 50;
+  const offset = options?.offset || 0;
+  const sort = options?.sort || "sold_quantity_desc";
+  const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY_AUTOPARTS}&sort=${sort}&limit=${limit}&offset=${offset}`;
+  return mlFetch<MLSearchResponse>(url);
 }
 
 export async function searchMLRegional(
@@ -115,21 +108,19 @@ export async function searchMLRegional(
   stateCode: string,
   options?: { limit?: number; offset?: number }
 ): Promise<MLSearchResponse> {
-  return callProxy<MLSearchResponse>({
-    action: "search_regional",
-    query,
-    state: stateCode,
-    limit: options?.limit || 50,
-    offset: options?.offset || 0,
-  });
+  const q = encodeURIComponent(query);
+  const limit = options?.limit || 50;
+  const offset = options?.offset || 0;
+  const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY_AUTOPARTS}&state=${stateCode}&sort=sold_quantity_desc&limit=${limit}&offset=${offset}`;
+  return mlFetch<MLSearchResponse>(url);
 }
 
 export async function getMLItem(itemId: string): Promise<MLItemDetail> {
-  return callProxy<MLItemDetail>({ action: "item", item_id: itemId });
+  return mlFetch<MLItemDetail>(`${ML_BASE}/items/${itemId}`);
 }
 
 export async function getMLSeller(sellerId: string): Promise<MLSellerDetail> {
-  return callProxy<MLSellerDetail>({ action: "seller", seller_id: sellerId });
+  return mlFetch<MLSellerDetail>(`${ML_BASE}/users/${sellerId}`);
 }
 
 export function summarizeMLResults(results: MLSearchResult[]): MLMarketSummary {
