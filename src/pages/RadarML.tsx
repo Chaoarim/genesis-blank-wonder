@@ -27,7 +27,7 @@ import { RadarEmpresarioBlock } from '@/components/radar/RadarEmpresarioBlock';
 import { RadarExportButton } from '@/components/radar/RadarExportButton';
 import { supabase } from '@/integrations/supabase/client';
 
-export default function RadarML() {
+export default function RadarML({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [searchMode, setSearchMode] = useState<'codigo' | 'veiculo'>('codigo');
   const [searchTerm, setSearchTerm] = useState('');
