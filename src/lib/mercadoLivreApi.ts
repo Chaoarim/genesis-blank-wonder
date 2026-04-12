@@ -95,13 +95,12 @@ export async function searchML(
   query: string,
   options?: { limit?: number; offset?: number; sort?: string }
 ): Promise<MLSearchResponse> {
-  return callProxy<MLSearchResponse>({
-    action: "search",
-    query,
-    limit: options?.limit || 50,
-    offset: options?.offset || 0,
-    sort: options?.sort || "sold_quantity_desc",
-  });
+  const q = encodeURIComponent(query);
+  const limit = options?.limit || 50;
+  const offset = options?.offset || 0;
+  const sort = options?.sort || "sold_quantity_desc";
+  const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY_AUTOPARTS}&sort=${sort}&limit=${limit}&offset=${offset}`;
+  return mlFetch<MLSearchResponse>(url);
 }
 
 export async function searchMLRegional(
@@ -109,21 +108,19 @@ export async function searchMLRegional(
   stateCode: string,
   options?: { limit?: number; offset?: number }
 ): Promise<MLSearchResponse> {
-  return callProxy<MLSearchResponse>({
-    action: "search_regional",
-    query,
-    state: stateCode,
-    limit: options?.limit || 50,
-    offset: options?.offset || 0,
-  });
+  const q = encodeURIComponent(query);
+  const limit = options?.limit || 50;
+  const offset = options?.offset || 0;
+  const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY_AUTOPARTS}&state=${stateCode}&sort=sold_quantity_desc&limit=${limit}&offset=${offset}`;
+  return mlFetch<MLSearchResponse>(url);
 }
 
 export async function getMLItem(itemId: string): Promise<MLItemDetail> {
-  return callProxy<MLItemDetail>({ action: "item", item_id: itemId });
+  return mlFetch<MLItemDetail>(`${ML_BASE}/items/${itemId}`);
 }
 
 export async function getMLSeller(sellerId: string): Promise<MLSellerDetail> {
-  return callProxy<MLSellerDetail>({ action: "seller", seller_id: sellerId });
+  return mlFetch<MLSellerDetail>(`${ML_BASE}/users/${sellerId}`);
 }
 
 export function summarizeMLResults(results: MLSearchResult[]): MLMarketSummary {
