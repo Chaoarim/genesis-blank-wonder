@@ -281,3 +281,85 @@ export function getIndicadorCompra(
   }
   return { label: 'DEMANDA MODERADA', color: 'text-blue-500', emoji: '🔵' };
 }
+
+// --- Sinal ML (Etapa 5) ---
+export type SinalML = 'comprar' | 'monitorar' | 'longo_prazo' | 'sem_dados';
+
+export interface SinalMLResult {
+  sinal: SinalML;
+  label: string;
+  emoji: string;
+  color: string;
+  motivo: string;
+}
+
+export function calcularSinalML(
+  item: MLResultItem,
+  mediaVendidos: number,
+  disponibilidadeRegional: boolean
+): SinalMLResult {
+  const vendidos = item.sold_quantity || 0;
+
+  if (vendidos === 0) {
+    return {
+      sinal: 'sem_dados',
+      label: 'SEM DADOS',
+      emoji: '⚪',
+      color: 'text-muted-foreground',
+      motivo: 'Sem dados de venda',
+    };
+  }
+
+  const altaDemanda = vendidos > mediaVendidos;
+  const disponivel = disponibilidadeRegional;
+  const estoqueOk = (item.available_quantity ?? 10) >= 5;
+
+  // 🟢 COMPRAR AGORA
+  if (altaDemanda && disponivel && estoqueOk) {
+    return {
+      sinal: 'comprar',
+      label: 'COMPRAR AGORA',
+      emoji: '🟢',
+      color: 'text-green-600',
+      motivo: `Alta demanda (${vendidos} vendidos), disponível na região`,
+    };
+  }
+
+  // 🔴 LONGO PRAZO
+  if (!altaDemanda && !disponivel) {
+    return {
+      sinal: 'longo_prazo',
+      label: 'LONGO PRAZO',
+      emoji: '🔴',
+      color: 'text-red-500',
+      motivo: `Baixa demanda (${vendidos} vendidos), indisponível na região`,
+    };
+  }
+
+  // 🟡 MONITORAR (default)
+  return {
+    sinal: 'monitorar',
+    label: 'MONITORAR',
+    emoji: '🟡',
+    color: 'text-yellow-500',
+    motivo: altaDemanda
+      ? `Alta demanda mas ${disponivel ? 'estoque baixo' : 'fora da região'}`
+      : `Demanda moderada (${vendidos} vendidos)`,
+  };
+}
+
+export function calcularSinaisML(
+  resultados: MLResultItem[],
+  disponibilidadeRegional: boolean
+): Map<string, SinalMLResult> {
+  if (!resultados.length) return new Map();
+
+  const totalVendidos = resultados.reduce((s, r) => s + (r.sold_quantity || 0), 0);
+  const media = totalVendidos / resultados.length;
+
+  const map = new Map<string, SinalMLResult>();
+  for (const item of resultados) {
+    map.set(item.id, calcularSinalML(item, media, disponibilidadeRegional));
+  }
+  return map;
+}
