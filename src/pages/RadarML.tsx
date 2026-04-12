@@ -27,7 +27,7 @@ import { RadarEmpresarioBlock } from '@/components/radar/RadarEmpresarioBlock';
 import { RadarExportButton } from '@/components/radar/RadarExportButton';
 import { supabase } from '@/integrations/supabase/client';
 
-export default function RadarML() {
+export default function RadarML({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [searchMode, setSearchMode] = useState<'codigo' | 'veiculo'>('codigo');
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,8 +100,9 @@ export default function RadarML() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white">
-      {/* Header */}
+    <div className={embedded ? "text-white" : "min-h-screen bg-[#0f0f0f] text-white"}>
+      {/* Header - only when standalone */}
+      {!embedded && (
       <div className="border-b border-[#2a2a2a] bg-[#111111]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -152,6 +153,7 @@ export default function RadarML() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Search Section */}
       <div className="max-w-7xl mx-auto px-4 py-6">
