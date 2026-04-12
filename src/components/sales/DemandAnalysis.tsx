@@ -387,7 +387,7 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
             <span className="text-xs text-muted-foreground">Fornecedores Cobertos</span>
           </div>
           <p className="text-lg font-bold">
-            {new Set(parts.map(p => p.fornecedor).filter(Boolean)).size}
+            {new Set(filteredCrossed.flatMap(d => d.pecasCompativeis.map(p => p.fornecedor)).filter(Boolean)).size}
           </p>
         </Card>
       </div>
