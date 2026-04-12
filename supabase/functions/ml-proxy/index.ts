@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -22,24 +20,6 @@ Deno.serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    // Auth check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return respond(401, { ok: false, error: "Unauthorized" });
-    }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return respond(401, { ok: false, error: "Unauthorized", details: userError?.message });
-    }
-
-    // Parse request
     const body = await req.json();
     const { url } = body;
 
@@ -48,21 +28,18 @@ Deno.serve(async (req) => {
     }
 
     // Only allow Mercado Livre API
-    if (!url.startsWith("https://api.mercadolibre.com/")) {
+    if (!url.startsWith("https://api.mercadolibre.com/") && !url.startsWith("https://api.mercadolivre.com/")) {
       return respond(400, { ok: false, error: "Only Mercado Livre API URLs are allowed" });
     }
 
     console.log(`[ml-proxy] Fetching: ${url}`);
 
     const mlResponse = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
     });
 
     const processingTime = Date.now() - startTime;
 
-    // Check content type
     const contentType = mlResponse.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const text = await mlResponse.text();
