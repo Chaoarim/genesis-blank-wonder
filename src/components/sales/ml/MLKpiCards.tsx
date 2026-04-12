@@ -29,6 +29,7 @@ export function MLKpiCards({ metricas }: MLKpiCardsProps) {
       icon: ShoppingCart,
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
+      tooltip: 'Valor aproximado fornecido pela API pública do Mercado Livre. O número real de vendas pode ser diferente.',
     },
     {
       title: 'Fornecedor Líder',
