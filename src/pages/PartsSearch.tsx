@@ -580,7 +580,7 @@ const PartsSearch = () => {
           {/* === FROTA MODE === */}
           {mode === 'frota' && (
             <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Carregando...</div>}>
-              <FleetRankingsManager adminUserId={null} readOnly />
+              <RadarML />
             </Suspense>
           )}
         </div>
