@@ -27,7 +27,6 @@ const MENU_ITEMS: TabDef[] = [
   // 🔍 Consulta
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
   { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
-  { value: 'demand-analysis', icon: Target, label: 'Análise de Demanda', group: 'Consulta' },
   { value: 'mercadolivre', icon: ShoppingBag, label: 'Mercado Livre', group: 'Consulta' },
 
   // ❓ Ajuda
