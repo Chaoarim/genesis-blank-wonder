@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Search, X, ChevronDown, Sparkles, LogOut, Car, Link as LinkIcon, Loader2, CreditCard, Tag, ArrowLeft, BarChart3, ShoppingCart, Check, BookOpen } from 'lucide-react';
 
 const FleetRankingsManager = lazy(() => import('@/components/sales/FleetRankingsManager').then(m => ({ default: m.FleetRankingsManager })));
+const RadarML = lazy(() => import('@/pages/RadarML'));
 import { usePartsDatabase, Part } from '@/hooks/usePartsDatabase';
 import { smartFilterParts } from '@/lib/partsSearchEngine';
 import { PartThumbnail } from '@/components/PartThumbnail';
