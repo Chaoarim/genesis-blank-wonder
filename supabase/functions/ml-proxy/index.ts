@@ -71,22 +71,43 @@ Deno.serve(async (req) => {
       return respond(400, { error: 'Apenas URLs do Mercado Livre são permitidas' });
     }
 
-    // Get OAuth token
-    const accessToken = await getAccessToken();
-
     console.log(`[ml-proxy] Fetching: ${url}`);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(url, {
+    // Try with OAuth token first, fall back to unauthenticated
+    let accessToken: string | null = null;
+    try {
+      accessToken = await getAccessToken();
+    } catch (e) {
+      console.warn('[ml-proxy] Could not get OAuth token, trying unauthenticated:', e);
+    }
+
+    const fetchHeaders: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+    if (accessToken) {
+      fetchHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    let response = await fetch(url, {
       method: 'GET',
       signal: controller.signal,
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
-      },
+      headers: fetchHeaders,
     });
+
+    // If 403 with token, retry without token (public endpoints)
+    if (response.status === 403 && accessToken) {
+      console.log('[ml-proxy] Got 403 with token, retrying without auth...');
+      await response.text(); // consume body
+      delete fetchHeaders['Authorization'];
+      response = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: fetchHeaders,
+      });
+    }
 
     clearTimeout(timeout);
 
