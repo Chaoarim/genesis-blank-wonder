@@ -31,7 +31,7 @@ const TOP_STATES = ML_STATES.slice(0, 10); // Top 10 states for quick analysis
 export function MLRegionalTable({ query }: MLRegionalTableProps) {
   const [rows, setRows] = useState<RegionalRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedState, setSelectedState] = useState(ML_STATES[0].code);
+  const [selectedState, setSelectedState] = useState<string>(ML_STATES[0].code);
 
   const handleAnalyzeAll = useCallback(async () => {
     if (!query.trim()) return;
