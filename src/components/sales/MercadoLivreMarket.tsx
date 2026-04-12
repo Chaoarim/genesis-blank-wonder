@@ -1,18 +1,18 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShoppingCart } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Loader2, ShoppingCart, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   buscarPecaML,
   calcularMetricasML,
   rankingFornecedoresPorPeca,
   calcularSinaisML,
-  type MLMetricas,
   type MLResultItem,
-  type FornecedorRanking,
   type SinalMLResult,
 } from '@/services/mercadolivreService';
+import { getCachedMLResults, saveMLResultsToCache } from '@/services/mlCacheService';
 import { MLKpiCards } from './ml/MLKpiCards';
 import { MLTopVendidosChart } from './ml/MLTopVendidosChart';
 import { MLFornecedorDonut } from './ml/MLFornecedorDonut';
@@ -31,23 +31,18 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalItem, setModalItem] = useState<MLResultItem | null>(null);
   const [filters, setFilters] = useState<MLFilterValues>(INITIAL_FILTERS);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
   const maxPrice = useMemo(() => {
     if (!rawResults.length) return 1000;
     return Math.ceil(Math.max(...rawResults.map((r) => r.price)) / 10) * 10;
   }, [rawResults]);
 
-  // Apply client-side filters
   const filteredResults = useMemo(() => {
     let items = rawResults;
 
     if (filters.estado !== 'all') {
-      const stateName = (
-        items[0]?.address?.state_name
-          ? undefined
-          : undefined
-      );
-      // Filter by state name in address
       items = items.filter((r) => {
         const sn = r.address?.state_name?.toLowerCase() || '';
         const code = filters.estado.replace('BR-', '').toLowerCase();
@@ -75,7 +70,6 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
       );
     }
 
-    // Reputação filter approximation based on sold_quantity thresholds
     if (filters.reputacao !== 'all') {
       items = items.filter((r) => {
         const vendidos = r.sold_quantity || 0;
@@ -108,13 +102,54 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
     if (!query.trim()) return;
     setLoading(true);
     setRawResults([]);
+    setCachedAt(null);
+    setFromCache(false);
     setFilters((prev) => ({ ...prev, precoMin: 0, precoMax: 99999 }));
+
+    try {
+      // 1. Check cache first
+      const cached = await getCachedMLResults(query);
+      if (cached && cached.results.length > 0) {
+        setRawResults(cached.results);
+        setCachedAt(cached.cachedAt);
+        setFromCache(true);
+        toast.info('Dados carregados do cache (atualizado nas últimas 24h)');
+        return;
+      }
+
+      // 2. Cache miss — call ML API
+      const data = await buscarPecaML(query, { limit: 50 });
+      const results = data.results || [];
+      setRawResults(results);
+      setCachedAt(new Date().toISOString());
+      setFromCache(false);
+
+      // 3. Save to cache (fire-and-forget)
+      if (results.length > 0) {
+        saveMLResultsToCache(query, results).catch(() => {});
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao buscar no Mercado Livre');
+    } finally {
+      setLoading(false);
+    }
+  }, [query]);
+
+  const handleForceRefresh = useCallback(async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setFromCache(false);
     try {
       const data = await buscarPecaML(query, { limit: 50 });
       const results = data.results || [];
       setRawResults(results);
+      setCachedAt(new Date().toISOString());
+      if (results.length > 0) {
+        saveMLResultsToCache(query, results).catch(() => {});
+      }
+      toast.success('Dados atualizados do Mercado Livre');
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao buscar no Mercado Livre');
+      toast.error(err.message || 'Erro ao atualizar dados');
     } finally {
       setLoading(false);
     }
@@ -126,6 +161,16 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
   }, []);
 
   const hasResults = rawResults.length > 0;
+
+  const formattedCacheDate = cachedAt
+    ? new Date(cachedAt).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
 
   return (
     <div className="space-y-4">
@@ -153,13 +198,33 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
         </Button>
       </div>
 
+      {/* Cache indicator */}
+      {hasResults && formattedCacheDate && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Clock className="w-3.5 h-3.5" />
+          <span>
+            Dados ML atualizados em: <span className="font-medium text-foreground">{formattedCacheDate}</span>
+          </span>
+          {fromCache && (
+            <Badge variant="outline" className="text-[10px] h-5">Cache</Badge>
+          )}
+          {fromCache && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleForceRefresh}
+              disabled={loading}
+              className="h-6 text-[10px] px-2"
+            >
+              Atualizar agora
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Filters */}
       {hasResults && (
-        <MLFilters
-          filters={filters}
-          onChange={setFilters}
-          maxPrice={maxPrice}
-        />
+        <MLFilters filters={filters} onChange={setFilters} maxPrice={maxPrice} />
       )}
 
       {/* KPI Cards */}
