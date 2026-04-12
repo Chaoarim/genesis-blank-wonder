@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
 
-  Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
+  Users, BookUser, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
   Clock, Wallet, PackageCheck, Car
