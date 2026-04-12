@@ -28,6 +28,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
   { value: 'fleet-rankings', icon: Car, label: 'Inteligência Automotiva', group: 'Consulta' },
   { value: 'mercadolivre', icon: ShoppingBag, label: 'Mercado Livre', group: 'Consulta' },
+  { value: 'radar-ml', icon: Radio, label: 'Radar de Mercado ML', group: 'Consulta' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
