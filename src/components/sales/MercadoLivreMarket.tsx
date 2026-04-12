@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, ShoppingCart } from 'lucide-react';
@@ -7,9 +7,11 @@ import {
   buscarPecaML,
   calcularMetricasML,
   rankingFornecedoresPorPeca,
+  calcularSinaisML,
   type MLMetricas,
   type MLResultItem,
   type FornecedorRanking,
+  type SinalMLResult,
 } from '@/services/mercadolivreService';
 import { MLKpiCards } from './ml/MLKpiCards';
 import { MLTopVendidosChart } from './ml/MLTopVendidosChart';
@@ -28,6 +30,11 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
   const [ranking, setRanking] = useState<FornecedorRanking[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalItem, setModalItem] = useState<MLResultItem | null>(null);
+
+  const sinaisML = useMemo(() => {
+    if (!metricas?.resultados?.length) return new Map<string, SinalMLResult>();
+    return calcularSinaisML(metricas.resultados, metricas.disponibilidadeRegional);
+  }, [metricas]);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
@@ -85,7 +92,7 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
       {/* Charts row */}
       {metricas && metricas.resultados.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <MLTopVendidosChart resultados={metricas.resultados} onViewItem={handleViewItem} />
+          <MLTopVendidosChart resultados={metricas.resultados} onViewItem={handleViewItem} sinaisML={sinaisML} />
           <MLFornecedorDonut ranking={ranking} />
         </div>
       )}
@@ -108,6 +115,7 @@ export function MercadoLivreMarket({ adminUserId }: MercadoLivreMarketProps) {
         onOpenChange={setModalOpen}
         items={metricas?.resultados || []}
         pecaNome={query}
+        sinaisML={sinaisML}
       />
     </div>
   );
