@@ -1,85 +1,69 @@
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
-function respond(status: number, body: unknown) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  const startTime = Date.now();
+  const respond = (status: number, body: unknown) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   try {
-    const body = await req.json();
-    const { url } = body;
+    const { url } = await req.json();
 
-    if (!url || typeof url !== "string") {
-      return respond(400, { ok: false, error: "Missing or invalid 'url' in request body" });
+    if (!url || typeof url !== 'string') {
+      return respond(400, { error: 'URL inválida ou ausente' });
     }
 
-    // Only allow Mercado Livre API
-    if (!url.startsWith("https://api.mercadolibre.com/") && !url.startsWith("https://api.mercadolivre.com/")) {
-      return respond(400, { ok: false, error: "Only Mercado Livre API URLs are allowed" });
+    // Only allow ML API URLs
+    if (!url.includes('mercadolibre.com') && !url.includes('mercadolivre.com')) {
+      return respond(400, { error: 'Apenas URLs do Mercado Livre são permitidas' });
     }
 
     console.log(`[ml-proxy] Fetching: ${url}`);
 
-    const mlResponse = await fetch(url, {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
       headers: {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
     });
 
-    const processingTime = Date.now() - startTime;
+    clearTimeout(timeout);
 
-    const contentType = mlResponse.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      const text = await mlResponse.text();
-      console.error(`[ml-proxy] Non-JSON response (${mlResponse.status}): ${text.substring(0, 200)}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`[ml-proxy] ML API error ${response.status}:`, JSON.stringify(data).substring(0, 300));
       return respond(200, {
         ok: false,
-        error: "Non-JSON response from Mercado Livre API",
-        status: mlResponse.status,
-        processing_time_ms: processingTime,
-      });
-    }
-
-    const data = await mlResponse.json();
-
-    if (!mlResponse.ok) {
-      console.error(`[ml-proxy] ML API error ${mlResponse.status}:`, JSON.stringify(data).substring(0, 500));
-      return respond(200, {
-        ok: false,
-        error: "Mercado Livre API error",
-        status: mlResponse.status,
+        error: `ML API retornou status ${response.status}`,
+        status: response.status,
         details: data,
-        processing_time_ms: processingTime,
       });
     }
 
-    return respond(200, {
-      ok: true,
-      data,
-      processing_time_ms: processingTime,
-    });
+    return respond(200, { ok: true, data });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : 'Erro desconhecido';
+    const isTimeout = message.includes('abort');
     console.error(`[ml-proxy] Error:`, message);
     return respond(200, {
       ok: false,
-      error: message,
-      processing_time_ms: Date.now() - startTime,
+      error: isTimeout ? 'Timeout ao conectar com Mercado Livre' : message,
+      timeout: isTimeout,
     });
   }
 });

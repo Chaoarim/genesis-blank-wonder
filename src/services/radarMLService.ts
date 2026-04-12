@@ -162,23 +162,38 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// --- Direct fetch to ML public API (browser-side, avoids datacenter IP blocks) ---
-async function mlFetch<T>(url: string, timeoutMs = 15000): Promise<T> {
+// --- Proxy helper via Edge Function (avoids CORS) ---
+async function mlFetch<T>(url: string, timeoutMs = 20000): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const { data, error } = await supabase.functions.invoke('ml-proxy', {
+      body: { url },
+    });
     clearTimeout(timer);
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      console.warn(`[ML API] ${res.status} for ${url}:`, body.substring(0, 200));
-      throw new Error(`Mercado Livre API error ${res.status}`);
+
+    if (error) {
+      console.error('[mlFetch] invoke error:', error);
+      throw new Error('Sem conexão com o Mercado Livre. Tente novamente em alguns segundos.');
     }
-    return (await res.json()) as T;
+
+    if (data?.ok === false) {
+      if (data?.timeout) {
+        throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
+      }
+      if (data?.status === 403) {
+        throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
+      }
+      throw new Error(data?.error || 'Erro ao consultar o Mercado Livre');
+    }
+
+    return (data?.data ?? data) as T;
   } catch (e: any) {
     clearTimeout(timer);
-    if (e.name === 'AbortError') throw new Error('Timeout ao consultar o Mercado Livre');
+    if (e.name === 'AbortError') {
+      throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
+    }
     throw e;
   }
 }
