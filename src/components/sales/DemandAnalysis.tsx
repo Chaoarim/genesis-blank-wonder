@@ -319,16 +319,43 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
-            <Input
-              className="pl-8 w-48"
-              placeholder="Buscar modelo/peça..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-          </div>
         </div>
+      </div>
+
+      {/* Search Filters */}
+      <div className="flex gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Buscar modelo/peça..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="relative flex-1 min-w-[150px]">
+          <Package className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Filtrar por fabricante/fornecedor..."
+            value={fornecedorFilter}
+            onChange={e => setFornecedorFilter(e.target.value)}
+          />
+        </div>
+        <div className="relative flex-1 min-w-[150px]">
+          <Zap className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Filtrar por peça/código..."
+            value={pecaFilter}
+            onChange={e => setPecaFilter(e.target.value)}
+          />
+        </div>
+        {(searchQuery || fornecedorFilter || pecaFilter) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearchQuery(''); setFornecedorFilter(''); setPecaFilter(''); }}>
+            Limpar
+          </Button>
+        )}
       </div>
 
       {/* Summary Cards */}
