@@ -103,7 +103,7 @@ export function BackupExcelDownload({ adminUserId }: BackupExcelDownloadProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Exporte os dados principais do sistema (vendas, clientes, estoque, contas a pagar e fornecedores) em um arquivo Excel com múltiplas abas.
+          Exporte os dados principais do sistema (vendas, clientes, estoque, contas a pagar, fornecedores e dados ML) em um arquivo Excel com múltiplas abas.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
