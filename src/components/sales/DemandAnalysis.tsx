@@ -67,6 +67,8 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
   const [enriching, setEnriching] = useState(false);
   const [enrichedItems, setEnrichedItems] = useState<MLEnrichedItem[]>([]);
   const [selectedState, setSelectedState] = useState('BR-SP');
+  const [fornecedorFilter, setFornecedorFilter] = useState('');
+  const [pecaFilter, setPecaFilter] = useState('');
 
   // Load fleet rankings
   useEffect(() => {
@@ -131,15 +133,37 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
     });
   }, [filteredRankings, parts]);
 
-  // Filter by search
+  // Filter by search, fornecedor, and peça
   const filteredCrossed = useMemo(() => {
-    if (!searchQuery.trim()) return crossedData;
+    let data = crossedData;
     const q = normalizeFleetText(searchQuery);
-    return crossedData.filter(d =>
-      normalizeFleetText(d.modelo).includes(q) ||
-      d.pecasCompativeis.some(p => p.searchText.includes(q))
-    );
-  }, [crossedData, searchQuery]);
+    const fq = normalizeFleetText(fornecedorFilter);
+    const pq = normalizeFleetText(pecaFilter);
+
+    if (q) {
+      data = data.filter(d =>
+        normalizeFleetText(d.modelo).includes(q) ||
+        d.pecasCompativeis.some(p => p.searchText.includes(q))
+      );
+    }
+    if (fq) {
+      data = data.map(d => {
+        const filtered = d.pecasCompativeis.filter(p => normalizeFleetText(p.fornecedor).includes(fq));
+        if (filtered.length === 0) return null;
+        return { ...d, pecasCompativeis: filtered, totalPecas: filtered.length, classificacao: filtered.length > 20 ? 'alta' as const : filtered.length > 5 ? 'media' as const : 'baixa' as const };
+      }).filter(Boolean) as CrossedDemand[];
+    }
+    if (pq) {
+      data = data.map(d => {
+        const filtered = d.pecasCompativeis.filter(p =>
+          normalizeFleetText(p.produto).includes(pq) || normalizeFleetText(p.codigo).includes(pq)
+        );
+        if (filtered.length === 0) return null;
+        return { ...d, pecasCompativeis: filtered, totalPecas: filtered.length, classificacao: filtered.length > 20 ? 'alta' as const : filtered.length > 5 ? 'media' as const : 'baixa' as const };
+      }).filter(Boolean) as CrossedDemand[];
+    }
+    return data;
+  }, [crossedData, searchQuery, fornecedorFilter, pecaFilter]);
 
   // Enrich top items with ML data
   const enrichWithML = useCallback(async () => {
@@ -295,16 +319,43 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
               {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
-            <Input
-              className="pl-8 w-48"
-              placeholder="Buscar modelo/peça..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
-          </div>
         </div>
+      </div>
+
+      {/* Search Filters */}
+      <div className="flex gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[150px]">
+          <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Buscar modelo/peça..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="relative flex-1 min-w-[150px]">
+          <Package className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Filtrar por fabricante/fornecedor..."
+            value={fornecedorFilter}
+            onChange={e => setFornecedorFilter(e.target.value)}
+          />
+        </div>
+        <div className="relative flex-1 min-w-[150px]">
+          <Zap className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8"
+            placeholder="Filtrar por peça/código..."
+            value={pecaFilter}
+            onChange={e => setPecaFilter(e.target.value)}
+          />
+        </div>
+        {(searchQuery || fornecedorFilter || pecaFilter) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearchQuery(''); setFornecedorFilter(''); setPecaFilter(''); }}>
+            Limpar
+          </Button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -336,7 +387,7 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
             <span className="text-xs text-muted-foreground">Fornecedores Cobertos</span>
           </div>
           <p className="text-lg font-bold">
-            {new Set(parts.map(p => p.fornecedor).filter(Boolean)).size}
+            {new Set(filteredCrossed.flatMap(d => d.pecasCompativeis.map(p => p.fornecedor)).filter(Boolean)).size}
           </p>
         </Card>
       </div>
