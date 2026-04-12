@@ -11,7 +11,6 @@ let tokenExpiresAt = 0;
 const ML_CLIENT_ID = '7461192017586183';
 
 async function getAccessToken(): Promise<string> {
-  // Return cached token if still valid (with 60s margin)
   if (cachedToken && Date.now() < tokenExpiresAt - 60_000) {
     return cachedToken;
   }
@@ -41,11 +40,15 @@ async function getAccessToken(): Promise<string> {
   }
 
   cachedToken = body.access_token;
-  // ML tokens typically expire in 6 hours
   tokenExpiresAt = Date.now() + (body.expires_in || 21600) * 1000;
   console.log('[ml-proxy] OAuth token obtained successfully');
 
   return cachedToken!;
+}
+
+function appendTokenToUrl(url: string, token: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}access_token=${token}`;
 }
 
 Deno.serve(async (req) => {
@@ -66,27 +69,55 @@ Deno.serve(async (req) => {
       return respond(400, { error: 'URL inválida ou ausente' });
     }
 
-    // Only allow ML API URLs
     if (!url.includes('mercadolibre.com') && !url.includes('mercadolivre.com')) {
       return respond(400, { error: 'Apenas URLs do Mercado Livre são permitidas' });
     }
 
-    // Get OAuth token
-    const accessToken = await getAccessToken();
-
-    console.log(`[ml-proxy] Fetching: ${url}`);
-
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(url, {
+    // Get OAuth token
+    let accessToken: string | null = null;
+    try {
+      accessToken = await getAccessToken();
+    } catch (e) {
+      console.warn('[ml-proxy] Could not get OAuth token:', e);
+    }
+
+    // Try with token as query param first (avoids 403 from datacenter IPs)
+    const urlWithToken = accessToken ? appendTokenToUrl(url, accessToken) : url;
+    console.log(`[ml-proxy] Fetching: ${url} (with_token=${!!accessToken})`);
+
+    let response = await fetch(urlWithToken, {
       method: 'GET',
       signal: controller.signal,
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
-      },
+      headers: { 'Accept': 'application/json' },
     });
+
+    // If still 403, try with Bearer header
+    if (response.status === 403 && accessToken) {
+      console.log('[ml-proxy] Got 403 with query token, retrying with Bearer header...');
+      await response.text();
+      response = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+    }
+
+    // If still 403, try without any auth
+    if (response.status === 403) {
+      console.log('[ml-proxy] Got 403 with auth, retrying without auth...');
+      await response.text();
+      response = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' },
+      });
+    }
 
     clearTimeout(timeout);
 
@@ -95,7 +126,6 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       console.error(`[ml-proxy] ML API error ${response.status}:`, JSON.stringify(data).substring(0, 300));
       
-      // If 401, invalidate token cache so next request gets a fresh one
       if (response.status === 401) {
         cachedToken = null;
         tokenExpiresAt = 0;
