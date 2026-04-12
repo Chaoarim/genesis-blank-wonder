@@ -310,7 +310,10 @@ const SalesHub = () => {
       <div className="min-h-screen flex w-full bg-gradient-to-b from-background to-muted/20">
         <SalesHubSidebar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            if (tab === 'radar-ml') { navigate('/radar-ml'); return; }
+            setActiveTab(tab);
+          }}
           visibleTabs={visibleTabs}
           badgeCounts={badgeCounts}
         />

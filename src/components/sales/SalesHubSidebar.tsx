@@ -6,7 +6,7 @@ import {
   Users, BookUser, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock, Wallet, PackageCheck, Car
+  Clock, Wallet, PackageCheck, Car, Radio
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -28,6 +28,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
   { value: 'fleet-rankings', icon: Car, label: 'Inteligência Automotiva', group: 'Consulta' },
   { value: 'mercadolivre', icon: ShoppingBag, label: 'Mercado Livre', group: 'Consulta' },
+  { value: 'radar-ml', icon: Radio, label: 'Radar de Mercado ML', group: 'Consulta' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },

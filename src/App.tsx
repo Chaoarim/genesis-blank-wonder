@@ -16,6 +16,7 @@ import PreRegistration from "./pages/PreRegistration";
 import PixPayment from "./pages/PixPayment";
 import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
+import RadarML from "./pages/RadarML";
 import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 
@@ -56,6 +57,7 @@ const App = () => (
           
           {/* Teste de Webhook (pode ser removido) */}
           <Route path="/webhook-test" element={<WebhookTest />} />
+          <Route path="/radar-ml" element={<RadarML />} />
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
