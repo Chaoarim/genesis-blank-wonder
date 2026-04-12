@@ -45,7 +45,7 @@ const LABELS: Record<string, { label: string; keywords: string }> = {
   'monthly-report': { label: 'Relatório Mensal', keywords: 'relatório mensal' },
   'sales-by-channel': { label: 'Vendas por Canal', keywords: 'canal balcão' },
   'demand-forecast': { label: 'Previsão de Demanda', keywords: 'previsão demanda' },
-  'fleet-rankings': { label: 'Tendências de Mercado', keywords: 'frota emplacamento ranking' },
+  'fleet-rankings': { label: 'Inteligência Automotiva', keywords: 'frota emplacamento ranking inteligência automotiva' },
   expedition: { label: 'Expedição', keywords: 'expedição conferência' },
   help: { label: 'Como Usar', keywords: 'ajuda guia tutorial' },
   customers: { label: 'Meus Clientes', keywords: 'cliente cadastro' },

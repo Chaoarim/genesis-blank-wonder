@@ -28,7 +28,7 @@ export const ALL_PERMISSIONS = [
   { key: 'history', label: 'Histórico', sensitive: false },
   { key: 'customers', label: 'Clientes', sensitive: false },
   { key: 'carteira', label: 'Carteira de Clientes', sensitive: false },
-  { key: 'fleet-rankings', label: 'Ranking Frota', sensitive: false },
+  { key: 'fleet-rankings', label: 'Inteligência Automotiva', sensitive: false },
   { key: 'credit', label: 'Aprovações de Crédito', sensitive: true },
   { key: 'repurchase-alerts', label: 'Alertas de Recompra', sensitive: false },
   { key: 'goals', label: 'Metas', sensitive: false },
