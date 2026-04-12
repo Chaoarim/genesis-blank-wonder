@@ -1,4 +1,4 @@
-// Direct ML API calls (no proxy needed - browser-side)
+import { supabase } from '@/integrations/supabase/client';
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
