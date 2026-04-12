@@ -133,15 +133,37 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
     });
   }, [filteredRankings, parts]);
 
-  // Filter by search
+  // Filter by search, fornecedor, and peça
   const filteredCrossed = useMemo(() => {
-    if (!searchQuery.trim()) return crossedData;
+    let data = crossedData;
     const q = normalizeFleetText(searchQuery);
-    return crossedData.filter(d =>
-      normalizeFleetText(d.modelo).includes(q) ||
-      d.pecasCompativeis.some(p => p.searchText.includes(q))
-    );
-  }, [crossedData, searchQuery]);
+    const fq = normalizeFleetText(fornecedorFilter);
+    const pq = normalizeFleetText(pecaFilter);
+
+    if (q) {
+      data = data.filter(d =>
+        normalizeFleetText(d.modelo).includes(q) ||
+        d.pecasCompativeis.some(p => p.searchText.includes(q))
+      );
+    }
+    if (fq) {
+      data = data.map(d => {
+        const filtered = d.pecasCompativeis.filter(p => normalizeFleetText(p.fornecedor).includes(fq));
+        if (filtered.length === 0) return null;
+        return { ...d, pecasCompativeis: filtered, totalPecas: filtered.length, classificacao: filtered.length > 20 ? 'alta' as const : filtered.length > 5 ? 'media' as const : 'baixa' as const };
+      }).filter(Boolean) as CrossedDemand[];
+    }
+    if (pq) {
+      data = data.map(d => {
+        const filtered = d.pecasCompativeis.filter(p =>
+          normalizeFleetText(p.produto).includes(pq) || normalizeFleetText(p.codigo).includes(pq)
+        );
+        if (filtered.length === 0) return null;
+        return { ...d, pecasCompativeis: filtered, totalPecas: filtered.length, classificacao: filtered.length > 20 ? 'alta' as const : filtered.length > 5 ? 'media' as const : 'baixa' as const };
+      }).filter(Boolean) as CrossedDemand[];
+    }
+    return data;
+  }, [crossedData, searchQuery, fornecedorFilter, pecaFilter]);
 
   // Enrich top items with ML data
   const enrichWithML = useCallback(async () => {
