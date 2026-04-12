@@ -3,10 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ML_BASE = "https://api.mercadolivre.com";
+const ML_BASE = "https://api.mercadolibre.com";
 const CATEGORY_AUTOPARTS = "MLB1743";
 
 interface SearchParams {
@@ -20,6 +20,13 @@ interface SearchParams {
   sort?: string;
 }
 
+function respond(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -28,10 +35,7 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return respond(401, { error: "Unauthorized" });
     }
 
     const supabase = createClient(
@@ -40,14 +44,9 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return respond(401, { error: "Unauthorized", details: userError?.message });
     }
 
     const params: SearchParams = await req.json();
@@ -72,63 +71,47 @@ Deno.serve(async (req) => {
       }
       case "item": {
         if (!params.item_id) {
-          return new Response(
-            JSON.stringify({ error: "item_id is required" }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
+          return respond(400, { error: "item_id is required" });
         }
         url = `${ML_BASE}/items/${params.item_id}`;
         break;
       }
       case "seller": {
         if (!params.seller_id) {
-          return new Response(
-            JSON.stringify({ error: "seller_id is required" }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
+          return respond(400, { error: "seller_id is required" });
         }
         url = `${ML_BASE}/users/${params.seller_id}`;
         break;
       }
       default:
-        return new Response(JSON.stringify({ error: "Invalid action" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return respond(400, { error: "Invalid action" });
     }
 
+    console.log(`[mercadolivre-proxy] Fetching: ${url}`);
     const mlResponse = await fetch(url);
     const mlData = await mlResponse.json();
 
     if (!mlResponse.ok) {
-      return new Response(
-        JSON.stringify({
-          error: "Mercado Livre API error",
-          status: mlResponse.status,
-          details: mlData,
-        }),
-        {
-          status: mlResponse.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      console.error(`[mercadolivre-proxy] ML API error ${mlResponse.status}:`, JSON.stringify(mlData));
+      return respond(200, {
+        ok: false,
+        error: "Mercado Livre API error",
+        status: mlResponse.status,
+        details: mlData,
+        results: [],
+        paging: { total: 0, offset: 0, limit: 0 },
+      });
     }
 
-    return new Response(JSON.stringify(mlData), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respond(200, mlData);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error(`[mercadolivre-proxy] Error:`, message);
+    return respond(200, {
+      ok: false,
+      error: message,
+      results: [],
+      paging: { total: 0, offset: 0, limit: 0 },
     });
   }
 });

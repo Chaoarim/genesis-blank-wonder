@@ -84,7 +84,16 @@ async function callProxy<T>(body: Record<string, unknown>): Promise<T> {
     "mercadolivre-proxy",
     { body }
   );
-  if (error) throw new Error(error.message || "Erro ao consultar Mercado Livre");
+  if (error) {
+    console.error("[ML Proxy] invoke error:", error);
+    throw new Error(error.message || "Erro ao consultar Mercado Livre");
+  }
+  // Handle structured error responses from the edge function
+  if (data && typeof data === 'object' && 'ok' in data && data.ok === false) {
+    console.warn("[ML Proxy] API returned error:", data.error);
+    // Return the data as-is so callers can use fallback fields (results, paging)
+    return data as T;
+  }
   return data as T;
 }
 
