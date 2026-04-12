@@ -13,9 +13,12 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend } from 'recharts';
 import {
-  searchML, summarizeMLResults, getIndicadorCompra, ML_STATES,
-  type MLSearchResult, type MLMarketSummary,
-} from '@/lib/mercadoLivreApi';
+  buscarPecaML,
+  calcularMetricasML,
+  getIndicadorCompra,
+  ML_STATES,
+  type MLMetricas,
+} from '@/services/mercadolivreService';
 import {
   getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText,
   type FleetAnalysisItem,
@@ -63,7 +66,7 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedType, setSelectedType] = useState('automovel');
   const [activeTab, setActiveTab] = useState('cruzamento');
-  const [mlCache, setMlCache] = useState<Map<string, MLMarketSummary>>(new Map());
+  const [mlCache, setMlCache] = useState<Map<string, MLMetricas>>(new Map());
   const [enriching, setEnriching] = useState(false);
   const [enrichedItems, setEnrichedItems] = useState<MLEnrichedItem[]>([]);
   const [selectedState, setSelectedState] = useState('BR-SP');
@@ -193,12 +196,12 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
     for (const entry of topParts) {
       try {
         const searchTerm = `${entry.item.produto} ${entry.item.fornecedor}`.trim();
-        let summary: MLMarketSummary;
+        let summary: MLMetricas;
         if (mlCache.has(searchTerm)) {
           summary = mlCache.get(searchTerm)!;
         } else {
-          const data = await searchML(searchTerm, { limit: 10 });
-          summary = summarizeMLResults(data.results || []);
+          const data = await buscarPecaML(searchTerm, { limit: 10 });
+          summary = calcularMetricasML(data.results || []);
           mlCache.set(searchTerm, summary);
         }
 
@@ -223,7 +226,6 @@ export function DemandAnalysis({ adminUserId }: DemandAnalysisProps) {
         }
 
         const indicador = getIndicadorCompra(
-          summary.resultados.length > 0,
           summary.totalVendido,
           summary.resultados[0]?.available_quantity
         );
