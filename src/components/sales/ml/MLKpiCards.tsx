@@ -1,4 +1,3 @@
-import { useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, TrendingDown, ShoppingCart, Crown } from 'lucide-react';
 import type { MLMetricas } from '@/services/mercadolivreService';
