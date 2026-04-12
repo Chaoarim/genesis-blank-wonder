@@ -77,6 +77,38 @@ export interface MLItemDetail {
   seller_address: { state: { name: string } };
 }
 
+export interface MLSellerDetail {
+  id: number;
+  nickname: string;
+  seller_reputation: {
+    level_id: string;
+    transactions: { completed: number };
+  };
+  address: { state: string };
+}
+
+export interface MLMetricas {
+  precoMedio: number;
+  menorPreco: number;
+  totalVendido: number;
+  fornecedorLider: string;
+  fornecedorIdLider: number;
+  fornecedorLiderVendas: number;
+  linkMaisVendido: string;
+  thumbnailMaisVendido: string;
+  mlItemId: string;
+  disponibilidadeRegional: boolean;
+  resultados: MLResultItem[];
+}
+
+export interface FornecedorRanking {
+  fornecedor: string;
+  sellerId: number;
+  totalVendido: number;
+  participacao: number;
+  estado: string;
+}
+
 // --- Proxy helper ---
 
 async function mlProxyFetch<T>(url: string): Promise<T> {
@@ -129,20 +161,37 @@ export async function buscarDetalheItem(itemId: string): Promise<MLItemDetail> {
   return mlProxyFetch<MLItemDetail>(url);
 }
 
-// --- Helpers de análise ---
+// --- FUNÇÃO 4: buscarDadosVendedor ---
+export async function buscarDadosVendedor(userId: number | string): Promise<MLSellerDetail> {
+  const url = `${ML_BASE}/users/${userId}`;
+  return mlProxyFetch<MLSellerDetail>(url);
+}
 
-export function calcularResumo(results: MLResultItem[]) {
+export function classificarReputacao(levelId: string): { label: string; cor: string } {
+  if (!levelId) return { label: 'Sem dados', cor: 'gray' };
+  if (levelId.startsWith('5_') || levelId.includes('green')) return { label: 'Ótimo', cor: 'green' };
+  if (levelId.startsWith('4_') || levelId.includes('yellow')) return { label: 'Bom', cor: 'yellow' };
+  return { label: 'Ruim', cor: 'red' };
+}
+
+// --- FUNÇÃO 5: calcularMetricasML ---
+export function calcularMetricasML(
+  results: MLResultItem[],
+  stateCode?: string
+): MLMetricas {
   if (!results.length) {
     return {
       precoMedio: 0,
       menorPreco: 0,
       totalVendido: 0,
       fornecedorLider: '',
+      fornecedorIdLider: 0,
       fornecedorLiderVendas: 0,
       linkMaisVendido: '',
       thumbnailMaisVendido: '',
       mlItemId: '',
-      resultados: [] as MLResultItem[],
+      disponibilidadeRegional: false,
+      resultados: [],
     };
   }
 
@@ -151,12 +200,25 @@ export function calcularResumo(results: MLResultItem[]) {
   const menorPreco = Math.min(...prices);
   const totalVendido = results.reduce((s, r) => s + (r.sold_quantity || 0), 0);
 
-  const sellerMap = new Map<string, number>();
+  // Seller ranking
+  const sellerMap = new Map<string, { id: number; vendas: number }>();
   for (const r of results) {
     const nick = r.seller?.nickname || 'Desconhecido';
-    sellerMap.set(nick, (sellerMap.get(nick) || 0) + (r.sold_quantity || 0));
+    const prev = sellerMap.get(nick);
+    sellerMap.set(nick, {
+      id: r.seller?.id || 0,
+      vendas: (prev?.vendas || 0) + (r.sold_quantity || 0),
+    });
   }
-  const sorted = [...sellerMap.entries()].sort((a, b) => b[1] - a[1]);
+  const sorted = [...sellerMap.entries()].sort((a, b) => b[1].vendas - a[1].vendas);
+  const lider = sorted[0];
+
+  // Regional availability
+  const disponibilidadeRegional = stateCode
+    ? results.some((r) => r.address?.state_name?.toLowerCase().includes(
+        ML_STATES.find((s) => s.code === stateCode)?.name.toLowerCase() || ''
+      ))
+    : results.length > 0;
 
   const topResult = results[0];
 
@@ -164,15 +226,46 @@ export function calcularResumo(results: MLResultItem[]) {
     precoMedio,
     menorPreco,
     totalVendido,
-    fornecedorLider: sorted[0]?.[0] || '',
-    fornecedorLiderVendas: sorted[0]?.[1] || 0,
+    fornecedorLider: lider?.[0] || '',
+    fornecedorIdLider: lider?.[1].id || 0,
+    fornecedorLiderVendas: lider?.[1].vendas || 0,
     linkMaisVendido: topResult?.permalink || '',
     thumbnailMaisVendido: topResult?.thumbnail || '',
     mlItemId: topResult?.id || '',
+    disponibilidadeRegional,
     resultados: results,
   };
 }
 
+// --- FUNÇÃO 6: rankingFornecedoresPorPeca ---
+export function rankingFornecedoresPorPeca(results: MLResultItem[]): FornecedorRanking[] {
+  if (!results.length) return [];
+
+  const sellerMap = new Map<string, { id: number; vendas: number; estado: string }>();
+  for (const r of results) {
+    const nick = r.seller?.nickname || 'Desconhecido';
+    const prev = sellerMap.get(nick);
+    sellerMap.set(nick, {
+      id: r.seller?.id || 0,
+      vendas: (prev?.vendas || 0) + (r.sold_quantity || 0),
+      estado: r.address?.state_name || prev?.estado || '',
+    });
+  }
+
+  const totalGeral = [...sellerMap.values()].reduce((s, v) => s + v.vendas, 0);
+
+  return [...sellerMap.entries()]
+    .sort((a, b) => b[1].vendas - a[1].vendas)
+    .map(([fornecedor, data]) => ({
+      fornecedor,
+      sellerId: data.id,
+      totalVendido: data.vendas,
+      participacao: totalGeral > 0 ? Math.round((data.vendas / totalGeral) * 100) : 0,
+      estado: data.estado,
+    }));
+}
+
+// --- Helper indicador ---
 export function getIndicadorCompra(
   totalVendido: number,
   availableQty?: number
