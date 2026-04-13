@@ -162,38 +162,51 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// --- Proxy helper via Edge Function (avoids CORS) ---
+// --- Direct browser fetch (avoids datacenter IP blocking on Edge Function) ---
 async function mlFetch<T>(url: string, timeoutMs = 20000): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const { data, error } = await supabase.functions.invoke('ml-proxy', {
-      body: { url },
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+      },
     });
+
     clearTimeout(timer);
 
-    if (error) {
-      console.error('[mlFetch] invoke error:', error);
+    if (!response.ok) {
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      console.error('[mlFetch] ML API error:', response.status, data);
+
+      if (response.status === 403) {
+        throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
+      }
+
+      throw new Error(data?.message || data?.error || `Erro ao consultar o Mercado Livre (${response.status})`);
+    }
+
+    return (await response.json()) as T;
+  } catch (e: any) {
+    clearTimeout(timer);
+
+    if (e?.name === 'AbortError') {
+      throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
+    }
+
+    if (e instanceof TypeError) {
       throw new Error('Sem conexão com o Mercado Livre. Tente novamente em alguns segundos.');
     }
 
-    if (data?.ok === false) {
-      if (data?.timeout) {
-        throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
-      }
-      if (data?.status === 403) {
-        throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
-      }
-      throw new Error(data?.error || 'Erro ao consultar o Mercado Livre');
-    }
-
-    return (data?.data ?? data) as T;
-  } catch (e: any) {
-    clearTimeout(timer);
-    if (e.name === 'AbortError') {
-      throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
-    }
     throw e;
   }
 }
