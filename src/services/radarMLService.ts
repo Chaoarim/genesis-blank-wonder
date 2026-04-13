@@ -204,10 +204,13 @@ async function mlProxyFetch<T>(url: string): Promise<T | null> {
   }
 
   if (payload?.status === 403) {
-    throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Tente novamente em instantes.');
+    console.warn('[mlProxyFetch] 403 from proxy, falling back to direct fetch');
+    return null;
   }
 
-  throw new Error(payload?.error || 'Erro ao consultar o Mercado Livre');
+  // For other errors, also fall back to direct fetch instead of blocking
+  console.warn('[mlProxyFetch] Proxy error, falling back to direct fetch:', payload?.error);
+  return null;
 }
 
 async function mlDirectFetch<T>(url: string): Promise<T> {
