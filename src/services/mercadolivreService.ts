@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+// Direct ML API integration (browser-side fetch)
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
