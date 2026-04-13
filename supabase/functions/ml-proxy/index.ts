@@ -113,10 +113,9 @@ Deno.serve(async (req) => {
 
         const serpParams = new URLSearchParams({
           engine: "mercadolibre",
-          site: "mercadolivre.com.br",
-          q: query,
+          mercadolibre_domain: "mercadolivre.com.br",
+          query: query,
           api_key: serpApiKey,
-          num: String(limit),
         });
 
         if (offset > 0) {
