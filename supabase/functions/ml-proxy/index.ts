@@ -4,14 +4,14 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
-// --- OAuth Token Cache ---
+// --- OAuth Token Cache (6h) ---
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
 const ML_CLIENT_ID = '7461192017586183';
 
-async function getAccessToken(): Promise<string> {
-  if (cachedToken && Date.now() < tokenExpiresAt - 60_000) {
+async function getAccessToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh && cachedToken && Date.now() < tokenExpiresAt - 60_000) {
     return cachedToken;
   }
 
@@ -40,15 +40,22 @@ async function getAccessToken(): Promise<string> {
   }
 
   cachedToken = body.access_token;
+  // Cache for the token lifetime (usually 6h)
   tokenExpiresAt = Date.now() + (body.expires_in || 21600) * 1000;
-  console.log('[ml-proxy] OAuth token obtained successfully');
+  console.log('[ml-proxy] OAuth token obtained, expires_in:', body.expires_in);
 
   return cachedToken!;
 }
 
-function appendTokenToUrl(url: string, token: string): string {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}access_token=${token}`;
+async function fetchML(url: string, token: string, signal: AbortSignal): Promise<Response> {
+  return fetch(url, {
+    method: 'GET',
+    signal,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 }
 
 Deno.serve(async (req) => {
@@ -76,70 +83,39 @@ Deno.serve(async (req) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
-    // Get OAuth token
-    let accessToken: string | null = null;
     try {
-      accessToken = await getAccessToken();
-    } catch (e) {
-      console.warn('[ml-proxy] Could not get OAuth token:', e);
-    }
+      // Step A: Get token (cached or fresh)
+      let accessToken = await getAccessToken();
 
-    // Try with token as query param first (avoids 403 from datacenter IPs)
-    const urlWithToken = accessToken ? appendTokenToUrl(url, accessToken) : url;
-    console.log(`[ml-proxy] Fetching: ${url} (with_token=${!!accessToken})`);
+      // Step B: Fetch ML API with Bearer token
+      console.log(`[ml-proxy] Fetching: ${url}`);
+      let response = await fetchML(url, accessToken, controller.signal);
 
-    let response = await fetch(urlWithToken, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' },
-    });
-
-    // If still 403, try with Bearer header
-    if (response.status === 403 && accessToken) {
-      console.log('[ml-proxy] Got 403 with query token, retrying with Bearer header...');
-      await response.text();
-      response = await fetch(url, {
-        method: 'GET',
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-    }
-
-    // If still 403, try without any auth
-    if (response.status === 403) {
-      console.log('[ml-proxy] Got 403 with auth, retrying without auth...');
-      await response.text();
-      response = await fetch(url, {
-        method: 'GET',
-        signal: controller.signal,
-        headers: { 'Accept': 'application/json' },
-      });
-    }
-
-    clearTimeout(timeout);
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error(`[ml-proxy] ML API error ${response.status}:`, JSON.stringify(data).substring(0, 300));
-      
+      // If 401 (expired token), refresh and retry once
       if (response.status === 401) {
-        cachedToken = null;
-        tokenExpiresAt = 0;
+        console.log('[ml-proxy] Token expired (401), refreshing...');
+        await response.text(); // consume body
+        accessToken = await getAccessToken(true);
+        response = await fetchML(url, accessToken, controller.signal);
       }
-      
-      return respond(200, {
-        ok: false,
-        error: `ML API retornou status ${response.status}`,
-        status: response.status,
-        details: data,
-      });
-    }
 
-    return respond(200, { ok: true, data });
+      clearTimeout(timeout);
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error(`[ml-proxy] ML API error ${response.status}:`, JSON.stringify(data).substring(0, 500));
+        return respond(200, {
+          ok: false,
+          error: `ML API retornou status ${response.status}`,
+          status: response.status,
+          details: data,
+        });
+      }
+
+      return respond(200, { ok: true, data });
+    } finally {
+      clearTimeout(timeout);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro desconhecido';
     const isTimeout = message.includes('abort');
