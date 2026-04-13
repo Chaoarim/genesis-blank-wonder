@@ -43,11 +43,17 @@ Deno.serve(async (req) => {
     if (!code) {
       return respond(400, { error: "Authorization code is required" });
     }
+    console.log("[ml-callback] Authorization code received");
 
     const clientSecret = Deno.env.get("ML_CLIENT_SECRET");
     if (!clientSecret) {
       return respond(500, { error: "ML_CLIENT_SECRET not configured" });
     }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
     // Exchange code for tokens
     console.log("[ml-callback] Exchanging code for tokens...");
@@ -67,6 +73,28 @@ Deno.serve(async (req) => {
 
     if (!tokenResp.ok) {
       console.error("[ml-callback] Token exchange failed:", JSON.stringify(tokenData));
+
+      if (tokenData?.error === "invalid_grant") {
+        const { data: existingToken } = await supabaseAdmin
+          .from("ml_tokens")
+          .select("ml_user_id, ml_nickname, expires_at")
+          .eq("user_id", user.id)
+          .gt("expires_at", new Date().toISOString())
+          .maybeSingle();
+
+        if (existingToken) {
+          console.log("[ml-callback] Reusing existing valid token for user:", user.id);
+          return respond(200, {
+            ok: true,
+            success: true,
+            reused_existing_token: true,
+            ml_user_id: existingToken.ml_user_id,
+            ml_nickname: existingToken.ml_nickname,
+            expires_at: existingToken.expires_at,
+          });
+        }
+      }
+
       return respond(400, {
         error: "Falha ao trocar código por token",
         details: tokenData,
@@ -87,12 +115,6 @@ Deno.serve(async (req) => {
       const meData = await meResp.json();
       mlNickname = meData.nickname || "";
     } catch {}
-
-    // Upsert tokens using service role to bypass RLS for upsert
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const { error: upsertError } = await supabaseAdmin
       .from("ml_tokens")
@@ -117,6 +139,7 @@ Deno.serve(async (req) => {
 
     return respond(200, {
       ok: true,
+      success: true,
       ml_user_id: tokenData.user_id,
       ml_nickname: mlNickname,
       expires_at: expiresAt,

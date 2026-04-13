@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Navigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { exchangeMLAuthorizationCode } from "@/features/ml/exchangeAuthorizationCode";
 
 /**
  * Root route handler. If ML OAuth ?code= is present, exchanges it.
@@ -16,35 +16,43 @@ export default function RootRedirect() {
   useEffect(() => {
     if (!code) return;
     setProcessing(true);
+    let cancelled = false;
 
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Faça login antes de conectar o Mercado Livre.");
-          setDone(true);
+        console.log("[ML OAuth] Código recebido na URL principal, iniciando troca.");
+        toast.info("Conectando ao Mercado Livre...");
+
+        const result = await exchangeMLAuthorizationCode(code);
+        if (cancelled) {
           return;
         }
 
-        toast.info("Conectando ao Mercado Livre...");
-        const { data, error } = await supabase.functions.invoke("ml-callback", {
-          body: { code },
-        });
-
-        if (error || !data?.ok) {
-          toast.error(data?.error || error?.message || "Erro ao conectar ML");
+        if (!result.success) {
+          toast.error(result.error || "Erro ao conectar ML");
         } else {
+          console.log("Token ML salvo:", result.data);
+          window.history.replaceState({}, "", "/");
           toast.success("Mercado Livre conectado com sucesso!");
         }
       } catch (e: any) {
-        toast.error(e.message || "Erro ao conectar ML");
+        if (!cancelled) {
+          toast.error(e.message || "Erro ao conectar ML");
+        }
       } finally {
-        setDone(true);
+        if (!cancelled) {
+          setDone(true);
+          setProcessing(false);
+        }
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [code]);
 
-  if (!code) {
+  if (!code && !processing) {
     return <Navigate to="/sales" replace />;
   }
 

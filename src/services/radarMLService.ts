@@ -163,8 +163,54 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// --- Direct browser fetch (no proxy needed for public ML endpoints) ---
-async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
+interface MLProxyResponse<T> {
+  ok?: boolean;
+  data?: T;
+  error?: string;
+  status?: number;
+  timeout?: boolean;
+  not_connected?: boolean;
+}
+
+async function mlProxyFetch<T>(url: string): Promise<T | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return null;
+  }
+
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Erro ao consultar o Mercado Livre');
+  }
+
+  const payload = (data || null) as MLProxyResponse<T> | null;
+
+  if (payload?.ok) {
+    return payload.data as T;
+  }
+
+  if (payload?.not_connected) {
+    return null;
+  }
+
+  if (payload?.timeout) {
+    throw new Error('Timeout ao conectar com Mercado Livre');
+  }
+
+  if (payload?.status === 403) {
+    throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Tente novamente em instantes.');
+  }
+
+  throw new Error(payload?.error || 'Erro ao consultar o Mercado Livre');
+}
+
+async function mlDirectFetch<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.text();
@@ -175,6 +221,16 @@ async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
     throw new Error(`Erro ao consultar o Mercado Livre (${res.status})`);
   }
   return res.json() as Promise<T>;
+}
+
+// --- Prioriza token válido via ml-proxy antes da consulta pública ---
+async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
+  const proxyResult = await mlProxyFetch<T>(url);
+  if (proxyResult !== null) {
+    return proxyResult;
+  }
+
+  return mlDirectFetch<T>(url);
 }
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
