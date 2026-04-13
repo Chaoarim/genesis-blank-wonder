@@ -163,15 +163,6 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-interface MLProxyResponse<T> {
-  ok?: boolean;
-  data?: T;
-  error?: string;
-  status?: number;
-  timeout?: boolean;
-  not_connected?: boolean;
-}
-
 // Fetch ML token from database for authenticated requests
 async function getMLToken(): Promise<string | null> {
   try {
