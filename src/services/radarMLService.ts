@@ -1,8 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
+import { ML_BASE, mlBrowserFetch, mlBrowserSearchFetch } from './mlPublicApi';
 // supabase is still used for cache operations (radar_cache, radar_historico, radar_favoritos)
 
-const ML_BASE = 'https://api.mercadolibre.com';
-const CATEGORY = 'MLB1743';
 const DELAY_MS = 500;
 
 // --- Types ---
@@ -163,54 +162,26 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// Token management is handled server-side by the ml-proxy Edge Function
-
-// All ML API calls go through the ml-proxy Edge Function to avoid CORS issues
-async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
-  const { data, error } = await supabase.functions.invoke('ml-proxy', {
-    body: { url },
-  });
-
-  if (error) {
-    console.error('[mlFetch] Edge function error:', error);
-    throw new Error('Erro ao conectar com o Mercado Livre via proxy');
-  }
-
-  if (!data?.ok) {
-    const msg = data?.error || 'Erro desconhecido do Mercado Livre';
-    console.error('[mlFetch] Proxy returned error:', msg);
-    if (data?.not_connected) {
-      throw new Error('ML não conectado. Autorize sua conta do Mercado Livre primeiro.');
-    }
-    throw new Error(msg);
-  }
-
-  return data.data as T;
-}
-
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // --- API Functions ---
 export async function radarBuscar(query: string, offset = 0, limit = 50, state?: string): Promise<RadarSearchResult> {
-  const q = encodeURIComponent(query);
-  let url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY}&sort=sold_quantity_desc&limit=${limit}&offset=${offset}`;
-  if (state) url += `&state=${state}`;
-  return mlFetch<RadarSearchResult>(url);
+  return mlBrowserSearchFetch<RadarSearchResult>(query, { limit, offset, state });
 }
 
 export async function radarItemDetails(ids: string[]): Promise<any[]> {
   if (!ids.length) return [];
   const url = `${ML_BASE}/items?ids=${ids.join(',')}`;
-  return mlFetch<any[]>(url);
+  return mlBrowserFetch<any[]>(url);
 }
 
 export async function radarSellerDetail(userId: number): Promise<RadarSellerDetail> {
-  return mlFetch<RadarSellerDetail>(`${ML_BASE}/users/${userId}`);
+  return mlBrowserFetch<RadarSellerDetail>(`${ML_BASE}/users/${userId}`);
 }
 
 export async function radarTrends(): Promise<any[]> {
   try {
-    return await mlFetch<any[]>(`${ML_BASE}/trends/MLB`);
+    return await mlBrowserFetch<any[]>(`${ML_BASE}/trends/MLB`);
   } catch { return []; }
 }
 
