@@ -17,6 +17,7 @@ import PixPayment from "./pages/PixPayment";
 import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
 import RadarML from "./pages/RadarML";
+import MLAuth from "./pages/MLAuth";
 
 import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "./components/OfflineIndicator";
