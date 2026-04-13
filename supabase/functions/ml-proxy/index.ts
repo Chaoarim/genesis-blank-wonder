@@ -1,180 +1,199 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
-const ML_CLIENT_ID = '7461192017586183';
+const SERPAPI_BASE = "https://serpapi.com/search.json";
+const ML_API_BASE = "https://api.mercadolibre.com";
 
 function respond(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
-async function refreshMLToken(supabaseAdmin: any, userId: string, refreshToken: string): Promise<{ access_token: string; refresh_token: string; expires_at: string } | null> {
-  const clientSecret = Deno.env.get('ML_CLIENT_SECRET');
-  if (!clientSecret) return null;
+interface ProxyRequest {
+  action: "search" | "item" | "seller" | "trends";
+  query?: string;
+  offset?: number;
+  limit?: number;
+  state?: string;
+  item_id?: string;
+  item_ids?: string[];
+  seller_id?: string | number;
+}
 
-  console.log('[ml-proxy] Refreshing ML token...');
-  const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: ML_CLIENT_ID,
-      client_secret: clientSecret,
-      refresh_token: refreshToken,
-    }),
-  });
+// Convert SerpAPI mercadolibre results to the ML API format our frontend expects
+function convertSerpResults(serpData: any, offset: number, limit: number) {
+  const organicResults = serpData.organic_results || [];
 
-  const body = await resp.json();
-  if (!resp.ok) {
-    console.error('[ml-proxy] Refresh failed:', JSON.stringify(body));
-    return null;
-  }
+  const results = organicResults.map((item: any) => ({
+    id: item.item_id || item.link?.match(/MLB-?\d+/)?.[0]?.replace("-", "") || "",
+    title: item.title || "",
+    price: item.price?.extracted || item.price?.raw ? parseFloat(String(item.price.raw).replace(/[^\d.,]/g, "").replace(",", ".")) : 0,
+    sold_quantity: item.reviews?.total_reviews || item.extensions?.find((e: string) => /vendido/i.test(e)) ? parseInt(String(item.extensions?.find((e: string) => /vendido/i.test(e))).replace(/\D/g, "")) || 0 : 0,
+    available_quantity: 10,
+    thumbnail: item.thumbnail || "",
+    permalink: item.link || "",
+    condition: item.condition || "new",
+    seller: {
+      id: 0,
+      nickname: item.seller?.name || item.seller?.nickname || "Vendedor ML",
+    },
+    address: {
+      state_id: "",
+      state_name: item.seller?.location || item.location || "",
+      city_name: "",
+    },
+    shipping: {
+      free_shipping: item.shipping?.free_shipping === true || (item.tag || "").includes("free"),
+      tags: [],
+    },
+    installments: null,
+    attributes: [],
+  }));
 
-  const expiresAt = new Date(Date.now() + (body.expires_in || 21600) * 1000).toISOString();
-
-  await supabaseAdmin.from('ml_tokens').update({
-    access_token: body.access_token,
-    refresh_token: body.refresh_token,
-    expires_at: expiresAt,
-  }).eq('user_id', userId);
-
-  console.log('[ml-proxy] Token refreshed successfully');
-  return { access_token: body.access_token, refresh_token: body.refresh_token, expires_at: expiresAt };
+  return {
+    results,
+    paging: {
+      total: serpData.search_information?.total_results || results.length,
+      offset,
+      limit,
+    },
+  };
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     // Authenticate user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return respond(401, { error: 'Unauthorized' });
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return respond(401, { error: "Unauthorized" });
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError || !user) {
-      return respond(401, { error: 'Unauthorized' });
+      return respond(401, { error: "Unauthorized" });
     }
 
-    const { url } = await req.json();
-    if (!url || typeof url !== 'string') {
-      return respond(400, { error: 'URL inválida ou ausente' });
-    }
+    const params: ProxyRequest = await req.json();
+    const serpApiKey = Deno.env.get("SERPAPI_KEY");
 
-    if (!url.includes('mercadolibre.com') && !url.includes('mercadolivre.com')) {
-      return respond(400, { error: 'Apenas URLs do Mercado Livre são permitidas' });
-    }
-
-    // Get tokens from DB using service role
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    const { data: tokenRow } = await supabaseAdmin
-      .from('ml_tokens')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!tokenRow) {
-      return respond(200, {
+    if (!serpApiKey) {
+      return respond(500, {
         ok: false,
-        error: 'ML não conectado. Autorize sua conta do Mercado Livre primeiro.',
-        not_connected: true,
+        error: "SERPAPI_KEY não configurada no servidor",
       });
     }
 
-    let accessToken = tokenRow.access_token;
+    switch (params.action) {
+      // ── SEARCH via SerpAPI ──
+      case "search": {
+        const query = params.query || "";
+        const offset = params.offset || 0;
+        const limit = params.limit || 50;
 
-    // Check if token is expired (with 60s buffer)
-    const expiresAt = new Date(tokenRow.expires_at).getTime();
-    if (Date.now() > expiresAt - 60000) {
-      console.log('[ml-proxy] Token expired, refreshing...');
-      const refreshed = await refreshMLToken(supabaseAdmin, user.id, tokenRow.refresh_token);
-      if (!refreshed) {
-        // Delete invalid tokens
-        await supabaseAdmin.from('ml_tokens').delete().eq('user_id', user.id);
-        return respond(200, {
-          ok: false,
-          error: 'Token ML expirado e não foi possível renovar. Reconecte sua conta.',
-          not_connected: true,
+        const serpParams = new URLSearchParams({
+          engine: "mercadolibre",
+          site: "mercadolivre.com.br",
+          q: query,
+          api_key: serpApiKey,
+          num: String(limit),
         });
-      }
-      accessToken = refreshed.access_token;
-    }
 
-    // Fetch ML API
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+        if (offset > 0) {
+          serpParams.set("start", String(offset));
+        }
 
-    try {
-      console.log(`[ml-proxy] Fetching: ${url}`);
-      let response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+        if (params.state) {
+          // SerpAPI doesn't have a direct state filter, but we can append to query
+          serpParams.set("q", `${query} ${params.state.replace("BR-", "")}`);
+        }
 
-      // If 401, try refreshing token once
-      if (response.status === 401) {
-        console.log('[ml-proxy] Got 401, refreshing token...');
-        await response.text(); // consume body
-        const refreshed = await refreshMLToken(supabaseAdmin, user.id, tokenRow.refresh_token);
-        if (refreshed) {
-          response = await fetch(url, {
-            signal: controller.signal,
-            headers: {
-              'Authorization': `Bearer ${refreshed.access_token}`,
-              'Content-Type': 'application/json',
-            },
+        console.log(`[ml-proxy] SerpAPI search: ${query} (offset=${offset})`);
+        const serpResp = await fetch(`${SERPAPI_BASE}?${serpParams}`);
+        const serpData = await serpResp.json();
+
+        if (!serpResp.ok) {
+          console.error("[ml-proxy] SerpAPI error:", JSON.stringify(serpData).substring(0, 500));
+          return respond(200, {
+            ok: false,
+            error: `SerpAPI retornou status ${serpResp.status}`,
+            details: serpData,
           });
         }
+
+        const converted = convertSerpResults(serpData, offset, limit);
+        return respond(200, { ok: true, data: converted });
       }
 
-      clearTimeout(timeout);
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error(`[ml-proxy] ML API error ${response.status}:`, JSON.stringify(data).substring(0, 500));
-        return respond(200, {
-          ok: false,
-          error: `ML API retornou status ${response.status}`,
-          status: response.status,
-          details: data,
-        });
+      // ── ITEM detail (direct ML API — public, no auth needed from server) ──
+      case "item": {
+        if (params.item_ids?.length) {
+          const url = `${ML_API_BASE}/items?ids=${params.item_ids.join(",")}`;
+          console.log(`[ml-proxy] ML items batch: ${params.item_ids.length} items`);
+          const resp = await fetch(url);
+          const data = await resp.json();
+          return respond(200, { ok: resp.ok, data });
+        }
+        if (!params.item_id) {
+          return respond(400, { ok: false, error: "item_id obrigatório" });
+        }
+        const url = `${ML_API_BASE}/items/${params.item_id}`;
+        console.log(`[ml-proxy] ML item: ${params.item_id}`);
+        const resp = await fetch(url);
+        const data = await resp.json();
+        return respond(200, { ok: resp.ok, data });
       }
 
-      return respond(200, { ok: true, data });
-    } finally {
-      clearTimeout(timeout);
+      // ── SELLER detail (direct ML API — public) ──
+      case "seller": {
+        if (!params.seller_id) {
+          return respond(400, { ok: false, error: "seller_id obrigatório" });
+        }
+        const url = `${ML_API_BASE}/users/${params.seller_id}`;
+        console.log(`[ml-proxy] ML seller: ${params.seller_id}`);
+        const resp = await fetch(url);
+        const data = await resp.json();
+        return respond(200, { ok: resp.ok, data });
+      }
+
+      // ── TRENDS (direct ML API — public) ──
+      case "trends": {
+        const url = `${ML_API_BASE}/trends/MLB`;
+        console.log("[ml-proxy] ML trends");
+        const resp = await fetch(url);
+        const data = await resp.json();
+        return respond(200, { ok: resp.ok, data });
+      }
+
+      default:
+        return respond(400, { ok: false, error: "Ação inválida" });
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Erro desconhecido';
-    const isTimeout = message.includes('abort');
-    console.error(`[ml-proxy] Error:`, message);
+    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    console.error("[ml-proxy] Error:", message);
     return respond(200, {
       ok: false,
-      error: isTimeout ? 'Timeout ao conectar com Mercado Livre' : message,
-      timeout: isTimeout,
+      error: message,
     });
   }
 });

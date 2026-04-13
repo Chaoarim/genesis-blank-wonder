@@ -1,108 +1,64 @@
+import { supabase } from '@/integrations/supabase/client';
+
 const ML_BASE = 'https://api.mercadolibre.com';
-const SEARCH_SORT = 'sold_quantity_desc';
-const DEFAULT_LIMIT = 50;
 
 interface MLSearchOptions {
   limit?: number;
   offset?: number;
   state?: string;
-  withSort?: boolean;
 }
 
-class MercadoLivreApiError extends Error {
-  status: number;
-  details: unknown;
-  url: string;
+// All ML data requests go through the ml-proxy Edge Function (which uses SerpAPI for search)
+async function invokeProxy<T>(body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('ml-proxy', { body });
 
-  constructor(status: number, message: string, url: string, details: unknown) {
-    super(message);
-    this.name = 'MercadoLivreApiError';
-    this.status = status;
-    this.details = details;
-    this.url = url;
+  if (error) {
+    console.error('[mlProxy] Edge function error:', error);
+    throw new Error('Erro ao conectar com o servidor de busca');
   }
+
+  if (!data?.ok) {
+    const msg = data?.error || 'Erro desconhecido';
+    console.error('[mlProxy] Proxy error:', msg);
+    throw new Error(msg);
+  }
+
+  return data.data as T;
 }
 
-function buildSearchUrl(query: string, options: MLSearchOptions = {}) {
-  const params = new URLSearchParams({
-    q: query,
-    limit: String(options.limit ?? DEFAULT_LIMIT),
+export async function mlBrowserSearchFetch<T>(query: string, options: MLSearchOptions = {}): Promise<T> {
+  return invokeProxy<T>({
+    action: 'search',
+    query,
+    limit: options.limit ?? 50,
+    offset: options.offset ?? 0,
+    state: options.state,
   });
-
-  if ((options.offset ?? 0) > 0) {
-    params.set('offset', String(options.offset));
-  }
-
-  if (options.state) {
-    params.set('state', options.state);
-  }
-
-  if (options.withSort !== false) {
-    params.set('sort', SEARCH_SORT);
-  }
-
-  return `${ML_BASE}/sites/MLB/search?${params.toString()}`;
-}
-
-async function readJsonSafe(response: Response) {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
-
-function extractErrorMessage(status: number, data: unknown) {
-  if (data && typeof data === 'object') {
-    const payload = data as Record<string, unknown>;
-    const message = [payload.message, payload.error]
-      .filter((value): value is string => typeof value === 'string' && value.length > 0)
-      .join(' - ');
-
-    if (message) {
-      return message;
-    }
-  }
-
-  return `ML API retornou status ${status}`;
 }
 
 export async function mlBrowserFetch<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-  });
-
-  const data = await readJsonSafe(response);
-
-  if (!response.ok) {
-    throw new MercadoLivreApiError(
-      response.status,
-      extractErrorMessage(response.status, data),
-      url,
-      data
-    );
+  // Determine action from URL pattern
+  if (url.includes('/items?ids=')) {
+    const idsMatch = url.match(/ids=([^&]+)/);
+    const ids = idsMatch ? idsMatch[1].split(',') : [];
+    return invokeProxy<T>({ action: 'item', item_ids: ids });
   }
 
-  return data as T;
-}
-
-export async function mlBrowserSearchFetch<T>(query: string, options: Omit<MLSearchOptions, 'withSort'> = {}): Promise<T> {
-  const primaryUrl = buildSearchUrl(query, { ...options, withSort: true });
-
-  try {
-    return await mlBrowserFetch<T>(primaryUrl);
-  } catch (error) {
-    if (error instanceof MercadoLivreApiError && error.status === 403) {
-      const fallbackUrl = buildSearchUrl(query, { ...options, withSort: false });
-      console.warn('[ML API] 403 na busca principal, tentando URL alternativa:', fallbackUrl);
-      return mlBrowserFetch<T>(fallbackUrl);
-    }
-
-    throw error;
+  if (url.includes('/items/')) {
+    const itemId = url.split('/items/')[1]?.split('?')[0];
+    return invokeProxy<T>({ action: 'item', item_id: itemId });
   }
+
+  if (url.includes('/users/')) {
+    const sellerId = url.split('/users/')[1]?.split('?')[0];
+    return invokeProxy<T>({ action: 'seller', seller_id: sellerId });
+  }
+
+  if (url.includes('/trends/')) {
+    return invokeProxy<T>({ action: 'trends' });
+  }
+
+  throw new Error(`URL não suportada: ${url}`);
 }
 
 export { ML_BASE };
