@@ -28,6 +28,127 @@ interface ProxyRequest {
   seller_id?: string | number;
 }
 
+// Extract MLB IDs from SerpAPI result links
+function extractMlIds(results: any[]): Map<string, string> {
+  const idMap = new Map<string, string>(); // mlId -> link
+  for (const item of results) {
+    const link = item.link || item.permalink || "";
+    const match = link.match(/MLB-?(\d+)/);
+    if (match) {
+      const mlId = `MLB${match[1]}`;
+      idMap.set(mlId, link);
+    }
+  }
+  return idMap;
+}
+
+// Fetch item details from ML public API in batches of 20
+async function fetchItemDetails(mlIds: string[]): Promise<Map<string, any>> {
+  const details = new Map<string, any>();
+  if (mlIds.length === 0) return details;
+
+  const batchSize = 20;
+  for (let i = 0; i < mlIds.length; i += batchSize) {
+    const batch = mlIds.slice(i, i + batchSize);
+    const url = `${ML_API_BASE}/items?ids=${batch.join(",")}`;
+    try {
+      console.log(`[ml-proxy] Fetching item details batch: ${batch.length} items`);
+      const resp = await fetch(url);
+      if (resp.ok) {
+        const data = await resp.json();
+        for (const entry of data) {
+          if (entry.code === 200 && entry.body) {
+            details.set(entry.body.id, entry.body);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[ml-proxy] Item batch fetch error:", e);
+    }
+  }
+  return details;
+}
+
+// Fetch seller details from ML public API
+async function fetchSellerDetails(sellerIds: number[]): Promise<Map<number, any>> {
+  const details = new Map<number, any>();
+  if (sellerIds.length === 0) return details;
+
+  // Limit to 10 unique sellers to avoid too many requests
+  const uniqueIds = [...new Set(sellerIds)].slice(0, 10);
+  const fetches = uniqueIds.map(async (id) => {
+    try {
+      const resp = await fetch(`${ML_API_BASE}/users/${id}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        details.set(id, data);
+      }
+    } catch (e) {
+      console.error(`[ml-proxy] Seller fetch error for ${id}:`, e);
+    }
+  });
+  await Promise.all(fetches);
+  return details;
+}
+
+// Enrich SerpAPI results with ML API data
+async function enrichResults(basicResults: any[]): Promise<any[]> {
+  // 1. Extract ML IDs
+  const idMap = extractMlIds(basicResults);
+  const mlIds = [...idMap.keys()];
+  console.log(`[ml-proxy] Extracted ${mlIds.length} ML IDs for enrichment`);
+
+  if (mlIds.length === 0) return basicResults;
+
+  // 2. Fetch item details
+  const itemDetails = await fetchItemDetails(mlIds);
+  console.log(`[ml-proxy] Got details for ${itemDetails.size} items`);
+
+  // 3. Collect seller IDs and fetch seller details
+  const sellerIds: number[] = [];
+  for (const item of itemDetails.values()) {
+    if (item.seller_id) sellerIds.push(item.seller_id);
+  }
+  const sellerDetails = await fetchSellerDetails(sellerIds);
+  console.log(`[ml-proxy] Got details for ${sellerDetails.size} sellers`);
+
+  // 4. Merge data
+  return basicResults.map((result) => {
+    const link = result.permalink || result.link || "";
+    const match = link.match(/MLB-?(\d+)/);
+    const mlId = match ? `MLB${match[1]}` : null;
+    const itemData = mlId ? itemDetails.get(mlId) : null;
+
+    if (!itemData) return result;
+
+    const sellerId = itemData.seller_id;
+    const sellerData = sellerId ? sellerDetails.get(sellerId) : null;
+
+    return {
+      ...result,
+      id: mlId || result.id,
+      sold_quantity: itemData.sold_quantity ?? result.sold_quantity ?? 0,
+      available_quantity: itemData.available_quantity ?? result.available_quantity ?? 0,
+      condition: itemData.condition || result.condition,
+      seller: {
+        id: sellerId || result.seller?.id || 0,
+        nickname: itemData.seller?.nickname || sellerData?.nickname || result.seller?.nickname || "N/A",
+        reputation: sellerData?.seller_reputation?.level_id || "",
+        completed_transactions: sellerData?.seller_reputation?.transactions?.completed || 0,
+      },
+      address: {
+        state_id: itemData.seller_address?.state?.id || "",
+        state_name: itemData.seller_address?.state?.name || result.address?.state_name || "",
+        city_name: itemData.seller_address?.city?.name || result.address?.city_name || "",
+      },
+      shipping: {
+        free_shipping: itemData.shipping?.free_shipping ?? result.shipping?.free_shipping ?? false,
+        tags: itemData.shipping?.tags || [],
+      },
+    };
+  });
+}
+
 // Convert SerpAPI mercadolibre organic_results to ML API format
 function convertMercadoLibreResults(serpData: any, offset: number, limit: number) {
   const organicResults = serpData.organic_results || [];
@@ -50,11 +171,7 @@ function convertMercadoLibreResults(serpData: any, offset: number, limit: number
         id: 0,
         nickname: item.seller_info?.name || item.seller?.name || "Vendedor ML",
       },
-      address: {
-        state_id: "",
-        state_name: "",
-        city_name: "",
-      },
+      address: { state_id: "", state_name: "", city_name: "" },
       shipping: {
         free_shipping: (item.extensions || []).some((e: string) => /gr[aá]tis|free/i.test(e)),
         tags: [],
@@ -119,7 +236,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return respond(401, { error: "Unauthorized" });
@@ -131,10 +247,7 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return respond(401, { error: "Unauthorized" });
     }
@@ -143,16 +256,10 @@ Deno.serve(async (req) => {
     const serpApiKey = Deno.env.get("SERPAPI_KEY");
 
     if (!serpApiKey) {
-      return respond(500, {
-        ok: false,
-        error: "SERPAPI_KEY não configurada no servidor",
-      });
+      return respond(500, { ok: false, error: "SERPAPI_KEY não configurada" });
     }
 
-    console.log("[ml-proxy] SERPAPI_KEY exists:", !!serpApiKey);
-
     switch (params.action) {
-      // ── SEARCH via SerpAPI (mercadolibre engine, fallback to google_shopping) ──
       case "search": {
         const query = params.query || "";
         const offset = params.offset || 0;
@@ -162,96 +269,81 @@ Deno.serve(async (req) => {
         const mlParams = new URLSearchParams({
           engine: "mercadolibre",
           mercadolibre_domain: "mercadolivre.com.br",
-          query: query,
+          query,
           api_key: serpApiKey,
         });
 
-        console.log(`[ml-proxy] SerpAPI mercadolibre engine: query="${query}"`);
+        console.log(`[ml-proxy] SerpAPI search: query="${query}"`);
         let serpResp = await fetch(`${SERPAPI_BASE}?${mlParams}`);
         let serpData = await serpResp.json();
 
-        console.log(`[ml-proxy] SerpAPI mercadolibre status: ${serpResp.status}, keys: ${Object.keys(serpData).join(",")}`);
-        console.log(`[ml-proxy] SerpAPI response (first 1000 chars):`, JSON.stringify(serpData).substring(0, 1000));
+        let converted: any;
 
-        if (serpResp.ok && serpData.organic_results && serpData.organic_results.length > 0) {
-          const converted = convertMercadoLibreResults(serpData, offset, limit);
-          console.log(`[ml-proxy] mercadolibre engine returned ${converted.results.length} results`);
-          return respond(200, { ok: true, data: converted });
-        }
+        if (serpResp.ok && serpData.organic_results?.length > 0) {
+          converted = convertMercadoLibreResults(serpData, offset, limit);
+          console.log(`[ml-proxy] mercadolibre engine: ${converted.results.length} results`);
+        } else {
+          // Fallback to google_shopping
+          console.log("[ml-proxy] Falling back to google_shopping");
+          const gsQuery = params.state
+            ? `${query} ${params.state.replace("BR-", "")} mercadolivre`
+            : `${query} mercadolivre`;
 
-        // Step 2: Fallback to google_shopping
-        console.log("[ml-proxy] mercadolibre engine returned no results, trying google_shopping fallback");
-        const gsQuery = params.state
-          ? `${query} ${params.state.replace("BR-", "")} mercadolivre`
-          : `${query} mercadolivre`;
-
-        const gsParams = new URLSearchParams({
-          engine: "google_shopping",
-          q: gsQuery,
-          gl: "br",
-          hl: "pt",
-          num: String(limit),
-          api_key: serpApiKey,
-        });
-
-        if (offset > 0) {
-          gsParams.set("start", String(offset));
-        }
-
-        serpResp = await fetch(`${SERPAPI_BASE}?${gsParams}`);
-        serpData = await serpResp.json();
-
-        console.log(`[ml-proxy] google_shopping status: ${serpResp.status}, shopping_results count: ${(serpData.shopping_results || []).length}`);
-
-        if (!serpResp.ok) {
-          console.error("[ml-proxy] SerpAPI fallback error:", JSON.stringify(serpData).substring(0, 500));
-          return respond(200, {
-            ok: false,
-            error: `SerpAPI retornou status ${serpResp.status}`,
-            details: serpData,
+          const gsParams = new URLSearchParams({
+            engine: "google_shopping",
+            q: gsQuery,
+            gl: "br",
+            hl: "pt",
+            num: String(limit),
+            api_key: serpApiKey,
           });
+          if (offset > 0) gsParams.set("start", String(offset));
+
+          serpResp = await fetch(`${SERPAPI_BASE}?${gsParams}`);
+          serpData = await serpResp.json();
+
+          if (!serpResp.ok) {
+            return respond(200, { ok: false, error: `SerpAPI error ${serpResp.status}`, details: serpData });
+          }
+          converted = convertShoppingResults(serpData, offset, limit);
+          console.log(`[ml-proxy] google_shopping fallback: ${converted.results.length} results`);
         }
 
-        const converted = convertShoppingResults(serpData, offset, limit);
-        console.log(`[ml-proxy] google_shopping fallback returned ${converted.results.length} results`);
+        // Step 2: Enrich with real ML API data
+        try {
+          converted.results = await enrichResults(converted.results);
+          console.log(`[ml-proxy] Enrichment complete`);
+        } catch (e) {
+          console.error("[ml-proxy] Enrichment failed (returning basic results):", e);
+        }
+
         return respond(200, { ok: true, data: converted });
       }
 
-      // ── ITEM detail (direct ML API — public, no auth needed from server) ──
       case "item": {
         if (params.item_ids?.length) {
           const url = `${ML_API_BASE}/items?ids=${params.item_ids.join(",")}`;
-          console.log(`[ml-proxy] ML items batch: ${params.item_ids.length} items`);
           const resp = await fetch(url);
           const data = await resp.json();
           return respond(200, { ok: resp.ok, data });
         }
-        if (!params.item_id) {
-          return respond(400, { ok: false, error: "item_id obrigatório" });
-        }
+        if (!params.item_id) return respond(400, { ok: false, error: "item_id obrigatório" });
         const url = `${ML_API_BASE}/items/${params.item_id}`;
-        console.log(`[ml-proxy] ML item: ${params.item_id}`);
         const resp = await fetch(url);
         const data = await resp.json();
         return respond(200, { ok: resp.ok, data });
       }
 
-      // ── SELLER detail (direct ML API — public) ──
       case "seller": {
-        if (!params.seller_id) {
-          return respond(400, { ok: false, error: "seller_id obrigatório" });
-        }
+        if (!params.seller_id) return respond(400, { ok: false, error: "seller_id obrigatório" });
         const url = `${ML_API_BASE}/users/${params.seller_id}`;
-        console.log(`[ml-proxy] ML seller: ${params.seller_id}`);
         const resp = await fetch(url);
         const data = await resp.json();
         return respond(200, { ok: resp.ok, data });
       }
 
-      // ── TRENDS (direct ML API — public) ──
       case "trends": {
         const url = `${ML_API_BASE}/trends/MLB`;
-        console.log("[ml-proxy] ML trends");
         const resp = await fetch(url);
         const data = await resp.json();
         return respond(200, { ok: resp.ok, data });
@@ -263,9 +355,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro desconhecido";
     console.error("[ml-proxy] Error:", message);
-    return respond(200, {
-      ok: false,
-      error: message,
-    });
+    return respond(200, { ok: false, error: message });
   }
 });
