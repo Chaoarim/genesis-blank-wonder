@@ -7,7 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
-const SERPAPI_BASE = "https://serpapi.com/search.json";
 const ML_API_BASE = "https://api.mercadolibre.com";
 
 function respond(status: number, body: unknown) {
@@ -28,61 +27,11 @@ interface ProxyRequest {
   seller_id?: string | number;
 }
 
-// Extract MLB IDs from SerpAPI result links
-function extractMlIds(results: any[]): Map<string, string> {
-  const idMap = new Map<string, string>(); // mlId -> link
-  for (const item of results) {
-    const link = item.link || item.permalink || "";
-    const match = link.match(/MLB-?(\d+)/);
-    if (match) {
-      const mlId = `MLB${match[1]}`;
-      idMap.set(mlId, link);
-    }
-  }
-  return idMap;
-}
-
-// Fetch item details from ML public API in batches of 20
-async function fetchItemDetails(mlIds: string[]): Promise<Map<string, any>> {
-  const details = new Map<string, any>();
-  if (mlIds.length === 0) return details;
-
-  const batchSize = 20;
-  for (let i = 0; i < mlIds.length; i += batchSize) {
-    const batch = mlIds.slice(i, i + batchSize);
-    const url = `${ML_API_BASE}/items?ids=${batch.join(",")}`;
-    try {
-      console.log(`[ml-proxy] Fetching item details: ${url}`);
-      const resp = await fetch(url);
-      console.log(`[ml-proxy] ML items response status: ${resp.status}`);
-      if (resp.ok) {
-        const data = await resp.json();
-        console.log(`[ml-proxy] ML items raw count: ${data.length}, first code: ${data[0]?.code}`);
-        for (const entry of data) {
-          if (entry.code === 200 && entry.body) {
-            details.set(entry.body.id, entry.body);
-            console.log(`[ml-proxy] Item ${entry.body.id}: sold=${entry.body.sold_quantity}, seller=${entry.body.seller_id}`);
-          } else {
-            console.log(`[ml-proxy] Item error: code=${entry.code}, id=${entry.body?.id}`);
-          }
-        }
-      } else {
-        const text = await resp.text();
-        console.error(`[ml-proxy] ML items fetch failed ${resp.status}: ${text.slice(0, 200)}`);
-      }
-    } catch (e) {
-      console.error("[ml-proxy] Item batch fetch error:", e);
-    }
-  }
-  return details;
-}
-
 // Fetch seller details from ML public API
 async function fetchSellerDetails(sellerIds: number[]): Promise<Map<number, any>> {
   const details = new Map<number, any>();
   if (sellerIds.length === 0) return details;
 
-  // Limit to 10 unique sellers to avoid too many requests
   const uniqueIds = [...new Set(sellerIds)].slice(0, 10);
   const fetches = uniqueIds.map(async (id) => {
     try {
@@ -90,6 +39,8 @@ async function fetchSellerDetails(sellerIds: number[]): Promise<Map<number, any>
       if (resp.ok) {
         const data = await resp.json();
         details.set(id, data);
+      } else {
+        console.log(`[ml-proxy] Seller ${id} fetch failed: ${resp.status}`);
       }
     } catch (e) {
       console.error(`[ml-proxy] Seller fetch error for ${id}:`, e);
@@ -99,143 +50,33 @@ async function fetchSellerDetails(sellerIds: number[]): Promise<Map<number, any>
   return details;
 }
 
-// Enrich SerpAPI results with ML API data
-async function enrichResults(basicResults: any[]): Promise<any[]> {
-  // 1. Extract ML IDs
-  const idMap = extractMlIds(basicResults);
-  const mlIds = [...idMap.keys()];
-  console.log(`[ml-proxy] Extracted ${mlIds.length} ML IDs for enrichment`);
+// Enrich ML search results with seller reputation data
+async function enrichWithSellerData(results: any[]): Promise<any[]> {
+  const sellerIds: number[] = results
+    .map((r) => r.seller?.id)
+    .filter((id) => id && typeof id === "number");
 
-  if (mlIds.length === 0) return basicResults;
+  if (sellerIds.length === 0) return results;
 
-  // 2. Fetch item details
-  const itemDetails = await fetchItemDetails(mlIds);
-  console.log(`[ml-proxy] Got details for ${itemDetails.size} items`);
-
-  // 3. Collect seller IDs and fetch seller details
-  const sellerIds: number[] = [];
-  for (const item of itemDetails.values()) {
-    if (item.seller_id) sellerIds.push(item.seller_id);
-  }
   const sellerDetails = await fetchSellerDetails(sellerIds);
-  console.log(`[ml-proxy] Got details for ${sellerDetails.size} sellers`);
+  console.log(`[ml-proxy] Enriched ${sellerDetails.size} sellers`);
 
-  // 4. Merge data
-  return basicResults.map((result) => {
-    const link = result.permalink || result.link || "";
-    const match = link.match(/MLB-?(\d+)/);
-    const mlId = match ? `MLB${match[1]}` : null;
-    const itemData = mlId ? itemDetails.get(mlId) : null;
-
-    if (!itemData) return result;
-
-    const sellerId = itemData.seller_id;
+  return results.map((result) => {
+    const sellerId = result.seller?.id;
     const sellerData = sellerId ? sellerDetails.get(sellerId) : null;
+
+    if (!sellerData) return result;
 
     return {
       ...result,
-      id: mlId || result.id,
-      sold_quantity: itemData.sold_quantity ?? result.sold_quantity ?? 0,
-      available_quantity: itemData.available_quantity ?? result.available_quantity ?? 0,
-      condition: itemData.condition || result.condition,
       seller: {
-        id: sellerId || result.seller?.id || 0,
-        nickname: itemData.seller?.nickname || sellerData?.nickname || result.seller?.nickname || "N/A",
-        reputation: sellerData?.seller_reputation?.level_id || "",
-        completed_transactions: sellerData?.seller_reputation?.transactions?.completed || 0,
-      },
-      address: {
-        state_id: itemData.seller_address?.state?.id || "",
-        state_name: itemData.seller_address?.state?.name || result.address?.state_name || "",
-        city_name: itemData.seller_address?.city?.name || result.address?.city_name || "",
-      },
-      shipping: {
-        free_shipping: itemData.shipping?.free_shipping ?? result.shipping?.free_shipping ?? false,
-        tags: itemData.shipping?.tags || [],
+        ...result.seller,
+        nickname: sellerData.nickname || result.seller?.nickname || "N/A",
+        reputation: sellerData.seller_reputation?.level_id || "",
+        completed_transactions: sellerData.seller_reputation?.transactions?.completed || 0,
       },
     };
   });
-}
-
-// Convert SerpAPI mercadolibre organic_results to ML API format
-function convertMercadoLibreResults(serpData: any, offset: number, limit: number) {
-  const organicResults = serpData.organic_results || [];
-
-  const results = organicResults.map((item: any, idx: number) => {
-    const priceNum = item.price?.extracted_value || item.price?.extracted || 0;
-    const mlIdMatch = (item.link || "").match(/MLB-?(\d+)/);
-    const mlId = mlIdMatch ? `MLB${mlIdMatch[1]}` : `SERP-${idx}`;
-
-    return {
-      id: mlId,
-      title: item.title || "",
-      price: priceNum,
-      sold_quantity: item.reviews?.count || 0,
-      available_quantity: 10,
-      thumbnail: item.thumbnail || "",
-      permalink: item.link || "",
-      condition: "new",
-      seller: {
-        id: 0,
-        nickname: item.seller_info?.name || item.seller?.name || "Vendedor ML",
-      },
-      address: { state_id: "", state_name: "", city_name: "" },
-      shipping: {
-        free_shipping: (item.extensions || []).some((e: string) => /gr[aá]tis|free/i.test(e)),
-        tags: [],
-      },
-      installments: null,
-      attributes: [],
-    };
-  });
-
-  return {
-    results,
-    paging: {
-      total: serpData.search_information?.total_results || results.length,
-      offset,
-      limit,
-    },
-  };
-}
-
-// Fallback: Convert SerpAPI google_shopping results
-function convertShoppingResults(serpData: any, offset: number, limit: number) {
-  const shoppingResults = serpData.shopping_results || [];
-
-  const results = shoppingResults.map((item: any) => {
-    const priceNum = item.extracted_price || (item.price ? parseFloat(String(item.price).replace(/[^\d.,]/g, "").replace(",", ".")) : 0);
-    const mlIdMatch = (item.link || "").match(/MLB-?(\d+)/);
-    const mlId = mlIdMatch ? `MLB${mlIdMatch[1]}` : "";
-
-    return {
-      id: mlId,
-      title: item.title || "",
-      price: priceNum,
-      sold_quantity: 0,
-      available_quantity: 10,
-      thumbnail: item.thumbnail || "",
-      permalink: item.link || "",
-      condition: "new",
-      seller: {
-        id: 0,
-        nickname: item.source || "Vendedor ML",
-      },
-      address: { state_id: "", state_name: "", city_name: "" },
-      shipping: { free_shipping: false, tags: [] },
-      installments: null,
-      attributes: [],
-    };
-  });
-
-  return {
-    results,
-    paging: {
-      total: serpData.search_information?.total_results || results.length,
-      offset,
-      limit,
-    },
-  };
 }
 
 Deno.serve(async (req) => {
@@ -261,11 +102,6 @@ Deno.serve(async (req) => {
     }
 
     const params: ProxyRequest = await req.json();
-    const serpApiKey = Deno.env.get("SERPAPI_KEY");
-
-    if (!serpApiKey) {
-      return respond(500, { ok: false, error: "SERPAPI_KEY não configurada" });
-    }
 
     switch (params.action) {
       case "search": {
@@ -273,62 +109,95 @@ Deno.serve(async (req) => {
         const offset = params.offset || 0;
         const limit = params.limit || 50;
 
-        // Step 1: Try mercadolibre engine
-        const mlParams = new URLSearchParams({
-          engine: "mercadolibre",
-          mercadolibre_domain: "mercadolivre.com.br",
-          query,
-          api_key: serpApiKey,
+        // Use ML public search API directly (no auth needed)
+        const searchParams = new URLSearchParams({
+          q: query,
+          sort: "sold_quantity_desc",
+          limit: String(limit),
+          offset: String(offset),
         });
 
-        const serpUrl = `${SERPAPI_BASE}?${mlParams}`;
-        console.log(`[ml-proxy] SerpAPI URL: ${serpUrl.replace(serpApiKey, "KEY***")}`);
-        let serpResp = await fetch(serpUrl);
-        let serpData = await serpResp.json();
-        console.log(`[ml-proxy] SerpAPI status: ${serpResp.status}, has organic: ${!!serpData.organic_results}, count: ${serpData.organic_results?.length ?? 0}`);
-        if (serpData.error) console.log(`[ml-proxy] SerpAPI error: ${serpData.error}`);
+        const searchUrl = `${ML_API_BASE}/sites/MLB/search?${searchParams}`;
+        console.log(`[ml-proxy] ML search: ${searchUrl}`);
 
-        let converted: any;
+        let resp = await fetch(searchUrl);
+        let data: any;
 
-        if (serpResp.ok && serpData.organic_results?.length > 0) {
-          converted = convertMercadoLibreResults(serpData, offset, limit);
-          console.log(`[ml-proxy] mercadolibre engine: ${converted.results.length} results, sample link: ${converted.results[0]?.permalink?.slice(0, 80)}`);
-        } else {
-          // Fallback to google_shopping
-          console.log("[ml-proxy] Falling back to google_shopping");
-          const gsQuery = params.state
-            ? `${query} ${params.state.replace("BR-", "")} mercadolivre`
-            : `${query} mercadolivre`;
-
-          const gsParams = new URLSearchParams({
-            engine: "google_shopping",
-            q: gsQuery,
-            gl: "br",
-            hl: "pt",
-            num: String(limit),
-            api_key: serpApiKey,
+        if (!resp.ok) {
+          // Fallback without sort parameter
+          console.log(`[ml-proxy] Sort failed (${resp.status}), retrying without sort`);
+          const fallbackParams = new URLSearchParams({
+            q: query,
+            limit: String(limit),
+            offset: String(offset),
           });
-          if (offset > 0) gsParams.set("start", String(offset));
-
-          serpResp = await fetch(`${SERPAPI_BASE}?${gsParams}`);
-          serpData = await serpResp.json();
-
-          if (!serpResp.ok) {
-            return respond(200, { ok: false, error: `SerpAPI error ${serpResp.status}`, details: serpData });
-          }
-          converted = convertShoppingResults(serpData, offset, limit);
-          console.log(`[ml-proxy] google_shopping fallback: ${converted.results.length} results`);
+          resp = await fetch(`${ML_API_BASE}/sites/MLB/search?${fallbackParams}`);
         }
 
-        // Step 2: Enrich with real ML API data
+        if (!resp.ok) {
+          const errText = await resp.text();
+          console.error(`[ml-proxy] ML search failed: ${resp.status} - ${errText.slice(0, 300)}`);
+          return respond(200, { ok: false, error: `ML API error ${resp.status}` });
+        }
+
+        data = await resp.json();
+        console.log(`[ml-proxy] ML search returned ${data.results?.length ?? 0} results, total: ${data.paging?.total}`);
+
+        // Map results to expected format
+        const results = (data.results || []).map((item: any) => ({
+          id: item.id || "",
+          title: item.title || "",
+          price: item.price || 0,
+          sold_quantity: item.sold_quantity ?? 0,
+          available_quantity: item.available_quantity ?? 0,
+          thumbnail: item.thumbnail || "",
+          permalink: item.permalink || "",
+          condition: item.condition || "new",
+          seller: {
+            id: item.seller?.id || 0,
+            nickname: item.seller?.nickname || "N/A",
+            reputation: "",
+            completed_transactions: 0,
+          },
+          address: {
+            state_id: item.seller_address?.state?.id || item.address?.state_id || "",
+            state_name: item.seller_address?.state?.name || item.address?.state_name || "",
+            city_name: item.seller_address?.city?.name || item.address?.city_name || "",
+          },
+          shipping: {
+            free_shipping: item.shipping?.free_shipping ?? false,
+            tags: item.shipping?.tags || [],
+          },
+          installments: item.installments || null,
+          attributes: item.attributes || [],
+        }));
+
+        // Log sample for debug
+        if (results.length > 0) {
+          const s = results[0];
+          console.log(`[ml-proxy] Sample: id=${s.id}, sold=${s.sold_quantity}, seller=${s.seller.nickname}, price=${s.price}`);
+        }
+
+        // Enrich with seller reputation
         try {
-          converted.results = await enrichResults(converted.results);
-          console.log(`[ml-proxy] Enrichment complete`);
+          const enriched = await enrichWithSellerData(results);
+          return respond(200, {
+            ok: true,
+            data: {
+              results: enriched,
+              paging: data.paging || { total: results.length, offset, limit },
+            },
+          });
         } catch (e) {
-          console.error("[ml-proxy] Enrichment failed (returning basic results):", e);
+          console.error("[ml-proxy] Seller enrichment failed:", e);
+          return respond(200, {
+            ok: true,
+            data: {
+              results,
+              paging: data.paging || { total: results.length, offset, limit },
+            },
+          });
         }
-
-        return respond(200, { ok: true, data: converted });
       }
 
       case "item": {
