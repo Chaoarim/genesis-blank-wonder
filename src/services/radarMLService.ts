@@ -163,12 +163,7 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// Fetch ML token from database for authenticated requests
-async function getMLToken(): Promise<string | null> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
-
+// Token management is handled server-side by the ml-proxy Edge Function
     const { data: tokenData } = await supabase
       .from('ml_tokens')
       .select('access_token, expires_at')
