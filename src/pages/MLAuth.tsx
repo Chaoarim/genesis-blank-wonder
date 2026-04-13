@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
+import { exchangeMLAuthorizationCode } from "@/features/ml/exchangeAuthorizationCode";
 
 const ML_CLIENT_ID = "7461192017586183";
 const REDIRECT_URI = "https://partsai.online/";
@@ -25,23 +25,17 @@ export default function MLAuth() {
   async function exchangeCode(code: string) {
     setStatus("loading");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError("Você precisa estar logado para conectar o Mercado Livre.");
+      console.log("[ML OAuth] Código recebido na rota /ml-auth, iniciando troca.");
+      const result = await exchangeMLAuthorizationCode(code);
+
+      if (!result.success) {
+        setError(result.error || "Erro ao trocar código por token");
         setStatus("error");
         return;
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke("ml-callback", {
-        body: { code },
-      });
-
-      if (fnError || !data?.ok) {
-        setError(data?.error || fnError?.message || "Erro ao trocar código por token");
-        setStatus("error");
-        return;
-      }
-
+      console.log("Token ML salvo:", result.data);
+      window.history.replaceState({}, "", "/ml-auth");
       setStatus("success");
       setTimeout(() => navigate("/radar-ml"), 2000);
     } catch (e: any) {
