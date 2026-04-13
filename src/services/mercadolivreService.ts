@@ -149,7 +149,7 @@ export async function buscarPecaML(
   const limit = options?.limit || LIMIT;
   const offset = options?.offset || 0;
   const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY}&sort=sold_quantity_desc&limit=${limit}&offset=${offset}`;
-  return mlProxyFetch<MLSearchResponse>(url);
+  return mlDirectFetch<MLSearchResponse>(url);
 }
 
 // --- FUNÇÃO 2: buscarPecaPorRegiao ---
@@ -162,19 +162,19 @@ export async function buscarPecaPorRegiao(
   const limit = options?.limit || LIMIT;
   const offset = options?.offset || 0;
   const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY}&sort=sold_quantity_desc&state=${stateCode}&limit=${limit}&offset=${offset}`;
-  return mlProxyFetch<MLSearchResponse>(url);
+  return mlDirectFetch<MLSearchResponse>(url);
 }
 
 // --- FUNÇÃO 3: buscarDetalheItem ---
 export async function buscarDetalheItem(itemId: string): Promise<MLItemDetail> {
   const url = `${ML_BASE}/items/${itemId}`;
-  return mlProxyFetch<MLItemDetail>(url);
+  return mlDirectFetch<MLItemDetail>(url);
 }
 
 // --- FUNÇÃO 4: buscarDadosVendedor ---
 export async function buscarDadosVendedor(userId: number | string): Promise<MLSellerDetail> {
   const url = `${ML_BASE}/users/${userId}`;
-  return mlProxyFetch<MLSellerDetail>(url);
+  return mlDirectFetch<MLSellerDetail>(url);
 }
 
 export function classificarReputacao(levelId: string): { label: string; cor: string } {
