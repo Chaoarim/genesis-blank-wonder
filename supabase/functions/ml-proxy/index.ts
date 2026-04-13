@@ -1,61 +1,52 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
 
-// --- OAuth Token Cache (6h) ---
-let cachedToken: string | null = null;
-let tokenExpiresAt = 0;
-
 const ML_CLIENT_ID = '7461192017586183';
 
-async function getAccessToken(forceRefresh = false): Promise<string> {
-  if (!forceRefresh && cachedToken && Date.now() < tokenExpiresAt - 60_000) {
-    return cachedToken;
-  }
+function respond(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
 
+async function refreshMLToken(supabaseAdmin: any, userId: string, refreshToken: string): Promise<{ access_token: string; refresh_token: string; expires_at: string } | null> {
   const clientSecret = Deno.env.get('ML_CLIENT_SECRET');
-  if (!clientSecret) {
-    throw new Error('ML_CLIENT_SECRET not configured');
-  }
+  if (!clientSecret) return null;
 
-  console.log('[ml-proxy] Requesting new OAuth token...');
-
+  console.log('[ml-proxy] Refreshing ML token...');
   const resp = await fetch('https://api.mercadolibre.com/oauth/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      grant_type: 'client_credentials',
+      grant_type: 'refresh_token',
       client_id: ML_CLIENT_ID,
       client_secret: clientSecret,
+      refresh_token: refreshToken,
     }),
   });
 
   const body = await resp.json();
-
   if (!resp.ok) {
-    console.error('[ml-proxy] OAuth error:', JSON.stringify(body));
-    throw new Error(`OAuth failed: ${body.error || resp.status}`);
+    console.error('[ml-proxy] Refresh failed:', JSON.stringify(body));
+    return null;
   }
 
-  cachedToken = body.access_token;
-  // Cache for the token lifetime (usually 6h)
-  tokenExpiresAt = Date.now() + (body.expires_in || 21600) * 1000;
-  console.log('[ml-proxy] OAuth token obtained, expires_in:', body.expires_in);
+  const expiresAt = new Date(Date.now() + (body.expires_in || 21600) * 1000).toISOString();
 
-  return cachedToken!;
-}
+  await supabaseAdmin.from('ml_tokens').update({
+    access_token: body.access_token,
+    refresh_token: body.refresh_token,
+    expires_at: expiresAt,
+  }).eq('user_id', userId);
 
-async function fetchML(url: string, token: string, signal: AbortSignal): Promise<Response> {
-  return fetch(url, {
-    method: 'GET',
-    signal,
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  console.log('[ml-proxy] Token refreshed successfully');
+  return { access_token: body.access_token, refresh_token: body.refresh_token, expires_at: expiresAt };
 }
 
 Deno.serve(async (req) => {
@@ -63,15 +54,25 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const respond = (status: number, body: unknown) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
   try {
-    const { url } = await req.json();
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return respond(401, { error: 'Unauthorized' });
+    }
 
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return respond(401, { error: 'Unauthorized' });
+    }
+
+    const { url } = await req.json();
     if (!url || typeof url !== 'string') {
       return respond(400, { error: 'URL inválida ou ausente' });
     }
@@ -80,23 +81,73 @@ Deno.serve(async (req) => {
       return respond(400, { error: 'Apenas URLs do Mercado Livre são permitidas' });
     }
 
+    // Get tokens from DB using service role
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const { data: tokenRow } = await supabaseAdmin
+      .from('ml_tokens')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!tokenRow) {
+      return respond(200, {
+        ok: false,
+        error: 'ML não conectado. Autorize sua conta do Mercado Livre primeiro.',
+        not_connected: true,
+      });
+    }
+
+    let accessToken = tokenRow.access_token;
+
+    // Check if token is expired (with 60s buffer)
+    const expiresAt = new Date(tokenRow.expires_at).getTime();
+    if (Date.now() > expiresAt - 60000) {
+      console.log('[ml-proxy] Token expired, refreshing...');
+      const refreshed = await refreshMLToken(supabaseAdmin, user.id, tokenRow.refresh_token);
+      if (!refreshed) {
+        // Delete invalid tokens
+        await supabaseAdmin.from('ml_tokens').delete().eq('user_id', user.id);
+        return respond(200, {
+          ok: false,
+          error: 'Token ML expirado e não foi possível renovar. Reconecte sua conta.',
+          not_connected: true,
+        });
+      }
+      accessToken = refreshed.access_token;
+    }
+
+    // Fetch ML API
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
     try {
-      // Step A: Get token (cached or fresh)
-      let accessToken = await getAccessToken();
-
-      // Step B: Fetch ML API with Bearer token
       console.log(`[ml-proxy] Fetching: ${url}`);
-      let response = await fetchML(url, accessToken, controller.signal);
+      let response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // If 401 (expired token), refresh and retry once
+      // If 401, try refreshing token once
       if (response.status === 401) {
-        console.log('[ml-proxy] Token expired (401), refreshing...');
+        console.log('[ml-proxy] Got 401, refreshing token...');
         await response.text(); // consume body
-        accessToken = await getAccessToken(true);
-        response = await fetchML(url, accessToken, controller.signal);
+        const refreshed = await refreshMLToken(supabaseAdmin, user.id, tokenRow.refresh_token);
+        if (refreshed) {
+          response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+              'Authorization': `Bearer ${refreshed.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+        }
       }
 
       clearTimeout(timeout);
