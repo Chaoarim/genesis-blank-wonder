@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+// supabase is still used for cache operations (radar_cache, radar_historico, radar_favoritos)
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
@@ -162,28 +163,18 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// --- Proxy helper via Edge Function (OAuth token handled server-side) ---
+// --- Direct browser fetch (no proxy needed for public ML endpoints) ---
 async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
-  const { data, error } = await supabase.functions.invoke('ml-proxy', {
-    body: { url },
-  });
-
-  if (error) {
-    console.error('[mlFetch] invoke error:', error);
-    throw new Error('Sem conexão com o Mercado Livre. Tente novamente em alguns segundos.');
-  }
-
-  if (data?.ok === false) {
-    if (data?.timeout) {
-      throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
-    }
-    if (data?.status === 403) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text();
+    console.error(`[mlFetch] ${res.status} for ${url}:`, body);
+    if (res.status === 403) {
       throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
     }
-    throw new Error(data?.error || 'Erro ao consultar o Mercado Livre');
+    throw new Error(`Erro ao consultar o Mercado Livre (${res.status})`);
   }
-
-  return (data?.data ?? data) as T;
+  return res.json() as Promise<T>;
 }
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
