@@ -25,6 +25,7 @@ import { RadarPriceBlock } from '@/components/radar/RadarPriceBlock';
 import { RadarInsightsBlock } from '@/components/radar/RadarInsightsBlock';
 import { RadarEmpresarioBlock } from '@/components/radar/RadarEmpresarioBlock';
 import { RadarExportButton } from '@/components/radar/RadarExportButton';
+import { MLConnectionStatus } from '@/components/sales/MLConnectionStatus';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function RadarML({ embedded = false }: { embedded?: boolean }) {
@@ -162,6 +163,7 @@ export default function RadarML({ embedded = false }: { embedded?: boolean }) {
               </SheetContent>
             </Sheet>
           </div>
+          <MLConnectionStatus />
         </div>
       </div>
       )}
