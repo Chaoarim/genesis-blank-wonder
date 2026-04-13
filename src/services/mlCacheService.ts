@@ -29,6 +29,19 @@ export async function getCachedMLResults(
 
   if (error || !data?.length) return null;
 
+  const hasRealSoldQuantity = data.some((row) => Number(row.total_vendido || 0) > 0);
+  const hasRealSellerName = data.some((row) => row.fornecedor_nome && row.fornecedor_nome !== 'N/A' && row.fornecedor_nome !== 'Vendedor ML');
+
+  if (!hasRealSoldQuantity || !hasRealSellerName) {
+    console.warn('[mlCache] Ignorando cache antigo/incompleto:', {
+      query: normalizedQuery,
+      regiao,
+      hasRealSoldQuantity,
+      hasRealSellerName,
+    });
+    return null;
+  }
+
   // Reconstruct MLResultItem[] from cache rows
   const results: MLResultItem[] = data.map((row) => ({
     id: row.ml_item_id,
