@@ -162,53 +162,28 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// --- Direct browser fetch (avoids datacenter IP blocking on Edge Function) ---
-async function mlFetch<T>(url: string, timeoutMs = 20000): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+// --- Proxy helper via Edge Function (OAuth token handled server-side) ---
+async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
 
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-      },
-    });
+  if (error) {
+    console.error('[mlFetch] invoke error:', error);
+    throw new Error('Sem conexão com o Mercado Livre. Tente novamente em alguns segundos.');
+  }
 
-    clearTimeout(timer);
-
-    if (!response.ok) {
-      let data: any = null;
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      console.error('[mlFetch] ML API error:', response.status, data);
-
-      if (response.status === 403) {
-        throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
-      }
-
-      throw new Error(data?.message || data?.error || `Erro ao consultar o Mercado Livre (${response.status})`);
-    }
-
-    return (await response.json()) as T;
-  } catch (e: any) {
-    clearTimeout(timer);
-
-    if (e?.name === 'AbortError') {
+  if (data?.ok === false) {
+    if (data?.timeout) {
       throw new Error('A busca demorou muito. O Mercado Livre pode estar lento. Tente novamente.');
     }
-
-    if (e instanceof TypeError) {
-      throw new Error('Sem conexão com o Mercado Livre. Tente novamente em alguns segundos.');
+    if (data?.status === 403) {
+      throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
     }
-
-    throw e;
+    throw new Error(data?.error || 'Erro ao consultar o Mercado Livre');
   }
+
+  return (data?.data ?? data) as T;
 }
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));

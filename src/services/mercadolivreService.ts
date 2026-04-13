@@ -1,4 +1,4 @@
-// Direct ML API integration (browser-side fetch)
+import { supabase } from '@/integrations/supabase/client';
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
@@ -109,37 +109,26 @@ export interface FornecedorRanking {
   estado: string;
 }
 
-// --- Direct fetch to ML API (browser-side, residential IP avoids 403) ---
+// --- Proxy helper via Edge Function (OAuth token handled server-side) ---
 
-async function mlDirectFetch<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+async function mlProxyFetch<T>(url: string): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
 
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' },
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('[mlDirectFetch] ML API error:', response.status, errorData);
-      throw new Error(`Mercado Livre retornou erro ${response.status}`);
-    }
-
-    return (await response.json()) as T;
-  } catch (err: any) {
-    clearTimeout(timeout);
-    if (err.name === 'AbortError') {
-      throw new Error('Timeout ao conectar com Mercado Livre. Tente novamente.');
-    }
-    throw err;
+  if (error) {
+    console.error('[mlProxyFetch] invoke error:', error);
+    throw new Error('Sem conexão com o Mercado Livre. Tente novamente.');
   }
-}
 
+  if (!data?.ok) {
+    const msg = data?.error || 'Erro ao consultar o Mercado Livre';
+    console.error('[mlProxyFetch] proxy error:', msg, data?.details);
+    throw new Error(msg);
+  }
+
+  return data.data as T;
+}
 // --- FUNÇÃO 1: buscarPecaML ---
 export async function buscarPecaML(
   query: string,
@@ -149,7 +138,7 @@ export async function buscarPecaML(
   const limit = options?.limit || LIMIT;
   const offset = options?.offset || 0;
   const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY}&sort=sold_quantity_desc&limit=${limit}&offset=${offset}`;
-  return mlDirectFetch<MLSearchResponse>(url);
+  return mlProxyFetch<MLSearchResponse>(url);
 }
 
 // --- FUNÇÃO 2: buscarPecaPorRegiao ---
@@ -162,19 +151,19 @@ export async function buscarPecaPorRegiao(
   const limit = options?.limit || LIMIT;
   const offset = options?.offset || 0;
   const url = `${ML_BASE}/sites/MLB/search?q=${q}&category=${CATEGORY}&sort=sold_quantity_desc&state=${stateCode}&limit=${limit}&offset=${offset}`;
-  return mlDirectFetch<MLSearchResponse>(url);
+  return mlProxyFetch<MLSearchResponse>(url);
 }
 
 // --- FUNÇÃO 3: buscarDetalheItem ---
 export async function buscarDetalheItem(itemId: string): Promise<MLItemDetail> {
   const url = `${ML_BASE}/items/${itemId}`;
-  return mlDirectFetch<MLItemDetail>(url);
+  return mlProxyFetch<MLItemDetail>(url);
 }
 
 // --- FUNÇÃO 4: buscarDadosVendedor ---
 export async function buscarDadosVendedor(userId: number | string): Promise<MLSellerDetail> {
   const url = `${ML_BASE}/users/${userId}`;
-  return mlDirectFetch<MLSellerDetail>(url);
+  return mlProxyFetch<MLSellerDetail>(url);
 }
 
 export function classificarReputacao(levelId: string): { label: string; cor: string } {
