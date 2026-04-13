@@ -111,16 +111,21 @@ Deno.serve(async (req) => {
     }
 
     switch (params.action) {
-      // ── SEARCH via SerpAPI ──
+      // ── SEARCH via SerpAPI (Google Shopping) ──
       case "search": {
         const query = params.query || "";
         const offset = params.offset || 0;
         const limit = params.limit || 50;
+        const searchQuery = params.state
+          ? `${query} ${params.state.replace("BR-", "")} site:mercadolivre.com.br`
+          : `${query} site:mercadolivre.com.br`;
 
         const serpParams = new URLSearchParams({
-          engine: "mercadolibre",
-          mercadolibre_domain: "mercadolivre.com.br",
-          query: query,
+          engine: "google_shopping",
+          q: searchQuery,
+          gl: "br",
+          hl: "pt",
+          num: String(limit),
           api_key: serpApiKey,
         });
 
@@ -128,12 +133,7 @@ Deno.serve(async (req) => {
           serpParams.set("start", String(offset));
         }
 
-        if (params.state) {
-          // SerpAPI doesn't have a direct state filter, but we can append to query
-          serpParams.set("q", `${query} ${params.state.replace("BR-", "")}`);
-        }
-
-        console.log(`[ml-proxy] SerpAPI search: ${query} (offset=${offset})`);
+        console.log(`[ml-proxy] SerpAPI google_shopping: ${searchQuery} (offset=${offset})`);
         const serpResp = await fetch(`${SERPAPI_BASE}?${serpParams}`);
         const serpData = await serpResp.json();
 
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        const converted = convertSerpResults(serpData, offset, limit);
+        const converted = convertShoppingResults(serpData, offset, limit);
         return respond(200, { ok: true, data: converted });
       }
 
