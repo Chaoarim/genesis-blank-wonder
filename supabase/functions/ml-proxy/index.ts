@@ -52,15 +52,23 @@ async function fetchItemDetails(mlIds: string[]): Promise<Map<string, any>> {
     const batch = mlIds.slice(i, i + batchSize);
     const url = `${ML_API_BASE}/items?ids=${batch.join(",")}`;
     try {
-      console.log(`[ml-proxy] Fetching item details batch: ${batch.length} items`);
+      console.log(`[ml-proxy] Fetching item details: ${url}`);
       const resp = await fetch(url);
+      console.log(`[ml-proxy] ML items response status: ${resp.status}`);
       if (resp.ok) {
         const data = await resp.json();
+        console.log(`[ml-proxy] ML items raw count: ${data.length}, first code: ${data[0]?.code}`);
         for (const entry of data) {
           if (entry.code === 200 && entry.body) {
             details.set(entry.body.id, entry.body);
+            console.log(`[ml-proxy] Item ${entry.body.id}: sold=${entry.body.sold_quantity}, seller=${entry.body.seller_id}`);
+          } else {
+            console.log(`[ml-proxy] Item error: code=${entry.code}, id=${entry.body?.id}`);
           }
         }
+      } else {
+        const text = await resp.text();
+        console.error(`[ml-proxy] ML items fetch failed ${resp.status}: ${text.slice(0, 200)}`);
       }
     } catch (e) {
       console.error("[ml-proxy] Item batch fetch error:", e);
@@ -273,15 +281,18 @@ Deno.serve(async (req) => {
           api_key: serpApiKey,
         });
 
-        console.log(`[ml-proxy] SerpAPI search: query="${query}"`);
-        let serpResp = await fetch(`${SERPAPI_BASE}?${mlParams}`);
+        const serpUrl = `${SERPAPI_BASE}?${mlParams}`;
+        console.log(`[ml-proxy] SerpAPI URL: ${serpUrl.replace(serpApiKey, "KEY***")}`);
+        let serpResp = await fetch(serpUrl);
         let serpData = await serpResp.json();
+        console.log(`[ml-proxy] SerpAPI status: ${serpResp.status}, has organic: ${!!serpData.organic_results}, count: ${serpData.organic_results?.length ?? 0}`);
+        if (serpData.error) console.log(`[ml-proxy] SerpAPI error: ${serpData.error}`);
 
         let converted: any;
 
         if (serpResp.ok && serpData.organic_results?.length > 0) {
           converted = convertMercadoLibreResults(serpData, offset, limit);
-          console.log(`[ml-proxy] mercadolibre engine: ${converted.results.length} results`);
+          console.log(`[ml-proxy] mercadolibre engine: ${converted.results.length} results, sample link: ${converted.results[0]?.permalink?.slice(0, 80)}`);
         } else {
           // Fallback to google_shopping
           console.log("[ml-proxy] Falling back to google_shopping");
