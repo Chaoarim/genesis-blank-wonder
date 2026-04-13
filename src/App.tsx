@@ -60,6 +60,7 @@ const App = () => (
           {/* Teste de Webhook (pode ser removido) */}
           <Route path="/webhook-test" element={<WebhookTest />} />
           <Route path="/radar-ml" element={<RadarML />} />
+          <Route path="/ml-auth" element={<MLAuth />} />
           
           
           {/* 404 */}
