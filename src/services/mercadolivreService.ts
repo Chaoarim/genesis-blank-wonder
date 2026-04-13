@@ -1,4 +1,5 @@
-// Direct browser fetch — no proxy needed for public ML endpoints
+// ML API calls routed through ml-proxy Edge Function to avoid CORS issues
+import { supabase } from '@/integrations/supabase/client';
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
