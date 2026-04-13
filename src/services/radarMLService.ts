@@ -163,89 +163,29 @@ export const CATEGORIAS_PECA = [
   'Transmissão', 'Elétrica', 'Arrefecimento', 'Injeção', 'Direção',
 ];
 
-// Fetch ML token from database for authenticated requests
-async function getMLToken(): Promise<string | null> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
+// Token management is handled server-side by the ml-proxy Edge Function
 
-    const { data: tokenData } = await supabase
-      .from('ml_tokens')
-      .select('access_token, expires_at')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!tokenData?.access_token) return null;
-
-    // Check if expired (with 5min buffer)
-    const expiresAt = new Date(tokenData.expires_at).getTime();
-    if (Date.now() > expiresAt - 300000) {
-      // Token expired — try refreshing via proxy
-      console.log('[mlFetch] Token expired, attempting refresh via proxy...');
-      try {
-        const { data } = await supabase.functions.invoke('ml-proxy', {
-          body: { url: 'https://api.mercadolibre.com/sites/MLB' }, // dummy call to trigger refresh
-        });
-        if (data?.ok) {
-          // Re-fetch the refreshed token
-          const { data: refreshed } = await supabase
-            .from('ml_tokens')
-            .select('access_token')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          return refreshed?.access_token || null;
-        }
-      } catch {
-        // Refresh failed
-      }
-      return null;
-    }
-
-    return tokenData.access_token;
-  } catch {
-    return null;
-  }
-}
-
-// Direct fetch from browser with optional ML token for authentication
-async function mlDirectFetch<T>(url: string, accessToken?: string | null): Promise<T> {
-  const headers: Record<string, string> = {};
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
-
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[mlFetch] ${res.status} for ${url}:`, body);
-    if (res.status === 403) {
-      throw new Error('Acesso temporariamente bloqueado pelo Mercado Livre. Aguarde alguns minutos e tente novamente.');
-    }
-    throw new Error(`Erro ao consultar o Mercado Livre (${res.status})`);
-  }
-  return res.json() as Promise<T>;
-}
-
-// Cache the token for the session to avoid repeated DB queries
-let _cachedToken: string | null = null;
-let _tokenFetchedAt = 0;
-
-async function getCachedMLToken(): Promise<string | null> {
-  // Re-fetch token every 5 minutes
-  if (_cachedToken && Date.now() - _tokenFetchedAt < 300000) {
-    return _cachedToken;
-  }
-  _cachedToken = await getMLToken();
-  _tokenFetchedAt = Date.now();
-  return _cachedToken;
-}
-
-// All ML API calls go directly from browser with token in header
+// All ML API calls go through the ml-proxy Edge Function to avoid CORS issues
 async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
-  const token = await getCachedMLToken();
-  return mlDirectFetch<T>(url, token);
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
+
+  if (error) {
+    console.error('[mlFetch] Edge function error:', error);
+    throw new Error('Erro ao conectar com o Mercado Livre via proxy');
+  }
+
+  if (!data?.ok) {
+    const msg = data?.error || 'Erro desconhecido do Mercado Livre';
+    console.error('[mlFetch] Proxy returned error:', msg);
+    if (data?.not_connected) {
+      throw new Error('ML não conectado. Autorize sua conta do Mercado Livre primeiro.');
+    }
+    throw new Error(msg);
+  }
+
+  return data.data as T;
 }
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));

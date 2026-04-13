@@ -1,4 +1,5 @@
-// Direct browser fetch — no proxy needed for public ML endpoints
+// ML API calls routed through ml-proxy Edge Function to avoid CORS issues
+import { supabase } from '@/integrations/supabase/client';
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
@@ -112,13 +113,22 @@ export interface FornecedorRanking {
 // --- Direct browser fetch (no proxy needed for public ML endpoints) ---
 
 async function mlDirectFetch<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`[ML API] ${res.status} for ${url}:`, body);
-    throw new Error(`Erro ao consultar o Mercado Livre (${res.status})`);
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
+
+  if (error) {
+    console.error('[ML API] Edge function error:', error);
+    throw new Error('Erro ao conectar com o Mercado Livre');
   }
-  return res.json() as Promise<T>;
+
+  if (!data?.ok) {
+    const msg = data?.error || 'Erro desconhecido do Mercado Livre';
+    console.error('[ML API] Proxy returned error:', msg);
+    throw new Error(msg);
+  }
+
+  return data.data as T;
 }
 // --- FUNÇÃO 1: buscarPecaML ---
 export async function buscarPecaML(
