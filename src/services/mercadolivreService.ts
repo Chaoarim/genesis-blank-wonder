@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+// Direct browser fetch — no proxy needed for public ML endpoints
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
