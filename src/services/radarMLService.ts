@@ -164,13 +164,6 @@ export const CATEGORIAS_PECA = [
 ];
 
 // Token management is handled server-side by the ml-proxy Edge Function
-    const { data: tokenData } = await supabase
-      .from('ml_tokens')
-      .select('access_token, expires_at')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
     if (!tokenData?.access_token) return null;
 
     // Check if expired (with 5min buffer)
