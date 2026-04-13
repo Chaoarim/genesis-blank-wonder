@@ -199,6 +199,23 @@ export async function getRadarCache(termo: string, estado: string): Promise<Rada
   if (!data?.length) return null;
   const row = data[0];
   const payload = row.payload_json as any;
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  const hasRealSoldQuantity = items.some((item: any) => (item?.sold_quantity || 0) > 0);
+  const hasRealSellerName = items.some((item: any) => {
+    const nickname = item?.seller?.nickname;
+    return nickname && nickname !== 'N/A' && nickname !== 'Vendedor ML';
+  });
+
+  if (items.length > 0 && (!hasRealSoldQuantity || !hasRealSellerName)) {
+    console.warn('[radarCache] Ignorando cache antigo/incompleto para refazer busca:', {
+      termo,
+      estado,
+      hasRealSoldQuantity,
+      hasRealSellerName,
+    });
+    return null;
+  }
+
   return {
     ...payload,
     fromCache: true,
