@@ -164,38 +164,6 @@ export const CATEGORIAS_PECA = [
 ];
 
 // Token management is handled server-side by the ml-proxy Edge Function
-    if (!tokenData?.access_token) return null;
-
-    // Check if expired (with 5min buffer)
-    const expiresAt = new Date(tokenData.expires_at).getTime();
-    if (Date.now() > expiresAt - 300000) {
-      // Token expired — try refreshing via proxy
-      console.log('[mlFetch] Token expired, attempting refresh via proxy...');
-      try {
-        const { data } = await supabase.functions.invoke('ml-proxy', {
-          body: { url: 'https://api.mercadolibre.com/sites/MLB' }, // dummy call to trigger refresh
-        });
-        if (data?.ok) {
-          // Re-fetch the refreshed token
-          const { data: refreshed } = await supabase
-            .from('ml_tokens')
-            .select('access_token')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          return refreshed?.access_token || null;
-        }
-      } catch {
-        // Refresh failed
-      }
-      return null;
-    }
-
-    return tokenData.access_token;
-  } catch {
-    return null;
-  }
-}
 
 // All ML API calls go through the ml-proxy Edge Function to avoid CORS issues
 async function mlFetch<T>(url: string, _timeoutMs = 20000): Promise<T> {
