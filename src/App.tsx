@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Sales from "./pages/Sales";
+import RootRedirect from "./pages/RootRedirect";
 import SalesHub from "./pages/SalesHub";
 import CatalogB2B from "./pages/CatalogB2B";
 import Login from "./pages/Login";
@@ -33,7 +34,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Página de vendas como página inicial */}
-          <Route path="/" element={<Navigate to="/sales" replace />} />
+          <Route path="/" element={<RootRedirect />} />
           <Route path="/sales" element={<Sales />} />
           
           {/* Autenticação */}
