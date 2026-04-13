@@ -28,7 +28,53 @@ interface ProxyRequest {
   seller_id?: string | number;
 }
 
-// Convert SerpAPI google_shopping results to the ML API format our frontend expects
+// Convert SerpAPI mercadolibre organic_results to ML API format
+function convertMercadoLibreResults(serpData: any, offset: number, limit: number) {
+  const organicResults = serpData.organic_results || [];
+
+  const results = organicResults.map((item: any, idx: number) => {
+    const priceNum = item.price?.extracted_value || item.price?.extracted || 0;
+    const mlIdMatch = (item.link || "").match(/MLB-?(\d+)/);
+    const mlId = mlIdMatch ? `MLB${mlIdMatch[1]}` : `SERP-${idx}`;
+
+    return {
+      id: mlId,
+      title: item.title || "",
+      price: priceNum,
+      sold_quantity: item.reviews?.count || 0,
+      available_quantity: 10,
+      thumbnail: item.thumbnail || "",
+      permalink: item.link || "",
+      condition: "new",
+      seller: {
+        id: 0,
+        nickname: item.seller_info?.name || item.seller?.name || "Vendedor ML",
+      },
+      address: {
+        state_id: "",
+        state_name: "",
+        city_name: "",
+      },
+      shipping: {
+        free_shipping: (item.extensions || []).some((e: string) => /gr[aá]tis|free/i.test(e)),
+        tags: [],
+      },
+      installments: null,
+      attributes: [],
+    };
+  });
+
+  return {
+    results,
+    paging: {
+      total: serpData.search_information?.total_results || results.length,
+      offset,
+      limit,
+    },
+  };
+}
+
+// Fallback: Convert SerpAPI google_shopping results
 function convertShoppingResults(serpData: any, offset: number, limit: number) {
   const shoppingResults = serpData.shopping_results || [];
 
@@ -50,15 +96,8 @@ function convertShoppingResults(serpData: any, offset: number, limit: number) {
         id: 0,
         nickname: item.source || "Vendedor ML",
       },
-      address: {
-        state_id: "",
-        state_name: "",
-        city_name: "",
-      },
-      shipping: {
-        free_shipping: item.delivery?.includes("Grátis") || false,
-        tags: [],
-      },
+      address: { state_id: "", state_name: "", city_name: "" },
+      shipping: { free_shipping: false, tags: [] },
       installments: null,
       attributes: [],
     };
@@ -110,19 +149,45 @@ Deno.serve(async (req) => {
       });
     }
 
+    console.log("[ml-proxy] SERPAPI_KEY exists:", !!serpApiKey);
+
     switch (params.action) {
-      // ── SEARCH via SerpAPI (Google Shopping) ──
+      // ── SEARCH via SerpAPI (mercadolibre engine, fallback to google_shopping) ──
       case "search": {
         const query = params.query || "";
         const offset = params.offset || 0;
         const limit = params.limit || 50;
-        const searchQuery = params.state
-          ? `${query} ${params.state.replace("BR-", "")} site:mercadolivre.com.br`
-          : `${query} site:mercadolivre.com.br`;
 
-        const serpParams = new URLSearchParams({
+        // Step 1: Try mercadolibre engine
+        const mlParams = new URLSearchParams({
+          engine: "mercadolibre",
+          mercadolibre_domain: "mercadolivre.com.br",
+          query: query,
+          api_key: serpApiKey,
+        });
+
+        console.log(`[ml-proxy] SerpAPI mercadolibre engine: query="${query}"`);
+        let serpResp = await fetch(`${SERPAPI_BASE}?${mlParams}`);
+        let serpData = await serpResp.json();
+
+        console.log(`[ml-proxy] SerpAPI mercadolibre status: ${serpResp.status}, keys: ${Object.keys(serpData).join(",")}`);
+        console.log(`[ml-proxy] SerpAPI response (first 1000 chars):`, JSON.stringify(serpData).substring(0, 1000));
+
+        if (serpResp.ok && serpData.organic_results && serpData.organic_results.length > 0) {
+          const converted = convertMercadoLibreResults(serpData, offset, limit);
+          console.log(`[ml-proxy] mercadolibre engine returned ${converted.results.length} results`);
+          return respond(200, { ok: true, data: converted });
+        }
+
+        // Step 2: Fallback to google_shopping
+        console.log("[ml-proxy] mercadolibre engine returned no results, trying google_shopping fallback");
+        const gsQuery = params.state
+          ? `${query} ${params.state.replace("BR-", "")} mercadolivre`
+          : `${query} mercadolivre`;
+
+        const gsParams = new URLSearchParams({
           engine: "google_shopping",
-          q: searchQuery,
+          q: gsQuery,
           gl: "br",
           hl: "pt",
           num: String(limit),
@@ -130,15 +195,16 @@ Deno.serve(async (req) => {
         });
 
         if (offset > 0) {
-          serpParams.set("start", String(offset));
+          gsParams.set("start", String(offset));
         }
 
-        console.log(`[ml-proxy] SerpAPI google_shopping: ${searchQuery} (offset=${offset})`);
-        const serpResp = await fetch(`${SERPAPI_BASE}?${serpParams}`);
-        const serpData = await serpResp.json();
+        serpResp = await fetch(`${SERPAPI_BASE}?${gsParams}`);
+        serpData = await serpResp.json();
+
+        console.log(`[ml-proxy] google_shopping status: ${serpResp.status}, shopping_results count: ${(serpData.shopping_results || []).length}`);
 
         if (!serpResp.ok) {
-          console.error("[ml-proxy] SerpAPI error:", JSON.stringify(serpData).substring(0, 500));
+          console.error("[ml-proxy] SerpAPI fallback error:", JSON.stringify(serpData).substring(0, 500));
           return respond(200, {
             ok: false,
             error: `SerpAPI retornou status ${serpResp.status}`,
@@ -147,6 +213,7 @@ Deno.serve(async (req) => {
         }
 
         const converted = convertShoppingResults(serpData, offset, limit);
+        console.log(`[ml-proxy] google_shopping fallback returned ${converted.results.length} results`);
         return respond(200, { ok: true, data: converted });
       }
 
