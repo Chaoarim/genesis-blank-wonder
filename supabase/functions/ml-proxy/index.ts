@@ -28,35 +28,41 @@ interface ProxyRequest {
   seller_id?: string | number;
 }
 
-// Convert SerpAPI mercadolibre results to the ML API format our frontend expects
-function convertSerpResults(serpData: any, offset: number, limit: number) {
-  const organicResults = serpData.organic_results || [];
+// Convert SerpAPI google_shopping results to the ML API format our frontend expects
+function convertShoppingResults(serpData: any, offset: number, limit: number) {
+  const shoppingResults = serpData.shopping_results || [];
 
-  const results = organicResults.map((item: any) => ({
-    id: item.item_id || item.link?.match(/MLB-?\d+/)?.[0]?.replace("-", "") || "",
-    title: item.title || "",
-    price: item.price?.extracted || item.price?.raw ? parseFloat(String(item.price.raw).replace(/[^\d.,]/g, "").replace(",", ".")) : 0,
-    sold_quantity: item.reviews?.total_reviews || item.extensions?.find((e: string) => /vendido/i.test(e)) ? parseInt(String(item.extensions?.find((e: string) => /vendido/i.test(e))).replace(/\D/g, "")) || 0 : 0,
-    available_quantity: 10,
-    thumbnail: item.thumbnail || "",
-    permalink: item.link || "",
-    condition: item.condition || "new",
-    seller: {
-      id: 0,
-      nickname: item.seller?.name || item.seller?.nickname || "Vendedor ML",
-    },
-    address: {
-      state_id: "",
-      state_name: item.seller?.location || item.location || "",
-      city_name: "",
-    },
-    shipping: {
-      free_shipping: item.shipping?.free_shipping === true || (item.tag || "").includes("free"),
-      tags: [],
-    },
-    installments: null,
-    attributes: [],
-  }));
+  const results = shoppingResults.map((item: any) => {
+    const priceNum = item.extracted_price || (item.price ? parseFloat(String(item.price).replace(/[^\d.,]/g, "").replace(",", ".")) : 0);
+    const mlIdMatch = (item.link || "").match(/MLB-?(\d+)/);
+    const mlId = mlIdMatch ? `MLB${mlIdMatch[1]}` : "";
+
+    return {
+      id: mlId,
+      title: item.title || "",
+      price: priceNum,
+      sold_quantity: 0,
+      available_quantity: 10,
+      thumbnail: item.thumbnail || "",
+      permalink: item.link || "",
+      condition: "new",
+      seller: {
+        id: 0,
+        nickname: item.source || "Vendedor ML",
+      },
+      address: {
+        state_id: "",
+        state_name: "",
+        city_name: "",
+      },
+      shipping: {
+        free_shipping: item.delivery?.includes("Grátis") || false,
+        tags: [],
+      },
+      installments: null,
+      attributes: [],
+    };
+  });
 
   return {
     results,
@@ -105,30 +111,29 @@ Deno.serve(async (req) => {
     }
 
     switch (params.action) {
-      // ── SEARCH via SerpAPI ──
+      // ── SEARCH via SerpAPI (Google Shopping) ──
       case "search": {
         const query = params.query || "";
         const offset = params.offset || 0;
         const limit = params.limit || 50;
+        const searchQuery = params.state
+          ? `${query} ${params.state.replace("BR-", "")} site:mercadolivre.com.br`
+          : `${query} site:mercadolivre.com.br`;
 
         const serpParams = new URLSearchParams({
-          engine: "mercadolibre",
-          site: "mercadolivre.com.br",
-          q: query,
-          api_key: serpApiKey,
+          engine: "google_shopping",
+          q: searchQuery,
+          gl: "br",
+          hl: "pt",
           num: String(limit),
+          api_key: serpApiKey,
         });
 
         if (offset > 0) {
           serpParams.set("start", String(offset));
         }
 
-        if (params.state) {
-          // SerpAPI doesn't have a direct state filter, but we can append to query
-          serpParams.set("q", `${query} ${params.state.replace("BR-", "")}`);
-        }
-
-        console.log(`[ml-proxy] SerpAPI search: ${query} (offset=${offset})`);
+        console.log(`[ml-proxy] SerpAPI google_shopping: ${searchQuery} (offset=${offset})`);
         const serpResp = await fetch(`${SERPAPI_BASE}?${serpParams}`);
         const serpData = await serpResp.json();
 
@@ -141,7 +146,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        const converted = convertSerpResults(serpData, offset, limit);
+        const converted = convertShoppingResults(serpData, offset, limit);
         return respond(200, { ok: true, data: converted });
       }
 
