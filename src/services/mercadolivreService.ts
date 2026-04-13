@@ -1,4 +1,4 @@
-// Direct ML API integration (browser-side fetch)
+import { supabase } from '@/integrations/supabase/client';
 
 const ML_BASE = 'https://api.mercadolibre.com';
 const CATEGORY = 'MLB1743';
@@ -109,37 +109,26 @@ export interface FornecedorRanking {
   estado: string;
 }
 
-// --- Direct fetch to ML API (browser-side, residential IP avoids 403) ---
+// --- Proxy helper via Edge Function (OAuth token handled server-side) ---
 
-async function mlDirectFetch<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+async function mlProxyFetch<T>(url: string): Promise<T> {
+  const { data, error } = await supabase.functions.invoke('ml-proxy', {
+    body: { url },
+  });
 
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' },
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('[mlDirectFetch] ML API error:', response.status, errorData);
-      throw new Error(`Mercado Livre retornou erro ${response.status}`);
-    }
-
-    return (await response.json()) as T;
-  } catch (err: any) {
-    clearTimeout(timeout);
-    if (err.name === 'AbortError') {
-      throw new Error('Timeout ao conectar com Mercado Livre. Tente novamente.');
-    }
-    throw err;
+  if (error) {
+    console.error('[mlProxyFetch] invoke error:', error);
+    throw new Error('Sem conexão com o Mercado Livre. Tente novamente.');
   }
-}
 
+  if (!data?.ok) {
+    const msg = data?.error || 'Erro ao consultar o Mercado Livre';
+    console.error('[mlProxyFetch] proxy error:', msg, data?.details);
+    throw new Error(msg);
+  }
+
+  return data.data as T;
+}
 // --- FUNÇÃO 1: buscarPecaML ---
 export async function buscarPecaML(
   query: string,
