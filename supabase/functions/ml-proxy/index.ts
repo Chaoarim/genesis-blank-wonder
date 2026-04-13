@@ -28,35 +28,41 @@ interface ProxyRequest {
   seller_id?: string | number;
 }
 
-// Convert SerpAPI mercadolibre results to the ML API format our frontend expects
-function convertSerpResults(serpData: any, offset: number, limit: number) {
-  const organicResults = serpData.organic_results || [];
+// Convert SerpAPI google_shopping results to the ML API format our frontend expects
+function convertShoppingResults(serpData: any, offset: number, limit: number) {
+  const shoppingResults = serpData.shopping_results || [];
 
-  const results = organicResults.map((item: any) => ({
-    id: item.item_id || item.link?.match(/MLB-?\d+/)?.[0]?.replace("-", "") || "",
-    title: item.title || "",
-    price: item.price?.extracted || item.price?.raw ? parseFloat(String(item.price.raw).replace(/[^\d.,]/g, "").replace(",", ".")) : 0,
-    sold_quantity: item.reviews?.total_reviews || item.extensions?.find((e: string) => /vendido/i.test(e)) ? parseInt(String(item.extensions?.find((e: string) => /vendido/i.test(e))).replace(/\D/g, "")) || 0 : 0,
-    available_quantity: 10,
-    thumbnail: item.thumbnail || "",
-    permalink: item.link || "",
-    condition: item.condition || "new",
-    seller: {
-      id: 0,
-      nickname: item.seller?.name || item.seller?.nickname || "Vendedor ML",
-    },
-    address: {
-      state_id: "",
-      state_name: item.seller?.location || item.location || "",
-      city_name: "",
-    },
-    shipping: {
-      free_shipping: item.shipping?.free_shipping === true || (item.tag || "").includes("free"),
-      tags: [],
-    },
-    installments: null,
-    attributes: [],
-  }));
+  const results = shoppingResults.map((item: any) => {
+    const priceNum = item.extracted_price || (item.price ? parseFloat(String(item.price).replace(/[^\d.,]/g, "").replace(",", ".")) : 0);
+    const mlIdMatch = (item.link || "").match(/MLB-?(\d+)/);
+    const mlId = mlIdMatch ? `MLB${mlIdMatch[1]}` : "";
+
+    return {
+      id: mlId,
+      title: item.title || "",
+      price: priceNum,
+      sold_quantity: 0,
+      available_quantity: 10,
+      thumbnail: item.thumbnail || "",
+      permalink: item.link || "",
+      condition: "new",
+      seller: {
+        id: 0,
+        nickname: item.source || "Vendedor ML",
+      },
+      address: {
+        state_id: "",
+        state_name: "",
+        city_name: "",
+      },
+      shipping: {
+        free_shipping: item.delivery?.includes("Grátis") || false,
+        tags: [],
+      },
+      installments: null,
+      attributes: [],
+    };
+  });
 
   return {
     results,
