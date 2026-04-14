@@ -16,6 +16,7 @@ import PreRegistration from "./pages/PreRegistration";
 import PixPayment from "./pages/PixPayment";
 import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
+import AutoIQ from "./pages/AutoIQ";
 import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 
@@ -53,6 +54,9 @@ const App = () => (
           {/* Admin */}
           <Route path="/admin" element={<Admin />} />
           <Route path="/pagamentos" element={<PaymentControl />} />
+          
+          {/* AutoIQ — Consultor de Peças IA */}
+          <Route path="/autoiq" element={<AutoIQ />} />
           
           {/* Teste de Webhook (pode ser removido) */}
           <Route path="/webhook-test" element={<WebhookTest />} />
