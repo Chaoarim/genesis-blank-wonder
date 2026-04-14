@@ -5,8 +5,9 @@ import {
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock, Wallet, PackageCheck, Car
+  Clock, Wallet, PackageCheck, Car, Bot
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
   SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton,
@@ -27,16 +28,20 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
   { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
 
+  // 🤖 IA
+  { value: 'autoiq', icon: Bot, label: 'AutoIQ', group: 'IA' },
+
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
 ];
 
 const GROUP_ICONS: Record<string, string> = {
   'Consulta': '🔍',
+  'IA': '🤖',
   'Ajuda': '❓',
 };
 
-const GROUPS = ['Consulta', 'Ajuda'];
+const GROUPS = ['Consulta', 'IA', 'Ajuda'];
 
 interface SalesHubSidebarProps {
   activeTab: string;
