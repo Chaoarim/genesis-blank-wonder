@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Sales from "./pages/Sales";
-import RootRedirect from "./pages/RootRedirect";
 import SalesHub from "./pages/SalesHub";
 import CatalogB2B from "./pages/CatalogB2B";
 import Login from "./pages/Login";
@@ -17,9 +16,6 @@ import PreRegistration from "./pages/PreRegistration";
 import PixPayment from "./pages/PixPayment";
 import PixRenewal from "./pages/PixRenewal";
 import WebhookTest from "./pages/WebhookTest";
-import RadarML from "./pages/RadarML";
-import MLAuth from "./pages/MLAuth";
-
 import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 
@@ -34,7 +30,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Página de vendas como página inicial */}
-          <Route path="/" element={<RootRedirect />} />
+          <Route path="/" element={<Navigate to="/sales" replace />} />
           <Route path="/sales" element={<Sales />} />
           
           {/* Autenticação */}
@@ -60,9 +56,6 @@ const App = () => (
           
           {/* Teste de Webhook (pode ser removido) */}
           <Route path="/webhook-test" element={<WebhookTest />} />
-          <Route path="/radar-ml" element={<RadarML />} />
-          <Route path="/ml-auth" element={<MLAuth />} />
-          
           
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

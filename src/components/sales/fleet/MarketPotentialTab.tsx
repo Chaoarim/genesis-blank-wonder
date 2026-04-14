@@ -1,18 +1,17 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend, Area, AreaChart } from 'recharts';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Zap, Clock, Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell, PieChart, Pie, Legend, LineChart, Line, Area, AreaChart } from 'recharts';
+import { Loader2, Target, TrendingUp, Package, Search, ShoppingCart, Upload, Download, FileSpreadsheet, Trash2, Zap, Clock } from 'lucide-react';
+import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { exportToExcel } from '@/lib/exportExcel';
 import { toast } from 'sonner';
-import { getFleetModelKeywords, itemMatchesFleetModel, loadFleetAnalysisItems, normalizeFleetText, type FleetAnalysisItem } from './fleetAnalysisData';
-import { buildTrailingYearWindow, formatYearWindowLabel, roundTrend, sortYearsAsc, summarizeSeriesWindow } from './fleetTrendUtils';
+import * as XLSX from 'xlsx';
 
 interface FleetRanking {
   id: string;
@@ -27,12 +26,15 @@ interface Props {
   rankings: FleetRanking[];
   selectedYear: string;
   selectedType: string;
-  readOnly?: boolean;
-  externalProductSearch?: string;
-  adminUserId?: string | null;
 }
 
-type PartItem = FleetAnalysisItem;
+interface SupplierItem {
+  id: string;
+  codigo: string;
+  produto: string;
+  aplicacao: string;
+  fornecedor: string;
+}
 
 interface ItemPotential {
   id: string;
@@ -44,12 +46,10 @@ interface ItemPotential {
   totalFleetCurrent: number;
   totalFleetAllYears: number;
   estimatedDemandCurrent: number;
-  trendGrowth: number;
+  trendGrowth: number; // % growth trend across years
   potentialScore: number;
-  investmentScore: number;
+  investmentScore: number; // long-term investment score
   classification: 'imediato' | 'investimento' | 'nicho' | 'sem_match';
-  yearlyFleet: Map<number, number>;
-  windowCagr: number;
 }
 
 interface TopChartItem {
@@ -62,63 +62,74 @@ interface TopChartItem {
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6'];
 const ANNUAL_REPLACEMENT_RATE = 0.15;
 
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function formatCompactUnits(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
   return Math.round(value).toLocaleString('pt-BR');
 }
 
-export function MarketPotentialTab({ rankings, selectedYear, selectedType, externalProductSearch = '', adminUserId = null }: Props) {
+export function MarketPotentialTab({ rankings, selectedYear, selectedType }: Props) {
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<PartItem[]>([]);
+  const [items, setItems] = useState<SupplierItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFabricante, setSelectedFabricante] = useState<string>('__all__');
-  const [sourceLabel, setSourceLabel] = useState('Lista de peças');
-  const [hasOwnerContext, setHasOwnerContext] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const reloadItems = useCallback(async () => {
+  const getOwnerId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: sellerRow } = await supabase
+      .from('seller_users')
+      .select('admin_user_id')
+      .eq('seller_auth_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+    return sellerRow?.admin_user_id || user.id;
+  };
+
+  const reloadItems = async () => {
     setLoading(true);
-    try {
-      const { items: loadedItems, sourceLabel: resolvedSourceLabel, ownerId } = await loadFleetAnalysisItems(adminUserId);
-      setItems(loadedItems);
-      setSourceLabel(resolvedSourceLabel);
-      setHasOwnerContext(Boolean(ownerId));
-    } catch (error) {
-      console.error('Erro ao carregar lista para análise de potencial:', error);
-      toast.error('Erro ao carregar a lista de peças da análise');
-      setItems([]);
-      setSourceLabel('Erro ao carregar lista de peças');
-      setHasOwnerContext(Boolean(adminUserId));
-    } finally {
-      setLoading(false);
+    const ownerId = await getOwnerId();
+    if (!ownerId) { setLoading(false); return; }
+
+    // Paginate through all supplier catalog items
+    const allItems: SupplierItem[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('supplier_catalog_items')
+        .select('id, codigo, produto, aplicacao, fornecedor')
+        .eq('user_id', ownerId)
+        .order('created_at', { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+      if (error || !data || data.length === 0) { hasMore = false; break; }
+      allItems.push(...data.map(d => ({
+        id: d.id,
+        codigo: d.codigo,
+        produto: d.produto,
+        aplicacao: d.aplicacao || '',
+        fornecedor: d.fornecedor || '',
+      })));
+      if (data.length < pageSize) hasMore = false;
+      else page++;
     }
-  }, [adminUserId]);
+    setItems(allItems);
+    setLoading(false);
+  };
 
-  // Unique fabricante list for selection
-  const fabricantes = useMemo(() => {
-    const unique = [...new Set(items.map(i => i.fornecedor).filter(Boolean))].sort();
-    return unique;
-  }, [items]);
-
-  // Items filtered by selected fabricante
-  const activeItems = useMemo(() => {
-    if (selectedFabricante === '__all__') return items;
-    const fabricanteNormalizado = normalizeFleetText(selectedFabricante);
-    return items.filter(i => normalizeFleetText(i.fornecedor) === fabricanteNormalizado);
-  }, [items, selectedFabricante]);
-
-  useEffect(() => {
-    reloadItems();
-  }, [reloadItems]);
-
-  useEffect(() => {
-    if (
-      selectedFabricante !== '__all__' &&
-      !fabricantes.some(fabricante => normalizeFleetText(fabricante) === normalizeFleetText(selectedFabricante))
-    ) {
-      setSelectedFabricante('__all__');
-    }
-  }, [fabricantes, selectedFabricante]);
+  useEffect(() => { reloadItems(); }, []);
 
   // Get all years available in rankings for trend analysis
   const allYearRankings = useMemo(() => {
@@ -126,87 +137,79 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
   }, [rankings, selectedType]);
 
   const availableYears = useMemo(() => {
-    return sortYearsAsc([...new Set(allYearRankings.map(r => r.year))]);
+    return [...new Set(allYearRankings.map(r => r.year))].sort();
   }, [allYearRankings]);
-
-  const selectedYearNumber = useMemo(() => {
-    const n = Number(selectedYear);
-    if (Number.isFinite(n) && availableYears.includes(n)) return n;
-    return availableYears[availableYears.length - 1] ?? 0;
-  }, [selectedYear, availableYears]);
-
-  const analysisWindowYears = useMemo(
-    () => buildTrailingYearWindow(availableYears, selectedYearNumber),
-    [availableYears, selectedYearNumber],
-  );
-  const analysisWindowLabel = useMemo(
-    () => formatYearWindowLabel(analysisWindowYears),
-    [analysisWindowYears],
-  );
-
-  const historyYears = useMemo(
-    () => availableYears.filter(year => year <= selectedYearNumber),
-    [availableYears, selectedYearNumber],
-  );
-
-  // Pre-compute fleet models per year once
-  const fleetByYear = useMemo(() => {
-    const map = new Map<number, Array<FleetRanking & { normalized: string; keywords: string[] }>>();
-    for (const year of availableYears) {
-      map.set(year, allYearRankings
-        .filter(r => r.year === year)
-        .map(r => ({ ...r, ...getFleetModelKeywords(r.model) })));
-    }
-    return map;
-  }, [allYearRankings, availableYears]);
-
-  const selectedYearFleetModels = useMemo(
-    () => fleetByYear.get(selectedYearNumber) || [],
-    [fleetByYear, selectedYearNumber],
-  );
 
   const filteredRankings = useMemo(() => {
     return rankings
-      .filter(r => r.year === selectedYearNumber && r.vehicle_type === selectedType)
+      .filter(r => r.year === Number(selectedYear) && r.vehicle_type === selectedType)
       .sort((a, b) => a.position - b.position);
-  }, [rankings, selectedYearNumber, selectedType]);
+  }, [rankings, selectedYear, selectedType]);
 
-  // Pre-compute per-item yearly fleet history ONCE (doesn't depend on selectedYear)
-  const itemHistories = useMemo(() => {
-    if (!activeItems.length || !availableYears.length) return [];
-    return activeItems.map(item => {
-      const itemText = normalizeFleetText(`${item.aplicacao} ${item.produto} ${item.searchText}`);
-      const yearlyFleet = new Map<number, number>();
+  // Cross supplier items × fleet (current + multi-year trend)
+  const itemPotentials: ItemPotential[] = useMemo(() => {
+    if (!items.length || !filteredRankings.length) return [];
+
+    const fleetModels = filteredRankings.map(r => ({
+      ...r,
+      normalized: normalize(r.model),
+      keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+    }));
+
+    // Build per-year fleet data for trend
+    const fleetByYear = new Map<number, typeof fleetModels>();
+    for (const year of availableYears) {
+      const yearRankings = allYearRankings
+        .filter(r => r.year === year)
+        .map(r => ({
+          ...r,
+          normalized: normalize(r.model),
+          keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+        }));
+      fleetByYear.set(year, yearRankings);
+    }
+
+    return items.map(item => {
+      const itemText = normalize(`${item.aplicacao} ${item.produto}`);
+
+      // Match current year
+      const matchedModels: string[] = [];
+      let totalFleetCurrent = 0;
+      for (const fm of fleetModels) {
+        const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
+        const strongMatch = fm.keywords.length <= 2 ? matchCount >= 1 : matchCount >= 2;
+        if (strongMatch) {
+          matchedModels.push(fm.model);
+          totalFleetCurrent += fm.quantity;
+        }
+      }
+
+      // Multi-year trend: total fleet matched per year
       let totalFleetAllYears = 0;
-      let matchedYearsCount = 0;
+      const yearlyFleet: number[] = [];
       for (const year of availableYears) {
         const yearModels = fleetByYear.get(year) || [];
         let yearTotal = 0;
-        for (const fm of yearModels) { if (itemMatchesFleetModel(itemText, fm.normalized, fm.keywords)) yearTotal += fm.quantity; }
-        yearlyFleet.set(year, yearTotal);
+        for (const fm of yearModels) {
+          const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
+          const strongMatch = fm.keywords.length <= 2 ? matchCount >= 1 : matchCount >= 2;
+          if (strongMatch) yearTotal += fm.quantity;
+        }
         totalFleetAllYears += yearTotal;
-        if (yearTotal > 0) matchedYearsCount++;
+        yearlyFleet.push(yearTotal);
       }
-      return { item, itemText, yearlyFleet, totalFleetAllYears, matchedYearsCount };
-    });
-  }, [activeItems, availableYears, fleetByYear]);
 
-  // Cross parts × fleet – now only the selected-year slice changes on year switch
-  const itemPotentials: ItemPotential[] = useMemo(() => {
-    if (!itemHistories.length || !selectedYearFleetModels.length) return [];
-
-    return itemHistories.map(h => {
-      const matchedModels: string[] = [];
-      for (const fm of selectedYearFleetModels) {
-        if (itemMatchesFleetModel(h.itemText, fm.normalized, fm.keywords)) matchedModels.push(fm.model);
+      // Calculate growth trend (linear regression slope as %)
+      let trendGrowth = 0;
+      if (yearlyFleet.length >= 2) {
+        const first = yearlyFleet[0] || 1;
+        const last = yearlyFleet[yearlyFleet.length - 1];
+        trendGrowth = ((last - first) / Math.max(first, 1)) * 100;
       }
-      const totalFleetCurrent = h.yearlyFleet.get(selectedYearNumber) || 0;
-      const windowSummary = summarizeSeriesWindow(h.yearlyFleet, analysisWindowYears);
-      const trendGrowth = roundTrend(windowSummary.growthPercent);
-      const windowCagr = roundTrend(windowSummary.cagrPercent);
 
       const estimatedDemandCurrent = Math.round(totalFleetCurrent * ANNUAL_REPLACEMENT_RATE);
 
+      // Potential score: immediate sales potential
       const potentialScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
             (Math.log10(totalFleetCurrent + 1) * 25) +
@@ -215,78 +218,59 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           ))
         : 0;
 
-      const hasPositiveWindowTrend = analysisWindowYears.length >= 2 && windowSummary.delta > 0 && (windowSummary.growthPercent >= 8 || windowSummary.cagrPercent >= 2.5);
-
-      const investmentScore = h.totalFleetAllYears > 0
+      // Investment score: long-term value (growth trend + fleet size)
+      const investmentScore = totalFleetCurrent > 0
         ? Math.min(100, Math.round(
-            (windowSummary.growthPercent > 0 ? Math.min(windowSummary.growthPercent, 45) : 0) +
-            (windowSummary.cagrPercent > 0 ? Math.min(windowSummary.cagrPercent * 4, 18) : 0) +
-            (windowSummary.delta > 0 ? Math.min(Math.log10(windowSummary.delta + 1) * 12, 18) : 0) +
-            (Math.log10(windowSummary.total + 1) * 10) +
-            (Math.log10(h.totalFleetAllYears + 1) * 8) +
-            (matchedModels.length * 4) +
-            (h.matchedYearsCount >= Math.min(analysisWindowYears.length, 3) ? 10 : 0)
+            (trendGrowth > 0 ? Math.min(trendGrowth, 50) : 0) +
+            (Math.log10(totalFleetAllYears + 1) * 15) +
+            (matchedModels.length * 5) +
+            (availableYears.length > 3 && trendGrowth > 20 ? 20 : 0)
           ))
         : 0;
 
+      // Classification
       let classification: ItemPotential['classification'] = 'sem_match';
-      if (potentialScore >= 60 && totalFleetCurrent > 0) {
-        classification = 'imediato';
-      } else if (hasPositiveWindowTrend && investmentScore > 0) {
-        classification = 'investimento';
-      } else if (potentialScore >= 30) {
-        classification = 'nicho';
-      } else if (investmentScore > 0 && totalFleetCurrent > 0) {
-        classification = 'investimento';
-      }
+      if (potentialScore >= 50 && investmentScore >= 40) classification = 'imediato';
+      else if (investmentScore >= 50) classification = 'investimento';
+      else if (potentialScore > 0) classification = 'nicho';
 
       return {
-        id: h.item.id,
-        codigo: h.item.codigo,
-        produto: h.item.produto,
-        aplicacao: h.item.aplicacao,
-        fornecedor: h.item.fornecedor,
+        id: item.id,
+        codigo: item.codigo,
+        produto: item.produto,
+        aplicacao: item.aplicacao,
+        fornecedor: item.fornecedor,
         matchedModels,
         totalFleetCurrent,
-        totalFleetAllYears: h.totalFleetAllYears,
+        totalFleetAllYears,
         estimatedDemandCurrent,
         trendGrowth,
         potentialScore,
         investmentScore,
         classification,
-        yearlyFleet: h.yearlyFleet,
-        windowCagr,
       };
-    }).sort((a, b) => b.potentialScore !== a.potentialScore ? b.potentialScore - a.potentialScore : b.investmentScore - a.investmentScore);
-  }, [itemHistories, selectedYearFleetModels, selectedYearNumber, analysisWindowYears]);
-
-  const searchTerms = useMemo(() => {
-    return [externalProductSearch, searchQuery]
-      .map(term => term.trim())
-      .filter(Boolean);
-  }, [externalProductSearch, searchQuery]);
-
-  const searchLabel = useMemo(() => searchTerms.join(' • '), [searchTerms]);
+    }).sort((a, b) => b.potentialScore - a.potentialScore);
+  }, [items, filteredRankings, allYearRankings, availableYears]);
 
   const filtered = useMemo(() => {
-    if (!searchTerms.length) return itemPotentials;
+    if (!searchQuery) return itemPotentials;
+    const q = normalize(searchQuery);
+    return itemPotentials.filter(p =>
+      normalize(p.codigo).includes(q) ||
+      normalize(p.produto).includes(q) ||
+      normalize(p.fornecedor).includes(q) ||
+      normalize(p.aplicacao).includes(q)
+    );
+  }, [itemPotentials, searchQuery]);
 
-    return itemPotentials.filter(item => {
-      const searchableText = normalizeFleetText(`${item.codigo} ${item.produto} ${item.fornecedor} ${item.aplicacao}`);
-      return searchTerms.every(term => searchableText.includes(normalizeFleetText(term)));
-    });
-  }, [itemPotentials, searchTerms]);
-
-  const displayItems = filtered;
-  const itemsConsideredCount = displayItems.length;
-  const withMatch = useMemo(() => displayItems.filter(p => p.potentialScore > 0), [displayItems]);
-  const growthItems = useMemo(
-    () => displayItems.filter(p => p.investmentScore > 0 && p.trendGrowth > 0),
-    [displayItems],
-  );
-  const immediateCount = useMemo(() => displayItems.filter(p => p.classification === 'imediato').length, [displayItems]);
-  const growthCount = useMemo(() => growthItems.length, [growthItems]);
+  // KPIs
+  const withMatch = useMemo(() => itemPotentials.filter(p => p.potentialScore > 0), [itemPotentials]);
+  const immediateCount = useMemo(() => itemPotentials.filter(p => p.classification === 'imediato').length, [itemPotentials]);
+  const investCount = useMemo(() => itemPotentials.filter(p => p.classification === 'investimento').length, [itemPotentials]);
   const totalDemand = useMemo(() => withMatch.reduce((s, p) => s + p.estimatedDemandCurrent, 0), [withMatch]);
+  const avgScore = useMemo(() => {
+    return withMatch.length > 0 ? Math.round(withMatch.reduce((s, p) => s + p.potentialScore, 0) / withMatch.length) : 0;
+  }, [withMatch]);
 
   // Top 10 chart — by demand
   const topImmediate = useMemo((): TopChartItem[] => {
@@ -301,14 +285,11 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
       }));
   }, [withMatch]);
 
-  // Top 10 investment
+  // Top 10 investment — by investment score
   const topInvestment = useMemo((): TopChartItem[] => {
-    return [...growthItems]
+    return [...itemPotentials]
       .filter(p => p.investmentScore > 0)
-      .sort((a, b) => {
-        if (b.investmentScore !== a.investmentScore) return b.investmentScore - a.investmentScore;
-        return b.trendGrowth - a.trendGrowth;
-      })
+      .sort((a, b) => b.investmentScore - a.investmentScore)
       .slice(0, 10)
       .map(p => ({
         label: p.codigo.length > 14 ? `${p.codigo.substring(0, 14)}…` : p.codigo,
@@ -316,28 +297,44 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         value: p.investmentScore,
         score: p.trendGrowth,
       }));
-  }, [growthItems]);
+  }, [itemPotentials]);
 
-  // Demand forecast by year
+  // Demand forecast by year (trend chart)
   const demandTrend = useMemo(() => {
-    if (historyYears.length < 2 || !displayItems.length) return [];
-    const matchedItems = displayItems.filter(p => p.totalFleetAllYears > 0);
-    if (!matchedItems.length) return [];
-    return historyYears.map(year => {
-      const total = matchedItems.reduce((s, p) => s + (p.yearlyFleet.get(year) || 0), 0);
-      return { ano: String(year), demanda: Math.round(total * ANNUAL_REPLACEMENT_RATE), frota: total };
+    if (availableYears.length < 2 || !withMatch.length) return [];
+    return availableYears.map(year => {
+      const yearModels = allYearRankings.filter(r => r.year === year);
+      const fleetKws = yearModels.map(r => ({
+        normalized: normalize(r.model),
+        keywords: normalize(r.model).split(' ').filter(w => w.length > 2),
+        quantity: r.quantity,
+      }));
+      let totalDemandYear = 0;
+      for (const item of items) {
+        const itemText = normalize(`${item.aplicacao} ${item.produto}`);
+        for (const fm of fleetKws) {
+          const matchCount = fm.keywords.filter(kw => itemText.includes(kw)).length;
+          const strongMatch = fm.keywords.length <= 2 ? matchCount >= 1 : matchCount >= 2;
+          if (strongMatch) totalDemandYear += fm.quantity;
+        }
+      }
+      return {
+        ano: String(year),
+        demanda: Math.round(totalDemandYear * ANNUAL_REPLACEMENT_RATE),
+        frota: totalDemandYear,
+      };
     });
-  }, [historyYears, displayItems]);
+  }, [availableYears, allYearRankings, items, withMatch]);
 
   // Classification distribution
   const classDistribution = useMemo(() => {
     const counts = {
-      imediato: displayItems.filter(p => p.classification === 'imediato').length,
-      investimento: displayItems.filter(p => p.classification === 'investimento').length,
-      nicho: displayItems.filter(p => p.classification === 'nicho').length,
-      sem_match: displayItems.filter(p => p.classification === 'sem_match').length,
+      imediato: itemPotentials.filter(p => p.classification === 'imediato').length,
+      investimento: itemPotentials.filter(p => p.classification === 'investimento').length,
+      nicho: itemPotentials.filter(p => p.classification === 'nicho').length,
+      sem_match: itemPotentials.filter(p => p.classification === 'sem_match').length,
     };
-    const total = displayItems.length;
+    const total = itemPotentials.length;
     const pct = (v: number) => total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0%';
     return [
       { name: '🔥 Venda Imediata', value: counts.imediato, fill: '#ef4444', detail: `${pct(counts.imediato)} — Alta demanda atual + tendência` },
@@ -345,29 +342,95 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
       { name: '🔹 Nicho', value: counts.nicho, fill: '#10b981', detail: `${pct(counts.nicho)} — Demanda menor` },
       { name: '⚪ Sem match', value: counts.sem_match, fill: '#94a3b8', detail: `${pct(counts.sem_match)} — Sem correspondência na frota` },
     ].filter(d => d.value > 0);
-  }, [displayItems]);
+  }, [itemPotentials]);
+
+  // Import handler
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const ownerId = await getOwnerId();
+      if (!ownerId) throw new Error('Usuário não autenticado');
+
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
+
+      if (!rows.length) { toast.error('Planilha vazia'); setImporting(false); return; }
+
+      const parsed = rows.map(r => ({
+        user_id: ownerId,
+        codigo: String(r.codigo || r.Código || r['Codigo'] || r['Código do Fabricante'] || '').trim(),
+        produto: String(r.produto || r.Produto || r.descricao || r.Descrição || '').trim(),
+        aplicacao: String(r.aplicacao || r.Aplicação || r['Aplicacao'] || '').trim() || null,
+        fornecedor: String(r.fornecedor || r.Fornecedor || r.marca || r.Marca || '').trim() || null,
+      })).filter(i => i.codigo && i.produto);
+
+      if (!parsed.length) {
+        toast.error('Nenhum item válido. Verifique colunas: codigo, produto, aplicacao, fornecedor');
+        setImporting(false);
+        return;
+      }
+
+      const batchSize = 500;
+      for (let i = 0; i < parsed.length; i += batchSize) {
+        const batch = parsed.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from('supplier_catalog_items')
+          .upsert(batch, { onConflict: 'user_id,codigo,fornecedor' });
+        if (error) throw error;
+      }
+
+      toast.success(`${parsed.length} peças do fornecedor importadas!`);
+      await reloadItems();
+    } catch (err: any) {
+      toast.error(`Erro na importação: ${err.message}`);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    const template = [
+      { codigo: 'RCDI06820', produto: 'DISCO FREIO DIANT VENTILADO', aplicacao: 'GOL G5/G6/SAVEIRO/VOYAGE', fornecedor: 'FREMAX' },
+      { codigo: 'PD/581', produto: 'PASTILHA DE FREIO DIANTEIRA', aplicacao: 'ONIX/PRISMA/COBALT/SPIN', fornecedor: 'FRAS-LE' },
+      { codigo: 'HK4577', produto: 'AMORTECEDOR DIANTEIRO', aplicacao: 'HB20 1.0/1.6', fornecedor: 'KAYABA' },
+    ];
+    exportToExcel(template, 'modelo_lista_fornecedor', 'Lista');
+    toast.success('Modelo de planilha baixado!');
+  };
 
   const handleExport = () => {
     if (!filtered.length) { toast.error('Nenhum dado para exportar'); return; }
     const data = filtered.map(p => ({
       Código: p.codigo,
       Produto: p.produto,
-      Fabricante: p.fornecedor,
+      Fornecedor: p.fornecedor,
       Aplicação: p.aplicacao,
       'Score Potencial': p.potentialScore,
       'Score Investimento': p.investmentScore,
       'Demanda Estimada': p.estimatedDemandCurrent,
       'Frota Match (Atual)': p.totalFleetCurrent,
-      'Crescimento 5 anos (%)': `${p.trendGrowth.toFixed(1)}%`,
-      'CAGR (%)': `${p.windowCagr.toFixed(1)}%`,
-      'Janela': analysisWindowLabel,
+      'Tendência (%)': `${p.trendGrowth.toFixed(1)}%`,
       Classificação: p.classification === 'imediato' ? 'Venda Imediata'
         : p.classification === 'investimento' ? 'Investimento'
         : p.classification === 'nicho' ? 'Nicho' : 'Sem Match',
       'Modelos Compatíveis': p.matchedModels.join(', '),
     }));
-    exportToExcel(data, `potencial_pecas_${selectedYear}`, 'Potencial');
+    exportToExcel(data, `potencial_fornecedor_${selectedYear}`, 'Potencial');
     toast.success('Dados exportados!');
+  };
+
+  const handleDeleteAll = async () => {
+    const ownerId = await getOwnerId();
+    if (!ownerId) return;
+    const { error } = await supabase.from('supplier_catalog_items').delete().eq('user_id', ownerId);
+    if (error) { toast.error('Erro ao excluir'); return; }
+    setItems([]);
+    toast.success('Lista de fornecedores excluída!');
   };
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -376,15 +439,22 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
     return (
       <Card className="p-8 text-center space-y-4">
         <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <h3 className="font-semibold">Potencial de Mercado — Lista de Peças</h3>
+        <h3 className="font-semibold">Potencial de Mercado — Listas de Fornecedores</h3>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          {hasOwnerContext
-            ? 'Nenhuma peça encontrada no estoque ou na lista de fornecedores. Importe seus dados para cruzar com a frota circulante e gerar demanda de compra atual e investimento a longo prazo.'
-            : 'Faça login para carregar suas peças e cruzar com a frota circulante da FENABRAVE.'}
+          Importe listas de peças dos seus fornecedores. O sistema cruzará com os dados da FENABRAVE para identificar
+          quais peças têm maior potencial de venda imediata e quais são ideais para investimento a longo prazo.
         </p>
-        <Badge variant="outline" className="mx-auto">
-          Fonte da análise: {sourceLabel}
-        </Badge>
+        <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+            {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+            {importing ? 'Importando...' : 'Importar Lista do Fornecedor'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+            <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+            Baixar Modelo
+          </Button>
+        </div>
       </Card>
     );
   }
@@ -400,28 +470,16 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="outline">Fonte da análise: {sourceLabel}</Badge>
-        <Badge variant="outline">Janela 5 anos: {analysisWindowLabel}</Badge>
-        {selectedFabricante !== '__all__' && <Badge variant="secondary">Fabricante: {selectedFabricante}</Badge>}
-        {searchTerms.length > 0 && (
-          <Badge variant="secondary" className="gap-1.5">
-            <Search className="w-3 h-3" />
-            Filtro produto: "{searchLabel}" — {filtered.length} resultados
-          </Badge>
-        )}
-      </div>
       {/* KPI Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-3 text-center">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Itens Considerados</p>
-          <p className="text-xl font-bold">{itemsConsideredCount.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] text-muted-foreground">de {activeItems.length.toLocaleString('pt-BR')} na fonte atual</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Peças Analisadas</p>
+          <p className="text-xl font-bold">{items.length.toLocaleString('pt-BR')}</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Com Potencial</p>
           <p className="text-xl font-bold text-primary">{withMatch.length.toLocaleString('pt-BR')}</p>
-          <p className="text-[10px] text-muted-foreground">{itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}% do recorte</p>
+          <p className="text-[10px] text-muted-foreground">{items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}% da lista</p>
         </Card>
         <Card className="p-3 text-center">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Demanda Total Est.</p>
@@ -439,35 +497,36 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center justify-center gap-1">
             <Clock className="w-3 h-3" /> Investimento
           </p>
-          <p className="text-xl font-bold text-blue-600">{growthCount}</p>
-          <p className="text-[10px] text-muted-foreground">peças c/ crescimento 5 anos</p>
+          <p className="text-xl font-bold text-blue-600">{investCount}</p>
+          <p className="text-[10px] text-muted-foreground">peças c/ crescimento</p>
         </Card>
       </div>
 
-      {/* Fabricante Selection */}
-      <div className="flex flex-wrap items-center gap-2">
-        {fabricantes.length > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Fabricante:</span>
-            <Select value={selectedFabricante} onValueChange={setSelectedFabricante}>
-              <SelectTrigger className="w-[220px] h-9">
-                <SelectValue placeholder="Selecionar fabricante" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todos os fabricantes ({items.length})</SelectItem>
-                {fabricantes.map(f => (
-                  <SelectItem key={f} value={f}>
-                    {f} ({items.filter(i => i.fornecedor === f).length})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+      {/* Action Bar */}
+      <div className="flex flex-wrap gap-2">
+        <input type="file" ref={fileInputRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+          {importing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+          {importing ? 'Importando...' : 'Importar Lista'}
+        </Button>
         <Button variant="outline" size="sm" onClick={handleExport} disabled={!filtered.length}>
           <Download className="w-4 h-4 mr-1.5" />
           Exportar Análise
         </Button>
+        <Button variant="outline" size="sm" onClick={handleDownloadTemplate}>
+          <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+          Baixar Modelo
+        </Button>
+        <ConfirmDeleteDialog
+          description="Tem certeza que deseja excluir TODA a lista de fornecedores? Esta ação não pode ser desfeita."
+          onConfirm={handleDeleteAll}
+          trigger={
+            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Trash2 className="w-4 h-4 mr-1.5" />
+              Excluir Toda Lista
+            </Button>
+          }
+        />
       </div>
 
       {/* Charts Row 1: Immediate Potential + Classification */}
@@ -542,7 +601,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" />
-            Top 10 — Investimento ({analysisWindowLabel})
+            Top 10 — Melhor Investimento a Longo Prazo
           </h3>
           {topInvestment.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
@@ -563,28 +622,20 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-10">Nenhuma peça com crescimento na janela {analysisWindowLabel}</p>
+            <p className="text-sm text-muted-foreground text-center py-10">Dados insuficientes para análise de tendência</p>
           )}
         </Card>
 
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-500" />
-            Previsão de Demanda — Evolução até {selectedYearNumber}
+            Previsão de Demanda — Evolução por Ano
           </h3>
           {demandTrend.length >= 2 ? (
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={demandTrend} margin={{ left: 10, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="ano"
-                  ticks={demandTrend.map(item => item.ano)}
-                  interval={0}
-                  tick={{ fontSize: 11 }}
-                  angle={demandTrend.length > 8 ? -35 : 0}
-                  textAnchor={demandTrend.length > 8 ? 'end' : 'middle'}
-                  height={demandTrend.length > 8 ? 56 : 30}
-                />
+                <XAxis dataKey="ano" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={formatCompactUnits} />
                 <Tooltip
                   formatter={(v: number, name: string) => [
@@ -609,7 +660,7 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
       <div className="relative">
         <Search className="absolute left-2 top-2.5 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por código, produto, fabricante ou aplicação..."
+          placeholder="Buscar por código, produto, fornecedor ou aplicação..."
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           className="pl-8"
@@ -621,10 +672,10 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
         <div className="p-3 border-b bg-accent/30">
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-primary" />
-            Análise de Potencial — {sourceLabel} ({selectedYearNumber})
+            Análise de Potencial — Lista de Fornecedores ({selectedYear})
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            Cruzamento: estoque + lista de fornecedores × frota FENABRAVE ({filteredRankings.length} modelos) — demanda de compra atual + investimento 5 anos
+            Cruzamento: lista de peças × frota FENABRAVE ({filteredRankings.length} modelos)
           </p>
         </div>
         <div className="overflow-auto max-h-[50vh]">
@@ -633,14 +684,15 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
               <TableRow>
                 <TableHead>Código</TableHead>
                 <TableHead>Produto</TableHead>
-                <TableHead>Fabricante</TableHead>
+                <TableHead>Fornecedor</TableHead>
                 <TableHead>Aplicação</TableHead>
                 <TableHead className="text-center">Score Potencial</TableHead>
                 <TableHead className="text-center">Score Invest.</TableHead>
                 <TableHead className="text-right">Demanda Est.</TableHead>
                 <TableHead className="text-right">Frota Match</TableHead>
-                <TableHead className="text-right">Cresc. 5 anos</TableHead>
+                <TableHead className="text-right">Tendência</TableHead>
                 <TableHead>Classificação</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -688,11 +740,23 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
                        p.classification === 'nicho' ? '🔹 Nicho' : '⚪ Sem match'}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    <ConfirmDeleteDialog
+                      description={`Excluir item ${p.codigo} da lista?`}
+                      onConfirm={async () => {
+                        const { error } = await supabase.from('supplier_catalog_items').delete().eq('id', p.id);
+                        if (error) { toast.error('Erro ao excluir'); return; }
+                        setItems(prev => prev.filter(i => i.id !== p.id));
+                        toast.success(`${p.codigo} excluído`);
+                      }}
+                      iconSize="sm"
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                     Nenhum item encontrado
                   </TableCell>
                 </TableRow>
@@ -713,10 +777,9 @@ export function MarketPotentialTab({ rankings, selectedYear, selectedType, exter
           💡 Insights Estratégicos
         </h3>
         <ul className="text-sm space-y-1.5 text-muted-foreground">
-          <li>🗓️ Janela de análise: <strong>{analysisWindowLabel}</strong> — crescimento calculado dentro deste bloco de 5 anos</li>
-          <li>📦 A fonte atual (<strong>{sourceLabel}</strong>) contém <strong>{activeItems.length}</strong> itens; no recorte exibido, <strong>{withMatch.length}</strong> ({itemsConsideredCount > 0 ? Math.round((withMatch.length / itemsConsideredCount) * 100) : 0}%) têm match com a frota circulante</li>
+          <li>📦 Sua lista contém <strong>{items.length}</strong> peças de fornecedores, <strong>{withMatch.length}</strong> ({items.length > 0 ? Math.round((withMatch.length / items.length) * 100) : 0}%) têm match com a frota circulante</li>
           <li>🔥 <strong>{immediateCount} peças</strong> classificadas como "Venda Imediata" — alta demanda atual, ideal para compra imediata</li>
-          <li>📈 <strong>{growthCount} peças</strong> com tendência positiva na janela de 5 anos — oportunidades de investimento</li>
+          <li>📈 <strong>{investCount} peças</strong> com potencial de "Investimento" — tendência de crescimento na frota, bom para investimento a longo prazo</li>
           {demandTrend.length >= 2 && (
             <li>📊 Demanda estimada: de <strong>{formatCompactUnits(demandTrend[0]?.demanda || 0)}</strong> ({demandTrend[0]?.ano}) para <strong>{formatCompactUnits(demandTrend[demandTrend.length - 1]?.demanda || 0)}</strong> ({demandTrend[demandTrend.length - 1]?.ano})</li>
           )}

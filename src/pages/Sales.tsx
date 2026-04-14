@@ -405,7 +405,7 @@ const Sales = () => {
             <Card className="p-6 glass-card border-primary/20">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                <span className="text-sm font-bold flex-1">Inteligência Automotiva</span>
+                <span className="text-sm font-bold flex-1">Ranking Frota / Emplacamentos</span>
               </div>
               <div className="space-y-2 mb-4">
                 {[

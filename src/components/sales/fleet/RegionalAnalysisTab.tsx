@@ -22,10 +22,6 @@ interface RegionalData {
 
 interface RegionalAnalysisTabProps {
   readOnly?: boolean;
-  selectedYear?: string;
-  selectedType?: string;
-  onSelectedYearChange?: (value: string) => void;
-  onSelectedTypeChange?: (value: string) => void;
 }
 
 const REGIONS = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
@@ -45,119 +41,80 @@ const REGION_COLORS: Record<string, string> = {
   'Sul': '#ef4444',
 };
 
-export function RegionalAnalysisTab({
-  readOnly = false,
-  selectedYear: externalSelectedYear,
-  selectedType: externalSelectedType,
-  onSelectedYearChange,
-  onSelectedTypeChange,
-}: RegionalAnalysisTabProps) {
+// FENABRAVE 2016 seed data
+const FENABRAVE_2016_SEED: Record<string, Record<string, number[]>> = {
+  automovel: {
+    'Norte':        [4.56, 4.79, 4.42, 4.46, 4.14, 4.26, 4.10, 3.97, 3.50, 3.44, 3.60, 4.16],
+    'Nordeste':     [17.36, 15.72, 14.88, 16.74, 15.35, 14.85, 14.74, 14.91, 14.33, 13.99, 13.83, 15.98],
+    'Centro-Oeste': [10.10, 10.22, 9.26, 8.88, 8.70, 8.35, 8.59, 8.74, 8.40, 8.55, 8.01, 8.66],
+    'Sudeste':      [49.04, 51.76, 52.11, 52.65, 53.92, 54.17, 54.53, 54.94, 56.10, 56.71, 57.59, 52.40],
+    'Sul':          [18.94, 17.52, 19.34, 17.28, 17.89, 18.36, 18.04, 17.43, 17.66, 17.32, 16.97, 18.79],
+  },
+  comercial_leve: {
+    'Norte':        [7.53, 8.43, 7.97, 7.32, 7.85, 7.79, 7.59, 7.34, 8.05, 7.79, 8.17, 8.37],
+    'Nordeste':     [20.34, 17.97, 16.60, 16.88, 16.17, 16.06, 15.27, 17.36, 15.77, 15.91, 15.60, 17.32],
+    'Centro-Oeste': [12.00, 12.34, 13.46, 12.78, 12.52, 12.22, 11.08, 13.52, 12.28, 11.05, 11.53, 12.64],
+    'Sudeste':      [39.42, 41.05, 41.47, 40.42, 42.53, 43.35, 43.99, 41.72, 43.15, 44.74, 45.08, 40.43],
+    'Sul':          [20.90, 20.21, 20.50, 22.60, 20.92, 20.58, 20.07, 19.56, 20.76, 20.50, 19.62, 21.23],
+  },
+  automovel_comercial_leve: {
+    'Norte':        [4.93, 5.28, 4.94, 4.92, 4.71, 4.81, 4.66, 4.60, 4.21, 4.07, 4.26, 4.78],
+    'Nordeste':     [17.71, 16.02, 15.14, 16.76, 15.47, 15.05, 14.83, 15.31, 14.35, 14.27, 14.09, 16.18],
+    'Centro-Oeste': [10.31, 10.51, 9.88, 9.51, 9.28, 8.98, 9.12, 9.52, 9.00, 8.91, 8.51, 9.24],
+    'Sudeste':      [47.85, 50.30, 50.54, 50.67, 52.18, 52.43, 52.83, 52.77, 54.10, 54.97, 55.80, 50.66],
+    'Sul':          [19.19, 17.89, 19.51, 18.14, 18.35, 18.71, 18.37, 17.79, 18.14, 17.78, 17.35, 19.15],
+  },
+};
+
+export function RegionalAnalysisTab({ readOnly = false }: RegionalAnalysisTabProps) {
   const [data, setData] = useState<RegionalData[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [years, setYears] = useState<number[]>([]);
-  const [localSelectedYear, setLocalSelectedYear] = useState<string>('');
-  const [localSelectedType, setLocalSelectedType] = useState<string>('automovel');
+  const [selectedYear, setSelectedYear] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('automovel');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const activeSelectedYear = externalSelectedYear ?? localSelectedYear;
-  const activeSelectedType = externalSelectedType ?? localSelectedType;
-  const isUsingSharedFilters = externalSelectedYear !== undefined || externalSelectedType !== undefined;
-
-  const handleYearChange = useCallback((value: string) => {
-    if (onSelectedYearChange) {
-      onSelectedYearChange(value);
-      return;
-    }
-
-    setLocalSelectedYear(value);
-  }, [onSelectedYearChange]);
-
-  const handleTypeChange = useCallback((value: string) => {
-    if (onSelectedTypeChange) {
-      onSelectedTypeChange(value);
-      return;
-    }
-
-    setLocalSelectedType(value);
-  }, [onSelectedTypeChange]);
-
-  const fetchData = useCallback(async (preferredYear?: number) => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-
-    // Paginate to fetch ALL records (Supabase default limit = 1000)
-    const PAGE_SIZE = 1000;
-    let allRows: RegionalData[] = [];
-    let page = 0;
-    let hasMore = true;
-
-    while (hasMore) {
-      const from = page * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const { data: rows, error } = await supabase
-        .from('fleet_regional_data')
-        .select('*')
-        .order('year', { ascending: false })
-        .order('month', { ascending: true })
-        .order('region', { ascending: true })
-        .range(from, to);
-
-      if (error) {
-        toast.error('Erro ao carregar dados regionais');
-        setLoading(false);
-        return;
-      }
-
-      if (!rows || rows.length === 0) {
-        hasMore = false;
-      } else {
-        allRows = allRows.concat(rows as RegionalData[]);
-        if (rows.length < PAGE_SIZE) hasMore = false;
-        else page++;
-      }
-    }
-
-    const uniqueYears = [...new Set(allRows.map(r => r.year))].sort((a, b) => b - a);
-
-    setData(allRows);
+    const { data: rows, error } = await supabase
+      .from('fleet_regional_data')
+      .select('*')
+      .order('year', { ascending: false })
+      .order('month', { ascending: true })
+      .order('region', { ascending: true });
+    if (error) { toast.error('Erro ao carregar dados regionais'); setLoading(false); return; }
+    const items = (rows || []) as RegionalData[];
+    setData(items);
+    const uniqueYears = [...new Set(items.map(r => r.year))].sort((a, b) => b - a);
     setYears(uniqueYears);
-    setLocalSelectedYear(prev => {
-      if (preferredYear && uniqueYears.includes(preferredYear)) return String(preferredYear);
-      if (prev && uniqueYears.includes(Number(prev))) return prev;
-      return uniqueYears.length > 0 ? String(uniqueYears[0]) : '';
-    });
+    if (!selectedYear && uniqueYears.length > 0) setSelectedYear(String(uniqueYears[0]));
     setLoading(false);
-  }, []);
+  }, [selectedYear]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, []);
 
-  // Filter data by year and type — pure DB, no seed fallback
   const filteredData = useMemo(() => {
     let filtered = data;
-    if (activeSelectedYear) filtered = filtered.filter(r => r.year === Number(activeSelectedYear));
-    if (activeSelectedType) filtered = filtered.filter(r => r.vehicle_type === activeSelectedType);
+    if (selectedYear) filtered = filtered.filter(r => r.year === Number(selectedYear));
+    if (selectedType) filtered = filtered.filter(r => r.vehicle_type === selectedType);
     return filtered;
-  }, [data, activeSelectedYear, activeSelectedType]);
+  }, [data, selectedYear, selectedType]);
 
-  // Monthly stacked chart data — use quantities when available for visual differentiation
+  // Monthly stacked chart data (like FENABRAVE)
   const monthlyChartData = useMemo(() => {
     const hasMonthly = filteredData.some(r => r.month !== null);
     if (!hasMonthly) return [];
-    const hasQuantities = filteredData.some(r => r.month !== null && r.quantity > 0);
     return MONTHS.map((label, idx) => {
       const monthNum = idx + 1;
       const monthRows = filteredData.filter(r => r.month === monthNum);
       const row: Record<string, any> = { month: label };
       REGIONS.forEach(region => {
         const match = monthRows.find(r => r.region === region);
-        row[region] = match ? (hasQuantities ? match.quantity : match.percentage) : 0;
+        row[region] = match ? match.percentage : 0;
       });
       return row;
     }).filter(r => REGIONS.some(reg => r[reg] > 0));
-  }, [filteredData]);
-
-  const monthlyChartUsesQuantity = useMemo(() => {
-    return filteredData.some(r => r.month !== null && r.quantity > 0);
   }, [filteredData]);
 
   // Annual summary (aggregate)
@@ -182,43 +139,24 @@ export function RegionalAnalysisTab({
 
   const totalQuantity = useMemo(() => regionSummary.reduce((s, r) => s + r.quantity, 0), [regionSummary]);
 
-  // Multi-year evolution chart — use quantities when available for visual differentiation
+  // Multi-year comparison
   const multiYearData = useMemo(() => {
-    if (!activeSelectedType) return [];
-
-    const selectedYearNumber = Number(activeSelectedYear);
-    const typeData = data.filter(r => {
-      if (r.vehicle_type !== activeSelectedType) return false;
-      if (!selectedYearNumber) return true;
-      return r.year <= selectedYearNumber;
-    });
-    const allYears = [...new Set(typeData.map(r => r.year))].sort((a, b) => a - b);
-    const hasQty = typeData.some(r => r.quantity > 0);
-
+    if (!selectedType) return [];
+    const typeData = data.filter(r => r.vehicle_type === selectedType);
+    const allYears = [...new Set(typeData.map(r => r.year))].sort();
     return allYears.map(year => {
       const yearData = typeData.filter(r => r.year === year);
       const row: Record<string, any> = { year };
       REGIONS.forEach(region => {
         const regionRows = yearData.filter(r => r.region === region);
         if (regionRows.length > 0) {
-          if (hasQty) {
-            row[region] = regionRows.reduce((s, r) => s + r.quantity, 0);
-          } else {
-            const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
-            row[region] = Number(avg.toFixed(2));
-          }
-        } else {
-          row[region] = 0;
+          const avg = regionRows.reduce((s, r) => s + r.percentage, 0) / regionRows.length;
+          row[region] = Number(avg.toFixed(2));
         }
       });
       return row;
     });
-  }, [data, activeSelectedType, activeSelectedYear]);
-
-  const evolutionUsesQuantity = useMemo(() => {
-    if (!activeSelectedType) return false;
-    return data.some(r => r.vehicle_type === activeSelectedType && r.quantity > 0);
-  }, [data, activeSelectedType]);
+  }, [data, selectedType]);
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -252,7 +190,9 @@ export function RegionalAnalysisTab({
         if (!REGIONS.some(r => r.toLowerCase() === region.toLowerCase())) continue;
         const matchedRegion = REGIONS.find(r => r.toLowerCase() === region.toLowerCase()) || region;
 
+        // Check if we have monthly data (13+ columns: region + 12 months)
         if (parts.length >= 13) {
+          // Monthly percentages: region;jan;fev;mar;abr;mai;jun;jul;ago;set;out;nov;dez
           for (let m = 0; m < 12; m++) {
             const pct = parseFloat(parts[m + 1]?.replace(',', '.') || '0');
             if (pct > 0) {
@@ -260,6 +200,7 @@ export function RegionalAnalysisTab({
             }
           }
         } else {
+          // Annual: region;quantidade;percentual
           const qty = parseInt(parts[1]?.replace(/\./g, '').replace(/,/g, '') || '0');
           const pct = parseFloat(parts[2]?.replace(',', '.') || '0');
           rows.push({ year, month: null, region: matchedRegion, vehicle_type: vehicleType, quantity: qty, percentage: pct });
@@ -270,11 +211,8 @@ export function RegionalAnalysisTab({
 
       const { error } = await supabase.from('fleet_regional_data').insert(rows);
       if (error) throw error;
-      setLocalSelectedType(vehicleType);
       toast.success(`${rows.length} registros importados para ${year} (${VEHICLE_TYPES.find(v => v.value === vehicleType)?.label})`);
-      await fetchData(year);
-      onSelectedTypeChange?.(vehicleType);
-      onSelectedYearChange?.(String(year));
+      fetchData();
     } catch (err: any) {
       toast.error('Erro: ' + err.message);
     }
@@ -286,18 +224,48 @@ export function RegionalAnalysisTab({
     if (!confirm(`Excluir todos os dados regionais de ${year}?`)) return;
     await supabase.from('fleet_regional_data').delete().eq('year', year);
     toast.success(`Dados regionais de ${year} excluídos`);
-    await fetchData();
+    fetchData();
+  };
+
+  const handleSeedFenabrave2016 = async () => {
+    if (!confirm('Carregar dados FENABRAVE 2016 (Automóveis, Comerciais Leves e Combinados)?')) return;
+    setImporting(true);
+    try {
+      await supabase.from('fleet_regional_data').delete().eq('year', 2016);
+      const rows: { year: number; month: number; region: string; vehicle_type: string; quantity: number; percentage: number }[] = [];
+      for (const [vtype, regions] of Object.entries(FENABRAVE_2016_SEED)) {
+        for (const [region, months] of Object.entries(regions)) {
+          months.forEach((pct, idx) => {
+            rows.push({ year: 2016, month: idx + 1, region, vehicle_type: vtype, quantity: 0, percentage: pct });
+          });
+        }
+      }
+      const { error } = await supabase.from('fleet_regional_data').insert(rows);
+      if (error) throw error;
+      toast.success(`${rows.length} registros FENABRAVE 2016 carregados!`);
+      fetchData();
+    } catch (err: any) {
+      toast.error('Erro: ' + err.message);
+    }
+    setImporting(false);
   };
 
   const handleDownloadTemplate = () => {
     const bom = '\uFEFF';
     const csv = bom +
+      '# MODELO 1 - Dados MENSAIS por região (percentual por mês)\n' +
+      '# Use este formato para dados como o relatório FENABRAVE\n' +
       'regiao;Jan;Fev;Mar;Abr;Mai;Jun;Jul;Ago;Set;Out;Nov;Dez\n' +
       'Norte;4.56;4.79;4.42;4.46;4.14;4.26;4.10;3.97;3.50;3.44;3.60;4.16\n' +
       'Nordeste;17.36;15.72;14.88;16.74;15.15;14.85;14.85;14.91;14.33;13.99;13.83;15.08\n' +
       'Centro-Oeste;9.14;10.22;9.26;8.88;8.70;8.35;8.59;8.74;8.40;8.55;8.01;8.66\n' +
       'Sudeste;49.04;51.76;52.11;52.65;53.92;54.17;54.33;54.94;56.10;56.71;57.59;52.40\n' +
-      'Sul;18.94;17.52;19.34;17.28;17.89;18.36;18.04;17.43;17.66;17.32;16.97;18.79\n';
+      'Sul;18.94;17.52;19.34;17.28;17.89;18.36;18.04;17.43;17.66;17.32;16.97;18.79\n' +
+      '\n' +
+      '# MODELO 2 - Dados ANUAIS por região (quantidade e percentual)\n' +
+      '# regiao;quantidade;percentual\n' +
+      '# Norte;50000;5.2\n' +
+      '# Nordeste;150000;15.8\n';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -318,7 +286,7 @@ export function RegionalAnalysisTab({
       'Quantidade': r.quantity,
       'Participação (%)': r.percentage,
     }));
-    exportToExcel(rows, `regional_${activeSelectedType}_${activeSelectedYear || 'todos'}`, 'Regional');
+    exportToExcel(rows, `regional_${selectedType}_${selectedYear || 'todos'}`, 'Regional');
     toast.success('Excel exportado!');
   };
 
@@ -354,11 +322,14 @@ export function RegionalAnalysisTab({
                   <Button size="sm" variant="outline" onClick={handleExportExcel}>
                     <Download className="w-4 h-4 mr-1" /> Exportar Excel
                   </Button>
-                  {activeSelectedYear && (
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(activeSelectedYear))}>
-                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {activeSelectedYear}
+                  {selectedYear && (
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteYear(Number(selectedYear))}>
+                      <Trash2 className="w-4 h-4 mr-1" /> Excluir {selectedYear}
                     </Button>
                   )}
+                  <Button size="sm" variant="secondary" onClick={handleSeedFenabrave2016} disabled={importing}>
+                    📊 Carregar FENABRAVE 2016
+                  </Button>
                 </div>
               </div>
             </CollapsibleContent>
@@ -366,24 +337,23 @@ export function RegionalAnalysisTab({
         </Card>
       )}
 
-      {!isUsingSharedFilters && (
-        <div className="flex flex-wrap gap-2">
-          <Select value={activeSelectedYear} onValueChange={handleYearChange}>
-            <SelectTrigger className="w-28"><SelectValue placeholder="Ano" /></SelectTrigger>
-            <SelectContent>
-              {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={activeSelectedType} onValueChange={handleTypeChange}>
-            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {VEHICLE_TYPES.map(t => (
-                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2">
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="w-28"><SelectValue placeholder="Ano" /></SelectTrigger>
+          <SelectContent>
+            {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {VEHICLE_TYPES.map(t => (
+              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {regionSummary.length === 0 ? (
         <Card className="p-8 text-center">
@@ -407,26 +377,26 @@ export function RegionalAnalysisTab({
             ))}
           </div>
 
-          {/* Monthly stacked bar chart */}
+          {/* Monthly stacked bar chart (FENABRAVE style) */}
           {monthlyChartData.length > 0 && (
             <Card className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary" />
-                {monthlyChartUsesQuantity
-                  ? `Emplacamentos Mensais por Região — ${activeSelectedYear}`
-                  : `Participação Mensal por Região — ${activeSelectedYear}`}
+                Emplacamentos por Região — {VEHICLE_TYPES.find(v => v.value === selectedType)?.label} ({selectedYear})
               </h3>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={monthlyChartData}>
+                <BarChart data={monthlyChartData} stackOffset="expand" barCategoryGap="8%">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis
-                    tickFormatter={v => monthlyChartUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`}
-                    tick={{ fontSize: 11 }}
-                    {...(!monthlyChartUsesQuantity ? { domain: [0, 100] } : {})}
+                  <YAxis tickFormatter={v => `${(v * 100).toFixed(0)}%`} domain={[0, 1]} />
+                  <Tooltip
+                    formatter={(value: number, name: string) => {
+                      const pct = typeof value === 'number' ? value : 0;
+                      return [`${(pct * 100).toFixed(2)}%`, name];
+                    }}
+                    labelFormatter={(label) => `Mês: ${label}`}
                   />
-                  <Tooltip formatter={(v: number) => monthlyChartUsesQuantity ? v.toLocaleString('pt-BR') : `${v.toFixed(2)}%`} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Legend />
                   {REGIONS.map(region => (
                     <Bar key={region} dataKey={region} stackId="a" fill={REGION_COLORS[region]} />
                   ))}
@@ -435,66 +405,83 @@ export function RegionalAnalysisTab({
             </Card>
           )}
 
-          {/* Region summary table */}
-          <Card className="p-0 overflow-hidden">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold text-sm">Resumo Regional — {activeSelectedYear}</h3>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Região</TableHead>
-                  <TableHead className="text-right">Participação Média (%)</TableHead>
-                  {totalQuantity > 0 && <TableHead className="text-right">Quantidade</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {regionSummary.map(r => (
-                  <TableRow key={r.region}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: REGION_COLORS[r.region] }} />
-                        <span className="font-medium">{r.region}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">{r.avgPercentage.toFixed(2)}%</TableCell>
-                    {totalQuantity > 0 && (
-                      <TableCell className="text-right font-mono">{r.quantity.toLocaleString('pt-BR')}</TableCell>
-                    )}
+          {/* Monthly data table */}
+          {monthlyChartData.length > 0 && (
+            <Card className="p-4 overflow-x-auto">
+              <h3 className="font-semibold mb-3">📊 Participação Mensal (%) — {selectedYear}</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Região</TableHead>
+                    {MONTHS.map(m => <TableHead key={m} className="text-center text-xs px-1">{m}</TableHead>)}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+                </TableHeader>
+                <TableBody>
+                  {REGIONS.map(region => {
+                    const regionRows = filteredData.filter(r => r.region === region && r.month !== null);
+                    if (regionRows.length === 0) return null;
+                    return (
+                      <TableRow key={region}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: REGION_COLORS[region] }} />
+                            <span className="font-medium text-sm">{region}</span>
+                          </div>
+                        </TableCell>
+                        {MONTHS.map((_, idx) => {
+                          const row = regionRows.find(r => r.month === idx + 1);
+                          return (
+                            <TableCell key={idx} className="text-center text-xs font-mono px-1">
+                              {row ? row.percentage.toFixed(2) : '-'}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
 
-          {/* Multi-year evolution */}
+          {/* Multi-year comparison */}
           {multiYearData.length > 1 && (
             <Card className="p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                Evolução Regional por Ano até {activeSelectedYear} ({VEHICLE_TYPES.find(v => v.value === activeSelectedType)?.label})
-              </h3>
+              <h3 className="font-semibold mb-3">📈 Evolução Regional por Ano — {VEHICLE_TYPES.find(v => v.value === selectedType)?.label}</h3>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={multiYearData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="year"
-                    interval={0}
-                    tick={{ fontSize: 11 }}
-                    angle={multiYearData.length > 10 ? -35 : 0}
-                    textAnchor={multiYearData.length > 10 ? 'end' : 'middle'}
-                    height={multiYearData.length > 10 ? 50 : 30}
-                  />
-                  <YAxis tickFormatter={v => evolutionUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => evolutionUsesQuantity ? v.toLocaleString('pt-BR') : `${v}%`} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <XAxis dataKey="year" />
+                  <YAxis tickFormatter={v => `${v}%`} />
+                  <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+                  <Legend />
                   {REGIONS.map(region => (
-                    <Bar key={region} dataKey={region} stackId="a" fill={REGION_COLORS[region]} />
+                    <Bar key={region} dataKey={region} fill={REGION_COLORS[region]} stackId="a" />
                   ))}
                 </BarChart>
               </ResponsiveContainer>
             </Card>
           )}
+
+          {/* Insights */}
+          <Card className="p-4 bg-primary/5 border-primary/20">
+            <h3 className="font-semibold mb-2">💡 Insights Regionais</h3>
+            <ul className="text-sm space-y-1 text-muted-foreground">
+              {(() => {
+                const sorted = [...regionSummary].sort((a, b) => b.avgPercentage - a.avgPercentage);
+                const top = sorted[0];
+                const bottom = sorted[sorted.length - 1];
+                return (
+                  <>
+                    <li>🏆 <strong>{top.region}</strong> lidera com média de {top.avgPercentage.toFixed(1)}% de participação</li>
+                    <li>📉 <strong>{bottom.region}</strong> tem menor participação — oportunidade de expansão</li>
+                    <li>🎯 Concentre estoque nos modelos mais emplacados na região <strong>{top.region}</strong></li>
+                    <li>🚀 Explore parcerias na região <strong>{bottom.region}</strong> para diversificar vendas</li>
+                  </>
+                );
+              })()}
+            </ul>
+          </Card>
         </div>
       )}
     </div>

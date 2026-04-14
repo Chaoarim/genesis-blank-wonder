@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
   BarChart3, PlusCircle, ShoppingBag, Package, AlertTriangle, History,
-
-  Users, BookUser, Percent, FileSpreadsheet, PackagePlus, Tag,
+  Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock, Wallet, PackageCheck, Car, Radio
+  Clock, Wallet, PackageCheck, Car
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel,
@@ -26,9 +25,7 @@ interface TabDef {
 const MENU_ITEMS: TabDef[] = [
   // 🔍 Consulta
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
-  { value: 'fleet-rankings', icon: Car, label: 'Inteligência Automotiva', group: 'Consulta' },
-  { value: 'mercadolivre', icon: ShoppingBag, label: 'Mercado Livre', group: 'Consulta' },
-  { value: 'radar-ml', icon: Radio, label: 'Radar de Mercado ML', group: 'Consulta' },
+  { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
