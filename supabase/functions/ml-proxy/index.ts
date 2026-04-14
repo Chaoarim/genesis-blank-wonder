@@ -2,80 +2,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-const ML_API_BASE = "https://api.mercadolibre.com";
 
 function respond(status: number, body: unknown) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-interface ProxyRequest {
-  action: "search" | "item" | "seller" | "trends";
-  query?: string;
-  offset?: number;
-  limit?: number;
-  state?: string;
-  item_id?: string;
-  item_ids?: string[];
-  seller_id?: string | number;
-}
-
-// Fetch seller details from ML public API
-async function fetchSellerDetails(sellerIds: number[]): Promise<Map<number, any>> {
-  const details = new Map<number, any>();
-  if (sellerIds.length === 0) return details;
-
-  const uniqueIds = [...new Set(sellerIds)].slice(0, 10);
-  const fetches = uniqueIds.map(async (id) => {
-    try {
-      const resp = await fetch(`${ML_API_BASE}/users/${id}`);
-      if (resp.ok) {
-        const data = await resp.json();
-        details.set(id, data);
-      } else {
-        console.log(`[ml-proxy] Seller ${id} fetch failed: ${resp.status}`);
-      }
-    } catch (e) {
-      console.error(`[ml-proxy] Seller fetch error for ${id}:`, e);
-    }
-  });
-  await Promise.all(fetches);
-  return details;
-}
-
-// Enrich ML search results with seller reputation data
-async function enrichWithSellerData(results: any[]): Promise<any[]> {
-  const sellerIds: number[] = results
-    .map((r) => r.seller?.id)
-    .filter((id) => id && typeof id === "number");
-
-  if (sellerIds.length === 0) return results;
-
-  const sellerDetails = await fetchSellerDetails(sellerIds);
-  console.log(`[ml-proxy] Enriched ${sellerDetails.size} sellers`);
-
-  return results.map((result) => {
-    const sellerId = result.seller?.id;
-    const sellerData = sellerId ? sellerDetails.get(sellerId) : null;
-
-    if (!sellerData) return result;
-
-    return {
-      ...result,
-      seller: {
-        ...result.seller,
-        nickname: sellerData.nickname || result.seller?.nickname || "N/A",
-        reputation: sellerData.seller_reputation?.level_id || "",
-        completed_transactions: sellerData.seller_reputation?.transactions?.completed || 0,
-      },
-    };
   });
 }
 
@@ -85,156 +19,195 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return respond(401, { error: "Unauthorized" });
+    const apiKey = Deno.env.get("SERPAPI_KEY");
+    if (!apiKey) {
+      console.error("[ml-proxy] SERPAPI_KEY not configured");
+      return respond(500, { error: "SERPAPI_KEY not configured" });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const body = await req.json();
+    const { action } = body;
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return respond(401, { error: "Unauthorized" });
-    }
+    // ── ACTION: search (Google Shopping via SerpAPI) ──
+    if (action === "shopping_search") {
+      const { termo, estado } = body;
+      if (!termo) return respond(400, { error: "termo is required" });
 
-    const params: ProxyRequest = await req.json();
+      const query = estado && estado !== "BRASIL"
+        ? `${termo} mercadolivre ${estado}`
+        : `${termo} mercadolivre`;
 
-    switch (params.action) {
-      case "search": {
-        const query = params.query || "";
-        const offset = params.offset || 0;
-        const limit = params.limit || 50;
+      const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(query)}&gl=br&hl=pt-BR&google_domain=google.com.br&num=40&api_key=${apiKey}`;
+      
+      console.log("[ml-proxy] SerpAPI Shopping request:", url.replace(apiKey, "***"));
 
-        // Use ML public search API directly (no auth needed)
-        const searchParams = new URLSearchParams({
-          q: query,
-          sort: "sold_quantity_desc",
-          limit: String(limit),
-          offset: String(offset),
-        });
+      const response = await fetch(url);
+      const data = await response.json();
 
-        const searchUrl = `${ML_API_BASE}/sites/MLB/search?${searchParams}`;
-        console.log(`[ml-proxy] ML search: ${searchUrl}`);
+      if (data.error) {
+        console.error("[ml-proxy] SerpAPI error:", data.error);
+        return respond(200, { results: [], metrics: {}, serpapi_error: data.error });
+      }
 
-        let resp = await fetch(searchUrl);
-        let data: any;
+      console.log("[ml-proxy] SerpAPI raw shopping_results count:", data.shopping_results?.length ?? 0);
 
-        if (!resp.ok) {
-          // Fallback without sort parameter
-          console.log(`[ml-proxy] Sort failed (${resp.status}), retrying without sort`);
-          const fallbackParams = new URLSearchParams({
-            q: query,
-            limit: String(limit),
-            offset: String(offset),
-          });
-          resp = await fetch(`${ML_API_BASE}/sites/MLB/search?${fallbackParams}`);
-        }
-
-        if (!resp.ok) {
-          const errText = await resp.text();
-          console.error(`[ml-proxy] ML search failed: ${resp.status} - ${errText.slice(0, 300)}`);
-          return respond(200, { ok: false, error: `ML API error ${resp.status}` });
-        }
-
-        data = await resp.json();
-        console.log(`[ml-proxy] ML search returned ${data.results?.length ?? 0} results, total: ${data.paging?.total}`);
-
-        // Map results to expected format
-        const results = (data.results || []).map((item: any) => ({
-          id: item.id || "",
+      const results = (data.shopping_results || [])
+        .map((item: any, i: number) => ({
+          position: i + 1,
           title: item.title || "",
-          price: item.price || 0,
-          sold_quantity: item.sold_quantity ?? 0,
-          available_quantity: item.available_quantity ?? 0,
+          price: item.extracted_price || 0,
+          original_price: item.extracted_original_price || null,
           thumbnail: item.thumbnail || "",
-          permalink: item.permalink || "",
-          condition: item.condition || "new",
-          seller: {
-            id: item.seller?.id || 0,
-            nickname: item.seller?.nickname || "N/A",
-            reputation: "",
-            completed_transactions: 0,
-          },
-          address: {
-            state_id: item.seller_address?.state?.id || item.address?.state_id || "",
-            state_name: item.seller_address?.state?.name || item.address?.state_name || "",
-            city_name: item.seller_address?.city?.name || item.address?.city_name || "",
-          },
-          shipping: {
-            free_shipping: item.shipping?.free_shipping ?? false,
-            tags: item.shipping?.tags || [],
-          },
-          installments: item.installments || null,
-          attributes: item.attributes || [],
+          link: item.link || "",
+          source: item.source || "Vendedor",
+          rating: item.rating || null,
+          reviews: item.reviews || 0,
+          delivery: item.delivery || "",
+          free_shipping: (item.delivery || "").toLowerCase().includes("grátis") ||
+                         (item.delivery || "").toLowerCase().includes("frete grátis") ||
+                         (item.tag || "").toLowerCase().includes("frete grátis"),
+          badge: item.badge || null,
+          extensions: item.extensions || [],
         }));
 
-        // Log sample for debug
-        if (results.length > 0) {
-          const s = results[0];
-          console.log(`[ml-proxy] Sample: id=${s.id}, sold=${s.sold_quantity}, seller=${s.seller.nickname}, price=${s.price}`);
-        }
+      const prices = results.map((r: any) => r.price).filter((p: number) => p > 0);
+      const bestRated = [...results].sort((a: any, b: any) => (b.reviews || 0) - (a.reviews || 0));
 
-        // Enrich with seller reputation
-        try {
-          const enriched = await enrichWithSellerData(results);
-          return respond(200, {
-            ok: true,
-            data: {
-              results: enriched,
-              paging: data.paging || { total: results.length, offset, limit },
-            },
-          });
-        } catch (e) {
-          console.error("[ml-proxy] Seller enrichment failed:", e);
-          return respond(200, {
-            ok: true,
-            data: {
-              results,
-              paging: data.paging || { total: results.length, offset, limit },
-            },
-          });
-        }
-      }
+      const metrics = {
+        total: results.length,
+        min_price: prices.length ? Math.min(...prices) : 0,
+        max_price: prices.length ? Math.max(...prices) : 0,
+        avg_price: prices.length ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : 0,
+        best_rated_seller: bestRated[0]?.source || "",
+        best_rated_reviews: bestRated[0]?.reviews || 0,
+        free_shipping_count: results.filter((r: any) => r.free_shipping).length,
+      };
 
-      case "item": {
-        if (params.item_ids?.length) {
-          const url = `${ML_API_BASE}/items?ids=${params.item_ids.join(",")}`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-          return respond(200, { ok: resp.ok, data });
-        }
-        if (!params.item_id) return respond(400, { ok: false, error: "item_id obrigatório" });
-        const url = `${ML_API_BASE}/items/${params.item_id}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        return respond(200, { ok: resp.ok, data });
-      }
-
-      case "seller": {
-        if (!params.seller_id) return respond(400, { ok: false, error: "seller_id obrigatório" });
-        const url = `${ML_API_BASE}/users/${params.seller_id}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        return respond(200, { ok: resp.ok, data });
-      }
-
-      case "trends": {
-        const url = `${ML_API_BASE}/trends/MLB`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        return respond(200, { ok: resp.ok, data });
-      }
-
-      default:
-        return respond(400, { ok: false, error: "Ação inválida" });
+      console.log("[ml-proxy] Returning", results.length, "results, metrics:", JSON.stringify(metrics));
+      return respond(200, { results, metrics });
     }
+
+    // ── ACTION: trends (Google Trends via SerpAPI) ──
+    if (action === "trends") {
+      const { termo } = body;
+      if (!termo) return respond(400, { error: "termo is required" });
+
+      const url = `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(termo)}&geo=BR&date=today+1-m&api_key=${apiKey}`;
+      console.log("[ml-proxy] SerpAPI Trends request");
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.error) {
+        console.error("[ml-proxy] SerpAPI trends error:", data.error);
+        return respond(200, { trend: null, error: data.error });
+      }
+
+      const timelineData = data.interest_over_time?.timeline_data || [];
+      const values = timelineData.map((d: any) => d.values?.[0]?.extracted_value ?? 0);
+      
+      let trend = "ESTÁVEL";
+      if (values.length >= 2) {
+        const recent = values.slice(-7).reduce((a: number, b: number) => a + b, 0) / Math.min(values.length, 7);
+        const older = values.slice(0, 7).reduce((a: number, b: number) => a + b, 0) / Math.min(values.length, 7);
+        const variation = older > 0 ? ((recent - older) / older) * 100 : 0;
+        if (variation > 15) trend = "ALTA";
+        else if (variation < -15) trend = "BAIXA";
+      }
+
+      return respond(200, {
+        trend,
+        values,
+        timeline: timelineData.map((d: any) => ({
+          date: d.date,
+          value: d.values?.[0]?.extracted_value ?? 0,
+        })),
+      });
+    }
+
+    // ── ACTION: regional (multiple regional searches) ──
+    if (action === "regional") {
+      const { termo } = body;
+      if (!termo) return respond(400, { error: "termo is required" });
+
+      const regions = [
+        { name: "Sudeste", city: "São Paulo" },
+        { name: "Sul", city: "Curitiba" },
+        { name: "Nordeste", city: "Salvador" },
+        { name: "Centro-Oeste", city: "Goiânia" },
+        { name: "Norte", city: "Manaus" },
+      ];
+
+      const regionalResults = await Promise.all(
+        regions.map(async (region) => {
+          try {
+            const query = `${termo} mercadolivre ${region.city}`;
+            const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(query)}&gl=br&hl=pt-BR&google_domain=google.com.br&num=10&api_key=${apiKey}`;
+            const resp = await fetch(url);
+            const data = await resp.json();
+            const items = data.shopping_results || [];
+            const prices = items.map((i: any) => i.extracted_price || 0).filter((p: number) => p > 0);
+            const hasFreeShipping = items.some((i: any) =>
+              (i.delivery || "").toLowerCase().includes("grátis")
+            );
+
+            return {
+              region: region.name,
+              city: region.city,
+              offers: items.length,
+              min_price: prices.length ? Math.min(...prices) : 0,
+              free_shipping: hasFreeShipping,
+              status: items.length >= 5 ? "bem_abastecido" : items.length >= 2 ? "limitado" : "escasso",
+            };
+          } catch (e) {
+            console.error(`[ml-proxy] Regional error for ${region.name}:`, e);
+            return {
+              region: region.name,
+              city: region.city,
+              offers: 0,
+              min_price: 0,
+              free_shipping: false,
+              status: "escasso",
+            };
+          }
+        })
+      );
+
+      return respond(200, { regions: regionalResults });
+    }
+
+    // ── ACTION: related (related products) ──
+    if (action === "related") {
+      const { termo } = body;
+      if (!termo) return respond(400, { error: "termo is required" });
+
+      const query = `peças relacionadas ${termo} automotivo`;
+      const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(query)}&gl=br&hl=pt-BR&google_domain=google.com.br&num=8&api_key=${apiKey}`;
+
+      const resp = await fetch(url);
+      const data = await resp.json();
+
+      const related = (data.shopping_results || []).slice(0, 6).map((item: any) => ({
+        title: item.title || "",
+        price: item.extracted_price || 0,
+        thumbnail: item.thumbnail || "",
+        link: item.link || "",
+        source: item.source || "",
+      }));
+
+      return respond(200, { related });
+    }
+
+    // Legacy actions - keep backward compatibility
+    if (action === "search" || action === "item" || action === "seller") {
+      return respond(200, { ok: false, error: "Legacy action. Use shopping_search instead." });
+    }
+
+    return respond(400, { error: "Invalid action. Use: shopping_search, trends, regional, related" });
+
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
+    const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[ml-proxy] Error:", message);
-    return respond(200, { ok: false, error: message });
+    return respond(500, { error: message });
   }
 });

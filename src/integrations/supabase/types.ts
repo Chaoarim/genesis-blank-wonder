@@ -241,6 +241,36 @@ export type Database = {
         }
         Relationships: []
       }
+      consultas_historico: {
+        Row: {
+          created_at: string
+          id: string
+          menor_preco: number
+          preco_medio: number
+          termo_busca: string
+          total_ofertas: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menor_preco?: number
+          preco_medio?: number
+          termo_busca: string
+          total_ofertas?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menor_preco?: number
+          preco_medio?: number
+          termo_busca?: string
+          total_ofertas?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_approvals: {
         Row: {
           created_at: string
