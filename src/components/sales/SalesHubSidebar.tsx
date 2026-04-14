@@ -53,6 +53,15 @@ interface SalesHubSidebarProps {
 export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCounts = {} }: SalesHubSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+  const navigate = useNavigate();
+
+  const handleTabClick = (value: string) => {
+    if (value === 'autoiq') {
+      navigate('/autoiq');
+    } else {
+      onTabChange(value);
+    }
+  };
 
   const filteredItems = MENU_ITEMS.filter(item => visibleTabs.includes(item.value));
 
