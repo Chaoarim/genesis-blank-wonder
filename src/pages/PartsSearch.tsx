@@ -289,10 +289,10 @@ const PartsSearch = () => {
   const empresarioInsights = useMemo(() => {
     if (!metrics || metrics.total === 0) return null;
     const bestRegion = regionalData.length > 0
-      ? regionalData.sort((a, b) => b.offers - a.offers)[0]
+      ? [...regionalData].sort((a, b) => b.offers - a.offers)[0]
       : null;
     const worstRegion = regionalData.length > 0
-      ? regionalData.sort((a, b) => a.offers - b.offers)[0]
+      ? [...regionalData].sort((a, b) => a.offers - b.offers)[0]
       : null;
 
     return {
