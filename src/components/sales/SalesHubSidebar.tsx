@@ -101,7 +101,7 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCoun
                       <SidebarMenuItem key={item.value}>
                         <SidebarMenuButton
                           isActive={activeTab === item.value}
-                          onClick={() => onTabChange(item.value)}
+                          onClick={() => handleTabClick(item.value)}
                           tooltip={item.label}
                           className={`relative ${
                             activeTab === item.value
@@ -150,7 +150,7 @@ export function SalesHubSidebar({ activeTab, onTabChange, visibleTabs, badgeCoun
                         <SidebarMenuItem key={item.value}>
                           <SidebarMenuButton
                             isActive={activeTab === item.value}
-                            onClick={() => onTabChange(item.value)}
+                            onClick={() => handleTabClick(item.value)}
                             tooltip={item.label}
                             className={
                               activeTab === item.value
