@@ -65,6 +65,7 @@ interface TrendData {
   trend: string;
   values: number[];
   timeline: { date: string; value: number }[];
+  error?: string;
 }
 
 interface HistoricoEntry {
@@ -89,6 +90,26 @@ const PartsSearch = () => {
   const [results, setResults] = useState<ShoppingResult[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [trendData, setTrendData] = useState<TrendData | null>(null);
+
+  const normalizeTrendData = (data: any): TrendData | null => {
+    if (!data || typeof data !== 'object') return null;
+    const values = Array.isArray(data.values) ? data.values.filter((v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)) : [];
+    const timeline = Array.isArray(data.timeline)
+      ? data.timeline
+          .filter((item: unknown) => !!item && typeof item === 'object')
+          .map((item: any) => ({
+            date: typeof item.date === 'string' ? item.date : '',
+            value: typeof item.value === 'number' && Number.isFinite(item.value) ? item.value : 0,
+          }))
+      : [];
+
+    return {
+      trend: typeof data.trend === 'string' ? data.trend : 'ESTÁVEL',
+      values,
+      timeline,
+      error: typeof data.error === 'string' ? data.error : undefined,
+    };
+  };
   const [regionalData, setRegionalData] = useState<RegionalData[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [historico, setHistorico] = useState<HistoricoEntry | null>(null);
@@ -169,8 +190,8 @@ const PartsSearch = () => {
         termo: termo.trim(),
         estado: estado !== 'BRASIL' ? estado : undefined,
       });
-      setResults(data.results || []);
-      setMetrics(data.metrics || null);
+      setResults(Array.isArray(data?.results) ? data.results : []);
+      setMetrics(data?.metrics && typeof data.metrics === 'object' ? data.metrics : null);
 
       if (data.metrics && data.metrics.total > 0) {
         await saveHistorico(termo, data.metrics);
@@ -189,19 +210,22 @@ const PartsSearch = () => {
     // Parallel: trends, regional, related
     setLoadingTrends(true);
     callProxy({ action: 'trends', termo: termo.trim() })
-      .then(d => setTrendData(d))
-      .catch(e => console.error('Trends error:', e))
+      .then(d => setTrendData(normalizeTrendData(d)))
+      .catch(e => {
+        console.error('Trends error:', e);
+        setTrendData({ trend: 'ESTÁVEL', values: [], timeline: [], error: e?.message || 'Erro ao carregar tendências' });
+      })
       .finally(() => setLoadingTrends(false));
 
     setLoadingRegional(true);
     callProxy({ action: 'regional', termo: termo.trim() })
-      .then(d => setRegionalData(d.regions || []))
+      .then(d => setRegionalData(Array.isArray(d?.regions) ? d.regions : []))
       .catch(e => console.error('Regional error:', e))
       .finally(() => setLoadingRegional(false));
 
     setLoadingRelated(true);
     callProxy({ action: 'related', termo: termo.trim() })
-      .then(d => setRelatedProducts(d.related || []))
+      .then(d => setRelatedProducts(Array.isArray(d?.related) ? d.related : []))
       .catch(e => console.error('Related error:', e))
       .finally(() => setLoadingRelated(false));
   };
@@ -432,7 +456,7 @@ const PartsSearch = () => {
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-blue-400" />
                 <span className="text-muted-foreground">
-                  Última consulta: {new Date(historico.created_at).toLocaleDateString('pt-BR')} —
+                  Última consulta: {historico.created_at ? new Date(historico.created_at).toLocaleDateString('pt-BR') : '—'} —
                   Mín era {formatBRL(historico.menor_preco)} | Hoje: {formatBRL(metrics.min_price)}
                   {metrics.min_price < historico.menor_preco
                     ? <span className="text-green-400 ml-1">↓ Baixou {formatBRL(historico.menor_preco - metrics.min_price)}</span>
@@ -593,6 +617,9 @@ const PartsSearch = () => {
                   {trendData.trend}
                 </Badge>
               </div>
+              {trendData.error && trendData.values.length === 0 && (
+                <p className="text-xs text-muted-foreground">Tendência indisponível no momento.</p>
+              )}
               {trendData.values.length > 0 && (
                 <div className="flex items-end gap-0.5 h-16">
                   {trendData.values.slice(-30).map((v, i) => {
