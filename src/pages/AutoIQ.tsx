@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Zap, Trash2, ArrowLeft } from 'lucide-react';
+import { Send, Loader2, Zap, Trash2, ArrowLeft, Sun, Moon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -12,13 +12,67 @@ interface Message {
   content: string;
 }
 
+const themes = {
+  dark: {
+    bg: '#0d0d0d',
+    text: '#e8e8e8',
+    border: '#1a1a1a',
+    userBubble: '#2a2a2a',
+    userText: '#e8e8e8',
+    assistantText: '#d4d4d4',
+    inputBg: '#1a1a1a',
+    inputBorder: '#2a2a2a',
+    inputText: '#e8e8e8',
+    placeholder: '#666',
+    sendBg: '#e8e8e8',
+    sendIcon: '#0d0d0d',
+    hoverBg: 'hover:bg-white/5',
+    iconColor: 'text-neutral-400',
+    titleColor: 'text-neutral-200',
+    subtitleColor: 'text-neutral-500',
+    footerColor: 'text-neutral-600',
+    dotColor: 'bg-neutral-500',
+  },
+  claude: {
+    bg: '#f5f0e8',
+    text: '#2d2b28',
+    border: '#e5ddd0',
+    userBubble: '#e8e0d2',
+    userText: '#2d2b28',
+    assistantText: '#3d3a36',
+    inputBg: '#ffffff',
+    inputBorder: '#d9d0c3',
+    inputText: '#2d2b28',
+    placeholder: '#9c9488',
+    sendBg: '#2d2b28',
+    sendIcon: '#f5f0e8',
+    hoverBg: 'hover:bg-black/5',
+    iconColor: 'text-stone-500',
+    titleColor: 'text-stone-800',
+    subtitleColor: 'text-stone-500',
+    footerColor: 'text-stone-400',
+    dotColor: 'bg-stone-400',
+  },
+} as const;
+
+type ThemeKey = keyof typeof themes;
+
 export default function AutoIQ() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [theme, setTheme] = useState<ThemeKey>(() => {
+    return (localStorage.getItem('autoiq-theme') as ThemeKey) || 'claude';
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
+
+  const t = themes[theme];
+
+  useEffect(() => {
+    localStorage.setItem('autoiq-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -26,7 +80,6 @@ export default function AutoIQ() {
     }
   }, [messages, isLoading]);
 
-  // Auto-resize textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (ta) {
@@ -101,21 +154,30 @@ export default function AutoIQ() {
     setInput('');
   };
 
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'claude' : 'dark');
+  };
+
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-screen" style={{ backgroundColor: '#0d0d0d', color: '#e8e8e8' }}>
+    <div className="flex flex-col h-screen transition-colors duration-300" style={{ backgroundColor: t.bg, color: t.text }}>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#1a1a1a' }}>
+      <header className="flex items-center justify-between px-4 py-3 border-b transition-colors duration-300" style={{ borderColor: t.border }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/vendas')} className="p-1.5 rounded-lg hover:bg-white/5 transition-colors">
-            <ArrowLeft className="w-4 h-4 text-neutral-400" />
+          <button onClick={() => navigate('/vendas')} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`}>
+            <ArrowLeft className={`w-4 h-4 ${t.iconColor}`} />
           </button>
-          <span className="text-sm font-medium text-neutral-200">⚡ AutoIQ — Maurício Chaparim</span>
+          <span className={`text-sm font-medium ${t.titleColor}`}>⚡ AutoIQ — Maurício Chaparim</span>
         </div>
-        <button onClick={clearChat} className="p-1.5 rounded-lg hover:bg-white/5 transition-colors" title="Nova conversa">
-          <Trash2 className="w-4 h-4 text-neutral-400" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={toggleTheme} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`} title="Alternar tema">
+            {theme === 'dark' ? <Sun className={`w-4 h-4 ${t.iconColor}`} /> : <Moon className={`w-4 h-4 ${t.iconColor}`} />}
+          </button>
+          <button onClick={clearChat} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`} title="Nova conversa">
+            <Trash2 className={`w-4 h-4 ${t.iconColor}`} />
+          </button>
+        </div>
       </header>
 
       {/* Chat */}
@@ -124,8 +186,8 @@ export default function AutoIQ() {
           {isEmpty && !isLoading && (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center">
               <Zap className="w-10 h-10 text-amber-500 mb-4" />
-              <h2 className="text-xl font-medium text-neutral-200 mb-2">AutoIQ</h2>
-              <p className="text-sm text-neutral-500 max-w-md">
+              <h2 className={`text-xl font-medium ${t.titleColor} mb-2`}>AutoIQ</h2>
+              <p className={`text-sm ${t.subtitleColor} max-w-md`}>
                 Consultor de peças automotivas com 25 anos de experiência. Pergunte sobre qualquer peça, veículo ou revisão.
               </p>
             </div>
@@ -136,7 +198,7 @@ export default function AutoIQ() {
               <div key={msg.id}>
                 {msg.role === 'user' ? (
                   <div className="flex justify-end">
-                    <div className="rounded-2xl px-4 py-2.5 max-w-[85%] text-sm" style={{ backgroundColor: '#2a2a2a', color: '#e8e8e8' }}>
+                    <div className="rounded-2xl px-4 py-2.5 max-w-[85%] text-sm transition-colors duration-300" style={{ backgroundColor: t.userBubble, color: t.userText }}>
                       <p className="whitespace-pre-wrap">{msg.content}</p>
                     </div>
                   </div>
@@ -145,7 +207,7 @@ export default function AutoIQ() {
                     <div className="shrink-0 mt-1">
                       <Zap className="w-5 h-5 text-amber-500" />
                     </div>
-                    <div className="autoiq-prose min-w-0 text-sm leading-relaxed" style={{ color: '#d4d4d4' }}>
+                    <div className="autoiq-prose min-w-0 text-sm leading-relaxed transition-colors duration-300" style={{ color: t.assistantText }}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                     </div>
                   </div>
@@ -159,9 +221,9 @@ export default function AutoIQ() {
                   <Zap className="w-5 h-5 text-amber-500" />
                 </div>
                 <div className="flex items-center gap-1 py-2">
-                  <span className="w-2 h-2 rounded-full bg-neutral-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-neutral-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-neutral-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className={`w-2 h-2 rounded-full ${t.dotColor} animate-bounce`} style={{ animationDelay: '0ms' }} />
+                  <span className={`w-2 h-2 rounded-full ${t.dotColor} animate-bounce`} style={{ animationDelay: '150ms' }} />
+                  <span className={`w-2 h-2 rounded-full ${t.dotColor} animate-bounce`} style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
@@ -170,9 +232,9 @@ export default function AutoIQ() {
       </div>
 
       {/* Input */}
-      <div className="border-t px-4 py-3" style={{ borderColor: '#1a1a1a' }}>
+      <div className="border-t px-4 py-3 transition-colors duration-300" style={{ borderColor: t.border }}>
         <div className="max-w-[760px] mx-auto">
-          <div className="flex items-end gap-2 rounded-2xl border px-4 py-2" style={{ borderColor: '#2a2a2a', backgroundColor: '#1a1a1a' }}>
+          <div className="flex items-end gap-2 rounded-2xl border px-4 py-2 transition-colors duration-300" style={{ borderColor: t.inputBorder, backgroundColor: t.inputBg }}>
             <textarea
               ref={textareaRef}
               value={input}
@@ -181,23 +243,23 @@ export default function AutoIQ() {
               placeholder="Pergunte sobre peças..."
               disabled={isLoading}
               rows={1}
-              className="flex-1 bg-transparent text-sm resize-none outline-none placeholder:text-neutral-600"
-              style={{ color: '#e8e8e8', maxHeight: 200 }}
+              className="flex-1 bg-transparent text-sm resize-none outline-none"
+              style={{ color: t.inputText, maxHeight: 200, '::placeholder': { color: t.placeholder } } as React.CSSProperties}
             />
             <button
               onClick={() => sendMessage(input)}
               disabled={isLoading || !input.trim()}
               className="shrink-0 p-1.5 rounded-lg transition-colors disabled:opacity-30"
-              style={{ backgroundColor: input.trim() ? '#e8e8e8' : 'transparent' }}
+              style={{ backgroundColor: input.trim() ? t.sendBg : 'transparent' }}
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
+                <Loader2 className={`w-4 h-4 animate-spin ${t.iconColor}`} />
               ) : (
-                <Send className="w-4 h-4" style={{ color: input.trim() ? '#0d0d0d' : '#666' }} />
+                <Send className="w-4 h-4" style={{ color: input.trim() ? t.sendIcon : t.placeholder }} />
               )}
             </button>
           </div>
-          <p className="text-[10px] text-neutral-600 text-center mt-2">
+          <p className={`text-[10px] ${t.footerColor} text-center mt-2`}>
             Maurício Chaparim • 25 anos de mercado automotivo
           </p>
         </div>
