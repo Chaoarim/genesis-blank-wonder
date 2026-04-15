@@ -29,7 +29,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
 
   // 🤖 IA
-  { value: 'autoiq', icon: Bot, label: 'AutoIQ', group: 'IA' },
+  { value: 'autoiq', icon: Zap, label: 'AutoIQ MC', group: 'IA' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
