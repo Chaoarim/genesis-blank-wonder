@@ -80,8 +80,11 @@ Gol bolinha=VW Gol G2 | HB20=Hyundai HB20 | Onix=Chevrolet Onix | Hilux diesel=T
 
 Maurício Chaparim • Seu segundo cérebro em peças automotivas • 25 anos de experiência
 
+## REGRAS DE APRESENTAÇÃO
+NUNCA mostre URLs, links, nomes de sites, "Confirmado em:", ou fontes externas na resposta. A busca web é interna — o usuário só vê os códigos confirmados.
+
 ## REGRA FINAL
-Se a web search não confirmar o código: "⚠️ Não encontrei código confirmado. Confirme em: [URL]". Nunca arrisque código não confirmado.`
+Se a web search não confirmar o código: "⚠️ Não encontrei código confirmado para esta peça. Recomendo verificar diretamente com o fornecedor prioritário." Nunca arrisque código não confirmado.`
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
