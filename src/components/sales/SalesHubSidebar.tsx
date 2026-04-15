@@ -28,20 +28,16 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'dashboard', icon: BarChart3, label: 'Início', group: 'Consulta' },
   { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
 
-  // 🤖 IA
-  { value: 'autoiq', icon: Zap, label: 'AutoIQ MC', group: 'IA' },
-
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
 ];
 
 const GROUP_ICONS: Record<string, string> = {
   'Consulta': '🔍',
-  'IA': '🤖',
   'Ajuda': '❓',
 };
 
-const GROUPS = ['Consulta', 'IA', 'Ajuda'];
+const GROUPS = ['Consulta', 'Ajuda'];
 
 interface SalesHubSidebarProps {
   activeTab: string;

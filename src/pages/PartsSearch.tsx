@@ -412,15 +412,15 @@ const PartsSearch = () => {
                     </div>
                   </Card>
                   <Card
-                    className="p-4 cursor-pointer hover:border-primary transition-colors flex items-center gap-3"
-                    onClick={() => setMode('frota')}
+                    className="p-4 cursor-pointer hover:border-amber-500 transition-colors flex items-center gap-3"
+                    onClick={() => navigate('/autoiq')}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <BarChart3 className="w-5 h-5 text-primary" />
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-5 h-5 text-amber-500" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-sm">Ranking Frota</h3>
-                      <p className="text-xs text-muted-foreground">Previsão de demanda de peças</p>
+                      <h3 className="font-semibold text-sm">⚡ AutoIQ</h3>
+                      <p className="text-xs text-muted-foreground">Consultor de peças IA 24h</p>
                     </div>
                   </Card>
                 </div>
