@@ -77,9 +77,8 @@ Gol bolinha=VW Gol G2 | HB20=Hyundai HB20 | Onix=Chevrolet Onix | Hilux diesel=T
 | # | Peça | Fornecedor | Código | Alternativo | Cód.Alt |
 ⚠️ Alertas
 💰 Aproveite também
-🔍 Fontes confirmadas [URLs]
 
-Maurício Chaparim • 25 anos
+Maurício Chaparim • Seu segundo cérebro em peças automotivas • 25 anos de experiência
 
 ## REGRA FINAL
 Se a web search não confirmar o código: "⚠️ Não encontrei código confirmado. Confirme em: [URL]". Nunca arrisque código não confirmado.`
