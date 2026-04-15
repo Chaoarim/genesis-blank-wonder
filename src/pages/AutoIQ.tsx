@@ -49,8 +49,8 @@ const themes = {
     hoverBg: 'hover:bg-black/5',
     iconColor: 'text-stone-500',
     titleColor: 'text-stone-800',
-    subtitleColor: 'text-stone-500',
-    footerColor: 'text-stone-400',
+    subtitleColor: 'text-stone-600',
+    footerColor: 'text-stone-500',
     dotColor: 'bg-stone-400',
   },
 } as const;
