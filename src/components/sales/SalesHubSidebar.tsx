@@ -5,7 +5,7 @@ import {
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock, Wallet, PackageCheck, Car, Bot
+  Clock, Wallet, PackageCheck, Car, Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
