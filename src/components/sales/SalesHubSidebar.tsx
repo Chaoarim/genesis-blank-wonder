@@ -5,7 +5,7 @@ import {
   Users, BookUser, Target, Percent, FileSpreadsheet, PackagePlus, Tag,
   Ticket, UserCog, DollarSign, Calendar, ShieldCheck, CreditCard, Receipt,
   FileBarChart, BellRing, Contact, HelpCircle, ChevronDown, TrendingUp, Shield, FileText,
-  Clock, Wallet, PackageCheck, Car, Bot
+  Clock, Wallet, PackageCheck, Car, Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -29,7 +29,7 @@ const MENU_ITEMS: TabDef[] = [
   { value: 'fleet-rankings', icon: Car, label: 'Ranking Frota', group: 'Consulta' },
 
   // 🤖 IA
-  { value: 'autoiq', icon: Bot, label: 'AutoIQ', group: 'IA' },
+  { value: 'autoiq', icon: Zap, label: 'AutoIQ MC', group: 'IA' },
 
   // ❓ Ajuda
   { value: 'help', icon: HelpCircle, label: 'Como Usar', group: 'Ajuda' },
