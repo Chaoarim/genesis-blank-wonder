@@ -105,7 +105,7 @@ export default function Sales() {
             {/* User message */}
             <div className="flex flex-row-reverse gap-2.5">
               <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">EU</div>
-              <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5 text-sm max-w-xs">
+              <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5 text-sm max-w-xs text-stone-800">
                 Preciso de amortecedor + kit suspensão para Gol G4 1.0 2008
               </div>
             </div>
