@@ -20,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/sales" replace />} />
+          <Route path="/vendas" element={<Navigate to="/sales" replace />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/login" element={<Login />} />
           <Route path="/autoiq" element={<AutoIQ />} />
