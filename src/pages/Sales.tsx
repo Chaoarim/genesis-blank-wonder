@@ -77,12 +77,12 @@ export default function Sales() {
           >
             Assinar por R$49/mês →
           </button>
-          <a
-            href="/autoiq"
+          <button
+            onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
             className="bg-background border border-border hover:bg-muted text-foreground px-7 py-3 rounded-xl text-sm transition-colors"
           >
             Ver como funciona
-          </a>
+          </button>
         </div>
         <div className="flex gap-6 justify-center mt-7 flex-wrap">
           {["Linha leve e pesada", "Busca web em tempo real", "Sem código inventado", "Disponível 24h"].map((item) => (
@@ -153,7 +153,7 @@ export default function Sales() {
       <hr className="border-border" />
 
       {/* FEATURES */}
-      <section className="px-6 py-14 max-w-5xl mx-auto">
+      <section id="features" className="px-6 py-14 max-w-5xl mx-auto">
         <p className="text-amber-600 text-xs font-medium tracking-widest uppercase mb-3">O que você recebe</p>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-3">
           Tudo que um especialista sabe,<br />disponível em <span className="text-amber-600">segundos</span>
