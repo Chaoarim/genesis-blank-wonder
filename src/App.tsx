@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Sales from "./pages/Sales";
 import Login from "./pages/Login";
+import PreCadastro from "./pages/PreCadastro";
 import AutoIQ from "./pages/AutoIQ";
 import NotFound from "./pages/NotFound";
 import { OfflineIndicator } from "./components/OfflineIndicator";
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/vendas" element={<Navigate to="/sales" replace />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/pre-cadastro" element={<PreCadastro />} />
           <Route path="/autoiq" element={<AutoIQ />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

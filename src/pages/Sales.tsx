@@ -32,7 +32,7 @@ export default function Sales() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const handleSubscribe = () => {
-    window.open("https://pay.kiwify.com.br/jSs0cc0", "_blank");
+    window.location.href = "/pre-cadastro";
   };
 
   return (
@@ -52,7 +52,7 @@ export default function Sales() {
             onClick={handleSubscribe}
             className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
           >
-            Assinar R$49,00
+            Assinar R$59,90
           </button>
         </div>
       </nav>
@@ -74,7 +74,7 @@ export default function Sales() {
             onClick={handleSubscribe}
             className="bg-amber-600 hover:bg-amber-700 text-white px-7 py-3 rounded-xl text-sm font-medium transition-colors"
           >
-            Assinar por R$49/mês →
+            Assinar por R$59,90/mês →
           </button>
           <button
             onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
@@ -233,7 +233,7 @@ export default function Sales() {
             </div>
             <p className="text-amber-600 text-xs font-medium tracking-widest uppercase mb-2">AutoIQ Mensal</p>
             <div className="text-5xl font-medium tracking-tight mb-1">
-              <sup className="text-xl align-super mr-1 font-normal">R$</sup>49
+              <sup className="text-xl align-super mr-1 font-normal">R$</sup>59,90
               <sub className="text-sm text-muted-foreground font-normal">/mês</sub>
             </div>
             <p className="text-muted-foreground text-xs mb-6">Cancele quando quiser. Sem contrato de fidelidade.</p>
@@ -306,7 +306,7 @@ export default function Sales() {
             onClick={handleSubscribe}
             className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3.5 rounded-xl text-sm font-medium transition-colors"
           >
-            Assinar por R$49/mês →
+            Assinar por R$59,90/mês →
           </button>
         </div>
       </div>
