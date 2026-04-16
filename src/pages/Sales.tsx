@@ -32,7 +32,7 @@ export default function Sales() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const handleSubscribe = () => {
-    window.open("https://pay.kiwify.com.br/mOT3bbr", "_blank");
+    window.open("https://pay.kiwify.com.br/jSs0cc0", "_blank");
   };
 
   return (
