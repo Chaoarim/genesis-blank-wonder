@@ -38,7 +38,7 @@ const Login = () => {
       if (data.user) {
         toast.success("Login realizado com sucesso!");
         
-        // Check if user is a seller → redirect to /vendas
+        // Check if user is a seller → redirect to /autoiq
         const { data: sellerData } = await supabase
           .from('seller_users')
           .select('id')

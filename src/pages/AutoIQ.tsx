@@ -165,7 +165,7 @@ export default function AutoIQ() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b transition-colors duration-300" style={{ borderColor: t.border }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/vendas')} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`}>
+          <button onClick={() => navigate('/sales')} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`}>
             <ArrowLeft className={`w-4 h-4 ${t.iconColor}`} />
           </button>
           <span className={`text-sm font-medium ${t.titleColor}`}>⚡ AutoIQ — Maurício Chaparim</span>
