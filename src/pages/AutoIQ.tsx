@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Zap, Trash2, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { Send, Loader2, Zap, Trash2, LogOut, Sun, Moon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -165,10 +165,14 @@ export default function AutoIQ() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b transition-colors duration-300" style={{ borderColor: t.border }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/sales')} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`}>
-            <ArrowLeft className={`w-4 h-4 ${t.iconColor}`} />
+          <button
+            onClick={async () => { await supabase.auth.signOut(); navigate('/login'); }}
+            className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`}
+            title="Sair"
+          >
+            <LogOut className={`w-4 h-4 ${t.iconColor}`} />
           </button>
-          <span className={`text-sm font-medium ${t.titleColor}`}>⚡ AutoIQ — Maurício Chaparim</span>
+          <span className={`text-sm font-medium ${t.titleColor}`}>⚡ AutoIQ — Seu segundo cérebro em consulta de peças automotivas</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={toggleTheme} className={`p-1.5 rounded-lg ${t.hoverBg} transition-colors`} title="Alternar tema">
