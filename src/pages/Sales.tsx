@@ -63,9 +63,8 @@ export default function Sales() {
           ⚡ Consultor de Peças IA 24h
         </div>
         <h1 className="text-4xl md:text-5xl font-medium leading-tight tracking-tight mb-5">
-          O segundo cérebro de{" "}
-          <span className="text-amber-600">Maurício Chaparim</span>
-          <br />trabalhando por você
+          Cada peça errada custa dinheiro.
+          <br />O <span className="text-amber-600">AutoIQ</span> garante o código certo.
         </h1>
         <p className="text-muted-foreground text-base max-w-lg mx-auto mb-8 leading-relaxed">
           25 anos de experiência em peças automotivas transformados em IA. Códigos certos, fornecedores certos, sem erro — disponível 24h por dia.
