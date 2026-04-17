@@ -40,7 +40,7 @@ export default function Admin() {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate("/login");
+        navigate("/login", { state: { redirectTo: "/admin" }, replace: true });
         return;
       }
       if (!ADMIN_EMAILS.includes(session.user.email ?? "")) {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,13 @@ import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const redirectTo = typeof location.state?.redirectTo === "string" ? location.state.redirectTo : null;
+  const adminEmails = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,16 +40,27 @@ const Login = () => {
 
       if (data.user) {
         toast.success("Login realizado com sucesso!");
-        
-        // Check if user is a seller → redirect to /autoiq
+
         const { data: sellerData } = await supabase
           .from('seller_users')
           .select('id')
           .eq('seller_auth_id', data.user.id)
           .eq('is_active', true)
           .maybeSingle();
-        
-        navigate("/autoiq");
+
+        const isAdmin = adminEmails.includes(data.user.email?.toLowerCase() ?? "");
+
+        if (redirectTo === "/admin" && isAdmin) {
+          navigate("/admin", { replace: true });
+          return;
+        }
+
+        if (redirectTo && redirectTo !== "/admin") {
+          navigate(redirectTo, { replace: true });
+          return;
+        }
+
+        navigate(sellerData ? "/autoiq" : "/sales", { replace: true });
       }
     } catch (error) {
       toast.error("Erro ao fazer login. Tente novamente.");
