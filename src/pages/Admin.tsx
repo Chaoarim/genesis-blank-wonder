@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-const ADMIN_EMAIL = "consultapecasai@gmail.com";
+const ADMIN_EMAILS = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
 
 type PreReg = {
   id: string;
@@ -40,7 +40,7 @@ export default function Admin() {
         navigate("/login");
         return;
       }
-      if (session.user.email !== ADMIN_EMAIL) {
+      if (!ADMIN_EMAILS.includes(session.user.email ?? "")) {
         toast({ title: "Acesso negado", description: "Apenas o administrador pode acessar.", variant: "destructive" });
         navigate("/sales");
         return;
