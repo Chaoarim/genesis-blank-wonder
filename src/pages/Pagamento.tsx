@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "@/hooks/use-toast";
+import { Logo } from "@/components/Logo";
 
 const PIX_KEY = "consultapecasai@gmail.com";
 const PRICE = "R$ 59,90";
