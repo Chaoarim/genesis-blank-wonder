@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const recovery_email: string | null = body.recovery_email?.trim() || null;
     const notes: string | null = body.notes?.trim() || null;
+    const is_admin: boolean = body.is_admin === true;
 
     // Gera código único
     const { data: codeData, error: codeErr } = await admin.rpc("generate_unique_access_code");
