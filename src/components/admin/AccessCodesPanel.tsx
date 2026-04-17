@@ -103,8 +103,12 @@ export function AccessCodesPanel() {
               value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
         </div>
+        <label className="flex items-center gap-2 mt-3 cursor-pointer">
+          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} className="w-4 h-4" />
+          <span className="text-sm">⚡ Conceder acesso de <strong>administrador</strong> (acesso total a /admin)</span>
+        </label>
         <Button onClick={generate} disabled={generating} className="mt-4">
-          {generating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</> : <><KeyRound className="w-4 h-4 mr-2" />Gerar código</>}
+          {generating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</> : <><KeyRound className="w-4 h-4 mr-2" />Gerar código{isAdmin ? " admin" : ""}</>}
         </Button>
       </Card>
 
