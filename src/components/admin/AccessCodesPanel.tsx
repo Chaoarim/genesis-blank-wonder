@@ -17,6 +17,7 @@ type AccessCode = {
   created_at: string;
   last_login_at: string | null;
   revoked_at: string | null;
+  is_admin: boolean;
 };
 
 export function AccessCodesPanel() {
