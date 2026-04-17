@@ -85,7 +85,7 @@ export default function Pagamento() {
         </div>
 
         <div className="bg-white rounded-xl p-4 flex justify-center border border-border">
-          <QRCodeSVG value={PIX_KEY} size={200} />
+          <QRCodeSVG value={PIX_PAYLOAD} size={220} level="M" />
         </div>
 
         <div>
