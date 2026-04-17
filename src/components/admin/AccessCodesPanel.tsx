@@ -26,6 +26,7 @@ export function AccessCodesPanel() {
   const [generating, setGenerating] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const load = async () => {
     setLoading(true);
