@@ -21,8 +21,11 @@ type Subscription = {
   email: string;
   status: string | null;
   plan: string | null;
+  started_at: string | null;
   expires_at: string | null;
   notes: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export default function Admin() {
@@ -124,6 +127,22 @@ export default function Admin() {
     loadAll();
   };
 
+  const removeSub = async (sub: Subscription) => {
+    if (!confirm(`Excluir definitivamente ${sub.email}?\n\nIsto remove o assinante e o pré-cadastro.`)) return;
+    const { error } = await supabase.from("user_subscriptions").delete().eq("id", sub.id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    await supabase.from("pre_registrations").delete().eq("email", sub.email);
+    toast({ title: "Usuário excluído" });
+    loadAll();
+  };
+
+  const saveNotes = async (sub: Subscription, notes: string) => {
+    const { error } = await supabase.from("user_subscriptions").update({ notes }).eq("id", sub.id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    toast({ title: "Observação salva" });
+    loadAll();
+  };
+
   if (!authChecked) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">Verificando acesso…</div>;
   }
@@ -210,20 +229,22 @@ export default function Admin() {
         )}
 
         {tab === "ativos" && !loading && (
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-card border border-border rounded-xl overflow-x-auto">
+            <table className="w-full text-sm min-w-[900px]">
               <thead className="bg-muted/50">
                 <tr className="text-left">
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Plano</th>
-                  <th className="px-4 py-3 font-medium">Expira em</th>
-                  <th className="px-4 py-3 font-medium text-right">Ações</th>
+                  <th className="px-3 py-3 font-medium">Email</th>
+                  <th className="px-3 py-3 font-medium">Status</th>
+                  <th className="px-3 py-3 font-medium">Ativação</th>
+                  <th className="px-3 py-3 font-medium">Inativo desde</th>
+                  <th className="px-3 py-3 font-medium">Expira</th>
+                  <th className="px-3 py-3 font-medium">Observações</th>
+                  <th className="px-3 py-3 font-medium text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {subs.length === 0 ? (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">Nenhum assinante</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhum assinante</td></tr>
                 ) : subs.map((s) => {
                   const isExpired = s.expires_at && new Date(s.expires_at) < new Date();
                   const statusColor =
@@ -231,26 +252,45 @@ export default function Admin() {
                     s.status === "blocked" ? "bg-red-100 text-red-700" :
                     "bg-amber-100 text-amber-700";
                   const statusLabel = isExpired && s.status === "active" ? "Em atraso" : s.status || "—";
+                  const inactiveDate = s.status === "blocked" ? s.updated_at : null;
                   return (
-                    <tr key={s.id} className="border-t border-border">
-                      <td className="px-4 py-3 font-mono text-xs">{s.email}</td>
-                      <td className="px-4 py-3">
+                    <tr key={s.id} className="border-t border-border align-top">
+                      <td className="px-3 py-3 font-mono text-xs">{s.email}</td>
+                      <td className="px-3 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>{statusLabel}</span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.plan || "—"}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                      <td className="px-3 py-3 text-xs text-muted-foreground">
+                        {s.started_at ? new Date(s.started_at).toLocaleDateString("pt-BR") : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-xs text-muted-foreground">
+                        {inactiveDate ? new Date(inactiveDate).toLocaleDateString("pt-BR") : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-xs text-muted-foreground">
                         {s.expires_at ? new Date(s.expires_at).toLocaleDateString("pt-BR") : "—"}
                       </td>
-                      <td className="px-4 py-3 text-right space-x-2">
+                      <td className="px-3 py-3">
+                        <textarea
+                          defaultValue={s.notes || ""}
+                          onBlur={(e) => {
+                            if (e.target.value !== (s.notes || "")) saveNotes(s, e.target.value);
+                          }}
+                          placeholder="Anotações…"
+                          className="w-48 min-h-[40px] text-xs bg-background border border-border rounded px-2 py-1 resize-y"
+                        />
+                      </td>
+                      <td className="px-3 py-3 text-right space-y-1 whitespace-nowrap">
                         {s.status === "blocked" ? (
-                          <button onClick={() => unblock(s)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-md">
+                          <button onClick={() => unblock(s)} className="block ml-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-md">
                             Reativar
                           </button>
                         ) : (
-                          <button onClick={() => block(s)} className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-md">
+                          <button onClick={() => block(s)} className="block ml-auto bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-md">
                             Bloquear
                           </button>
                         )}
+                        <button onClick={() => removeSub(s)} className="block ml-auto bg-muted hover:bg-muted/70 text-foreground text-xs px-3 py-1.5 rounded-md">
+                          Excluir
+                        </button>
                       </td>
                     </tr>
                   );
