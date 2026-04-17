@@ -22,6 +22,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          is_admin: boolean
           last_login_at: string | null
           notes: string | null
           recovery_email: string | null
@@ -35,6 +36,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_admin?: boolean
           last_login_at?: string | null
           notes?: string | null
           recovery_email?: string | null
@@ -48,6 +50,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_admin?: boolean
           last_login_at?: string | null
           notes?: string | null
           recovery_email?: string | null
