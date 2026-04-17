@@ -40,7 +40,7 @@ export default function Admin() {
         navigate("/login");
         return;
       }
-      if (session.user.email !== ADMIN_EMAIL) {
+      if (!ADMIN_EMAILS.includes(session.user.email ?? "")) {
         toast({ title: "Acesso negado", description: "Apenas o administrador pode acessar.", variant: "destructive" });
         navigate("/sales");
         return;
