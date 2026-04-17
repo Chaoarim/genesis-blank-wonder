@@ -63,9 +63,11 @@ export default function Sales() {
         <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-1.5 rounded-full text-xs font-medium mb-7">
           ⚡ Consultor de Peças IA 24h
         </div>
-        <h1 className="text-4xl md:text-5xl font-medium leading-tight tracking-tight mb-5">
-          Cada peça errada custa dinheiro.
-          <br />O <span className="text-amber-600">AutoIQ</span> garante o código certo.
+        <h1 className="text-[28px] sm:text-4xl md:text-5xl font-medium leading-[1.15] tracking-tight mb-5 text-balance px-2">
+          Errou a peça, perdeu dinheiro.{" "}
+          <span className="block sm:inline">
+            O <span className="text-amber-600">AutoIQ</span> acerta o código de primeira.
+          </span>
         </h1>
         <p className="text-muted-foreground text-base max-w-lg mx-auto mb-8 leading-relaxed">
           25 anos de experiência em peças automotivas transformados em IA. Códigos certos, fornecedores certos, sem erro — disponível 24h por dia.
