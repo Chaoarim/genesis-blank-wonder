@@ -63,7 +63,7 @@ export default function Pagamento() {
   };
 
   const whatsappMsg = encodeURIComponent(
-    `Olá! Acabei de fazer o pagamento Pix de ${PRICE} para a assinatura do AutoIQ.\nEmail cadastrado: ${email}\nSegue comprovante anexo.`
+    `Olá Mauricio Chaparim! Acabei de fazer o pagamento Pix de ${PRICE} para a assinatura do AutoIQ.\nEmail cadastrado: ${email}\nSegue comprovante anexo.`
   );
 
   return (
@@ -118,7 +118,7 @@ export default function Pagamento() {
         </div>
 
         <a
-          href={`https://wa.me/5511999999999?text=${whatsappMsg}`}
+          href={`https://wa.me/5519981878489?text=${whatsappMsg}`}
           target="_blank"
           rel="noopener noreferrer"
           className="block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition-colors"
