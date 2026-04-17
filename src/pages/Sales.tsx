@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Logo } from "@/components/Logo";
 
 const faqs = [
   {
@@ -41,7 +42,7 @@ export default function Sales() {
       {/* NAV */}
       <nav className="flex items-center justify-between px-8 py-4 border-b border-border bg-background sticky top-0 z-50">
         <div className="flex items-center gap-2.5 font-medium text-base">
-          <div className="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center text-white text-sm">⚡</div>
+          <Logo size={32} />
           AutoIQ
         </div>
         <div className="flex items-center gap-3">
@@ -111,7 +112,7 @@ export default function Sales() {
             </div>
             {/* AI message */}
             <div className="flex gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-amber-600 flex items-center justify-center text-xs text-white flex-shrink-0">⚡</div>
+              <Logo size={28} className="!rounded-full flex-shrink-0" />
               <div className="bg-muted border border-border rounded-xl px-3.5 py-2.5 text-sm max-w-sm">
                 <p className="font-medium mb-2">🚗 VW Gol G4 — 1.0 8V — 2008</p>
                 <table className="w-full text-xs border-collapse">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "@/hooks/use-toast";
+import { Logo } from "@/components/Logo";
 
 const PIX_KEY = "consultapecasai@gmail.com";
 const PRICE = "R$ 59,90";
@@ -69,7 +70,7 @@ export default function Pagamento() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center px-6 py-12">
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center text-white text-lg">⚡</div>
+        <Logo size={40} />
         <h1 className="text-2xl font-semibold">AutoIQ</h1>
       </div>
 
