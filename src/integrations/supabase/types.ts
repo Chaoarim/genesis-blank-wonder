@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          activated_at: string | null
+          auth_user_id: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          last_login_at: string | null
+          notes: string | null
+          recovery_email: string | null
+          revoked_at: string | null
+          status: string
+        }
+        Insert: {
+          activated_at?: string | null
+          auth_user_id?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_login_at?: string | null
+          notes?: string | null
+          recovery_email?: string | null
+          revoked_at?: string | null
+          status?: string
+        }
+        Update: {
+          activated_at?: string | null
+          auth_user_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_login_at?: string | null
+          notes?: string | null
+          recovery_email?: string | null
+          revoked_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       accounts_payable: {
         Row: {
           amount: number
@@ -2073,6 +2115,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      generate_unique_access_code: { Args: never; Returns: string }
       get_admin_user_id: { Args: never; Returns: string }
       get_daily_usage: { Args: { p_user_id: string }; Returns: Json }
       has_role: {
