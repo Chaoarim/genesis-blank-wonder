@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const recovery_email: string | null = body.recovery_email?.trim() || null;
     const notes: string | null = body.notes?.trim() || null;
+    const is_admin: boolean = body.is_admin === true;
 
     // Gera código único
     const { data: codeData, error: codeErr } = await admin.rpc("generate_unique_access_code");
@@ -63,10 +64,18 @@ Deno.serve(async (req) => {
       auth_user_id: created.user!.id,
       recovery_email,
       notes,
+      is_admin,
       activated_at: new Date().toISOString(),
       created_by: userData.user.id,
     });
     if (insertErr) throw insertErr;
+
+    if (is_admin) {
+      await admin.from("user_roles").insert({
+        user_id: created.user!.id,
+        role: "admin",
+      });
+    }
 
     return new Response(JSON.stringify({ code, auth_user_id: created.user!.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

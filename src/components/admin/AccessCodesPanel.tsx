@@ -17,6 +17,7 @@ type AccessCode = {
   created_at: string;
   last_login_at: string | null;
   revoked_at: string | null;
+  is_admin: boolean;
 };
 
 export function AccessCodesPanel() {
@@ -25,15 +26,16 @@ export function AccessCodesPanel() {
   const [generating, setGenerating] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [notes, setNotes] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("access_codes")
-      .select("id,code,status,recovery_email,notes,created_at,last_login_at,revoked_at")
+      .select("id,code,status,recovery_email,notes,created_at,last_login_at,revoked_at,is_admin")
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar códigos");
-    else setCodes(data || []);
+    else setCodes((data as any) || []);
     setLoading(false);
   };
 
@@ -43,14 +45,14 @@ export function AccessCodesPanel() {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-access-code", {
-        body: { recovery_email: recoveryEmail || null, notes: notes || null },
+        body: { recovery_email: recoveryEmail || null, notes: notes || null, is_admin: isAdmin },
       });
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao gerar código");
         return;
       }
-      toast.success(`Código gerado: ${data.code}`);
-      setRecoveryEmail(""); setNotes("");
+      toast.success(`${isAdmin ? "Código ADMIN" : "Código"} gerado: ${data.code}`);
+      setRecoveryEmail(""); setNotes(""); setIsAdmin(false);
       await load();
     } finally { setGenerating(false); }
   };
@@ -101,8 +103,12 @@ export function AccessCodesPanel() {
               value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
         </div>
+        <label className="flex items-center gap-2 mt-3 cursor-pointer">
+          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} className="w-4 h-4" />
+          <span className="text-sm">⚡ Conceder acesso de <strong>administrador</strong> (acesso total a /admin)</span>
+        </label>
         <Button onClick={generate} disabled={generating} className="mt-4">
-          {generating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</> : <><KeyRound className="w-4 h-4 mr-2" />Gerar código</>}
+          {generating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</> : <><KeyRound className="w-4 h-4 mr-2" />Gerar código{isAdmin ? " admin" : ""}</>}
         </Button>
       </Card>
 
@@ -124,6 +130,7 @@ export function AccessCodesPanel() {
                 <Badge variant={c.status === "active" ? "default" : "secondary"}>
                   {c.status === "active" ? "Ativo" : "Revogado"}
                 </Badge>
+                {c.is_admin && <Badge variant="destructive">ADMIN</Badge>}
                 {c.notes && <span className="text-sm text-muted-foreground">{c.notes}</span>}
                 {c.recovery_email && <span className="text-xs text-muted-foreground">📧 {c.recovery_email}</span>}
                 <span className="text-xs text-muted-foreground ml-auto">
