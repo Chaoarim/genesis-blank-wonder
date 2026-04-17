@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { AccessCodesPanel } from "@/components/admin/AccessCodesPanel";
 
 const ADMIN_EMAILS = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
 
@@ -34,7 +35,7 @@ export default function Admin() {
   const [pres, setPres] = useState<PreReg[]>([]);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<"pendentes" | "ativos">("pendentes");
+  const [tab, setTab] = useState<"pendentes" | "ativos" | "codigos">("codigos");
 
   useEffect(() => {
     const check = async () => {
@@ -191,9 +192,19 @@ export default function Admin() {
           >
             Assinantes ({subs.length})
           </button>
+          <button
+            onClick={() => setTab("codigos")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === "codigos" ? "border-amber-600 text-amber-600" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Códigos de acesso
+          </button>
         </div>
 
-        {loading && <div className="text-center text-muted-foreground py-8">Carregando…</div>}
+        {tab === "codigos" && <AccessCodesPanel />}
+
+        {loading && tab !== "codigos" && <div className="text-center text-muted-foreground py-8">Carregando…</div>}
 
         {tab === "pendentes" && !loading && (
           <div className="bg-card border border-border rounded-xl overflow-hidden">

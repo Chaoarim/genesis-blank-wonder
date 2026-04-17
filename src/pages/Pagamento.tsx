@@ -64,7 +64,7 @@ export default function Pagamento() {
   };
 
   const whatsappMsg = encodeURIComponent(
-    `Olá Mauricio Chaparim! Acabei de fazer o pagamento Pix de ${PRICE} para a assinatura do AutoIQ.\nEmail cadastrado: ${email}\nSegue comprovante anexo.`
+    `Olá Mauricio! ✅ Acabei de fazer o pagamento Pix de ${PRICE} para o AutoIQ.\n${email ? `Email: ${email}\n` : ""}Segue o comprovante anexo. Aguardo meu código de acesso.`
   );
 
   return (

@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.weekly-backup]
 verify_jwt = false
+
+[functions.login-with-code]
+verify_jwt = false
