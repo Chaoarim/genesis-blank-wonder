@@ -5,65 +5,79 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Zap, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Zap, Mail, Lock, Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
 import { toast } from "sonner";
+
+const ADMIN_EMAILS = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
+
+function formatCode(raw: string): string {
+  const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  const parts = [clean.slice(0, 4), clean.slice(4, 8), clean.slice(8, 12)].filter(Boolean);
+  return parts.join("-");
+}
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const redirectTo = typeof location.state?.redirectTo === "string" ? location.state.redirectTo : null;
-  const adminEmails = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const goAfterLogin = async (userId: string, userEmail: string | null) => {
+    const { data: sellerData } = await supabase
+      .from("seller_users").select("id")
+      .eq("seller_auth_id", userId).eq("is_active", true).maybeSingle();
+    const isAdmin = ADMIN_EMAILS.includes((userEmail ?? "").toLowerCase());
+    if (redirectTo === "/admin" && isAdmin) return navigate("/admin", { replace: true });
+    if (redirectTo && redirectTo !== "/admin") return navigate(redirectTo, { replace: true });
+    navigate(sellerData ? "/autoiq" : "/sales", { replace: true });
+  };
+
+  const handleCodeLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast.error("Email ou senha incorretos");
-        } else {
-          toast.error(error.message);
-        }
+      const { data, error } = await supabase.functions.invoke("login-with-code", { body: { code } });
+      if (error || data?.error) {
+        toast.error(data?.error || error?.message || "Código inválido");
         return;
       }
+      if (data?.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+        toast.success("Acesso liberado!");
+        await goAfterLogin(data.session.user.id, data.session.user.email);
+      }
+    } catch (err) {
+      toast.error("Erro ao validar código");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(), password,
+      });
+      if (error) {
+        toast.error(error.message.includes("Invalid") ? "Email ou senha incorretos" : error.message);
+        return;
+      }
       if (data.user) {
         toast.success("Login realizado com sucesso!");
-
-        const { data: sellerData } = await supabase
-          .from('seller_users')
-          .select('id')
-          .eq('seller_auth_id', data.user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        const isAdmin = adminEmails.includes(data.user.email?.toLowerCase() ?? "");
-
-        if (redirectTo === "/admin" && isAdmin) {
-          navigate("/admin", { replace: true });
-          return;
-        }
-
-        if (redirectTo && redirectTo !== "/admin") {
-          navigate(redirectTo, { replace: true });
-          return;
-        }
-
-        navigate(sellerData ? "/autoiq" : "/sales", { replace: true });
+        await goAfterLogin(data.user.id, data.user.email ?? null);
       }
-    } catch (error) {
-      toast.error("Erro ao fazer login. Tente novamente.");
+    } catch {
+      toast.error("Erro ao fazer login");
     } finally {
       setLoading(false);
     }
@@ -72,7 +86,6 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/sales" className="inline-flex items-center gap-2">
             <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
@@ -85,82 +98,79 @@ const Login = () => {
         <Card className="p-8 glass-card">
           <h1 className="text-2xl font-bold text-center mb-6">Entrar na conta</h1>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
+          <Tabs defaultValue="code" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="code">Código de acesso</TabsTrigger>
+              <TabsTrigger value="email">E-mail/senha</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <TabsContent value="code">
+              <form onSubmit={handleCodeLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="code">Código de 12 dígitos</Label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="code"
+                      placeholder="XXXX-XXXX-XXXX"
+                      value={code}
+                      onChange={(e) => setCode(formatCode(e.target.value))}
+                      className="pl-10 font-mono tracking-wider text-center"
+                      maxLength={14}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Você recebeu o código por WhatsApp após o pagamento.
+                  </p>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading || code.replace(/-/g, "").length !== 12}>
+                  {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Validando...</> : "Acessar sistema"}
+                </Button>
+              </form>
+            </TabsContent>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Entrando...
-                </>
-              ) : (
-                "Entrar"
-              )}
-            </Button>
-          </form>
+            <TabsContent value="email">
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input id="email" type="email" placeholder="seu@email.com" value={email}
+                      onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
+                      value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10" required />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Entrando...</> : "Entrar"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
 
-          <div className="mt-4 text-center">
-            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-              Esqueceu sua senha?
-            </Link>
-          </div>
-
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
-              Não tem acesso?{" "}
-              <Link to="/pre-cadastro" className="text-primary hover:underline font-medium">
-                Fazer pré-cadastro
+              Ainda não tem código?{" "}
+              <Link to="/pagamento" className="text-primary hover:underline font-medium">
+                Pagar e receber acesso
               </Link>
             </p>
           </div>
         </Card>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          <Link to="/sales" className="hover:text-primary">
-            ← Voltar para página inicial
-          </Link>
+          <Link to="/sales" className="hover:text-primary">← Voltar para página inicial</Link>
         </p>
       </div>
     </div>
