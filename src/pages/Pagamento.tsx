@@ -5,6 +5,46 @@ import { toast } from "@/hooks/use-toast";
 
 const PIX_KEY = "consultapecasai@gmail.com";
 const PRICE = "R$ 59,90";
+const PIX_AMOUNT = "59.90";
+const MERCHANT_NAME = "CONSULTA PECAS AI";
+const MERCHANT_CITY = "SAO PAULO";
+
+// EMV BR Code (Pix Copia e Cola) generator
+function crc16(payload: string): string {
+  let crc = 0xffff;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+      crc &= 0xffff;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+function tlv(id: string, value: string): string {
+  return id + value.length.toString().padStart(2, "0") + value;
+}
+
+function buildPixPayload(): string {
+  const gui = tlv("00", "br.gov.bcb.pix");
+  const key = tlv("01", PIX_KEY);
+  const merchantAccount = tlv("26", gui + key);
+  const payload =
+    tlv("00", "01") +
+    merchantAccount +
+    tlv("52", "0000") +
+    tlv("53", "986") +
+    tlv("54", PIX_AMOUNT) +
+    tlv("58", "BR") +
+    tlv("59", MERCHANT_NAME) +
+    tlv("60", MERCHANT_CITY) +
+    tlv("62", tlv("05", "***")) +
+    "6304";
+  return payload + crc16(payload);
+}
+
+const PIX_PAYLOAD = buildPixPayload();
 
 export default function Pagamento() {
   const [params] = useSearchParams();
