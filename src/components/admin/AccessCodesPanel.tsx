@@ -32,10 +32,10 @@ export function AccessCodesPanel() {
     setLoading(true);
     const { data, error } = await supabase
       .from("access_codes")
-      .select("id,code,status,recovery_email,notes,created_at,last_login_at,revoked_at")
+      .select("id,code,status,recovery_email,notes,created_at,last_login_at,revoked_at,is_admin")
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar códigos");
-    else setCodes(data || []);
+    else setCodes((data as any) || []);
     setLoading(false);
   };
 
