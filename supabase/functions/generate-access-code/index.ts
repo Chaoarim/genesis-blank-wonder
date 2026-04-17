@@ -64,10 +64,18 @@ Deno.serve(async (req) => {
       auth_user_id: created.user!.id,
       recovery_email,
       notes,
+      is_admin,
       activated_at: new Date().toISOString(),
       created_by: userData.user.id,
     });
     if (insertErr) throw insertErr;
+
+    if (is_admin) {
+      await admin.from("user_roles").insert({
+        user_id: created.user!.id,
+        role: "admin",
+      });
+    }
 
     return new Response(JSON.stringify({ code, auth_user_id: created.user!.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
