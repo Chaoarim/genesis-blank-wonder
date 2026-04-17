@@ -45,14 +45,14 @@ export function AccessCodesPanel() {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-access-code", {
-        body: { recovery_email: recoveryEmail || null, notes: notes || null },
+        body: { recovery_email: recoveryEmail || null, notes: notes || null, is_admin: isAdmin },
       });
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao gerar código");
         return;
       }
-      toast.success(`Código gerado: ${data.code}`);
-      setRecoveryEmail(""); setNotes("");
+      toast.success(`${isAdmin ? "Código ADMIN" : "Código"} gerado: ${data.code}`);
+      setRecoveryEmail(""); setNotes(""); setIsAdmin(false);
       await load();
     } finally { setGenerating(false); }
   };
