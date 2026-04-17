@@ -136,6 +136,15 @@ export default function Admin() {
     loadAll();
   };
 
+  const resetPassword = async (sub: Subscription) => {
+    if (!confirm(`Enviar link de redefinição de senha para ${sub.email}?`)) return;
+    const { error } = await supabase.auth.resetPasswordForEmail(sub.email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    toast({ title: "Link enviado", description: `${sub.email} receberá o e-mail para criar nova senha.` });
+  };
+
   const saveNotes = async (sub: Subscription, notes: string) => {
     const { error } = await supabase.from("user_subscriptions").update({ notes }).eq("id", sub.id);
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -288,6 +297,9 @@ export default function Admin() {
                             Bloquear
                           </button>
                         )}
+                        <button onClick={() => resetPassword(s)} className="block ml-auto bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md">
+                          Resetar senha
+                        </button>
                         <button onClick={() => removeSub(s)} className="block ml-auto bg-muted hover:bg-muted/70 text-foreground text-xs px-3 py-1.5 rounded-md">
                           Excluir
                         </button>
