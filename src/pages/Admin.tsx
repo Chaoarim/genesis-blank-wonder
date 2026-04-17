@@ -21,8 +21,11 @@ type Subscription = {
   email: string;
   status: string | null;
   plan: string | null;
+  started_at: string | null;
   expires_at: string | null;
   notes: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export default function Admin() {
