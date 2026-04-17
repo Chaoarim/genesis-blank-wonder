@@ -130,6 +130,7 @@ export function AccessCodesPanel() {
                 <Badge variant={c.status === "active" ? "default" : "secondary"}>
                   {c.status === "active" ? "Ativo" : "Revogado"}
                 </Badge>
+                {c.is_admin && <Badge variant="destructive">ADMIN</Badge>}
                 {c.notes && <span className="text-sm text-muted-foreground">{c.notes}</span>}
                 {c.recovery_email && <span className="text-xs text-muted-foreground">📧 {c.recovery_email}</span>}
                 <span className="text-xs text-muted-foreground ml-auto">
