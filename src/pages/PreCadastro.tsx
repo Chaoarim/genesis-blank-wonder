@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -14,6 +15,8 @@ export default function PreCadastro() {
     password2: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [showPw2, setShowPw2] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,25 +105,45 @@ export default function PreCadastro() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Crie uma senha *</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              minLength={6}
-              placeholder="Mínimo 6 caracteres"
-              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-amber-600"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPw ? "text" : "password"}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                minLength={6}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:border-amber-600"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Confirme a senha *</label>
-            <input
-              type="password"
-              value={form.password2}
-              onChange={(e) => setForm({ ...form, password2: e.target.value })}
-              className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-amber-600"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPw2 ? "text" : "password"}
+                value={form.password2}
+                onChange={(e) => setForm({ ...form, password2: e.target.value })}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:border-amber-600"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw2((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showPw2 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <button
             type="submit"
