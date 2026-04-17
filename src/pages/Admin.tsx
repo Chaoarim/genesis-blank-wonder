@@ -127,6 +127,22 @@ export default function Admin() {
     loadAll();
   };
 
+  const removeSub = async (sub: Subscription) => {
+    if (!confirm(`Excluir definitivamente ${sub.email}?\n\nIsto remove o assinante e o pré-cadastro.`)) return;
+    const { error } = await supabase.from("user_subscriptions").delete().eq("id", sub.id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    await supabase.from("pre_registrations").delete().eq("email", sub.email);
+    toast({ title: "Usuário excluído" });
+    loadAll();
+  };
+
+  const saveNotes = async (sub: Subscription, notes: string) => {
+    const { error } = await supabase.from("user_subscriptions").update({ notes }).eq("id", sub.id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    toast({ title: "Observação salva" });
+    loadAll();
+  };
+
   if (!authChecked) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">Verificando acesso…</div>;
   }
