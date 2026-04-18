@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Logo } from "@/components/Logo";
@@ -12,25 +11,13 @@ export default function PreCadastro() {
     email: "",
     whatsapp: "",
     company_name: "",
-    password: "",
-    password2: "",
   });
   const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
-  const [showPw2, setShowPw2] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.full_name || !form.email || !form.whatsapp || !form.password) {
+    if (!form.full_name || !form.email || !form.whatsapp) {
       toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
-      return;
-    }
-    if (form.password.length < 6) {
-      toast({ title: "Senha deve ter no mínimo 6 caracteres", variant: "destructive" });
-      return;
-    }
-    if (form.password !== form.password2) {
-      toast({ title: "As senhas não conferem", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -39,7 +26,6 @@ export default function PreCadastro() {
       email: form.email,
       whatsapp: form.whatsapp,
       company_name: form.company_name || null,
-      password_hash: form.password, // será hasheada pelo trigger no banco
     });
     setLoading(false);
     if (error) {
@@ -60,7 +46,7 @@ export default function PreCadastro() {
       <div className="w-full max-w-md bg-card border border-border rounded-xl p-7">
         <h2 className="text-xl font-semibold text-center mb-1">Fazer pré-cadastro</h2>
         <p className="text-sm text-muted-foreground text-center mb-6">
-          Crie sua conta e siga para o pagamento via Pix.
+          Após o pagamento, você receberá um código de acesso de 12 dígitos.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -103,48 +89,6 @@ export default function PreCadastro() {
               onChange={(e) => setForm({ ...form, company_name: e.target.value })}
               className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-amber-600"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Crie uma senha *</label>
-            <div className="relative">
-              <input
-                type={showPw ? "text" : "password"}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                minLength={6}
-                placeholder="Mínimo 6 caracteres"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:border-amber-600"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
-              >
-                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Confirme a senha *</label>
-            <div className="relative">
-              <input
-                type={showPw2 ? "text" : "password"}
-                value={form.password2}
-                onChange={(e) => setForm({ ...form, password2: e.target.value })}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 pr-10 text-sm focus:outline-none focus:border-amber-600"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw2((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
-              >
-                {showPw2 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
           </div>
           <button
             type="submit"
