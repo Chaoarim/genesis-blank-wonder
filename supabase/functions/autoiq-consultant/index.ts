@@ -350,10 +350,12 @@ REGRAS DO BLOCO:
 - NUNCA quebrar valores em múltiplas linhas
 - Um bloco :::peca ... ::: por peça, em sequência
 
-⚠️ ALERTAS
-1. ...
+⚠️ ALERTAS — NÃO incluir por padrão. Só aparece se o cliente perguntar sobre instalação, compatibilidade ou dúvida técnica.
 
-(NÃO incluir seção "💰 VENDA ADICIONAL". NÃO incluir seção "💡 OBSERVAÇÕES TÉCNICAS". NÃO incluir seção de fontes consultadas. NUNCA exibir URLs ou nomes de sites. Formato final: APENAS 3 seções → cabeçalho do veículo + 📋 LISTA DE PEÇAS + ⚠️ ALERTAS. NADA MAIS.)
+💰 VENDA ADICIONAL
+(somente peça + fornecedor, SEM código)
+
+(NÃO incluir seção "💡 OBSERVAÇÕES TÉCNICAS". NÃO incluir seção de fontes consultadas. NUNCA exibir URLs ou nomes de sites. Formato final padrão: APENAS 2 seções → 📋 LISTA DE PEÇAS + 💰 VENDA ADICIONAL. Cabeçalho do veículo no topo. NADA MAIS.)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REGRAS ABSOLUTAS
