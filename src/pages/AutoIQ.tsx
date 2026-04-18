@@ -11,6 +11,17 @@ interface Message {
   content: string;
 }
 
+const MAX_CONTEXT_MESSAGES = 6;
+const MAX_MESSAGE_LENGTH = 1800;
+
+const buildContextMessages = (messages: Message[]) =>
+  messages
+    .slice(-MAX_CONTEXT_MESSAGES)
+    .map(({ role, content }) => ({
+      role,
+      content: content.slice(0, MAX_MESSAGE_LENGTH),
+    }));
+
 const themes = {
   dark: {
     bg: '#0d0d0d',
@@ -113,7 +124,7 @@ export default function AutoIQ() {
             'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+            messages: buildContextMessages(newMessages),
           }),
         }
       );
@@ -133,7 +144,14 @@ export default function AutoIQ() {
       toast.error(e instanceof Error ? e.message : 'Erro ao consultar');
       setMessages(prev => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: '❌ Erro ao processar. Tente novamente.' },
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content:
+            e instanceof Error && e.message.includes('Limite de requisições')
+              ? '⚠️ O AutoIQ está temporariamente sobrecarregado. Aguarde alguns segundos e tente novamente.'
+              : '❌ Erro ao processar. Tente novamente.',
+        },
       ]);
     } finally {
       setIsLoading(false);
