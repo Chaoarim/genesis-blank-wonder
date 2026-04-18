@@ -27,12 +27,13 @@ Hilux 2016+→2.8TDI | Ranger 2013-22→2.2/3.2TDI | S10 2012+→2.8D
 Tracker 2020+→1.2T | Creta 2017-22→1.6/2.0 | Creta 2022+→1.0T
 Strada 2021+→1.3T | Pulse 2021+→1.0T | Corolla 2019+→2.0 Flex
 
-PASSO 2 — BUSCAR CADA CÓDIGO (obrigatório, sem exceção)
-A. Busca primária: "[fornecedor] [peça] [veículo] código aplicação"
-B. Aceitar código SOMENTE se fonte confirmar: modelo + ano OU motor
-C. Confirmação cruzada: "[CÓDIGO] [peça] [veículo]"
-D. Se 2 buscas falharem: ⚠️ VERIFICAR — [URL do catálogo]
+PASSO 2 — BUSCAR CÓDIGO (FLUXO OTIMIZADO — 1 BUSCA POR PEÇA)
+A. Busca SOMENTE o fornecedor PRIORITÁRIO primeiro: "[prioritário] [peça] [veículo] código"
+B. Se confirmar aplicação (modelo+ano OU motor) → USA esse código e NÃO busca alternativo
+C. Só busca o ALTERNATIVO se após 2 tentativas o prioritário falhar
+D. Se alternativo também falhar: ⚠️ VERIFICAR — [URL do catálogo]
    NUNCA escrever código sem confirmação. NUNCA campo vazio.
+OBJETIVO: 1 busca por peça na maioria dos casos. Resposta em 10-15s.
 
 CATÁLOGOS OFICIAIS:
 Nakata→nakata.net/catalogo | Cofap→cofap.com.br | Fras-le→fras-le.com
