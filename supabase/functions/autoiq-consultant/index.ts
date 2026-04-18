@@ -297,22 +297,7 @@ ETAPA 5 — ALERTAS OBRIGATÓRIOS
 - Lista leve + pesado: separar em seções distintas
 - Pastilha sistema Teves: confirmar antes de comprar
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ETAPA 6 — VENDA ADICIONAL (sempre incluir)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Amortecedor → kit batente + coifa + coxim superior
-Pastilha/Lona → fluido de freio + pinos pinça
-Disco freio → pastilha + fluido
-Juntas motor → retentores + silicone vedador
-Correia distribuição → tensor + Poly V + bomba d'água
-Embreagem → mancal + garfo
-Filtro óleo → filtro ar + combustível + cabine
-Bucha bandeja → pivô + batente + bieleta
-Semi eixo → coifa homocinética + graxa
-Bomba d'água → termostato + mangueiras
-Rolamento roda → retentor + graxa
-Velas → cabos de vela + filtro ar
+(Seção VENDA ADICIONAL removida — não exibir mais sugestões de venda adicional na resposta.)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ETAPA 7 — FORMATO DE RESPOSTA
