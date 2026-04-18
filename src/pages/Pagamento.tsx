@@ -54,9 +54,9 @@ export default function Pagamento() {
 
   const copyKey = async () => {
     try {
-      await navigator.clipboard.writeText(PIX_KEY);
+      await navigator.clipboard.writeText(PIX_PAYLOAD);
       setCopied(true);
-      toast({ title: "Chave Pix copiada!" });
+      toast({ title: "Pix Copia e Cola copiado!" });
       setTimeout(() => setCopied(false), 2500);
     } catch {
       toast({ title: "Não foi possível copiar", variant: "destructive" });
