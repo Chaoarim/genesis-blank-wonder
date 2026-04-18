@@ -155,8 +155,10 @@ FORMATO DE RESPOSTA (fixo, sem variação)
 (se motor inferido: "Motor inferido: X — confirmar se diferente")
 
 📋 LISTA DE PEÇAS
-| # | Produto | Cód. OEM | Fornecedor 1 | Cód. | ✅/⚠️ | Fornecedor 2 | Cód. | ✅/⚠️ | Qtd | Obs |
-|---|---------|----------|-------------|------|-------|-------------|------|-------|-----|-----|
+| # | Produto | Fornecedor 1 | Cód. | ✅/⚠️ | Fornecedor 2 | Cód. | ✅/⚠️ | Qtd | Aplicação Cruzada |
+|---|---------|-------------|------|-------|-------------|------|-------|-----|-------------------|
+
+APLICAÇÃO CRUZADA: para cada peça, busque "[código da peça] aplicação veículos compatíveis" e liste outros modelos compatíveis (ex: "Cobalt 2012-19, Spin 2013-19, Classic 2011-14"). Se não encontrar, deixe "—".
 
 ✅ Confirmado em fonte oficial | ⚠️ Verificar — [link catálogo]
 
