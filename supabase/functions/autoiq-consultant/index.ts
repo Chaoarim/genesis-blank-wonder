@@ -270,12 +270,28 @@ serve(async (req) => {
       console.error("Anthropic API error:", response.status, errorText)
 
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Limite de requisições excedido.' }), {
+        return new Response(JSON.stringify({ error: 'Limite de requisições excedido. Aguarde alguns segundos.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      return new Response(JSON.stringify({ error: 'Erro no serviço de IA' }), {
+      // Detecta erro de créditos esgotados na conta Anthropic
+      if (errorText.includes('credit balance is too low')) {
+        return new Response(JSON.stringify({
+          error: '💳 Créditos da Anthropic esgotados. O administrador precisa adicionar saldo em console.anthropic.com/settings/billing.'
+        }), {
+          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      // Repassa a mensagem real da Anthropic para facilitar o diagnóstico
+      let detail = errorText
+      try {
+        const parsed = JSON.parse(errorText)
+        detail = parsed?.error?.message || errorText
+      } catch { /* keep raw */ }
+
+      return new Response(JSON.stringify({ error: `Erro no serviço de IA: ${detail}` }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
