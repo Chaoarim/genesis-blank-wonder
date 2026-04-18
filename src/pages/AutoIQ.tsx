@@ -210,8 +210,15 @@ export default function AutoIQ() {
                     <div className="shrink-0 mt-1">
                       <Zap className="w-5 h-5 text-amber-500" />
                     </div>
-                    <div className="autoiq-prose min-w-0 text-sm leading-relaxed transition-colors duration-300" style={{ color: t.assistantText }}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                    <div className="min-w-0 flex-1 transition-colors duration-300">
+                      <PartCards
+                        text={msg.content}
+                        cardBg={t.userBubble}
+                        cardBorder={t.border}
+                        textColor={t.assistantText}
+                        mutedColor={t.subtitleColor.includes('stone') ? '#7a7068' : '#a3a3a3'}
+                        proseColor={t.assistantText}
+                      />
                     </div>
                   </div>
                 )}
