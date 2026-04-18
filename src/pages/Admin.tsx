@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AccessCodesPanel } from "@/components/admin/AccessCodesPanel";
 
+const ADMIN_EMAILS = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
+
 type PreReg = {
   id: string;
   full_name: string;
@@ -48,7 +50,8 @@ export default function Admin() {
         .eq("user_id", session.user.id)
         .eq("role", "admin")
         .maybeSingle();
-      if (!roleRow) {
+      const isAllowedAdminEmail = ADMIN_EMAILS.includes((session.user.email ?? "").toLowerCase());
+      if (!roleRow && !isAllowedAdminEmail) {
         toast({ title: "Acesso negado", description: "Apenas o administrador pode acessar.", variant: "destructive" });
         navigate("/sales");
         return;
