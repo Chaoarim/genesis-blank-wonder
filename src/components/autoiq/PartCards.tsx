@@ -29,9 +29,17 @@ function parseContent(text: string): ParsedContent {
       segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     }
     const peca: Peca = { produto: '' };
-    match[1].split('\n').forEach((line) => {
-      const m = line.match(/^\s*(\w+)\s*:\s*(.+?)\s*$/);
-      if (m) (peca as any)[m[1]] = m[2];
+    const body = match[1].trim();
+    const keys = ['produto', 'qtd', 'fornecedor1', 'codigo1', 'status1', 'fornecedor2', 'codigo2', 'status2', 'obs'];
+    const tokenRegex = new RegExp(`(${keys.join('|')})\\s*:\\s*`, 'g');
+    const positions: { key: string; start: number; valueStart: number }[] = [];
+    let tm: RegExpExecArray | null;
+    while ((tm = tokenRegex.exec(body)) !== null) {
+      positions.push({ key: tm[1], start: tm.index, valueStart: tm.index + tm[0].length });
+    }
+    positions.forEach((p, idx) => {
+      const end = idx + 1 < positions.length ? positions[idx + 1].start : body.length;
+      (peca as any)[p.key] = body.slice(p.valueStart, end).trim();
     });
     if (peca.produto) {
       cardIdx += 1;
