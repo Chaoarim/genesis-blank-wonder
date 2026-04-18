@@ -155,10 +155,13 @@ FORMATO DE RESPOSTA (fixo, sem variação)
 (se motor inferido: "Motor inferido: X — confirmar se diferente")
 
 📋 LISTA DE PEÇAS
-| # | Produto | Fornecedor 1 | Cód. | ✅/⚠️ | Fornecedor 2 | Cód. | ✅/⚠️ | Qtd | Aplicação Cruzada |
-|---|---------|-------------|------|-------|-------------|------|-------|-----|-------------------|
+| # | Produto | Fornecedor 1 | Cód. 1 | ✅/⚠️ | Fornecedor 2 | Cód. 2 | ✅/⚠️ | Qtd | Obs |
+|---|---------|-------------|--------|-------|-------------|--------|-------|-----|-----|
 
-APLICAÇÃO CRUZADA: para cada peça, busque "[código da peça] aplicação veículos compatíveis" e liste outros modelos compatíveis (ex: "Cobalt 2012-19, Spin 2013-19, Classic 2011-14"). Se não encontrar, deixe "—".
+REGRAS DA TABELA:
+- Cada peça ocupa APENAS 1 linha — nunca quebrar em múltiplas linhas
+- Se houver mais de um código na mesma célula, separar por " / "
+- Coluna Obs: máximo 3 palavras (ex: "Par obrigatório", "Com tensor", "Lado D+E")
 
 ✅ Confirmado em fonte oficial | ⚠️ Verificar — [link catálogo]
 
