@@ -155,15 +155,28 @@ FORMATO DE RESPOSTA (fixo, sem variação)
 (se motor inferido: "Motor inferido: X — confirmar se diferente")
 
 📋 LISTA DE PEÇAS
-| # | Produto | Fornecedor 1 | Cód. 1 | ✅/⚠️ | Fornecedor 2 | Cód. 2 | ✅/⚠️ | Qtd | Obs |
-|---|---------|-------------|--------|-------|-------------|--------|-------|-----|-----|
 
-REGRAS DA TABELA:
-- Cada peça ocupa APENAS 1 linha — nunca quebrar em múltiplas linhas
-- Se houver mais de um código na mesma célula, separar por " / "
-- Coluna Obs: máximo 3 palavras (ex: "Par obrigatório", "Com tensor", "Lado D+E")
+Para CADA peça, emita um bloco neste formato EXATO (não use tabela markdown, não use outro formato):
 
-✅ Confirmado em fonte oficial | ⚠️ Verificar — [link catálogo]
+:::peca
+produto: Amortecedor Dianteiro
+qtd: 2
+fornecedor1: Cofap
+codigo1: GP30365 / GP30366
+status1: ok
+fornecedor2: Monroe Axios
+codigo2: SP208
+status2: verificar
+obs: Par obrigatório
+:::
+
+REGRAS DO BLOCO:
+- "status1"/"status2": use "ok" para ✅ confirmado, "verificar" para ⚠️
+- Se houver mais de um código, separe por " / " na mesma linha
+- "obs": máximo 3 palavras. Se não houver, omita a linha "obs"
+- Se não houver fornecedor2, omita as 3 linhas (fornecedor2/codigo2/status2)
+- NUNCA quebrar valores em múltiplas linhas
+- Um bloco :::peca ... ::: por peça, em sequência
 
 ⚠️ ALERTAS
 1. ...
