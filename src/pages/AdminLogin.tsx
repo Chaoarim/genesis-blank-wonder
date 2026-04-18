@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
+const ADMIN_EMAILS = ["mauricio.chaparim@gmail.com", "consultapecasai@gmail.com"];
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -33,7 +35,8 @@ const AdminLogin = () => {
           .eq("user_id", data.user.id)
           .eq("role", "admin")
           .maybeSingle();
-        if (!roleRow) {
+        const isAllowedAdminEmail = ADMIN_EMAILS.includes((data.user.email ?? "").toLowerCase());
+        if (!roleRow && !isAllowedAdminEmail) {
           await supabase.auth.signOut();
           toast.error("Esta conta não tem permissão de administrador");
           return;

@@ -44,7 +44,14 @@ export default function Admin() {
         navigate("/login", { state: { redirectTo: "/admin" }, replace: true });
         return;
       }
-      if (!ADMIN_EMAILS.includes(session.user.email ?? "")) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      const isAllowedAdminEmail = ADMIN_EMAILS.includes((session.user.email ?? "").toLowerCase());
+      if (!roleRow && !isAllowedAdminEmail) {
         toast({ title: "Acesso negado", description: "Apenas o administrador pode acessar.", variant: "destructive" });
         navigate("/sales");
         return;
