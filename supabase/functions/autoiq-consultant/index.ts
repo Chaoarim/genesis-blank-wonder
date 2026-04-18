@@ -180,7 +180,7 @@ REGRAS ABSOLUTAS
 1. NUNCA código de memória — busca web sempre
 2. NUNCA invente — sem confirmação: ⚠️ VERIFICAR + link
 3. NUNCA código sem aplicação confirmada na fonte
-4. NUNCA misture OEM com código de fornecedor
+4. SEMPRE incluir aplicação cruzada (outros veículos compatíveis) ou "—"
 5. NUNCA omita quantidade ou lado
 6. SEMPRE par em amortecedor e disco
 7. SEMPRE venda adicional
