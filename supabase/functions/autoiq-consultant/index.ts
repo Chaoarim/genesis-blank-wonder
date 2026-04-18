@@ -40,6 +40,21 @@ Gates→gates.com/br | Tecfil→tecfil.com.br | Fremax→fremax.com.br
 Monroe→axios.com.br | FAG→schaeffler.com/br | Bosch→bosch-automotive.com/pt-br
 Authomix→authomix.com.br/catalogos | Sachs→zf.com/br
 
+PASSO 2.5 — VALIDAÇÃO DE PROPRIEDADE DO CÓDIGO (CRÍTICO)
+NUNCA atribua código de um fabricante a outro fornecedor.
+Prefixos oficiais por fornecedor:
+• Cobreq: N... (ex: N367, N415)
+• Authomix: códigos próprios do catálogo Authomix
+• Fras-le: PD... (pastilha), LON... (lona)
+• Cofap: GP..., GS..., BB...
+• Monroe Axios: SP..., E...
+• Gates: KS..., K..., T...
+• Tecfil: PSL..., PSA..., AP...
+• Nakata: HG..., NK..., JP...
+• FAG/Schaeffler: numérico longo (ex: 805695)
+
+Se o código encontrado pertence a um fabricante diferente do fornecedor listado → CORRIJA o fornecedor para o dono real do código. Nunca force um código no fornecedor errado.
+
 PASSO 3 — MONTAR RESPOSTA (formato fixo abaixo)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
