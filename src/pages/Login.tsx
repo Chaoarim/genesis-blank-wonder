@@ -34,7 +34,8 @@ const Login = () => {
     const isAdmin = ADMIN_EMAILS.includes((userEmail ?? "").toLowerCase());
     if (redirectTo === "/admin" && isAdmin) return navigate("/admin", { replace: true });
     if (redirectTo && redirectTo !== "/admin") return navigate(redirectTo, { replace: true });
-    navigate(sellerData ? "/autoiq" : "/sales", { replace: true });
+    if (isAdmin) return navigate("/admin", { replace: true });
+    navigate("/autoiq", { replace: true });
   };
 
   const handleCodeLogin = async (e: React.FormEvent) => {
