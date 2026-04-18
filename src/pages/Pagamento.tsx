@@ -90,25 +90,23 @@ export default function Pagamento() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            Pix Copia e Cola
-          </label>
-          <div className="flex gap-2">
-            <textarea
-              readOnly
-              value={PIX_PAYLOAD}
-              rows={3}
-              className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-xs font-mono break-all resize-none"
-            />
+          <div className="flex items-stretch gap-2 bg-muted/40 border border-border rounded-xl p-2">
+            <p className="flex-1 px-2 py-2 text-xs font-mono text-center break-all leading-relaxed text-foreground">
+              {PIX_PAYLOAD}
+            </p>
             <button
               onClick={copyKey}
-              className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 rounded-lg transition-colors self-stretch"
+              className="flex items-center gap-1.5 bg-background hover:bg-accent border border-border text-foreground text-sm font-medium px-3 rounded-lg transition-colors shrink-0"
             >
-              {copied ? "✓ Copiado" : "Copiar"}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              {copied ? "Copiado" : "Copiar"}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground mt-1.5">
-            Chave: <span className="font-mono">{PIX_KEY}</span>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Copie o código acima e cole na opção "Pix Copia e Cola" do seu banco, ou escaneie o QR Code.
           </p>
         </div>
 
