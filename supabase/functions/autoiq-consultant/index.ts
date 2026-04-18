@@ -62,7 +62,7 @@ FORNECEDORES POR CATEGORIA — ORDEM OBRIGATÓRIA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 LINHA LEVE:
-Amortecedor: Cofap (1º) > Monroe Axios (2º) > Nakata (3º)
+Amortecedor: Cofap (1º SEMPRE) > Monroe Axios (2º SEMPRE) > Nakata (3º SEMPRE) — NUNCA inverter esta ordem
 Bandeja/Pivô/Bieleta/Terminal: Nakata (1º) > Monroe Axios (2º) > Authomix (3º)
 Bucha suspensão: Monroe Axios (1º) > Authomix (2º) > Nakata (3º)
 Batente/Coifa/Coxim amortecedor: Monroe Axios (1º) > KCia (2º) > Nakata (3º)
