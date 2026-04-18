@@ -202,8 +202,7 @@ REGRAS DO BLOCO:
 💡 OBSERVAÇÕES TÉCNICAS
 ...
 
-🔍 FONTES CONSULTADAS
-...
+(NÃO incluir seção de fontes consultadas. NUNCA exibir URLs ou nomes de sites na resposta final ao usuário.)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REGRAS ABSOLUTAS
