@@ -28,14 +28,19 @@ export function AccessCodesPanel() {
   const [notes, setNotes] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const invokeAccessCodes = async (payload: Record<string, unknown>) => {
+    return supabase.functions.invoke("generate-access-code", { body: payload });
+  };
+
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("access_codes")
-      .select("id,code,status,recovery_email,notes,created_at,last_login_at,revoked_at,is_admin")
-      .order("created_at", { ascending: false });
-    if (error) toast.error("Erro ao carregar códigos");
-    else setCodes((data as any) || []);
+    const { data, error } = await invokeAccessCodes({ action: "list" });
+    if (error || data?.error) {
+      setCodes([]);
+      toast.error(data?.error || error?.message || "Erro ao carregar códigos");
+    } else {
+      setCodes((data?.codes as AccessCode[]) || []);
+    }
     setLoading(false);
   };
 
@@ -44,8 +49,11 @@ export function AccessCodesPanel() {
   const generate = async () => {
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-access-code", {
-        body: { recovery_email: recoveryEmail || null, notes: notes || null, is_admin: isAdmin },
+      const { data, error } = await invokeAccessCodes({
+        action: "generate",
+        recovery_email: recoveryEmail || null,
+        notes: notes || null,
+        is_admin: isAdmin,
       });
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao gerar código");
@@ -71,16 +79,14 @@ export function AccessCodesPanel() {
 
   const revoke = async (id: string) => {
     if (!confirm("Revogar este código? O cliente perderá o acesso.")) return;
-    const { error } = await supabase.from("access_codes")
-      .update({ status: "revoked", revoked_at: new Date().toISOString() }).eq("id", id);
-    if (error) toast.error("Erro ao revogar");
+    const { data, error } = await invokeAccessCodes({ action: "revoke", id });
+    if (error || data?.error) toast.error(data?.error || error?.message || "Erro ao revogar");
     else { toast.success("Código revogado"); load(); }
   };
 
   const reactivate = async (id: string) => {
-    const { error } = await supabase.from("access_codes")
-      .update({ status: "active", revoked_at: null }).eq("id", id);
-    if (error) toast.error("Erro ao reativar");
+    const { data, error } = await invokeAccessCodes({ action: "reactivate", id });
+    if (error || data?.error) toast.error(data?.error || error?.message || "Erro ao reativar");
     else { toast.success("Código reativado"); load(); }
   };
 
