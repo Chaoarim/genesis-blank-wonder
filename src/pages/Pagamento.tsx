@@ -91,21 +91,25 @@ export default function Pagamento() {
 
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            Chave Pix (e-mail)
+            Pix Copia e Cola
           </label>
           <div className="flex gap-2">
-            <input
+            <textarea
               readOnly
-              value={PIX_KEY}
-              className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-sm font-mono"
+              value={PIX_PAYLOAD}
+              rows={3}
+              className="flex-1 bg-background border border-border rounded-lg px-3 py-2.5 text-xs font-mono break-all resize-none"
             />
             <button
               onClick={copyKey}
-              className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 rounded-lg transition-colors"
+              className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 rounded-lg transition-colors self-stretch"
             >
               {copied ? "✓ Copiado" : "Copiar"}
             </button>
           </div>
+          <p className="text-xs text-muted-foreground mt-1.5">
+            Chave: <span className="font-mono">{PIX_KEY}</span>
+          </p>
         </div>
 
         <div className="bg-muted/50 rounded-lg p-4 text-sm space-y-2">
