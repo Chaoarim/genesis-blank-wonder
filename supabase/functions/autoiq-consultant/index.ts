@@ -71,7 +71,7 @@ Mola helicoidal: Fabrini (1º) > Monroe Axios (2º)
 Coxim motor/câmbio: Corteco (1º) > Sabó (2º) > Authomix (3º)
 Juntas/Retentores/Vedação: Sabó (1º) > Corteco (2º)
 Lona freio: Fras-le (1º) > LonaFlex (2º)
-Pastilha freio: Fras-le (1º) > Authomix (2º) > Cobreq/TRW/SYL (3º)
+Pastilha freio: Fras-le (1º) > Cobreq (2º) > SYL (3º) — Authomix SOMENTE se nenhum dos 3 tiver código confirmado
 Disco freio: Fremax (1º) > Durametal (2º) > Hipper Freios (3º)
 Tambor freio: Durametal (1º) > Fremax (2º) > Hipper Freios (3º)
 Cubo de roda: Durametal (1º) > Authomix (2º)
