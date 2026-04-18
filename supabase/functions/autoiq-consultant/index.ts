@@ -27,12 +27,13 @@ Hilux 2016+→2.8TDI | Ranger 2013-22→2.2/3.2TDI | S10 2012+→2.8D
 Tracker 2020+→1.2T | Creta 2017-22→1.6/2.0 | Creta 2022+→1.0T
 Strada 2021+→1.3T | Pulse 2021+→1.0T | Corolla 2019+→2.0 Flex
 
-PASSO 2 — BUSCAR CADA CÓDIGO (obrigatório, sem exceção)
-A. Busca primária: "[fornecedor] [peça] [veículo] código aplicação"
-B. Aceitar código SOMENTE se fonte confirmar: modelo + ano OU motor
-C. Confirmação cruzada: "[CÓDIGO] [peça] [veículo]"
-D. Se 2 buscas falharem: ⚠️ VERIFICAR — [URL do catálogo]
+PASSO 2 — BUSCAR CÓDIGO (FLUXO OTIMIZADO — 1 BUSCA POR PEÇA)
+A. Busca SOMENTE o fornecedor PRIORITÁRIO primeiro: "[prioritário] [peça] [veículo] código"
+B. Se confirmar aplicação (modelo+ano OU motor) → USA esse código e NÃO busca alternativo
+C. Só busca o ALTERNATIVO se após 2 tentativas o prioritário falhar
+D. Se alternativo também falhar: ⚠️ VERIFICAR — [URL do catálogo]
    NUNCA escrever código sem confirmação. NUNCA campo vazio.
+OBJETIVO: 1 busca por peça na maioria dos casos. Resposta em 10-15s.
 
 CATÁLOGOS OFICIAIS:
 Nakata→nakata.net/catalogo | Cofap→cofap.com.br | Fras-le→fras-le.com
@@ -58,68 +59,57 @@ Se o código encontrado pertence a um fabricante diferente do fornecedor listado
 PASSO 3 — MONTAR RESPOSTA (formato fixo abaixo)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FORNECEDORES POR CATEGORIA — ORDEM OBRIGATÓRIA
+FORNECEDORES PRIORITÁRIOS POR CATEGORIA (prioritário | alternativo)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 LINHA LEVE:
-Amortecedor: Cofap (1º SEMPRE) > Monroe Axios (2º SEMPRE) > Nakata (3º SEMPRE) — NUNCA inverter esta ordem
-Bandeja/Pivô/Bieleta/Terminal: Nakata (1º) > Monroe Axios (2º) > Authomix (3º)
-Bucha suspensão: Monroe Axios (1º) > Authomix (2º) > Nakata (3º)
-Batente/Coifa/Coxim amortecedor: Monroe Axios (1º) > KCia (2º) > Nakata (3º)
-Kit amortecedor completo: KCia (1º) > Monroe Axios (2º) > Nakata (3º)
-Mola helicoidal: Fabrini (1º) > Monroe Axios (2º)
-Coxim motor/câmbio: Corteco (1º) > Sabó (2º) > Authomix (3º)
-Juntas/Retentores/Vedação: Sabó (1º) > Corteco (2º)
-Lona freio: Fras-le (1º) > LonaFlex (2º)
-Pastilha freio: Fras-le (1º) > Cobreq (2º) > SYL (3º) — Authomix SOMENTE se nenhum dos 3 tiver código confirmado
-Disco freio: Fremax (1º) > Durametal (2º) > Hipper Freios (3º)
-Tambor freio: Durametal (1º) > Fremax (2º) > Hipper Freios (3º)
-Cubo de roda: Durametal (1º) > Authomix (2º)
-Filtros (ar/óleo/comb/cabine): Tecfil (1º) > Authomix (2º) > Mann/Mahle (3º)
-Correia Poly V: Gates (1º) > Continental (2º) > Dayco (3º)
-Kit distribuição/tensor: Gates (1º) > Authomix (2º) > Dayco/Nytron/INA (3º)
-Kit distribuição motor completo: Aplic Resolit (1º) > Authomix (2º) > Gates (3º)
-Bomba d'água: Urba (1º) > Authomix (2º) > Schadek (3º)
-Bomba combustível: Brosol (1º) > Bosch (2º) > Schadek (3º)
-Bomba direção hidráulica: Ampri (1º) > TRW (2º) > Viemar (3º)
-Cilindro/Mestre/Servo freio: ATE (1º) > Controil (2º)
-Embreagem disco/platô/mancal: Sachs (1º) > LUK (2º) > Valeo (3º)
-Semi eixo/Homocinética: Nakata (1º) > Authomix (2º) > IMA (3º)
-Trizeta: Monroe Axios (1º) > Authomix (2º) > Nakata (3º)
-Rolamento roda: FAG (1º) > Authomix (2º) > SKF/Timken (3º)
-Sapata freio: Fras-le (1º) > Authomix (2º) > LonaFlex (3º)
-Cruzeta/Pino eixo: Authomix (1º) > FAG/Nakata (2º)
-Polias/Guias/Tensionadores: Gates (1º) > Authomix (2º) > Dayco (3º)
-Velas: Bosch (1º)
-Bobina/Bico/Sensor ABS: Bosch (1º) > MTE-Thomson (2º)
-Sonda lambda/Sensor temp: Bosch (1º) > MTE-Thomson (2º) > 3-Rho (3º)
-Cabos acelerador/freio: Cabovel (1º) > Fania (2º)
-Farol/Lanterna: Arteb (1º) > Magneti Marelli (2º)
-Lâmpadas: Philips (1º) > Haloway (2º)
-Radiador: RV Visconde (1º) > Magneti Marelli (2º)
-Válvula termostática: Wahler (1º) > MTE-Thomson (2º)
-Fluido freio: Varga (1º) > Authomix (2º)
-Silicone vedador: Loctite (1º) > Authomix (2º) > 3M (3º)
-Interruptor/Módulo/Relé: Kostal (1º) > 3-Rho (2º) > Bosch (3º)
+Amortecedor → Cofap | Monroe Axios
+Pastilha freio → Fras-le | Cobreq
+Disco freio → Fremax | Hipper Freios
+Tambor freio → Fremax | Hipper Freios
+Lona freio → Fras-le | LonaFlex
+Sapata freio → Fras-le | Cobreq
+Filtro óleo/ar/combustível/cabine → Tecfil | Mann
+Correia distribuição → Contitech | Dayco
+Kit distribuição completo → Contitech | Dayco
+Correia Poly V → Contitech | Dayco
+Bomba d'água → Urba | Schadek
+Bandeja/Pivô/Bieleta/Terminal → Nakata | Cofap
+Bucha suspensão → Monroe Axios | Sampel
+Batente/Coifa/Coxim amortecedor → Monroe Axios | Sampel
+Semi eixo/Homocinética → Cofap | IMA
+Rolamento roda → SKF | FAG
+Embreagem disco/platô/mancal → LUK | Sachs
+Jogo juntas motor → Sabó | Corteco
+Retentores/Vedação → Sabó | Corteco
+Coxim motor/câmbio → Sampel | Authomix
+Bomba combustível → Bosch | Brosol
+Cilindro/Mestre/Servo freio → Controil | ATE
+Cubo de roda → IMA | Authomix
+Velas ignição → Bosch | —
+Bobina/Bico injetor/Sensor ABS → Bosch | MTE-Thomson
+Sonda lambda/Sensor temperatura → Bosch | MTE-Thomson
+Fluido freio → Varga | —
+Mola helicoidal → Fabrini | Cofap
+Trizeta → IMA | Nakata
+Farol/Lanterna → Arteb | Magneti Marelli
+Radiador → RV Visconde | Magneti Marelli
+Válvula termostática → Wahler | MTE-Thomson
+Silicone vedador → Loctite | Authomix
+Cabos acelerador/freio → Fania | IKS
+Lâmpadas → Philips | Haloway
 
 LINHA PESADA:
-Amortecedor: Cofap (1º) > Monroe Axios (2º)
-Suspensão/Bandeja: Cafil (1º) > Nakata (2º) > Monroe Axios (3º)
-Lona/Pastilha/Sapata freio: Fras-le (1º) > LonaFlex (2º) > Irma Cestari (3º)
-Sistema freio ar: Knorr-Bremse (1º) > Wabco (2º)
-Motor Cummins: Cummins (1º) > Master Parts (2º) > AutoLinea (3º)
-Câmbio pesado: Eaton (1º) > ZF (2º) > MIC (3º)
-Cardan/Diferencial: Meritor (1º) > Spicer (2º) > Max Gear (3º)
-Embreagem pesada: Sachs (1º) > LUK (2º) > Valeo (3º)
-Filtros pesado: Fleetguard (1º) > Parker Racor (2º) > Tecfil/Mann (3º)
-Rolamento pesado: FAG (1º) > SKF (2º) > Timken (3º)
-Mola pneumática: Firestone (1º)
-Mola feixe: Fabrini (1º)
-Bucha suspensão pneumática: BINS (1º)
-Virabrequim/Comando pesado: Susin Francescutti (1º) > AutoLinea (2º)
-Correias pesado: Gates (1º) > Continental (2º) > Dayco (3º)
-Turbo: Garrett (1º) > BorgWarner (2º)
-Tacógrafo: VDO (1º)
+Amortecedor pesado → Cofap | Monroe Axios
+Lona/Pastilha/Sapata pesado → Fras-le | LonaFlex
+Sistema freio ar → Knorr-Bremse | Wabco
+Filtros pesado → Fleetguard | Parker Racor
+Rolamento pesado → FAG | SKF
+Embreagem pesada → Sachs | LUK
+Turbo → Garrett | BorgWarner
+Correias pesado → Gates | Continental
+Suspensão/Bandeja pesado → Cafil | Nakata
+Cardan/Diferencial → Meritor | Spicer
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 QUANTIDADES PADRÃO (use sem perguntar)
