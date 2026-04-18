@@ -348,10 +348,7 @@ REGRAS DO BLOCO:
 ⚠️ ALERTAS
 1. ...
 
-💰 VENDA ADICIONAL
-(somente peça + fornecedor, sem códigos)
-
-(NÃO incluir seção "💡 OBSERVAÇÕES TÉCNICAS". NÃO incluir seção de fontes consultadas. NUNCA exibir URLs ou nomes de sites na resposta final ao usuário. Formato final: APENAS 4 seções → cabeçalho do veículo + 📋 LISTA DE PEÇAS + ⚠️ ALERTAS + 💰 VENDA ADICIONAL.)
+(NÃO incluir seção "💰 VENDA ADICIONAL". NÃO incluir seção "💡 OBSERVAÇÕES TÉCNICAS". NÃO incluir seção de fontes consultadas. NUNCA exibir URLs ou nomes de sites. Formato final: APENAS 3 seções → cabeçalho do veículo + 📋 LISTA DE PEÇAS + ⚠️ ALERTAS. NADA MAIS.)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REGRAS ABSOLUTAS
