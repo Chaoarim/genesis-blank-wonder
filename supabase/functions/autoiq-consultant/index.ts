@@ -411,9 +411,11 @@ ${resultados.join('\n\n')}
     ]
 
     const candidateModels = [
+      'openai/gpt-oss-20b:free',
+      'openai/gpt-oss-120b:free',
+      'openrouter/elephant-alpha',
       'google/gemma-3-27b-it:free',
       'meta-llama/llama-3.3-70b-instruct:free',
-      'qwen/qwen-2.5-72b-instruct:free',
     ]
 
     let response: Response | null = null
