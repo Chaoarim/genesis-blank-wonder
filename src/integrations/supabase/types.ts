@@ -220,6 +220,42 @@ export type Database = {
           },
         ]
       }
+      catalogo_pecas: {
+        Row: {
+          aplicacao: string | null
+          codigo: string
+          created_at: string | null
+          estoque: number | null
+          fornecedor: string
+          id: number
+          preco: string | null
+          produto: string
+          veiculo: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          codigo: string
+          created_at?: string | null
+          estoque?: number | null
+          fornecedor: string
+          id?: number
+          preco?: string | null
+          produto: string
+          veiculo: string
+        }
+        Update: {
+          aplicacao?: string | null
+          codigo?: string
+          created_at?: string | null
+          estoque?: number | null
+          fornecedor?: string
+          id?: number
+          preco?: string | null
+          produto?: string
+          veiculo?: string
+        }
+        Relationships: []
+      }
       chat_usage: {
         Row: {
           id: string
@@ -2129,6 +2165,7 @@ export type Database = {
         Returns: boolean
       }
       has_seller_module_access: { Args: { _module: string }; Returns: boolean }
+      unaccent: { Args: { "": string }; Returns: string }
       update_subscription_by_email: {
         Args: { p_email: string; p_plan: string; p_status: string }
         Returns: undefined
