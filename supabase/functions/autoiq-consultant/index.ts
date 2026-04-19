@@ -419,7 +419,7 @@ ${resultados.join('\n\n')}
         'X-Title': 'AutoIQ Consultant',
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4',
+        model: 'deepseek/deepseek-chat-v3.1:free',
         max_tokens: 4096,
         messages: openrouterMessages,
       })
