@@ -375,7 +375,7 @@ serve(async (req) => {
         if (dados.length > 0) {
           temDadosBanco = true
           const linhas = dados.map(d =>
-            `  • ${d.fornecedor} | Cód: ${d.codigo} | ${d.produto} | Estoque: ${d.estoque > 0 ? d.estoque + ' un' : 'verificar'}`
+            `  • FORNECEDOR: ${d.fornecedor} | CODIGO: ${d.codigo} | PRODUTO: ${d.produto} | ESTOQUE: ${d.estoque > 0 ? d.estoque + ' un' : 'verificar'} | USE ESTE CODIGO NO CARD`
           ).join('\n')
           resultados.push(`Peça: ${peca}\n${linhas}`)
         }
