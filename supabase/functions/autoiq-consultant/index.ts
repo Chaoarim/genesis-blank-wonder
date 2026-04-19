@@ -393,39 +393,41 @@ ${resultados.join('\n\n')}
       }
     }
 
-    const anthropicMessages = messages.map((m: { role: string; content: string }, idx: number) => {
-      const isUltimaMensagem = idx === messages.length - 1 && m.role === 'user'
-      return {
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: isUltimaMensagem && contextoBanco
-          ? `${m.content}\n\n${contextoBanco}`
-          : m.content,
-      }
-    })
+    const systemContent = contextoBanco
+      ? SYSTEM_PROMPT + `\n\n🔒 DADOS CONFIRMADOS DO ESTOQUE — COPIE OS CÓDIGOS ABAIXO DIRETAMENTE NOS CARDS SEM BUSCA WEB:\n${contextoBanco}`
+      : SYSTEM_PROMPT
 
-    const tools = temDadosBanco && pecas.length > 0
-      ? []
-      : [{ type: "web_search_20250305", name: "web_search" }]
+    const openrouterMessages = [
+      { role: 'system', content: systemContent },
+      ...messages.map((m: { role: string; content: string }, idx: number) => {
+        const isUltimaMensagem = idx === messages.length - 1 && m.role === 'user'
+        return {
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: isUltimaMensagem && contextoBanco
+            ? `${m.content}\n\n${contextoBanco}`
+            : m.content,
+        }
+      })
+    ]
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://novopecai.lovable.app',
+        'X-Title': 'AutoIQ Consultant',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'anthropic/claude-sonnet-4',
         max_tokens: 4096,
-        system: contextoBanco ? SYSTEM_PROMPT + `\n\n🔒 DADOS CONFIRMADOS DO ESTOQUE — COPIE OS CÓDIGOS ABAIXO DIRETAMENTE NOS CARDS SEM BUSCA WEB:\n${contextoBanco}` : SYSTEM_PROMPT,
-        tools,
-        messages: anthropicMessages
+        messages: openrouterMessages,
       })
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("Anthropic API error:", response.status, errorText)
+      console.error("OpenRouter API error:", response.status, errorText)
 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Limite de requisições excedido. Aguarde alguns segundos.' }), {
@@ -433,9 +435,9 @@ ${resultados.join('\n\n')}
         })
       }
 
-      if (errorText.includes('credit balance is too low')) {
+      if (response.status === 402 || errorText.toLowerCase().includes('credit')) {
         return new Response(JSON.stringify({
-          error: '💳 Créditos da Anthropic esgotados. O administrador precisa adicionar saldo em console.anthropic.com/settings/billing.'
+          error: '💳 Créditos do OpenRouter esgotados. Adicione saldo em openrouter.ai/credits.'
         }), {
           status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
@@ -454,10 +456,7 @@ ${resultados.join('\n\n')}
 
     const data = await response.json()
 
-    const text = data.content
-      ?.filter((block: { type: string }) => block.type === 'text')
-      .map((block: { text: string }) => block.text)
-      .join('\n') || 'Não foi possível gerar uma resposta.'
+    const text = data.choices?.[0]?.message?.content || 'Não foi possível gerar uma resposta.'
 
     return new Response(
       JSON.stringify({ response: text }),
