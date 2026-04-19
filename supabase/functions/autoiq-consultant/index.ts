@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,38 +60,35 @@ Se ambiguidade bloquear >50% da lista → fazer UMA pergunta objetiva.
 Caso contrário → processar e sinalizar itens incertos com ⚠️.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ETAPA 2 — BUSCAR CÓDIGOS
+ETAPA 2 — PRIORIDADE DE FONTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚡ REGRA ABSOLUTA:
-PROIBIDO usar código de memória.
-Todo código vem de busca web realizada agora, nesta sessão.
-Códigos mudam com revisões de fabricante — memória é fonte de erro.
+⚡ REGRA ABSOLUTA DE FONTE:
 
-PROCESSO OBRIGATÓRIO PARA CADA PEÇA:
+PRIORIDADE 1 — ESTOQUE INTERNO (dados já injetados no prompt):
+Se o prompt contiver uma seção "DADOS DO ESTOQUE INTERNO", use esses
+dados diretamente. Eles são do banco de dados do próprio cliente.
+NÃO faça busca web para peças cobertas pelo estoque interno.
+Marque status como "ok" e inclua "📦 Estoque interno" no obs.
+
+PRIORIDADE 2 — BUSCA WEB (somente para peças sem dados internos):
+Se uma peça não estiver no estoque interno, use busca web.
+Processo obrigatório para cada peça sem dados:
 
 PASSO A — Busca primária:
 Query: "[fornecedor prioritário] [peça] [veículo completo] código aplicação"
-Exemplos:
-Cofap amortecedor dianteiro Hilux pickup 2.8 2020 código
-Fras-le pastilha freio Onix 1.4 2018 código
-Tecfil filtro óleo HB20 1.0 2015 código
 
 PASSO B — Validar aplicação:
 Aceitar código SOMENTE se fonte confirmar modelo + ano OU motor.
-Fonte sem confirmação de aplicação → rejeitar e buscar outra.
 
 PASSO C — Confirmação cruzada:
 Query: "[CÓDIGO] [peça] aplicação [veículo]"
-Confirmar que o código pertence exatamente ao veículo consultado.
 
 PASSO D — Fallback obrigatório:
 Após 2 buscas sem resultado confirmado:
 → ⚠️ VERIFICAR — [URL direto do catálogo do fornecedor]
-NUNCA escrever código sem confirmação.
-NUNCA deixar campo vazio sem alerta.
 
-CATÁLOGOS OFICIAIS PARA BUSCA:
+CATÁLOGOS OFICIAIS:
 Cofap→cofap.com.br | Fras-le→fras-le.com | Fremax→fremax.com.br
 Tecfil→tecfil.com.br | Contitech→contitech.com.br
 Nakata→nakata.net/catalogo | Monroe/Axios→axios.com.br
@@ -100,10 +98,6 @@ Sabó→sabo.com.br | LUK→schaeffler.com/br
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ETAPA 3 — FORNECEDORES PRIORITÁRIOS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Busca SOMENTE o prioritário primeiro.
-Se confirmar → usa. NÃO busca alternativo.
-Só busca alternativo se prioritário falhar após 2 tentativas.
 
 LINHA LEVE:
 Amortecedor → Cofap | Monroe Axios
@@ -223,7 +217,7 @@ FORMATO FIXO — APENAS CARDS. NADA MAIS.
 Inicie com uma linha identificando o veículo:
 🚗 [Marca — Modelo — Versão — Motor — Ano]
 
-Para CADA peça, emita um bloco neste formato EXATO (não use tabela markdown, não use outro formato):
+Para CADA peça, emita um bloco neste formato EXATO:
 
 :::peca
 produto: Amortecedor Dianteiro
@@ -248,16 +242,13 @@ REGRAS DO BLOCO:
 A resposta termina no último card.
 ZERO texto depois dos cards.
 
-Alertas, venda adicional, observações e fontes:
-SOMENTE se o cliente perguntar explicitamente.
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REGRAS ABSOLUTAS — SEM EXCEÇÃO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. NUNCA código de memória — busca web sempre
+1. Estoque interno disponível → usar direto, SEM busca web
 2. NUNCA invente — sem confirmação: ⚠️ VERIFICAR + link
-3. NUNCA código sem aplicação confirmada na fonte
+3. NUNCA código sem aplicação confirmada
 4. NUNCA misturar códigos de fornecedores diferentes
 5. NUNCA omitir quantidade ou lado
 6. SEMPRE par em amortecedor e disco
@@ -283,6 +274,60 @@ cada resposta representa o padrão mais alto de consultoria
 em peças automotivas do Brasil.
 
 Isso é o padrão AutoIQ. Isso é o mínimo aceitável.`
+
+// ─── Busca no banco de dados ───────────────────────────────────
+async function buscarPecasNoBanco(
+  supabaseClient: ReturnType<typeof createClient>,
+  veiculo: string,
+  termoBusca: string
+): Promise<Array<{ codigo: string; produto: string; fornecedor: string; aplicacao: string; estoque: number; preco: string }>> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('catalogo_pecas')
+      .select('codigo, produto, fornecedor, aplicacao, estoque, preco')
+      .ilike('veiculo', `%${veiculo}%`)
+      .ilike('produto', `%${termoBusca}%`)
+      .limit(6)
+
+    if (error) {
+      console.error('Erro busca banco:', error)
+      return []
+    }
+    return (data as any) || []
+  } catch (e) {
+    console.error('Erro busca banco:', e)
+    return []
+  }
+}
+
+// ─── Extrai veículo e peças da última mensagem do usuário ──────
+function extrairContexto(messages: Array<{ role: string; content: string }>) {
+  const ultimaMensagem = messages.filter(m => m.role === 'user').pop()?.content || ''
+
+  const veiculoMatch = ultimaMensagem.match(
+    /\b(chevrolet|fiat|volkswagen|vw|ford|honda|toyota|hyundai|jeep|renault|nissan|mitsubishi|peugeot|citroën|citroen|chery|caoa)\s+\w+|\b(onix|gol|celta|corsa|clio|uno|palio|argo|cronos|mobi|strada|toro|compass|renegade|hb20|creta|kwid|sandero|logan|duster|ka|ecosport|ranger|s10|hilux|sw4|l200|tracker|spin|cobalt|cruze|montana|zafira|polo|virtus|t-cross|jetta|saveiro|fox|golf)\b/i
+  )
+  const veiculo = veiculoMatch ? veiculoMatch[0] : ''
+
+  const termosPecas = [
+    'amortecedor', 'pastilha', 'disco', 'filtro', 'correia', 'rolamento',
+    'embreagem', 'bucha', 'bandeja', 'pivô', 'pivo', 'bieleta', 'terminal',
+    'vela', 'bobina', 'sensor', 'bomba', 'radiador', 'mola', 'coxim',
+    'semi eixo', 'homocinética', 'coifa', 'batente',
+    'cubo', 'tambor', 'lona', 'sapata', 'tensor', 'kit distribuição',
+    'junta', 'retentor', 'calço', 'válvula'
+  ]
+
+  const pecasEncontradas: string[] = []
+  const conteudoLower = ultimaMensagem.toLowerCase()
+  for (const termo of termosPecas) {
+    if (conteudoLower.includes(termo)) {
+      pecasEncontradas.push(termo)
+    }
+  }
+
+  return { veiculo, pecas: pecasEncontradas }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -313,10 +358,54 @@ serve(async (req) => {
       )
     }
 
-    const anthropicMessages = messages.map((m: { role: string; content: string }) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: m.content,
-    }))
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabaseClient = createClient(supabaseUrl, supabaseKey)
+
+    const { veiculo, pecas } = extrairContexto(messages)
+
+    let contextoBanco = ''
+    let temDadosBanco = false
+
+    if (veiculo && pecas.length > 0) {
+      const resultados: string[] = []
+
+      for (const peca of pecas) {
+        const dados = await buscarPecasNoBanco(supabaseClient, veiculo, peca)
+        if (dados.length > 0) {
+          temDadosBanco = true
+          const linhas = dados.map(d =>
+            `  • ${d.fornecedor} | Cód: ${d.codigo} | ${d.produto} | Estoque: ${d.estoque > 0 ? d.estoque + ' un' : 'verificar'}`
+          ).join('\n')
+          resultados.push(`Peça: ${peca}\n${linhas}`)
+        }
+      }
+
+      if (temDadosBanco) {
+        contextoBanco = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DADOS DO ESTOQUE INTERNO — USE ESTES DIRETAMENTE
+NÃO faça busca web para as peças abaixo.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${resultados.join('\n\n')}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`
+      }
+    }
+
+    const anthropicMessages = messages.map((m: { role: string; content: string }, idx: number) => {
+      const isUltimaMensagem = idx === messages.length - 1 && m.role === 'user'
+      return {
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: isUltimaMensagem && contextoBanco
+          ? `${m.content}\n\n${contextoBanco}`
+          : m.content,
+      }
+    })
+
+    const tools = temDadosBanco && pecas.length > 0
+      ? []
+      : [{ type: "web_search_20250305", name: "web_search" }]
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -329,12 +418,7 @@ serve(async (req) => {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
-        tools: [
-          {
-            type: "web_search_20250305",
-            name: "web_search",
-          }
-        ],
+        tools,
         messages: anthropicMessages
       })
     })
@@ -349,7 +433,6 @@ serve(async (req) => {
         })
       }
 
-      // Detecta erro de créditos esgotados na conta Anthropic
       if (errorText.includes('credit balance is too low')) {
         return new Response(JSON.stringify({
           error: '💳 Créditos da Anthropic esgotados. O administrador precisa adicionar saldo em console.anthropic.com/settings/billing.'
@@ -358,7 +441,6 @@ serve(async (req) => {
         })
       }
 
-      // Repassa a mensagem real da Anthropic para facilitar o diagnóstico
       let detail = errorText
       try {
         const parsed = JSON.parse(errorText)
@@ -385,7 +467,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("autoiq-consultant error:", error)
     return new Response(
-      JSON.stringify({ error: error.message || 'Unknown error' }),
+      JSON.stringify({ error: (error as Error).message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
