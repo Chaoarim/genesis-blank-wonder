@@ -410,32 +410,67 @@ ${resultados.join('\n\n')}
       })
     ]
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://novopecai.lovable.app',
-        'X-Title': 'AutoIQ Consultant',
-      },
-      body: JSON.stringify({
-        model: 'deepseek/deepseek-chat-v3.1:free',
-        max_tokens: 4096,
-        messages: openrouterMessages,
+    const candidateModels = [
+      'openai/gpt-oss-20b:free',
+      'openai/gpt-oss-120b:free',
+      'openrouter/elephant-alpha',
+      'google/gemma-3-27b-it:free',
+      'meta-llama/llama-3.3-70b-instruct:free',
+    ]
+
+    let response: Response | null = null
+    let lastErrorText = ''
+    let lastStatus = 500
+
+    for (const model of candidateModels) {
+      const attempt = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://novopecai.lovable.app',
+          'X-Title': 'AutoIQ Consultant',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 4096,
+          messages: openrouterMessages,
+        })
       })
-    })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("OpenRouter API error:", response.status, errorText)
+      if (attempt.ok) {
+        response = attempt
+        break
+      }
 
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Limite de requisições excedido. Aguarde alguns segundos.' }), {
+      lastStatus = attempt.status
+      lastErrorText = await attempt.text()
+      console.error(`OpenRouter API error (${model}):`, attempt.status, lastErrorText)
+
+      const parsedError = (() => {
+        try {
+          return JSON.parse(lastErrorText)
+        } catch {
+          return null
+        }
+      })()
+
+      const detail = String(parsedError?.error?.message || lastErrorText).toLowerCase()
+      const shouldRetry = attempt.status === 404 || attempt.status === 429 || attempt.status >= 500 || detail.includes('rate-limit') || detail.includes('rate limited') || detail.includes('no endpoints found')
+
+      if (!shouldRetry) {
+        break
+      }
+    }
+
+    if (!response) {
+      if (lastStatus === 429 || lastErrorText.toLowerCase().includes('rate limit')) {
+        return new Response(JSON.stringify({ error: 'Os modelos gratuitos do OpenRouter estão temporariamente sobrecarregados. Tente novamente em instantes.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      if (response.status === 402 || errorText.toLowerCase().includes('credit')) {
+      if (lastStatus === 402 || lastErrorText.toLowerCase().includes('credit')) {
         return new Response(JSON.stringify({
           error: '💳 Créditos do OpenRouter esgotados. Adicione saldo em openrouter.ai/credits.'
         }), {
@@ -443,10 +478,10 @@ ${resultados.join('\n\n')}
         })
       }
 
-      let detail = errorText
+      let detail = lastErrorText
       try {
-        const parsed = JSON.parse(errorText)
-        detail = parsed?.error?.message || errorText
+        const parsed = JSON.parse(lastErrorText)
+        detail = parsed?.error?.message || lastErrorText
       } catch { /* keep raw */ }
 
       return new Response(JSON.stringify({ error: `Erro no serviço de IA: ${detail}` }), {

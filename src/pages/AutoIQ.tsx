@@ -148,8 +148,8 @@ export default function AutoIQ() {
           id: crypto.randomUUID(),
           role: 'assistant',
           content:
-            e instanceof Error && e.message.includes('Limite de requisições')
-              ? '⚠️ O AutoIQ está temporariamente sobrecarregado. Aguarde alguns segundos e tente novamente.'
+            e instanceof Error
+              ? `❌ ${e.message}`
               : '❌ Erro ao processar. Tente novamente.',
         },
       ]);
