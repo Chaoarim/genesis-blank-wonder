@@ -411,9 +411,9 @@ ${resultados.join('\n\n')}
     ]
 
     const candidateModels = [
-      'openai/gpt-oss-20b:free',
       'openai/gpt-oss-120b:free',
-      'openrouter/elephant-alpha',
+      'google/gemma-4-31b-it:free',
+      'qwen/qwen3-next-80b-a3b-instruct:free',
       'google/gemma-3-27b-it:free',
       'meta-llama/llama-3.3-70b-instruct:free',
     ]
@@ -465,7 +465,7 @@ ${resultados.join('\n\n')}
 
     if (!response) {
       if (lastStatus === 429 || lastErrorText.toLowerCase().includes('rate limit')) {
-        return new Response(JSON.stringify({ error: 'Os modelos gratuitos do OpenRouter estão temporariamente sobrecarregados. Tente novamente em instantes.' }), {
+        return new Response(JSON.stringify({ error: 'Os modelos gratuitos do OpenRouter estão temporariamente sobrecarregados. O modelo deepseek/deepseek-chat não é free nesse endpoint; tente novamente em instantes ou use um modelo com saldo.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
