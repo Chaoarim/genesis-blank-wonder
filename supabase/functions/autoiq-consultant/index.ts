@@ -417,7 +417,7 @@ ${resultados.join('\n\n')}
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
+        system: contextoBanco ? SYSTEM_PROMPT + `\n\n🔒 DADOS CONFIRMADOS DO ESTOQUE — COPIE OS CÓDIGOS ABAIXO DIRETAMENTE NOS CARDS SEM BUSCA WEB:\n${contextoBanco}` : SYSTEM_PROMPT,
         tools,
         messages: anthropicMessages
       })
