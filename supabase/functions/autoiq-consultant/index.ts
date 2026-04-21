@@ -216,9 +216,7 @@ Responda em **Markdown limpo, conversacional e profissional** — estilo consult
 
 ESTRUTURA OBRIGATÓRIA:
 
-1. Uma linha curta de abertura natural (ex: "Com base no que sei e no que está no banco, respondo assim:")
-
-2. Linha do veículo identificado em negrito com emoji:
+1. Comece DIRETO com a linha do veículo identificado em negrito com emoji (SEM frase de abertura, SEM saudação, SEM "Com base no que sei..."):
 **🚙 Marca — Modelo — Versão — Motor — Ano**
 
 3. **Tabela markdown** com as colunas: Código | Produto | Fornecedor | Aplicação
@@ -239,8 +237,6 @@ REGRAS:
 - Sem títulos H1/H2/H3. Apenas a linha do veículo em negrito + tabela + observações.
 
 EXEMPLO REAL:
-
-Com base no que sei e no que está no banco, respondo assim:
 
 **🚙 Volkswagen — Gol — G5 1.0 8V EA111 — 2010**
 

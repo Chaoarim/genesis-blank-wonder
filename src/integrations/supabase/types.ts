@@ -228,6 +228,7 @@ export type Database = {
           fornecedor: string | null
           id: number
           produto: string | null
+          veiculo: string | null
         }
         Insert: {
           aplicacao?: string | null
@@ -236,6 +237,7 @@ export type Database = {
           fornecedor?: string | null
           id?: number
           produto?: string | null
+          veiculo?: string | null
         }
         Update: {
           aplicacao?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           fornecedor?: string | null
           id?: number
           produto?: string | null
+          veiculo?: string | null
         }
         Relationships: []
       }
