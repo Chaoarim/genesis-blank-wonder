@@ -223,36 +223,27 @@ export type Database = {
       catalogo_pecas: {
         Row: {
           aplicacao: string | null
-          codigo: string
+          codigo: string | null
           created_at: string | null
-          estoque: number | null
-          fornecedor: string
+          fornecedor: string | null
           id: number
-          preco: string | null
-          produto: string
-          veiculo: string
+          produto: string | null
         }
         Insert: {
           aplicacao?: string | null
-          codigo: string
+          codigo?: string | null
           created_at?: string | null
-          estoque?: number | null
-          fornecedor: string
+          fornecedor?: string | null
           id?: number
-          preco?: string | null
-          produto: string
-          veiculo: string
+          produto?: string | null
         }
         Update: {
           aplicacao?: string | null
-          codigo?: string
+          codigo?: string | null
           created_at?: string | null
-          estoque?: number | null
-          fornecedor?: string
+          fornecedor?: string | null
           id?: number
-          preco?: string | null
-          produto?: string
-          veiculo?: string
+          produto?: string | null
         }
         Relationships: []
       }
