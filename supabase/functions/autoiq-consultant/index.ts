@@ -266,10 +266,14 @@ async function buscarPecasNoBanco(
   termoBusca: string
 ): Promise<Array<{ codigo: string; produto: string; fornecedor: string; aplicacao: string }>> {
   try {
+    // Extrai só o modelo (última palavra do veículo ex: "Volkswagen Gol" → "Gol")
+    const palavras = veiculo.trim().split(/\s+/)
+    const modelo = palavras[palavras.length - 1]
+
     const { data, error } = await supabaseClient
       .from('catalogo_pecas')
       .select('codigo, produto, fornecedor, aplicacao')
-      .ilike('aplicacao', `%${veiculo}%`)
+      .ilike('aplicacao', `%${modelo}%`)
       .ilike('produto', `%${termoBusca}%`)
       .limit(8)
 
