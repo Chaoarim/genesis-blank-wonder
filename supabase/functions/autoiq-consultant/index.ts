@@ -65,14 +65,14 @@ ETAPA 2 — PRIORIDADE DE FONTE
 
 ⚡ REGRA ABSOLUTA DE FONTE:
 
-PRIORIDADE 1 — ESTOQUE INTERNO (dados já injetados no prompt):
-Se o prompt contiver uma seção "DADOS DO ESTOQUE INTERNO", use esses
+PRIORIDADE 1 — BANCO DE DADOS INTERNO (dados já injetados no prompt):
+Se o prompt contiver uma seção "DADOS DO BANCO INTERNO", use esses
 dados diretamente. Eles são do banco de dados do próprio cliente.
-NÃO faça busca web para peças cobertas pelo estoque interno.
-Marque status como "ok" e inclua "📦 Estoque interno" no obs.
+NÃO faça busca web para peças cobertas pelo banco interno.
+Marque status como "ok".
 
 PRIORIDADE 2 — BUSCA WEB (somente para peças sem dados internos):
-Se uma peça não estiver no estoque interno, use busca web.
+Se uma peça não estiver no banco interno, use busca web.
 Processo obrigatório para cada peça sem dados:
 
 PASSO A — Busca primária:
@@ -246,7 +246,7 @@ ZERO texto depois dos cards.
 REGRAS ABSOLUTAS — SEM EXCEÇÃO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. Estoque interno disponível → usar direto, SEM busca web
+1. Banco interno disponível → usar direto, SEM busca web
 2. NUNCA invente — sem confirmação: ⚠️ VERIFICAR + link
 3. NUNCA código sem aplicação confirmada
 4. NUNCA misturar códigos de fornecedores diferentes
@@ -257,37 +257,21 @@ REGRAS ABSOLUTAS — SEM EXCEÇÃO
 9. Alertas → SOMENTE se cliente pedir
 10. MÍNIMO de perguntas — processar, sinalizar, entregar
 11. NUNCA citar distribuidora como fonte
-12. Linha pesada = mesmo rigor da leve
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-IDENTIDADE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Você não é um chatbot.
-Você é o segundo cérebro de Maurício Chaparim.
-
-Quando responde uma lista, o cliente vai direto ao balcão e compra.
-Sem dúvida. Sem conferência. Sem erro.
-
-Com base nos 25 anos de experiência do Maurício Chaparim,
-cada resposta representa o padrão mais alto de consultoria
-em peças automotivas do Brasil.
-
-Isso é o padrão AutoIQ. Isso é o mínimo aceitável.`
+12. Linha pesada = mesmo rigor da leve`
 
 // ─── Busca no banco de dados ───────────────────────────────────
 async function buscarPecasNoBanco(
   supabaseClient: ReturnType<typeof createClient>,
   veiculo: string,
   termoBusca: string
-): Promise<Array<{ codigo: string; produto: string; fornecedor: string; aplicacao: string; estoque: number; preco: string }>> {
+): Promise<Array<{ codigo: string; produto: string; fornecedor: string; aplicacao: string }>> {
   try {
     const { data, error } = await supabaseClient
       .from('catalogo_pecas')
-      .select('codigo, produto, fornecedor, aplicacao, estoque, preco')
-      .ilike('veiculo', `%${veiculo}%`)
+      .select('codigo, produto, fornecedor, aplicacao')
+      .ilike('aplicacao', `%${veiculo}%`)
       .ilike('produto', `%${termoBusca}%`)
-      .limit(6)
+      .limit(8)
 
     if (error) {
       console.error('Erro busca banco:', error)
@@ -307,7 +291,7 @@ function extrairContexto(messages: Array<{ role: string; content: string }>) {
   const veiculoMatch = ultimaMensagem.match(
     /\b(chevrolet|fiat|volkswagen|vw|ford|honda|toyota|hyundai|jeep|renault|nissan|mitsubishi|peugeot|citroën|citroen|chery|caoa)\s+\w+|\b(onix|gol|celta|corsa|clio|uno|palio|argo|cronos|mobi|strada|toro|compass|renegade|hb20|creta|kwid|sandero|logan|duster|ka|ecosport|ranger|s10|hilux|sw4|l200|tracker|spin|cobalt|cruze|montana|zafira|polo|virtus|t-cross|jetta|saveiro|fox|golf)\b/i
   )
-  const veiculo = veiculoMatch ? veiculoMatch[0] : ''
+  const veiculo = veiculoMatch ? veiculoMatch[0].trim() : ''
 
   const termosPecas = [
     'amortecedor', 'pastilha', 'disco', 'filtro', 'correia', 'rolamento',
@@ -375,7 +359,7 @@ serve(async (req) => {
         if (dados.length > 0) {
           temDadosBanco = true
           const linhas = dados.map(d =>
-            `  • FORNECEDOR: ${d.fornecedor} | CODIGO: ${d.codigo} | PRODUTO: ${d.produto} | ESTOQUE: ${d.estoque > 0 ? d.estoque + ' un' : 'verificar'} | USE ESTE CODIGO NO CARD`
+            `  • FORNECEDOR: ${d.fornecedor} | CODIGO: ${d.codigo} | PRODUTO: ${d.produto} | APLICACAO: ${d.aplicacao.substring(0, 80)} | USE ESTE CODIGO NO CARD`
           ).join('\n')
           resultados.push(`Peça: ${peca}\n${linhas}`)
         }
@@ -384,7 +368,7 @@ serve(async (req) => {
       if (temDadosBanco) {
         contextoBanco = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DADOS DO ESTOQUE INTERNO — USE ESTES DIRETAMENTE
+DADOS DO BANCO INTERNO — USE ESTES DIRETAMENTE
 NÃO faça busca web para as peças abaixo.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${resultados.join('\n\n')}
@@ -394,7 +378,7 @@ ${resultados.join('\n\n')}
     }
 
     const systemContent = contextoBanco
-      ? SYSTEM_PROMPT + `\n\n🔒 DADOS CONFIRMADOS DO ESTOQUE — COPIE OS CÓDIGOS ABAIXO DIRETAMENTE NOS CARDS SEM BUSCA WEB:\n${contextoBanco}`
+      ? SYSTEM_PROMPT + `\n\n🔒 DADOS CONFIRMADOS DO BANCO — COPIE OS CÓDIGOS ABAIXO DIRETAMENTE NOS CARDS SEM BUSCA WEB:\n${contextoBanco}`
       : SYSTEM_PROMPT
 
     const openrouterMessages = [
@@ -448,24 +432,18 @@ ${resultados.join('\n\n')}
       console.error(`OpenRouter API error (${model}):`, attempt.status, lastErrorText)
 
       const parsedError = (() => {
-        try {
-          return JSON.parse(lastErrorText)
-        } catch {
-          return null
-        }
+        try { return JSON.parse(lastErrorText) } catch { return null }
       })()
 
       const detail = String(parsedError?.error?.message || lastErrorText).toLowerCase()
       const shouldRetry = attempt.status === 404 || attempt.status === 429 || attempt.status >= 500 || detail.includes('rate-limit') || detail.includes('rate limited') || detail.includes('no endpoints found')
 
-      if (!shouldRetry) {
-        break
-      }
+      if (!shouldRetry) break
     }
 
     if (!response) {
       if (lastStatus === 429 || lastErrorText.toLowerCase().includes('rate limit')) {
-        return new Response(JSON.stringify({ error: 'Os modelos gratuitos do OpenRouter estão temporariamente sobrecarregados. O modelo deepseek/deepseek-chat não é free nesse endpoint; tente novamente em instantes ou use um modelo com saldo.' }), {
+        return new Response(JSON.stringify({ error: 'Os modelos gratuitos do OpenRouter estão temporariamente sobrecarregados. Tente novamente em instantes.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
@@ -490,7 +468,6 @@ ${resultados.join('\n\n')}
     }
 
     const data = await response.json()
-
     const text = data.choices?.[0]?.message?.content || 'Não foi possível gerar uma resposta.'
 
     return new Response(
