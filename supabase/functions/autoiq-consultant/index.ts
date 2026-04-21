@@ -238,8 +238,6 @@ REGRAS:
 
 EXEMPLO REAL:
 
-Com base no que sei e no que está no banco, respondo assim:
-
 **🚙 Volkswagen — Gol — G5 1.0 8V EA111 — 2010**
 
 | Código | Produto | Fornecedor | Aplicação |
