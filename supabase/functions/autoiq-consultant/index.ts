@@ -338,10 +338,10 @@ serve(async (req) => {
       })
     }
 
-    const apiKey = Deno.env.get('OPENROUTER_API_KEY')
+    const apiKey = Deno.env.get('LOVABLE_API_KEY')
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Server configuration error: OPENROUTER_API_KEY not set' }),
+        JSON.stringify({ error: 'Server configuration error: LOVABLE_API_KEY not set' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -385,7 +385,7 @@ ${resultados.join('\n\n')}
       ? SYSTEM_PROMPT + `\n\n🔒 DADOS CONFIRMADOS DO BANCO — COPIE OS CÓDIGOS ABAIXO DIRETAMENTE NOS CARDS SEM BUSCA WEB:\n${contextoBanco}`
       : SYSTEM_PROMPT
 
-    const openrouterMessages = [
+    const aiMessages = [
       { role: 'system', content: systemContent },
       ...messages.map((m: { role: string; content: string }, idx: number) => {
         const isUltimaMensagem = idx === messages.length - 1 && m.role === 'user'
@@ -398,72 +398,40 @@ ${resultados.join('\n\n')}
       })
     ]
 
-    const candidateModels = [
-      'openai/gpt-oss-120b:free',
-      'google/gemma-4-31b-it:free',
-      'qwen/qwen3-next-80b-a3b-instruct:free',
-      'google/gemma-3-27b-it:free',
-      'meta-llama/llama-3.3-70b-instruct:free',
-    ]
-
-    let response: Response | null = null
-    let lastErrorText = ''
-    let lastStatus = 500
-
-    for (const model of candidateModels) {
-      const attempt = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://novopecai.lovable.app',
-          'X-Title': 'AutoIQ Consultant',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 4096,
-          messages: openrouterMessages,
-        })
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: aiMessages,
       })
+    })
 
-      if (attempt.ok) {
-        response = attempt
-        break
-      }
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Lovable AI error:', response.status, errorText)
 
-      lastStatus = attempt.status
-      lastErrorText = await attempt.text()
-      console.error(`OpenRouter API error (${model}):`, attempt.status, lastErrorText)
-
-      const parsedError = (() => {
-        try { return JSON.parse(lastErrorText) } catch { return null }
-      })()
-
-      const detail = String(parsedError?.error?.message || lastErrorText).toLowerCase()
-      const shouldRetry = attempt.status === 404 || attempt.status === 429 || attempt.status >= 500 || detail.includes('rate-limit') || detail.includes('rate limited') || detail.includes('no endpoints found')
-
-      if (!shouldRetry) break
-    }
-
-    if (!response) {
-      if (lastStatus === 429 || lastErrorText.toLowerCase().includes('rate limit')) {
-        return new Response(JSON.stringify({ error: 'Os modelos gratuitos do OpenRouter estão temporariamente sobrecarregados. Tente novamente em instantes.' }), {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      if (lastStatus === 402 || lastErrorText.toLowerCase().includes('credit')) {
+      if (response.status === 402) {
         return new Response(JSON.stringify({
-          error: '💳 Créditos do OpenRouter esgotados. Adicione saldo em openrouter.ai/credits.'
+          error: '💳 Créditos do Lovable AI esgotados. Adicione saldo em Settings > Workspace > Usage.'
         }), {
           status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      let detail = lastErrorText
+      let detail = errorText
       try {
-        const parsed = JSON.parse(lastErrorText)
-        detail = parsed?.error?.message || lastErrorText
+        const parsed = JSON.parse(errorText)
+        detail = parsed?.error?.message || errorText
       } catch { /* keep raw */ }
 
       return new Response(JSON.stringify({ error: `Erro no serviço de IA: ${detail}` }), {
@@ -472,7 +440,14 @@ ${resultados.join('\n\n')}
     }
 
     const data = await response.json()
-    const text = data.choices?.[0]?.message?.content || 'Não foi possível gerar uma resposta.'
+    let text: string = data.choices?.[0]?.message?.content || 'Não foi possível gerar uma resposta.'
+
+    // Limpa tokens especiais que alguns modelos vazam
+    text = text
+      .replace(/<\|endoftext\|>/g, '')
+      .replace(/<\|im_end\|>/g, '')
+      .replace(/<\|im_start\|>/g, '')
+      .trim()
 
     return new Response(
       JSON.stringify({ response: text }),
