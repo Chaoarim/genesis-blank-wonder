@@ -99,6 +99,46 @@ export function PartCards({
   proseColor: string;
 }) {
   const { segments } = parseContent(text);
+  const hasCards = segments.some((s) => s.type === 'card');
+
+  if (!hasCards) {
+    return (
+      <div className="autoiq-prose text-sm leading-relaxed" style={{ color: proseColor }}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            table: ({ children }) => (
+              <div className="my-3 overflow-x-auto rounded-lg border" style={{ borderColor: cardBorder }}>
+                <table className="w-full text-sm border-collapse">{children}</table>
+              </div>
+            ),
+            thead: ({ children }) => <thead style={{ backgroundColor: cardBg }}>{children}</thead>,
+            th: ({ children }) => (
+              <th className="text-left font-semibold px-3 py-2 border-b" style={{ borderColor: cardBorder, color: textColor }}>
+                {children}
+              </th>
+            ),
+            td: ({ children }) => (
+              <td className="px-3 py-2 border-b align-top" style={{ borderColor: cardBorder, color: textColor }}>
+                {children}
+              </td>
+            ),
+            code: ({ children }) => (
+              <code className="font-mono text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: cardBg, color: textColor }}>
+                {children}
+              </code>
+            ),
+            p: ({ children }) => <p className="my-2">{children}</p>,
+            strong: ({ children }) => (
+              <strong className="font-semibold" style={{ color: textColor }}>{children}</strong>
+            ),
+          }}
+        >
+          {text}
+        </ReactMarkdown>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
