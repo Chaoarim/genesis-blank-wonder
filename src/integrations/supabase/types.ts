@@ -1150,6 +1150,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pecas: {
+        Row: {
+          aplicacao: string | null
+          busca_ts: unknown
+          codigo: string
+          fornecedor: string | null
+          id: number
+          produto: string
+        }
+        Insert: {
+          aplicacao?: string | null
+          busca_ts?: unknown
+          codigo: string
+          fornecedor?: string | null
+          id?: number
+          produto: string
+        }
+        Update: {
+          aplicacao?: string | null
+          busca_ts?: unknown
+          codigo?: string
+          fornecedor?: string | null
+          id?: number
+          produto?: string
+        }
+        Relationships: []
+      }
       popular_car_parts: {
         Row: {
           aplicacao: string | null
@@ -2144,6 +2171,17 @@ export type Database = {
         Args: { pw: string; pw_hash: string }
         Returns: boolean
       }
+      buscar_pecas: {
+        Args: { p_limite?: number; p_query: string }
+        Returns: {
+          aplicacao: string
+          codigo: string
+          fornecedor: string
+          id: number
+          produto: string
+          relevancia: number
+        }[]
+      }
       check_subscription_status: {
         Args: { p_user_id: string }
         Returns: string
@@ -2159,6 +2197,8 @@ export type Database = {
         Returns: boolean
       }
       has_seller_module_access: { Args: { _module: string }; Returns: boolean }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       unaccent: { Args: { "": string }; Returns: string }
       update_subscription_by_email: {
         Args: { p_email: string; p_plan: string; p_status: string }
